@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
@@ -118,8 +117,6 @@ namespace Strive
                     {
                         JsonConfig.Apply(options.SerializerSettings);
                     });
-
-            services.AddAutoMapper(Assembly.GetExecutingAssembly(), typeof(CoreModule).Assembly);
 
             var healthChecks = services.AddHealthChecks();
 
