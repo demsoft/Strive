@@ -1,6 +1,6 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-ARG NODE_IMAGE=node:14
+ARG NODE_IMAGE=node:22
 FROM mcr.microsoft.com/dotnet/aspnet:5.0-buster-slim AS base
 WORKDIR /app
 EXPOSE 80
@@ -10,7 +10,7 @@ FROM ${NODE_IMAGE} as node-build
 WORKDIR /web
 COPY Client/package.json .
 COPY Client/yarn.lock .
-RUN yarn install
+RUN yarn install --frozen-lockfile
 COPY Client/ .
 RUN yarn build
 

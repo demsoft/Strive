@@ -132,7 +132,7 @@ Then you need to start the required microservices you do NOT want to modify:
    ```sh
    cd src/Web/WebSPA && dotnet run
    ```
-  Do not use yarn start in the ClientApp folder, as the ASP.Net Core app injects some parameters required for the frontend to work. Fast refresh will still work in the React app.
+  Do not use yarn start in the Client folder, as the ASP.Net Core app injects some parameters required for the frontend to work (it starts the Vite dev server itself). Hot module replacement will still work in the React app. The frontend requires Node 20.19+.
 - SFU (runs on `http://localhost:3000`)
    ```sh
    cd src/Services/SFU && yarn dev

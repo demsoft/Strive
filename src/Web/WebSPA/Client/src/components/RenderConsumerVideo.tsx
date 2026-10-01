@@ -105,7 +105,7 @@ export default function RenderConsumerVideo({
 
    useEffect(() => {
       if (connection && consumer) {
-         const source: ProducerSource = consumer.appData.source;
+         const source: ProducerSource = consumer.appData.source as ProducerSource;
          const device = getProducerDevice(source);
 
          const scalability = consumer.rtpParameters.encodings?.[0].scalabilityMode;

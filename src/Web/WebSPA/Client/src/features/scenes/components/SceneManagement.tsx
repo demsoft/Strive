@@ -144,7 +144,7 @@ export default function SceneManagement() {
                      <ListItem
                         button
                         onClick={() => handleOverwriteScene(null)}
-                        title={t('conference.scenes.remove_overwrite')}
+                        title={t('conference.scenes.remove_overwrite') as string}
                      >
                         <ListItemIcon style={{ minWidth: 32 }}>
                            <CloseIcon />

@@ -9,10 +9,6 @@ import ConsumerUsageControl from './consumer-usage-control';
 import SfuClient from './sfu-client';
 import { ChangeStreamRequest, ConsumerLayers, ConsumerScore, ProducerSource, SetPreferredLayersRequest } from './types';
 
-const PC_PROPRIETARY_CONSTRAINTS = {
-   optional: [{ googDscp: true }],
-};
-
 const log = debug('webrtc:connection');
 
 type OnNewConsumerPayload = {
@@ -226,7 +222,6 @@ export class WebRtcConnection extends TypedEmitter<WebRtcConnectionEvents> {
       const transport = this.device.createSendTransport({
          ...transportOptions.response,
          iceServers: [],
-         proprietaryConstraints: PC_PROPRIETARY_CONSTRAINTS,
       });
 
       transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
@@ -238,11 +233,11 @@ export class WebRtcConnection extends TypedEmitter<WebRtcConnectionEvents> {
                log('[Transport: %s] Remote transport connection response, success: %s', transport.id, response.success);
 
                if (response.success) callback();
-               else errback();
+               else errback(new Error(response.error.message));
             })
             .catch((err) => {
                log('[Transport: %s] Remote transport connection failed: %O', transport.id, err);
-               errback();
+               errback(err instanceof Error ? err : new Error('Remote transport connection failed'));
             });
       });
 
@@ -261,11 +256,11 @@ export class WebRtcConnection extends TypedEmitter<WebRtcConnectionEvents> {
                callback({ id: result.response.id });
             } else {
                log('[Transport: %s] Response failure: %O', transport.id, result.error);
-               errback(result.error);
+               errback(new Error(result.error.message));
             }
          } catch (error) {
             log('[Transport: %s] Request failure: %O', transport.id, error);
-            errback(error);
+            errback(error instanceof Error ? error : new Error('Produce request failed'));
          }
       });
 
@@ -298,11 +293,11 @@ export class WebRtcConnection extends TypedEmitter<WebRtcConnectionEvents> {
                );
 
                if (response.success) callback();
-               else errback(response.error);
+               else errback(new Error(response.error.message));
             })
             .catch((err) => {
                log('[Transport: %s] Remote receive transport connection failed: %O', transport.id, err);
-               errback();
+               errback(err instanceof Error ? err : new Error('Remote receive transport connection failed'));
             });
       });
 

@@ -45,13 +45,15 @@ export default function DeviceSelector({ devices, defaultName, className, select
       const value = event.target.value as string;
       if (!value) return;
 
-      let possibleDevices: Collection<DeviceGroup> | undefined;
+      let possibleDevices: Collection<DeviceGroup>;
 
       const [type, deviceId] = parseDeviceId(value);
       if (type === 'local') {
-         possibleDevices = _(devices).filter((x) => x.type === 'local');
+         possibleDevices = _(devices).filter((x) => x.type === 'local') as Collection<DeviceGroup>;
       } else {
-         possibleDevices = _(devices).filter((x) => x.type === 'equipment' && x.connectionId === type);
+         possibleDevices = _(devices).filter(
+            (x) => x.type === 'equipment' && x.connectionId === type,
+         ) as Collection<DeviceGroup>;
       }
 
       const viewModel = possibleDevices.flatMap((x) => x.devices).find((x) => x.device.deviceId === deviceId);

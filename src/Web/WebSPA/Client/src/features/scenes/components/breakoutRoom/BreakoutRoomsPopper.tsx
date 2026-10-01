@@ -65,7 +65,7 @@ export default function BreakoutRoomsPopper(props: ListItemPopperProps) {
                   {canModify && (
                      <ButtonGroup
                         variant="outlined"
-                        aria-label={t('conference.scenes.breakout_rooms.add_time_button_group')}
+                        aria-label={t('conference.scenes.breakout_rooms.add_time_button_group') as string}
                         size="small"
                      >
                         <Button onClick={handleAddMinutes(1)}>+1 min</Button>
