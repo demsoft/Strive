@@ -131,7 +131,7 @@ namespace Strive.Core.Tests.Services.Chat
         }
 
         [Fact]
-        public void CancelTimer_TimerWasSet_Reschedule()
+        public async Task CancelTimer_TimerWasSet_Reschedule()
         {
             ChatChannel channel2 = new RoomChatChannel("test123");
 
@@ -149,7 +149,7 @@ namespace Strive.Core.Tests.Services.Chat
 
             // assert
             trigger();
-            capturedRequest.AssertReceived();
+            await capturedRequest.WaitForRequest();
 
             var request = capturedRequest.GetRequest();
             Assert.Equal(channel2, request.Channel);

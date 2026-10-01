@@ -117,6 +117,15 @@ namespace Strive.Tests.Utils
             _asserted = true;
         }
 
+        /// <summary>
+        ///     Wait until the request was sent, for code that sends it on a continuation
+        /// </summary>
+        public async Task WaitForRequest(TimeSpan? timeout = null)
+        {
+            await Task.WhenAny(_task, Task.Delay(timeout ?? TimeSpan.FromSeconds(5)));
+            AssertReceived();
+        }
+
         public void AssertNotReceived()
         {
             Assert.False(_task.IsCompleted);

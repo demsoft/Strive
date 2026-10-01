@@ -28,9 +28,10 @@ namespace Strive
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args)
         {
-            return WebHost.CreateDefaultBuilder(args).UseStartup<Startup>().UseSerilog(
-                (hostingContext, loggerConfiguration) => loggerConfiguration.ReadFrom
-                    .Configuration(hostingContext.Configuration).Enrich.FromLogContext());
+            // Serilog.AspNetCore 8 removed IWebHostBuilder.UseSerilog, AddSerilog registers the same logger factory
+            return WebHost.CreateDefaultBuilder(args).UseStartup<Startup>().ConfigureServices(
+                (hostingContext, services) => services.AddSerilog(loggerConfiguration => loggerConfiguration.ReadFrom
+                    .Configuration(hostingContext.Configuration).Enrich.FromLogContext()));
         }
     }
 }
