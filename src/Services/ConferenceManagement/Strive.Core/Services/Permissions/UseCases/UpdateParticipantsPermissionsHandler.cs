@@ -32,7 +32,7 @@ namespace Strive.Core.Services.Permissions.UseCases
             _logger = logger;
         }
 
-        public async Task<Unit> Handle(UpdateParticipantsPermissionsRequest request,
+        public async Task Handle(UpdateParticipantsPermissionsRequest request,
             CancellationToken cancellationToken)
         {
             var participants = request.Participants;
@@ -67,8 +67,6 @@ namespace Strive.Core.Services.Permissions.UseCases
 
             if (appliedPermissions.Any())
                 await _mediator.Publish(new ParticipantPermissionsUpdatedNotification(appliedPermissions));
-
-            return Unit.Value;
         }
     }
 }

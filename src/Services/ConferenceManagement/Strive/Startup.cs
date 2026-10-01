@@ -239,7 +239,8 @@ namespace Strive
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement {{scheme, new List<string>()}});
             });
 
-            services.AddMediatR(typeof(Startup), typeof(CoreModule));
+            services.AddMediatR(config =>
+                config.RegisterServicesFromAssemblies(typeof(Startup).Assembly, typeof(CoreModule).Assembly));
 
             if (Environment.IsDevelopment())
                 services.AddCors(options =>

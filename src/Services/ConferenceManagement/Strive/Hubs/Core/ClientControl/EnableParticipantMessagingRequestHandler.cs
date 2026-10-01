@@ -19,7 +19,7 @@ namespace Strive.Hubs.Core.ClientControl
             _logger = logger;
         }
 
-        public async Task<Unit> Handle(EnableParticipantMessagingRequest request, CancellationToken cancellationToken)
+        public async Task Handle(EnableParticipantMessagingRequest request, CancellationToken cancellationToken)
         {
             var (participant, connectionId) = request;
 
@@ -31,8 +31,6 @@ namespace Strive.Hubs.Core.ClientControl
 
             _logger.LogDebug("Added participant {participant} with connection {connectionId}", request.Participant,
                 request.ConnectionId);
-
-            return Unit.Value;
         }
     }
 }

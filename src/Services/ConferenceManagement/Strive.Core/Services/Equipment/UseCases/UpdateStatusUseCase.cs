@@ -19,7 +19,7 @@ namespace Strive.Core.Services.Equipment.UseCases
             _mediator = mediator;
         }
 
-        public async Task<Unit> Handle(UpdateStatusRequest request, CancellationToken cancellationToken)
+        public async Task Handle(UpdateStatusRequest request, CancellationToken cancellationToken)
         {
             var (participant, connectionId, status) = request;
 
@@ -32,8 +32,6 @@ namespace Strive.Core.Services.Equipment.UseCases
 
             await _mediator.Send(new UpdateSynchronizedObjectRequest(participant.ConferenceId,
                 SynchronizedEquipment.SyncObjId(participant.Id)));
-
-            return Unit.Value;
         }
     }
 }

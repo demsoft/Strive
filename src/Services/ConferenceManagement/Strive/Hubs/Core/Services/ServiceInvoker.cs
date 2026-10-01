@@ -15,6 +15,16 @@ namespace Strive.Hubs.Core.Services
             _context = context;
         }
 
+        public IServiceRequestBuilder<Unit> Create(IRequest request)
+        {
+            return new ServiceRequestBuilderVoid(() => request, _mediator, _context);
+        }
+
+        public IServiceRequestBuilder<Unit> Create(Func<IRequest> requestFactory)
+        {
+            return new ServiceRequestBuilderVoid(requestFactory, _mediator, _context);
+        }
+
         public IServiceRequestBuilder<TResponse> Create<TResponse>(IRequest<TResponse> request)
         {
             return new ServiceRequestBuilder<TResponse>(() => request, _mediator, _context);

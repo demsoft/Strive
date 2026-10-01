@@ -28,7 +28,7 @@ namespace Strive.Core.Services.Rooms.UseCases
             _logger = logger;
         }
 
-        public async Task<Unit> Handle(RemoveRoomsRequest request, CancellationToken cancellationToken)
+        public async Task Handle(RemoveRoomsRequest request, CancellationToken cancellationToken)
         {
             var (conferenceId, roomIds) = request;
 
@@ -54,8 +54,6 @@ namespace Strive.Core.Services.Rooms.UseCases
 
                 await _mediator.Publish(new RoomsRemovedNotification(conferenceId, removedRooms));
             }
-
-            return Unit.Value;
         }
 
         private async Task<bool> RemoveRoom(string conferenceId, string roomId)

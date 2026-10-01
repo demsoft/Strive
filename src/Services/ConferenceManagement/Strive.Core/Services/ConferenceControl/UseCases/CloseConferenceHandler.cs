@@ -22,7 +22,7 @@ namespace Strive.Core.Services.ConferenceControl.UseCases
             _logger = logger;
         }
 
-        public async Task<Unit> Handle(CloseConferenceRequest request, CancellationToken cancellationToken)
+        public async Task Handle(CloseConferenceRequest request, CancellationToken cancellationToken)
         {
             var conferenceId = request.ConferenceId;
 
@@ -37,8 +37,6 @@ namespace Strive.Core.Services.ConferenceControl.UseCases
             {
                 _logger.LogDebug("Conference was already closed");
             }
-
-            return Unit.Value;
         }
     }
 }

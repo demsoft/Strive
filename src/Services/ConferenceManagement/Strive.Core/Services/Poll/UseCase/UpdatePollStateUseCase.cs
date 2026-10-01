@@ -19,7 +19,7 @@ namespace Strive.Core.Services.Poll.UseCase
             _mediator = mediator;
         }
 
-        public async Task<Unit> Handle(UpdatePollStateRequest request, CancellationToken cancellationToken)
+        public async Task Handle(UpdatePollStateRequest request, CancellationToken cancellationToken)
         {
             var (conferenceId, pollId, pollState) = request;
 
@@ -38,8 +38,6 @@ namespace Strive.Core.Services.Poll.UseCase
             {
                 await _mediator.Send(new UpdateParticipantSubscriptionsOfPollRequest(conferenceId, poll));
             }
-
-            return Unit.Value;
         }
     }
 }

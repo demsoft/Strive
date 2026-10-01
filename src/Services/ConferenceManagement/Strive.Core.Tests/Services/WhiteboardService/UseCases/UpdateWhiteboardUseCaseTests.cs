@@ -174,7 +174,7 @@ namespace Strive.Core.Tests.Services.WhiteboardService.UseCases
             SetupWhiteboard(whiteboard);
             SetupRooms(new Room(RoomId, "room"));
 
-            var request = _mediator.CaptureRequest<UpdateSynchronizedObjectRequest, Unit>();
+            var request = _mediator.CaptureRequest<UpdateSynchronizedObjectRequest>();
 
             var useCase = Create();
 

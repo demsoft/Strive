@@ -163,7 +163,7 @@ namespace Strive.Core.Tests.Services.BreakoutRooms.Internal
             var activeState = new BreakoutRoomsConfig(2, DateTimeOffset.MinValue, "description");
             var currentState = new BreakoutRoomInternalState(activeState, new[] {"test1", "test2"}, "123");
 
-            var capturedRequest = _mediator.CaptureRequest<RemoveRoomsRequest, Unit>();
+            var capturedRequest = _mediator.CaptureRequest<RemoveRoomsRequest>();
 
             SetupInternalState(currentState);
 

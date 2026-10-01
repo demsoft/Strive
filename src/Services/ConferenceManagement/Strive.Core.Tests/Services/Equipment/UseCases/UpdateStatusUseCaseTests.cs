@@ -82,7 +82,7 @@ namespace Strive.Core.Tests.Services.Equipment.UseCases
 
             _repo.Setup(x => x.GetConnection(_testParticipant, ConnectionId)).ReturnsAsync(existingConnection);
 
-            var capturedRequest = _mediator.CaptureRequest<UpdateSynchronizedObjectRequest, Unit>();
+            var capturedRequest = _mediator.CaptureRequest<UpdateSynchronizedObjectRequest>();
 
             // act
             await useCase.Handle(

@@ -22,7 +22,7 @@ namespace Strive.Core.Services.Equipment.UseCases
             _mediator = mediator;
         }
 
-        public async Task<Unit> Handle(InitializeEquipmentRequest request, CancellationToken cancellationToken)
+        public async Task Handle(InitializeEquipmentRequest request, CancellationToken cancellationToken)
         {
             var connection = new EquipmentConnection(request.ConnectionId, request.Name, request.Devices,
                 ImmutableDictionary<ProducerSource, UseMediaStateInfo>.Empty);
@@ -38,8 +38,6 @@ namespace Strive.Core.Services.Equipment.UseCases
 
             await _mediator.Send(new UpdateSynchronizedObjectRequest(request.Participant.ConferenceId,
                 SynchronizedEquipment.SyncObjId(request.Participant.Id)));
-
-            return Unit.Value;
         }
     }
 }

@@ -109,7 +109,7 @@ namespace Strive.Core.Tests.Services.Rooms.UseCases
             // arrange
             var testParticipant = new Participant(ConferenceId, "test");
 
-            var capturedRequest = _mediator.CaptureRequest<SetParticipantRoomRequest, Unit>();
+            var capturedRequest = _mediator.CaptureRequest<SetParticipantRoomRequest>();
 
             SetRemoveRoomIsSuccessful(roomId);
             SetParticipantsInRoom(roomId, testParticipant.Yield());

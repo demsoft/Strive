@@ -23,7 +23,7 @@ namespace Strive.Core.Services.ConferenceControl.UseCases
             _logger = logger;
         }
 
-        public async Task<Unit> Handle(OpenConferenceRequest request, CancellationToken cancellationToken)
+        public async Task Handle(OpenConferenceRequest request, CancellationToken cancellationToken)
         {
             var conferenceId = request.ConferenceId;
             _logger.LogDebug("Attempt to open conference {conferenceId}", conferenceId);
@@ -39,8 +39,6 @@ namespace Strive.Core.Services.ConferenceControl.UseCases
             {
                 _logger.LogDebug("The conference is already open.");
             }
-
-            return Unit.Value;
         }
 
         private async Task VerifyConferenceExists(string conferenceId)

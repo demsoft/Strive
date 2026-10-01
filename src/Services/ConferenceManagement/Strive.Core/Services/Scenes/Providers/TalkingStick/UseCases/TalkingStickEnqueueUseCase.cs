@@ -26,7 +26,7 @@ namespace Strive.Core.Services.Scenes.Providers.TalkingStick.UseCases
             _modeHandler = modeHandler;
         }
 
-        public async Task<Unit> Handle(TalkingStickEnqueueRequest request, CancellationToken cancellationToken)
+        public async Task Handle(TalkingStickEnqueueRequest request, CancellationToken cancellationToken)
         {
             var (participant, remove) = request;
 
@@ -59,8 +59,6 @@ namespace Strive.Core.Services.Scenes.Providers.TalkingStick.UseCases
 
             await _mediator.Send(new UpdateSynchronizedObjectRequest(participant.ConferenceId,
                 SynchronizedSceneTalkingStick.SyncObjId(roomId)));
-
-            return Unit.Value;
         }
 
         private async Task<bool> CheckParticipantIsInRoom(Participant participant, string roomId)

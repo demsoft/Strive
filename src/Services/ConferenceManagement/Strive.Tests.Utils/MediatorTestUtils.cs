@@ -20,6 +20,17 @@ namespace Strive.Tests.Utils
             return new CapturedRequest<T, TResponse>(mediator, returnVal.Task);
         }
 
+        public static CapturedRequest<T> CaptureRequest<T>(this Mock<IMediator> mediator) where T : IRequest
+        {
+            var returnVal = new TaskCompletionSource<T>();
+
+            mediator.Setup(x => x.Send(It.IsAny<T>(), It.IsAny<CancellationToken>()))
+                .Callback((T request, CancellationToken _) => returnVal.SetResult(request))
+                .Returns(Task.CompletedTask);
+
+            return new CapturedRequest<T>(mediator, returnVal.Task);
+        }
+
         public static CapturedRequest<T, TResponse> HandleRequest<T, TResponse>(this Mock<IMediator> mediator,
             Func<T, TResponse> responseFactory) where T : IRequest<TResponse>
         {
@@ -51,6 +62,40 @@ namespace Strive.Tests.Utils
     }
 
     public class CapturedRequest<T, TResponse> where T : IRequest<TResponse>
+    {
+        private readonly Mock<IMediator> _mediator;
+        private readonly Task<T> _task;
+        private bool _asserted;
+
+        public CapturedRequest(Mock<IMediator> mediator, Task<T> task)
+        {
+            _mediator = mediator;
+            _task = task;
+        }
+
+        public void AssertReceived()
+        {
+            if (_asserted) return;
+
+            Assert.True(_task.IsCompleted);
+            _mediator.Verify(x => x.Send(It.IsAny<T>(), It.IsAny<CancellationToken>()));
+
+            _asserted = true;
+        }
+
+        public void AssertNotReceived()
+        {
+            Assert.False(_task.IsCompleted);
+        }
+
+        public T GetRequest()
+        {
+            AssertReceived();
+            return _task.Result;
+        }
+    }
+
+    public class CapturedRequest<T> where T : IRequest
     {
         private readonly Mock<IMediator> _mediator;
         private readonly Task<T> _task;

@@ -19,7 +19,7 @@ namespace Strive.Core.Services.Equipment.UseCases
             _mediator = mediator;
         }
 
-        public async Task<Unit> Handle(AuthenticateEquipmentRequest request, CancellationToken cancellationToken)
+        public async Task Handle(AuthenticateEquipmentRequest request, CancellationToken cancellationToken)
         {
             var actualToken = await _tokenRepository.Get(request.Participant);
             if (actualToken != request.Token)
@@ -27,8 +27,6 @@ namespace Strive.Core.Services.Equipment.UseCases
 
             if (!await _mediator.Send(new CheckIsParticipantJoinedRequest(request.Participant)))
                 throw EquipmentError.ParticipantNotJoined.ToException();
-
-            return Unit.Value;
         }
     }
 }

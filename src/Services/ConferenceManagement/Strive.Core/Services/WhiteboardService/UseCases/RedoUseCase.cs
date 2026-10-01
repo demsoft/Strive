@@ -18,7 +18,7 @@ namespace Strive.Core.Services.WhiteboardService.UseCases
             _canvasActionUtils = canvasActionUtils;
         }
 
-        public async Task<Unit> Handle(RedoRequest request, CancellationToken cancellationToken)
+        public async Task Handle(RedoRequest request, CancellationToken cancellationToken)
         {
             var (conferenceId, roomId, whiteboardId, participantId) = request;
 
@@ -52,7 +52,6 @@ namespace Strive.Core.Services.WhiteboardService.UseCases
 
             await _mediator.Send(new UpdateWhiteboardRequest(conferenceId, roomId, whiteboardId, UpdateAction),
                 cancellationToken);
-            return Unit.Value;
         }
     }
 }
