@@ -1,6 +1,10 @@
 version: "3.4"
 
 services:
+  rabbitmq:
+    volumes:
+      - "./rabbitmq.dev.conf:/etc/rabbitmq/conf.d/20-dev.conf:ro"
+
   sfu:
     build:
       args:
@@ -13,9 +17,10 @@ services:
       - "9000:9000"
     environment:
       - DEBUG=strive-mediasoup**
+      - AMQP_CONNECTION_STRING=amqp://rabbitmq?frameMax=131072
   
   traefik:
-    image: "traefik:v2.4"
+    image: "traefik:v2.11"
     command:
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
