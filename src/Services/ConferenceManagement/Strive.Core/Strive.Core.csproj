@@ -5,7 +5,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="autofac" Version="6.2.0" />
+		<PackageReference Include="autofac" Version="8.4.0" />
 		<PackageReference Include="FluentValidation" Version="11.12.0" />
 		<PackageReference Include="Hashids.net" Version="1.7.0" />
 		<PackageReference Include="MediatR" Version="12.5.0" />

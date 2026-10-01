@@ -106,12 +106,17 @@ namespace Strive
                                          throw new ArgumentException("SFU url template not set."))));
 
             // SignalR
-            services.AddSignalR().AddNewtonsoftJsonProtocol(options =>
-                {
-                    JsonConfig.Apply(options.PayloadSerializerSettings);
-                });
+            // Since .NET 7, hub and API parameters are bound from DI if the container can resolve their type. Autofac
+            // reports collection types (e.g. IReadOnlyList<T>) as resolvable, so client arguments would be injected
+            // instead. All injected parameters use [FromServices] explicitly.
+            services.AddSignalR(options => options.DisableImplicitFromServicesParameters = true)
+                .AddNewtonsoftJsonProtocol(options => { JsonConfig.Apply(options.PayloadSerializerSettings); });
 
-            services.AddMvc().ConfigureApiBehaviorOptions(options => options.UseInvalidModelStateToError())
+            services.AddMvc().ConfigureApiBehaviorOptions(options =>
+                {
+                    options.UseInvalidModelStateToError();
+                    options.DisableImplicitFromServicesParameters = true;
+                })
                 .AddNewtonsoftJson(options => { JsonConfig.Apply(options.SerializerSettings); });
 
             services.AddFluentValidationAutoValidation();
