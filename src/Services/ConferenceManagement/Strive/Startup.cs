@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using FluentValidation;
 using FluentValidation.AspNetCore;
 using MassTransit;
 using MediatR;
@@ -111,12 +112,11 @@ namespace Strive
                 });
 
             services.AddMvc().ConfigureApiBehaviorOptions(options => options.UseInvalidModelStateToError())
-                .AddFluentValidation(fv =>
-                    fv.RegisterValidatorsFromAssemblyContaining<Startup>()
-                        .RegisterValidatorsFromAssemblyContaining<CoreModule>()).AddNewtonsoftJson(options =>
-                    {
-                        JsonConfig.Apply(options.SerializerSettings);
-                    });
+                .AddNewtonsoftJson(options => { JsonConfig.Apply(options.SerializerSettings); });
+
+            services.AddFluentValidationAutoValidation();
+            services.AddValidatorsFromAssemblyContaining<Startup>();
+            services.AddValidatorsFromAssemblyContaining<CoreModule>();
 
             var healthChecks = services.AddHealthChecks();
 
