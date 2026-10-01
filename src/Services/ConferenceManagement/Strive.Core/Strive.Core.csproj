@@ -7,14 +7,14 @@
 	<ItemGroup>
 		<PackageReference Include="autofac" Version="6.2.0" />
 		<PackageReference Include="FluentValidation" Version="11.12.0" />
-		<PackageReference Include="Hashids.net" Version="1.4.0" />
+		<PackageReference Include="Hashids.net" Version="1.7.0" />
 		<PackageReference Include="MediatR" Version="12.5.0" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-		<PackageReference Include="Nito.AsyncEx.Coordination" Version="5.1.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<PackageReference Include="Nito.AsyncEx.Coordination" Version="5.1.2" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
 		<PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
-		<PackageReference Include="Cronos" Version="0.7.1" />
-		<PackageReference Include="Polly" Version="7.2.2" />
+		<PackageReference Include="Cronos" Version="0.13.0" />
+		<PackageReference Include="Polly" Version="7.2.4" />
 		<PackageReference Include="SpeciVacation" Version="1.0.2" />
 	</ItemGroup>
 

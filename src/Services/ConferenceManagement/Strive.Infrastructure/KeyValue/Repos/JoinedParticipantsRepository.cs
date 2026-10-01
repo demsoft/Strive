@@ -56,8 +56,9 @@ namespace Strive.Infrastructure.KeyValue.Repos
 
             if (result.IsNull) return null;
 
-            var arr = (string[]) result;
-            return new PreviousParticipantState(arr[0], arr[1]);
+            // the script returns [conferenceId, connectionId] if the participant was joined, checked by IsNull above
+            var arr = ((string?[]?) result)!;
+            return new PreviousParticipantState(arr[0]!, arr[1]!);
         }
 
         private static async ValueTask<bool?> RemoveParticipantSafe(IKeyValueDatabaseActions database,

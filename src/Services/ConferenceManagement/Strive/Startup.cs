@@ -135,7 +135,8 @@ namespace Strive
                 services.AddSingleton(s => s.GetRequiredService<IRedisDatabase>().Database);
                 services.AddSingleton<IKeyValueDatabase, RedisKeyValueDatabase>();
 
-                healthChecks.AddRedis(config.ConnectionString);
+                // reuse the application's connection, the configuration may use Hosts instead of a connection string
+                healthChecks.AddRedis(s => s.GetRequiredService<IRedisDatabase>().Database.Multiplexer);
             }
 
             // MongoDb

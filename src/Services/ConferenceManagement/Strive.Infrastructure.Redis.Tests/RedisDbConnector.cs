@@ -9,13 +9,13 @@ namespace Strive.IntegrationTests._Helpers
 {
     public class RedisDbConnector : IAsyncDisposable
     {
-        private readonly RedisCacheConnectionPoolManager _connectionPool;
+        private readonly RedisConnectionPoolManager _connectionPool;
         private readonly string _instanceId = "IntegrationTest:" + Guid.NewGuid().ToString("N");
 
         public RedisDbConnector()
         {
             var config = new RedisConfiguration {Hosts = new[] {new RedisHost {Host = "localhost", Port = 6379}}};
-            _connectionPool = new RedisCacheConnectionPoolManager(config);
+            _connectionPool = new RedisConnectionPoolManager(config);
         }
 
         public IDatabase CreateConnection()
