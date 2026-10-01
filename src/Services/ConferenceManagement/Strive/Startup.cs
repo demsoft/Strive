@@ -74,7 +74,7 @@ namespace Strive
             services.AddLogging();
 
             // Authentication
-            var authOptions = Configuration.GetSection("Authentication").Get<AuthOptions>();
+            var authOptions = Configuration.GetRequired<AuthOptions>("Authentication");
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
                 JwtBearerDefaults.AuthenticationScheme, options =>
                 {
@@ -88,7 +88,7 @@ namespace Strive
                 });
             services.AddSingleton<IAuthorizationHandler, UserIsModeratorOfConferenceHandler>();
 
-            var sfuOptions = Configuration.GetSection("SFU").Get<SfuOptions>();
+            var sfuOptions = Configuration.GetRequired<SfuOptions>("SFU");
             var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(sfuOptions.TokenSecret ??
                                                                               throw new ArgumentException(
                                                                                   "SFU token secret not set")));
@@ -124,7 +124,7 @@ namespace Strive
             var healthChecks = services.AddHealthChecks();
 
             // KeyValueDatabase
-            var keyValueOptions = Configuration.GetSection("KeyValueDatabase").Get<KeyValueDatabaseConfig>();
+            var keyValueOptions = Configuration.GetRequired<KeyValueDatabaseConfig>("KeyValueDatabase");
             if (keyValueOptions.UseInMemory)
             {
                 services.AddSingleton<IKeyValueDatabase, InMemoryKeyValueDatabase>(services =>
@@ -145,7 +145,7 @@ namespace Strive
             services.Configure<MongoDbOptions>(Configuration.GetSection("MongoDb"));
             services.AddHostedService<MongoDbBuilder>();
 
-            var mongoOptions = Configuration.GetSection("MongoDb").Get<MongoDbOptions>();
+            var mongoOptions = Configuration.GetRequired<MongoDbOptions>("MongoDb");
             healthChecks.AddMongoDb(mongoOptions.ConnectionString);
 
             services.Configure<HealthCheckPublisherOptions>(options =>
@@ -157,7 +157,7 @@ namespace Strive
             services.Configure<SfuOptions>(Configuration.GetSection("SFU"));
             services.Configure<RabbitMqOptions>(Configuration.GetSection("RabbitMq"));
 
-            var rabbitMqOptions = Configuration.GetSection("RabbitMq").Get<RabbitMqOptions>();
+            var rabbitMqOptions = Configuration.GetRequired<RabbitMqOptions>("RabbitMq");
 
             services.AddMassTransit(config =>
             {
