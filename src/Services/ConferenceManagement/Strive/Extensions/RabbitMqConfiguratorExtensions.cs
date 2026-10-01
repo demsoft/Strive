@@ -1,4 +1,4 @@
-using MassTransit.RabbitMqTransport;
+using MassTransit;
 using Strive.Config;
 using RabbitMQ.Client;
 

@@ -171,6 +171,10 @@ namespace Strive
                     config.AddMessageScheduler(schedulerEndpoint);
                     config.UsingInMemory((context, configurator) =>
                     {
+                        // MassTransit 8 defaults to System.Text.Json, keep Newtonsoft as in MassTransit 7
+                        configurator.UseNewtonsoftJsonSerializer();
+                        configurator.UseNewtonsoftJsonDeserializer();
+
                         configurator.UseInMemoryScheduler("scheduler");
                         configurator.ConfigureEndpoints(context);
 
@@ -203,7 +207,10 @@ namespace Strive
                             e.Consumer<NotifyConnectionConsumer>(context);
                         });
 
-                        configurator.ConfigureJsonSerializer(jsonConfig =>
+                        // the SFU parses these messages, so keep the Newtonsoft wire format from MassTransit 7
+                        configurator.UseNewtonsoftJsonSerializer();
+                        configurator.UseNewtonsoftJsonDeserializer();
+                        configurator.ConfigureNewtonsoftJsonSerializer(jsonConfig =>
                         {
                             jsonConfig.DefaultValueHandling = DefaultValueHandling.Include;
                             JsonConfig.Apply(jsonConfig);
@@ -212,7 +219,6 @@ namespace Strive
                     });
                 }
             });
-            services.AddMassTransitHostedService();
             services.AddMediator();
 
             // Swagger

@@ -1,5 +1,4 @@
 using MassTransit;
-using MassTransit.RabbitMqTransport;
 using Strive.Config;
 
 namespace Strive.Extensions
