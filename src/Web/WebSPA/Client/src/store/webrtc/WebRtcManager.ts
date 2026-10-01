@@ -102,7 +102,6 @@ export class WebRtcManager extends TypedEmitter<WebRtcManagerEvents> {
       await device.load({ routerRtpCapabilities: rtpResult.response });
 
       const result = await client.initializeConnection({
-         sctpCapabilities: device.sctpCapabilities,
          rtpCapabilities: device.rtpCapabilities,
       });
 

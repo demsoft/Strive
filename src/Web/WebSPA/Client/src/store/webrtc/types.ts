@@ -1,5 +1,5 @@
 import { MediaKind, RtpCapabilities, RtpParameters } from 'mediasoup-client/lib/RtpParameters';
-import { SctpCapabilities, SctpParameters } from 'mediasoup-client/lib/SctpParameters';
+import { SctpParameters } from 'mediasoup-client/lib/SctpParameters';
 import { DtlsParameters, IceCandidate, IceParameters } from 'mediasoup-client/lib/Transport';
 
 export type ChangeStreamRequest = {
@@ -41,12 +41,10 @@ export function isProducerDevice(source: ProducerSource): source is ProducerDevi
 }
 
 export type InitializeConnectionRequest = {
-   sctpCapabilities: SctpCapabilities;
    rtpCapabilities: RtpCapabilities;
 };
 
 export type CreateTransportRequest = {
-   sctpCapabilities?: SctpCapabilities;
    forceTcp?: boolean;
    producing: boolean;
    consuming: boolean;

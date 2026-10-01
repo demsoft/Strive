@@ -53,7 +53,7 @@
       "lodash": "^4.17.15",
       "luxon": "^1.27.0",
       "mdi-material-ui": "^6.22.1",
-      "mediasoup-client": "3.15.7",
+      "mediasoup-client": "3.24.4",
       "oidc-client": "^1.11.5",
       "prettier": "2.3.1",
       "qrcode.react": "^1.0.0",

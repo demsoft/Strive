@@ -207,7 +207,6 @@ export class WebRtcConnection extends TypedEmitter<WebRtcConnectionEvents> {
 
    public async createSendTransport(): Promise<Transport> {
       const transportOptions = await this.client.createTransport({
-         sctpCapabilities: this.device.sctpCapabilities,
          producing: true,
          consuming: false,
       });

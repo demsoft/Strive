@@ -1060,7 +1060,7 @@
   resolved "https://registry.yarnpkg.com/@types/d3-time/-/d3-time-2.1.0.tgz#95708e5c92b199959806fd2116eeb3dfa0e9661c"
   integrity sha512-qVCiT93utxN0cawScyQuNx8H82vBvZXSClZfgOu3l3dRRlRO6FjKEZlaPgXG9XUFjIAOsA4kAJY101vobHeJLQ==
 
-"@types/debug@^4.1.12", "@types/debug@^4.1.5":
+"@types/debug@^4.1.13", "@types/debug@^4.1.5":
   version "4.1.13"
   resolved "https://registry.yarnpkg.com/@types/debug/-/debug-4.1.13.tgz#22d1cc9d542d3593caea764f974306ab36286ee7"
   integrity sha512-KSVgmQmzMwPlmtljOomayoR89W4FynCAi3E8PPs7vmDVPe84hT+vGPKkJfThkmXs0x0jAaa9U8uW8bbfyS2fWw==
@@ -1600,7 +1600,7 @@ asynckit@^0.4.0:
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
   integrity sha1-x57Zf380y48robyXkLzDZkdLS3k=
 
-awaitqueue@^3.2.4:
+awaitqueue@^3.3.1:
   version "3.3.1"
   resolved "https://registry.yarnpkg.com/awaitqueue/-/awaitqueue-3.3.1.tgz#3efed961ee080483b4657ef1953cb246fd306c9b"
   integrity sha512-kzMN6Bdfalok/JWZvwDfI704cIyCvHDi6Ez/bApGzNPjGHQhwJ07DzGd3DDzeXH2fjr9P5g8paESFUvYnbs7rA==
@@ -1660,11 +1660,6 @@ braces@^3.0.1:
   integrity sha512-b8um+L1RzM3WDSzvhm6gIz1yfTbBt6YTlcEKAvsmqCZZFw46z626lVj9j1yEPW33H5H+lBQpZMP1k8l+78Ha0A==
   dependencies:
     fill-range "^7.0.1"
-
-browser-dtector@^4.1.0:
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/browser-dtector/-/browser-dtector-4.1.1.tgz#f322260856558932bc70b85b62f2a91d817df1f8"
-  integrity sha512-taJAx2vDx7yE17sceWLQ42kqQxp/8LlfL8EGg9xf4KGL1HSQtvJ4kVXmlduL88DaKQ0M+NysvvYp3Z8BqdBhBQ==
 
 browser-process-hrtime@^1.0.0:
   version "1.0.0"
@@ -2621,7 +2616,7 @@ fabric@^4.5.0:
     canvas "^2.6.1"
     jsdom "^15.2.1"
 
-fake-mediastreamtrack@^2.1.4:
+fake-mediastreamtrack@^2.2.1:
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/fake-mediastreamtrack/-/fake-mediastreamtrack-2.2.1.tgz#49a36b4d58fadb7b450eafe96bdfd9173a1c6252"
   integrity sha512-SITLc7UTDirSdgLGORrlmqjWLJtbtfIz/xO7DwVbJH3f0ds+NQok4ccl/WEzz49NSgiUlXf2wDW0+y5C+TO6EA==
@@ -2875,7 +2870,7 @@ goober@^2.0.35:
   resolved "https://registry.yarnpkg.com/goober/-/goober-2.0.37.tgz#5598c41f4c19bc1fca2c926e876a58a685faffb8"
   integrity sha512-wgj5C7IJX2+MyHZ4TgOA+hLL1mCDW+jGorQ5KCMLF1ofE9gQkfbo1s8txIrzIsAX65XRTm0qaipolId2KMYUkw==
 
-h264-profile-level-id@^2.2.3:
+h264-profile-level-id@^2.3.3:
   version "2.3.3"
   resolved "https://registry.yarnpkg.com/h264-profile-level-id/-/h264-profile-level-id-2.3.3.tgz#1206e6c1a536a49e8b14b51ab147255a1e44695c"
   integrity sha512-rPd5gpyWuIfEbBiHC/f9I4wdeCpAhg0aWdYgjMRdVTqhJT22C6VrWTi4hpAAgJad1Vv8BJDEvrzAQTW7CxzmJw==
@@ -3615,21 +3610,20 @@ mdi-material-ui@^6.22.1:
   resolved "https://registry.yarnpkg.com/mdi-material-ui/-/mdi-material-ui-6.22.1.tgz#f4cd3fdd24103b87204a5d7fe1096c20b93f8d49"
   integrity sha512-wndaFXJhoFr9g5kPw31TZajTa9uf/21jb2jD1rJ5Vi+sj2GZYnZz2BYbrfp1qFgd7tZz8XAcnpsSNMdLbe+dtw==
 
-mediasoup-client@3.15.7:
-  version "3.15.7"
-  resolved "https://registry.yarnpkg.com/mediasoup-client/-/mediasoup-client-3.15.7.tgz#386f6d962fcc4edd0ff4dcd4433f2a64f23f6165"
-  integrity sha512-nQQQKH5HaLH+8JC+bm89ry+fg0vVV0rHHqR34Ch1zzrmmBkonifePbI0bBHNAw/rDJP/I07yA84lu9Egn26lCw==
+mediasoup-client@3.24.4:
+  version "3.24.4"
+  resolved "https://registry.yarnpkg.com/mediasoup-client/-/mediasoup-client-3.24.4.tgz#4ac84f3510000f5abfd59661a0832a6a51cc788f"
+  integrity sha512-iOZzuF2QP80sYCUqYn2AnnMhYRgrtq9pGKOj7rj0YWJamm0hN1PUvHKrQZVcf3XPN0B9W3s4dZqrJOWG5GbnUg==
   dependencies:
-    "@types/debug" "^4.1.12"
+    "@types/debug" "^4.1.13"
     "@types/events-alias" "npm:@types/events@^3.0.3"
-    awaitqueue "^3.2.4"
-    browser-dtector "^4.1.0"
+    awaitqueue "^3.3.1"
     debug "^4.4.3"
     events-alias "npm:events@^3.3.0"
-    fake-mediastreamtrack "^2.1.4"
-    h264-profile-level-id "^2.2.3"
-    sdp-transform "^2.15.0"
-    supports-color "^10.2.2"
+    fake-mediastreamtrack "^2.2.1"
+    h264-profile-level-id "^2.3.3"
+    sdp-transform "^3.0.0"
+    supports-color "^11.0.0"
 
 memoize-one@^5.1.1:
   version "5.1.1"
@@ -4549,10 +4543,10 @@ scheduler@^0.20.2:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
 
-sdp-transform@^2.15.0:
-  version "2.15.0"
-  resolved "https://registry.yarnpkg.com/sdp-transform/-/sdp-transform-2.15.0.tgz#79d37a2481916f36a0534e07b32ceaa87f71df42"
-  integrity sha512-KrOH82c/W+GYQ0LHqtr3caRpM3ITglq3ljGUIb8LTki7ByacJZ9z+piSGiwZDsRyhQbYBOBJgr2k6X4BZXi3Kw==
+sdp-transform@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/sdp-transform/-/sdp-transform-3.0.0.tgz#863dd2d781c468d7d6a2f9c70fedcf0538f3e76c"
+  integrity sha512-gfYVRGxjHkGF2NPeUWHw5u6T/KGFtS5/drPms73gaSuMaVHKCY3lpLnGDfswVQO0kddeePoti09AwhYP4zA8dQ==
 
 seedrandom@^3.0.5:
   version "3.0.5"
@@ -4822,10 +4816,10 @@ style-value-types@4.1.4:
     hey-listen "^1.0.8"
     tslib "^2.1.0"
 
-supports-color@^10.2.2:
-  version "10.2.2"
-  resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-10.2.2.tgz#466c2978cc5cd0052d542a0b576461c2b802ebb4"
-  integrity sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g==
+supports-color@^11.0.0:
+  version "11.0.0"
+  resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-11.0.0.tgz#54f4096e9cac614c6f273dc764e697e3c2c3941d"
+  integrity sha512-/zyImLdxhdygBIaVX0xTlQhKaCDLCrm665aqHk8xqK/Pa6k61fL6gwQGQq1k31yNyz6x55PppQgF2DMyPQa5xw==
 
 supports-color@^5.3.0:
   version "5.5.0"
