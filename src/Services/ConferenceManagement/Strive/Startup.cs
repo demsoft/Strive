@@ -200,8 +200,8 @@ namespace Strive
                         {
                             e.Durable = false;
 
-                            e.Consumer<StreamsUpdatedConsumer>(context);
-                            e.Consumer<NotifyConnectionConsumer>(context);
+                            e.ConfigureConsumer<StreamsUpdatedConsumer>(context);
+                            e.ConfigureConsumer<NotifyConnectionConsumer>(context);
                         });
 
                         // the SFU parses these messages, so keep the Newtonsoft wire format from MassTransit 7

@@ -19,9 +19,9 @@ namespace Strive.Infrastructure.Scheduler
             _messageScheduler = messageScheduler;
         }
 
-        public static void Configure(IReceiveConfigurator configurator, IServiceProvider context)
+        public static void Configure(IReceiveConfigurator configurator, IRegistrationContext context)
         {
-            configurator.ReceiveEndpoint(QueueName, e => e.Consumer<MediatrNotificationConsumer>(context));
+            configurator.ReceiveEndpoint(QueueName, e => e.ConfigureConsumer<MediatrNotificationConsumer>(context));
         }
 
         public async ValueTask<string> Schedule<T>(T notification, DateTimeOffset scheduleDate)
