@@ -45,7 +45,10 @@
         "scene_layout_chips_with_presenter": "Chips und Präsentator",
         "scene_layout_screen_share": "Layout für Bildschirmübertragung",
         "scene_layout_tiles": "Kacheln über der Szene",
-        "scene_layout_tiles_desc": "Zeige eine Reihe von Kacheln über der Szene an"
+        "scene_layout_tiles_desc": "Zeige eine Reihe von Kacheln über der Szene an",
+        "lobby": "Lobby",
+        "lobby_enabled": "Teilnehmer müssen von einem Moderator zugelassen werden",
+        "lobby_description": "Moderatoren treten direkt bei. Alle anderen warten, bis ein Moderator sie zulässt, sobald die Konferenz geöffnet ist."
       },
       "moderators": {
         "error_user_not_found": "Benutzer mit Id \"{{id}}\" wurde nicht gefunden",
@@ -536,6 +539,20 @@
     },
     "reactions": {
       "send": "Reaktion senden"
+    },
+    "lobby": {
+      "title": "Lobby",
+      "waiting_title": "Warten auf Einlass",
+      "waiting_text": "Du trittst der Konferenz bei, sobald ein Moderator dich zulässt.",
+      "denied_title": "Du wurdest nicht zugelassen",
+      "denied_text": "Ein Moderator hat deine Beitrittsanfrage abgelehnt.",
+      "nobody_waiting": "Niemand wartet.",
+      "admit": "Zulassen",
+      "deny": "Ablehnen",
+      "admit_all": "Alle zulassen",
+      "waiting_count_one": "{{count}} Teilnehmer wartet",
+      "waiting_count_other": "{{count}} Teilnehmer warten",
+      "someone_waiting": "{{name}} wartet auf Einlass"
     }
   }
 }

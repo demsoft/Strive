@@ -253,6 +253,28 @@ export default function TabCommon({
             />
          </Grid>
          <Grid className={classes.sectionGrid} size={12}>
+            <Typography variant="h6">{t('dialog_create_conference.tabs.common.lobby')}</Typography>
+            <FormControlLabel
+               control={
+                  <Controller
+                     render={({ field: { onChange, value } }) => (
+                        <Checkbox
+                           id="lobby-enabled"
+                           onChange={(e) => onChange(e.target.checked)}
+                           checked={value ?? false}
+                        />
+                     )}
+                     control={control}
+                     name="configuration.lobby.isEnabled"
+                  />
+               }
+               label={t('dialog_create_conference.tabs.common.lobby_enabled')}
+            />
+            <Typography variant="caption" color="textSecondary" component="div">
+               {t('dialog_create_conference.tabs.common.lobby_description')}
+            </Typography>
+         </Grid>
+         <Grid className={classes.sectionGrid} size={12}>
             <Typography variant="h6" gutterBottom>
                {t('glossary:scene_other')}
             </Typography>

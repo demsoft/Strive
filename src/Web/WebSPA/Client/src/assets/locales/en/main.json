@@ -45,7 +45,10 @@
         "scene_layout_auto_desc": "Display chips when no webcams are active, else show tiles",
         "scene_layout_chips_desc": "If a participant is speaking, display his name above the scene",
         "scene_layout_chipsWithPresenter_desc": "Display chips and a participant tile above the chat",
-        "scene_layout_tiles_desc": "Display a row of participant tiles above the scene"
+        "scene_layout_tiles_desc": "Display a row of participant tiles above the scene",
+        "lobby": "Lobby",
+        "lobby_enabled": "Participants have to be admitted by a moderator",
+        "lobby_description": "Moderators join directly. Everyone else waits until a moderator admits them once the conference is open."
       },
       "moderators": {
         "error_user_not_found": "User with id \"{{id}}\" not found",
@@ -536,6 +539,20 @@
     },
     "reactions": {
       "send": "Send a reaction"
+    },
+    "lobby": {
+      "title": "Lobby",
+      "waiting_title": "Waiting for the host to let you in",
+      "waiting_text": "You will join the conference as soon as a moderator admits you.",
+      "denied_title": "You were not admitted",
+      "denied_text": "A moderator declined your request to join this conference.",
+      "nobody_waiting": "Nobody is waiting.",
+      "admit": "Admit",
+      "deny": "Deny",
+      "admit_all": "Admit all",
+      "waiting_count_one": "{{count}} participant is waiting",
+      "waiting_count_other": "{{count}} participants are waiting",
+      "someone_waiting": "{{name}} is waiting to join"
     }
   }
 }

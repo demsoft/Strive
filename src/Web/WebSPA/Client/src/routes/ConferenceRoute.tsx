@@ -19,6 +19,8 @@ import { WebRtcContext } from 'src/store/webrtc/WebRtcContext';
 import { WebRtcManager } from 'src/store/webrtc/WebRtcManager';
 import { formatErrorMessage } from 'src/utils/error-utils';
 import to from 'src/utils/to';
+import LobbyWaitingView from 'src/features/lobby/components/LobbyWaitingView';
+import { selectLobbyStatus } from 'src/features/lobby/selectors';
 import { ConferenceRouteParams } from './types';
 
 const defaultEvents: string[] = [
@@ -27,6 +29,7 @@ const defaultEvents: string[] = [
    coreHub.events.onRequestDisconnect,
    coreHub.events.onEquipmentError,
    coreHub.events.onReaction,
+   coreHub.events.onLobbyStatus,
 ];
 
 type Props = RouteComponentProps<ConferenceRouteParams>;
@@ -37,6 +40,7 @@ function ConferenceRoute({
    },
 }: Props) {
    const error = useSelector((state: RootState) => state.conference.connectionError);
+   const lobbyStatus = useSelector(selectLobbyStatus);
    const conferenceState = useSelector((state: RootState) => state.conference.conferenceState);
    const { isConnected, isReconnecting } = useSelector((state: RootState) => state.signalr);
    const webRtc = useRef(new WebRtcManager({ sendMedia: true, receiveMedia: true })).current;
@@ -69,6 +73,10 @@ function ConferenceRoute({
             <Link {...to('/')}>{t('common:back_to_start')}</Link>
          </FullscreenError>
       );
+   }
+
+   if (lobbyStatus === 'waiting' || lobbyStatus === 'denied') {
+      return <LobbyWaitingView denied={lobbyStatus === 'denied'} />;
    }
 
    if (!conferenceState || !isConnected) {

@@ -5,6 +5,7 @@ import {
    DeletePollDto,
    FetchChatMessagesDto,
    KickParticipantRequestDto,
+   LobbyParticipantDto,
    LowerParticipantsHandDto,
    OpenBreakoutRoomsDto,
    RoomCreationInfo,
@@ -49,6 +50,10 @@ export const getEquipmentToken = createHubFn('GetEquipmentToken');
 export const sendEquipmentCommand = createHubFn<SendEquipmentCommandDto>('SendEquipmentCommand');
 
 export const changeProducerSource = createHubFn<ChangeProducerSourceRequest>('ChangeParticipantProducer');
+
+export const admitParticipant = createHubFn<LobbyParticipantDto>('AdmitParticipant');
+export const denyParticipant = createHubFn<LobbyParticipantDto>('DenyParticipant');
+export const admitAllParticipants = createHubFn('AdmitAllParticipants');
 
 export const raiseHand = createHubFn('RaiseHand');
 export const lowerHand = createHubFn('LowerHand');
@@ -99,4 +104,5 @@ export const events = {
    onRequestDisconnect: 'OnRequestDisconnect',
    onEquipmentError: 'OnEquipmentError',
    onReaction: 'OnReaction',
+   onLobbyStatus: 'OnLobbyStatus',
 };

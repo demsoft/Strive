@@ -16,6 +16,7 @@ import { CONFERENCE_CAN_OPEN_AND_CLOSE } from 'src/permissions';
 import { ConferenceRouteParams } from 'src/routes/types';
 import { RootState } from 'src/store';
 import { selectParticipantList } from '../selectors';
+import LobbyButton from 'src/features/lobby/components/LobbyButton';
 import AppBarLogo from './appbar/AppBarLogo';
 import BreakoutRoomChip from './appbar/BreakoutRoomChip';
 import WebRtcStatusChip from './appbar/WebRtcStatusChip';
@@ -135,6 +136,7 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
                      </Typography>
                   </Box>
                )}
+               <LobbyButton />
                <IconButton aria-label={t('common:settings')} color="inherit" onClick={handleOpenSettings} size="large">
                   <SettingsIcon />
                </IconButton>

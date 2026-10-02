@@ -20,6 +20,11 @@ export const POLL_RESULT = 'poll_result';
 export const POLL_ANSWERS = 'poll_answers';
 export const WHITEBOARDS = 'whiteboards';
 export const HAND_RAISES = 'handRaises';
+export const LOBBY = 'lobby';
+
+export type SynchronizedLobby = {
+   participants: { [participantId: string]: { displayName: string; since: string } };
+};
 
 export type SynchronizedHandRaises = {
    /** participant id -> iso timestamp of when the hand was raised */
@@ -37,6 +42,7 @@ export type SynchronizedConferenceInfo = {
    name: string | null;
    isPrivateChatEnabled: boolean;
    sceneOptions: SceneOptions;
+   isLobbyEnabled: boolean;
 };
 
 export type SynchronizedParticipantsPermissions = {

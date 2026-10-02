@@ -9,6 +9,7 @@ import createConference from '../features/create-conference/reducer';
 import diagnostics from '../features/diagnostics/reducer';
 import handRaise from '../features/hand-raise/reducer';
 import equipment from '../features/equipment/reducer';
+import lobby from '../features/lobby/reducer';
 import media from '../features/media/reducer';
 import poll from '../features/poll/reducer';
 import reactions from '../features/reactions/reducer';
@@ -40,6 +41,7 @@ const rootReducer = combineReducers({
    poll,
    whiteboard,
    handRaise,
+   lobby,
    reactions,
 });
 
