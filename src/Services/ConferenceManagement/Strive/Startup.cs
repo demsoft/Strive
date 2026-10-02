@@ -20,6 +20,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MongoDB.Driver;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
@@ -149,7 +150,8 @@ namespace Strive
             services.AddHostedService<MongoDbBuilder>();
 
             var mongoOptions = Configuration.GetRequired<MongoDbOptions>("MongoDb");
-            healthChecks.AddMongoDb(mongoOptions.ConnectionString);
+            var healthCheckMongoClient = new MongoClient(mongoOptions.ConnectionString);
+            healthChecks.AddMongoDb(_ => healthCheckMongoClient);
 
             services.Configure<HealthCheckPublisherOptions>(options =>
             {
