@@ -1,4 +1,4 @@
-import { useReactOidc } from '@axa-fr/react-oidc-context';
+import useUser from 'src/features/auth/useUser';
 import { Link } from '@mui/material';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -41,7 +41,7 @@ function ConferenceRoute({
    const webRtc = useRef(new WebRtcManager({ sendMedia: true, receiveMedia: true })).current;
    const { t } = useTranslation();
 
-   const { oidcUser } = useReactOidc();
+   const oidcUser = useUser();
 
    const dispatch = useDispatch();
 

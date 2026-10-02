@@ -1,18 +1,17 @@
-import { useReactOidc } from '@axa-fr/react-oidc-context';
 import { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
+import { SigninState } from 'src/features/auth/components/StriveAuthProvider';
+import useUser from 'src/features/auth/useUser';
 
 export default function RedirectToConference() {
    const history = useHistory();
-   const { oidcUser } = useReactOidc();
+   const oidcUser = useUser();
 
-   const redirectUrl = oidcUser.state?.url;
+   const redirectUrl = (oidcUser.state as SigninState | undefined)?.url;
 
    useEffect(() => {
-      if (oidcUser.state?.url) {
-         if (history.location.pathname !== oidcUser.state?.url) {
-            history.replace(oidcUser.state.url);
-         }
+      if (redirectUrl && history.location.pathname !== redirectUrl) {
+         history.replace(redirectUrl);
       }
    }, [redirectUrl]);
 

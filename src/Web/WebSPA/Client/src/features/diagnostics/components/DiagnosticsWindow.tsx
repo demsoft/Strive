@@ -1,4 +1,4 @@
-import { useReactOidc } from '@axa-fr/react-oidc-context';
+import useUser from 'src/features/auth/useUser';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import NewWindow from 'react-new-window';
@@ -11,7 +11,7 @@ export default function DiagnosticsWindow() {
    const dispatch = useDispatch();
    const { t } = useTranslation();
    const open = useSelector((state: RootState) => state.diagnostics.open);
-   const { oidcUser } = useReactOidc();
+   const oidcUser = useUser();
 
    const handleUnload = () => {
       dispatch(setOpen(false));

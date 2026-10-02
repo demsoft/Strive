@@ -1,4 +1,4 @@
-import { AuthenticationContext } from '@axa-fr/react-oidc-context';
+import { useAuth } from 'react-oidc-context';
 import { Button, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import React, { useEffect } from 'react';
@@ -79,16 +79,13 @@ export default function MainRoute() {
    }, [dispatch]);
 
    const links = useSelector((state: RootState) => state.conference.conferenceLinks);
+   const auth = useAuth();
 
    return (
       <div className={classes.root}>
-         <AuthenticationContext.Consumer>
-            {({ logout }) => (
-               <Button className={classes.signOutButton} onClick={() => logout()}>
-                  {t('common:sign_out')}
-               </Button>
-            )}
-         </AuthenticationContext.Consumer>
+         <Button className={classes.signOutButton} onClick={() => auth.signoutRedirect()}>
+            {t('common:sign_out')}
+         </Button>
 
          {links && links.length > 0 && (
             <div className={classes.sideList}>

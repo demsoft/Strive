@@ -1,4 +1,5 @@
-import { useReactOidc } from '@axa-fr/react-oidc-context';
+import { useAuth } from 'react-oidc-context';
+import useUser from 'src/features/auth/useUser';
 import { AppBar, Box, Chip, IconButton, Menu, MenuItem, Toolbar, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -59,7 +60,8 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
    const handleCloseConference = () => dispatch(coreHub.closeConference());
    const handleOpenSettings = () => dispatch(openSettings());
 
-   const { logout, oidcUser } = useReactOidc();
+   const auth = useAuth();
+   const oidcUser = useUser();
    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
    const handleOpenMenu = () => setIsMenuOpen(true);
@@ -154,7 +156,7 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
                {canCloseConference && (
                   <MenuItem onClick={handleCloseConference}>{t('conference.appbar.close_conference')}</MenuItem>
                )}
-               <MenuItem onClick={logout as any}>{t('common:sign_out')}</MenuItem>
+               <MenuItem onClick={() => auth.signoutRedirect()}>{t('common:sign_out')}</MenuItem>
             </Menu>
          </Toolbar>
       </AppBar>

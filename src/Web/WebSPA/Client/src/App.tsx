@@ -1,14 +1,10 @@
-import { AuthenticationProvider, oidcLog, OidcSecure } from '@axa-fr/react-oidc-context';
 import { createTheme, CssBaseline, responsiveFontSizes, ThemeProvider } from '@mui/material';
 import { blue, pink } from '@mui/material/colors';
 import { makeStyles } from 'tss-react/mui';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
-import { ocidConfig } from 'src/config';
-import AuthCallback from 'src/features/auth/components/AuthCallback';
-import NotAuthenticated from 'src/features/auth/components/NotAuthenticated';
-import AuthenticatingComponent from './features/auth/components/AuthenticatingComponent';
-import SessionLostComponent from './features/auth/components/SessionLostComponent';
+import RequireAuth from './features/auth/components/RequireAuth';
+import StriveAuthProvider from './features/auth/components/StriveAuthProvider';
 import UserInteractionListener from './features/media/components/UserInteractionListener';
 import RedirectToConference from './RedirectToConference';
 import AuthenticatedRoutes from './routes/AuthenticatedRoutes';
@@ -55,20 +51,18 @@ function App() {
             <Switch>
                <Route path="/c/:id/as-equipment" exact component={EquipmentRoute} />
                <Route path="/">
-                  <AuthenticationProvider
-                     configuration={ocidConfig}
-                     loggerLevel={oidcLog.ERROR}
-                     isEnabled
-                     callbackComponentOverride={AuthCallback}
-                     notAuthenticated={NotAuthenticated}
-                     sessionLostComponent={SessionLostComponent}
-                     authenticating={AuthenticatingComponent}
-                  >
-                     <OidcSecure>
-                        <AuthenticatedRoutes />
-                        <RedirectToConference />
-                     </OidcSecure>
-                  </AuthenticationProvider>
+                  <StriveAuthProvider>
+                     <Switch>
+                        {/* the silent renew iframe, the provider processes the callback */}
+                        <Route path="/authentication/silent_callback" render={() => null} />
+                        <Route>
+                           <RequireAuth>
+                              <AuthenticatedRoutes />
+                              <RedirectToConference />
+                           </RequireAuth>
+                        </Route>
+                     </Switch>
+                  </StriveAuthProvider>
                </Route>
             </Switch>
          </BrowserRouter>
