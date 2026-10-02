@@ -15,6 +15,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import * as coreHub from 'src/core-hub';
+import useStriveSound from 'src/hooks/useStriveSound';
 import usePermission from 'src/hooks/usePermission';
 import { LOBBY_CAN_ADMIT } from 'src/permissions';
 import { showMessage } from 'src/store/notifier/actions';
@@ -46,6 +47,8 @@ export default function LobbyButton() {
    const enabled = useSelector(selectIsLobbyEnabled);
    const waiting = useSelector(selectWaitingParticipants);
 
+   const [playWaitingSound] = useStriveSound('striveLobbyWaiting');
+
    const buttonRef = useRef<HTMLButtonElement>(null);
    const [open, setOpen] = useState(false);
 
@@ -54,7 +57,10 @@ export default function LobbyButton() {
    useEffect(() => {
       const known = knownIds.current;
       if (known) {
-         for (const participant of waiting.filter((x) => !known.has(x.id))) {
+         const newlyWaiting = waiting.filter((x) => !known.has(x.id));
+         if (newlyWaiting.length > 0) playWaitingSound();
+
+         for (const participant of newlyWaiting) {
             dispatch(
                showMessage({
                   type: 'info',

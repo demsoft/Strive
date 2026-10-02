@@ -1,11 +1,13 @@
 import useSound from 'use-sound';
 import testAudioFile from 'src/assets/audio/test_audio_file.mp3';
 import striveConferenceOpened from 'src/assets/audio/strive_conference_opened.mp3';
+import striveLobbyWaiting from 'src/assets/audio/strive_lobby_waiting.mp3';
 import { HookOptions, ReturnedValue } from 'use-sound/dist/types';
 
 const availableSounds = {
    testAudioFile,
    striveConferenceOpened,
+   striveLobbyWaiting,
 };
 
 export type AvailableSound = keyof typeof availableSounds;
