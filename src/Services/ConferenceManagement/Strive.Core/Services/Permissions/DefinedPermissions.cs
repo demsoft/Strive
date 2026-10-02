@@ -24,6 +24,17 @@ namespace Strive.Core.Services.Permissions
             public static readonly PermissionDescriptor<bool> CanSendAnonymously = new("chat/canSendAnonymously");
         }
 
+        public static class HandRaise
+        {
+            public static readonly PermissionDescriptor<bool> CanRaise = new("handRaise/canRaise");
+            public static readonly PermissionDescriptor<bool> CanLowerOthers = new("handRaise/canLowerOthers");
+        }
+
+        public static class Reactions
+        {
+            public static readonly PermissionDescriptor<bool> CanSend = new("reactions/canSend");
+        }
+
         public static class Media
         {
             public static readonly PermissionDescriptor<bool> CanShareAudio = new("media/canShareAudio");

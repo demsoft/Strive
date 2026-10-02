@@ -24,6 +24,7 @@ using Strive.Core.Services.ConferenceControl.Gateways;
 using Strive.Core.Services.ConferenceControl.Notifications;
 using Strive.Core.Services.ConferenceControl.Requests;
 using Strive.Core.Services.Equipment.Requests;
+using Strive.Core.Services.HandRaise.Requests;
 using Strive.Core.Services.Media;
 using Strive.Core.Services.Media.Requests;
 using Strive.Core.Services.Permissions;
@@ -185,6 +186,24 @@ namespace Strive.Hubs.Core
             return GetInvoker().Create(new KickParticipantRequest(new Participant(conferenceId, message.ParticipantId)))
                 .ValidateObject(message).RequirePermissions(DefinedPermissions.Conference.CanKickParticipant)
                 .ConferenceMustBeOpen().Send();
+        }
+
+        public Task<SuccessOrError<Unit>> RaiseHand()
+        {
+            return GetInvoker().Create(new RaiseHandRequest(GetContextParticipant()))
+                .RequirePermissions(DefinedPermissions.HandRaise.CanRaise).ConferenceMustBeOpen().Send();
+        }
+
+        public Task<SuccessOrError<Unit>> LowerHand()
+        {
+            return GetInvoker().Create(new LowerHandRequest(GetContextParticipant())).Send();
+        }
+
+        public Task<SuccessOrError<Unit>> LowerParticipantsHand(LowerParticipantsHandDto dto)
+        {
+            var (conferenceId, _) = GetContextParticipant();
+            return GetInvoker().Create(new LowerHandRequest(new Participant(conferenceId, dto.ParticipantId)))
+                .ValidateObject(dto).RequirePermissions(DefinedPermissions.HandRaise.CanLowerOthers).Send();
         }
 
         public Task<SuccessOrError<ParticipantPermissionResponse>> FetchPermissions(string? targetParticipantId)
