@@ -2,7 +2,7 @@ import express, { Express, Request, RequestHandler } from 'express';
 import * as errors from './errors';
 import ConferenceManager from './lib/conference/conference-manager';
 import Logger from './utils/logger';
-import jwt from 'express-jwt';
+import { expressjwt, Request as JwtRequest } from 'express-jwt';
 import config from './config';
 import cors from 'cors';
 
@@ -13,12 +13,12 @@ type RequestInfo = { participantId: string; conferenceId: string; connectionId: 
 
 export default function configureEndpoints(app: Express, conferenceManager: ConferenceManager): void {
    app.use(express.json());
-   app.use(jwt({ algorithms: ['HS256'], secret: config.services.tokenSecret }));
+   app.use(expressjwt({ algorithms: ['HS256'], secret: config.services.tokenSecret }));
    app.use(cors());
 
    const conferenceMatchMiddleware: RequestHandler = (req, res, next) => {
       const conferenceId: string = req.params.conferenceId;
-      const tokenConference = (req.user as JwtProperties).conference;
+      const tokenConference = ((req as JwtRequest).auth as JwtProperties).conference;
 
       logger.debug('REQUEST %s', req.url);
 
@@ -32,7 +32,7 @@ export default function configureEndpoints(app: Express, conferenceManager: Conf
    };
 
    const getJwtProps = (req: Request): RequestInfo => {
-      const jwt = req.user as JwtProperties;
+      const jwt = (req as JwtRequest).auth as JwtProperties;
       return { conferenceId: jwt.conference, participantId: jwt.sub, connectionId: jwt.connection };
    };
 

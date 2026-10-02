@@ -1,9 +1,8 @@
-import { Consumer, Producer, RtpCapabilities, SctpCapabilities, Transport } from 'mediasoup/lib/types';
+import type { Consumer, Producer, RtpCapabilities, Transport } from 'mediasoup/types';
 
 export default class Connection {
    constructor(
       public rtpCapabilities: RtpCapabilities,
-      public sctpCapabilities: SctpCapabilities,
       /** the connection id (from SignalR) */
       public connectionId: string,
 

@@ -1,6 +1,4 @@
-import { RouterOptions } from 'mediasoup/lib/Router';
-import { WebRtcTransportOptions } from 'mediasoup/lib/WebRtcTransport';
-import { WorkerSettings } from 'mediasoup/lib/Worker';
+import type { RouterOptions, WebRtcTransportOptions, WorkerSettings } from 'mediasoup/types';
 import * as os from 'os';
 
 const config: Config = {
@@ -40,7 +38,6 @@ const config: Config = {
             },
          ],
          initialAvailableOutgoingBitrate: 1000000,
-         maxSctpMessageSize: 262144,
          enableUdp: true,
          enableTcp: true,
          preferUdp: true,

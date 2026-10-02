@@ -1,4 +1,4 @@
-import { Producer } from 'mediasoup/lib/types';
+import type { Producer } from 'mediasoup/types';
 import { StreamAction } from './conference/request-types';
 
 export type ConferenceInfoDto = {

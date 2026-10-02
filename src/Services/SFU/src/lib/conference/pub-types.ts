@@ -1,4 +1,4 @@
-import { ConsumerLayers, ConsumerScore, ConsumerType, MediaKind, RtpParameters } from 'mediasoup/lib/types';
+import type { ConsumerLayers, ConsumerScore, ConsumerType, MediaKind, ProducerScore, RtpParameters } from 'mediasoup/types';
 import { ProducerSource } from '../types';
 
 export type ProducerChangedEventArgs = {
@@ -29,7 +29,7 @@ export type ConsumerLayersChanged = ConsumerArgs & {
 
 export type ProducerScoreInfo = {
    producerId: string;
-   score: number;
+   score: ProducerScore[];
 };
 
 export type ConsumerInfo = {

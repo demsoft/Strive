@@ -1,24 +1,21 @@
-import {
+import type {
    ConsumerLayers,
    DtlsParameters,
    IceCandidate,
    IceParameters,
    ProducerOptions,
    RtpCapabilities,
-   SctpCapabilities,
    SctpParameters,
-} from 'mediasoup/lib/types';
+} from 'mediasoup/types';
 import { ProducerSource } from '../types';
 
 export type InitializeConnectionRequest = {
    connectionId: string;
    participantId: string;
-   sctpCapabilities: SctpCapabilities;
    rtpCapabilities: RtpCapabilities;
 };
 
 export type CreateTransportRequest = {
-   sctpCapabilities?: SctpCapabilities;
    forceTcp?: boolean;
    producing: boolean;
    consuming: boolean;
