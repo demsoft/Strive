@@ -9,7 +9,8 @@ using Xunit;
 
 namespace Strive.IntegrationTests.Infrastructure.Redis
 {
-    public class JoinedParticipantsRepositoryTests : IClassFixture<RedisDbConnector>
+    [Collection(RedisCollection.Name)]
+    public class JoinedParticipantsRepositoryTests
     {
         private readonly IDatabase _database;
         private readonly IJoinedParticipantsRepository _repository;

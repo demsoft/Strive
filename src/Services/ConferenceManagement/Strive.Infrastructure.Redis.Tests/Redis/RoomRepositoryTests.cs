@@ -11,7 +11,8 @@ using Xunit;
 
 namespace Strive.IntegrationTests.Infrastructure.Redis
 {
-    public class RoomRepositoryTests : IClassFixture<RedisDbConnector>
+    [Collection(RedisCollection.Name)]
+    public class RoomRepositoryTests
     {
         private readonly IDatabase _database;
         private readonly IRoomRepository _repository;

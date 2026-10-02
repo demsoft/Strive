@@ -5,8 +5,8 @@ using Xunit;
 
 namespace Strive.IntegrationTests.Infrastructure.Redis.Scripts
 {
-    public class RoomRepository_SetParticipantRoom_Redis : RoomRepository_SetParticipantRoom_Tests,
-        IClassFixture<RedisDbConnector>
+    [Collection(RedisCollection.Name)]
+    public class RoomRepository_SetParticipantRoom_Redis : RoomRepository_SetParticipantRoom_Tests
     {
         public RoomRepository_SetParticipantRoom_Redis(RedisDbConnector connector) : base(
             KeyValueDatabaseFactory.Create(connector.CreateConnection()))

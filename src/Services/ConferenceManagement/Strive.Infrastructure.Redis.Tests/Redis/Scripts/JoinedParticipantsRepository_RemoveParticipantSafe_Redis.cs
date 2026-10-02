@@ -5,8 +5,9 @@ using Xunit;
 
 namespace Strive.IntegrationTests.Infrastructure.Redis.Scripts
 {
+    [Collection(RedisCollection.Name)]
     public class JoinedParticipantsRepository_RemoveParticipantSafe_Redis :
-        JoinedParticipantsRepository_RemoveParticipantSafe_Tests, IClassFixture<RedisDbConnector>
+        JoinedParticipantsRepository_RemoveParticipantSafe_Tests
     {
         public JoinedParticipantsRepository_RemoveParticipantSafe_Redis(RedisDbConnector connector) : base(
             KeyValueDatabaseFactory.Create(connector.CreateConnection()))

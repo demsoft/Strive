@@ -1,35 +1,52 @@
-using System;
 using System.Threading.Tasks;
 using StackExchange.Redis;
-using StackExchange.Redis.Extensions.Core.Configuration;
-using StackExchange.Redis.Extensions.Core.Implementations;
-using StackExchange.Redis.Extensions.Newtonsoft;
+using Xunit;
 
 namespace Strive.IntegrationTests._Helpers
 {
-    public class RedisDbConnector : IAsyncDisposable
+    /// <summary>
+    ///     Connection to the Redis server for tests (localhost:6379). The tests use their own database
+    ///     (<see cref="TestDatabase" />), which is cleared before and after the test run. Other databases are not touched.
+    ///     The Lua scripts build key names themselves, so the tests cannot be isolated by a key prefix.
+    /// </summary>
+    public class RedisDbConnector : IAsyncLifetime
     {
-        private readonly RedisConnectionPoolManager _connectionPool;
-        private readonly string _instanceId = "IntegrationTest:" + Guid.NewGuid().ToString("N");
+        public const int TestDatabase = 15;
 
-        public RedisDbConnector()
-        {
-            var config = new RedisConfiguration {Hosts = new[] {new RedisHost {Host = "localhost", Port = 6379}}};
-            _connectionPool = new RedisConnectionPoolManager(config);
-        }
+        private readonly ConnectionMultiplexer _connection =
+            ConnectionMultiplexer.Connect("localhost:6379,allowAdmin=true");
 
         public IDatabase CreateConnection()
         {
-            return new RedisDatabase(_connectionPool, new NewtonsoftSerializer(), new ServerEnumerationStrategy(), 0,
-                200 /*, _instanceId + ":" + Guid.NewGuid().ToString("N")*/).Database;
+            return _connection.GetDatabase(TestDatabase);
         }
 
-        public async ValueTask DisposeAsync()
+        public Task InitializeAsync()
         {
-            var connection = CreateConnection();
-            await connection.KeyDeleteAsync(_instanceId + "*");
-
-            _connectionPool?.Dispose();
+            return ClearTestDatabase();
         }
+
+        public async Task DisposeAsync()
+        {
+            await ClearTestDatabase();
+            await _connection.DisposeAsync();
+        }
+
+        private async Task ClearTestDatabase()
+        {
+            foreach (var endpoint in _connection.GetEndPoints())
+            {
+                await _connection.GetServer(endpoint).FlushDatabaseAsync(TestDatabase);
+            }
+        }
+    }
+
+    /// <summary>
+    ///     All Redis tests share one database, so they must not run in parallel.
+    /// </summary>
+    [CollectionDefinition(Name)]
+    public class RedisCollection : ICollectionFixture<RedisDbConnector>
+    {
+        public const string Name = "Redis";
     }
 }
