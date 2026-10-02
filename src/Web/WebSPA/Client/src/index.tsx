@@ -1,6 +1,6 @@
 import 'fontsource-roboto';
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
@@ -12,13 +12,12 @@ window.AudioContext = window.AudioContext || (window as any).webkitAudioContext;
 
 debug.log = console.info.bind(console);
 
-ReactDOM.render(
+createRoot(document.getElementById('root')!).render(
    <React.StrictMode>
       <Provider store={store}>
          <App />
       </Provider>
    </React.StrictMode>,
-   document.getElementById('root'),
 );
 
 // If you want your app to work offline and load faster, you can change

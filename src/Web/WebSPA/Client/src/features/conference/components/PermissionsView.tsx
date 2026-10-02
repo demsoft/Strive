@@ -32,7 +32,7 @@ export default function PermissionsView({ permissions: { layers } }: Props) {
                         permission.overwrittenIn ? (
                            <Tooltip
                               key={permission.key}
-                              title={t<string>('conference.dialog_permissions.notice_overwritten', {
+                              title={t('conference.dialog_permissions.notice_overwritten', {
                                  layer: permission.overwrittenIn,
                               })}
                            >

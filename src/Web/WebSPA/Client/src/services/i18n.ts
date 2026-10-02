@@ -1,4 +1,4 @@
-import i18next, { FormatFunction } from 'i18next';
+import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
 import de from 'src/assets/locales/de';
@@ -20,15 +20,6 @@ export const supportedLanguages: LanguageInfo[] = [
    { id: 'de', name: 'Deutsch' },
 ];
 
-const formatInterpolation: FormatFunction = (value: any, format?: string) => {
-   switch (format) {
-      case 'error':
-         return formatErrorMessage(value);
-      default:
-         return value;
-   }
-};
-
 i18next
    .use(initReactI18next)
    .use(LanguageDetector)
@@ -41,8 +32,10 @@ i18next
       nonExplicitSupportedLngs: true,
       interpolation: {
          escapeValue: false,
-         format: formatInterpolation,
       },
    });
+
+// used in translations as {{error, error}}
+i18next.services.formatter?.add('error', (value) => formatErrorMessage(value));
 
 export default i18next;

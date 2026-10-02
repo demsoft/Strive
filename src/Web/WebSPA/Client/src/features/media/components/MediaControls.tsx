@@ -153,7 +153,7 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
             )}
          </div>
          <div className={classes.rightActions}>
-            <Tooltip title={t<string>('conference.troubleshooting.title')} arrow>
+            <Tooltip title={t('conference.troubleshooting.title')} arrow>
                <Fab
                   id="media-controls-troubleshooting"
                   color="default"

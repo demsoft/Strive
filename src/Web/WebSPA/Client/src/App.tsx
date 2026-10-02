@@ -1,8 +1,6 @@
 import { AuthenticationProvider, oidcLog, OidcSecure } from '@axa-fr/react-oidc-context';
-import LuxonUtils from '@date-io/luxon';
 import { createMuiTheme, CssBaseline, makeStyles, responsiveFontSizes } from '@material-ui/core';
 import { blue, pink } from '@material-ui/core/colors';
-import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import { ThemeProvider } from '@material-ui/styles';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
@@ -43,34 +41,32 @@ const theme = responsiveFontSizes(
 
 function App() {
    return (
-      <MuiPickersUtilsProvider utils={LuxonUtils}>
-         <ThemeProvider theme={theme}>
-            <MaterialUiToaster />
-            <UserInteractionListener />
-            <CssBaseline />
-            <BrowserRouter>
-               <Switch>
-                  <Route path="/c/:id/as-equipment" exact component={EquipmentRoute} />
-                  <Route path="/">
-                     <AuthenticationProvider
-                        configuration={ocidConfig}
-                        loggerLevel={oidcLog.ERROR}
-                        isEnabled
-                        callbackComponentOverride={AuthCallback}
-                        notAuthenticated={NotAuthenticated}
-                        sessionLostComponent={SessionLostComponent}
-                        authenticating={AuthenticatingComponent}
-                     >
-                        <OidcSecure>
-                           <AuthenticatedRoutes />
-                           <RedirectToConference />
-                        </OidcSecure>
-                     </AuthenticationProvider>
-                  </Route>
-               </Switch>
-            </BrowserRouter>
-         </ThemeProvider>
-      </MuiPickersUtilsProvider>
+      <ThemeProvider theme={theme}>
+         <MaterialUiToaster />
+         <UserInteractionListener />
+         <CssBaseline />
+         <BrowserRouter>
+            <Switch>
+               <Route path="/c/:id/as-equipment" exact component={EquipmentRoute} />
+               <Route path="/">
+                  <AuthenticationProvider
+                     configuration={ocidConfig}
+                     loggerLevel={oidcLog.ERROR}
+                     isEnabled
+                     callbackComponentOverride={AuthCallback}
+                     notAuthenticated={NotAuthenticated}
+                     sessionLostComponent={SessionLostComponent}
+                     authenticating={AuthenticatingComponent}
+                  >
+                     <OidcSecure>
+                        <AuthenticatedRoutes />
+                        <RedirectToConference />
+                     </OidcSecure>
+                  </AuthenticationProvider>
+               </Route>
+            </Switch>
+         </BrowserRouter>
+      </ThemeProvider>
    );
 }
 

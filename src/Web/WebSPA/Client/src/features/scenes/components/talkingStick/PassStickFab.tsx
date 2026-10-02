@@ -41,7 +41,7 @@ export default function PassStickFab() {
                count: queue.length,
             })}
          >
-            {t<string>('conference.scenes.talking_stick_modes.pass_stick')}
+            {t('conference.scenes.talking_stick_modes.pass_stick')}
          </TwoLineFab>
          <Dialog onClose={handleClose} open={open} aria-labelledby="pass-stick-title" fullWidth maxWidth="sm">
             <DialogTitle id="pass-stick-title">

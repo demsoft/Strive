@@ -201,7 +201,7 @@ export default function OpenPollDialogForm({ open, onSubmit }: Props) {
                                        onChange={onChange}
                                     >
                                        {pollTypes.map((x) => ({
-                                          label: t<string>(x.labelTranslationKey),
+                                          label: t(x.labelTranslationKey),
                                           value: x.instructionType,
                                        }))}
                                     </MobileAwareSelect>

@@ -12,6 +12,8 @@ export default function SelectionPollResults({ viewModel: { results, poll } }: P
    if (results?.results.type !== 'selection') return null;
 
    const maxAnswers = Math.ceil(Math.max(results.participantsAnswered, 5) / 5) * 5;
+   // nivo bar data only allows strings and numbers, so the participant tokens are looked up for the tooltip
+   const tokensByOption = results.results.options;
 
    return (
       <div style={{ height: '100%' }}>
@@ -19,35 +21,33 @@ export default function SelectionPollResults({ viewModel: { results, poll } }: P
             data={Object.entries(results.results.options).map(([option, answers]) => ({
                option,
                count: answers.length,
-               tokens: answers,
             }))}
             keys={['count']}
             indexBy="option"
             animate={true}
             margin={{ bottom: 50, left: 50, top: 20 }}
-            motionStiffness={90}
-            motionDamping={15}
-            valueScale={{ type: 'linear' }}
+            motionConfig={{ tension: 90, friction: 15 }}
+            valueScale={{ type: 'linear', max: maxAnswers }}
             indexScale={{ type: 'band', round: true }}
             colors={{ scheme: 'nivo' }}
             labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
             borderColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
             axisTop={null}
             axisRight={null}
-            tooltip={({ data: { option, count, tokens } }) => (
+            tooltip={({ data: { option, count } }) => (
                <NivoTooltipContent
                   header={
                      <span>
                         {option}: <strong>{count}</strong>
                      </span>
                   }
-                  participantTokens={tokens as any}
+                  participantTokens={tokensByOption[option] as any}
                   pollId={poll.id}
                />
             )}
             padding={0.3}
             theme={{
-               textColor: theme.palette.text.secondary,
+               text: { fill: theme.palette.text.secondary },
                grid: { line: { stroke: theme.palette.divider } },
                axis: {
                   ticks: {
@@ -82,7 +82,6 @@ export default function SelectionPollResults({ viewModel: { results, poll } }: P
                legendOffset: -40,
                tickValues: 5,
             }}
-            maxValue={maxAnswers}
             gridYValues={5}
          />
       </div>

@@ -32,7 +32,7 @@ function NoPresenter({ className, dimensions }: NoPresenterProps) {
    return (
       <TalkingStickScreen className={className} mode="race" dimensions={dimensions}>
          <Fab variant="extended" color="primary" style={{ minWidth: 220 }} disabled={!canEnqueue} onClick={handleTake}>
-            {t<string>('conference.scenes.talking_stick_modes.take_stick')}
+            {t('conference.scenes.talking_stick_modes.take_stick')}
          </Fab>
       </TalkingStickScreen>
    );

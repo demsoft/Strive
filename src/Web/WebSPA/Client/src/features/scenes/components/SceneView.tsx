@@ -1,5 +1,5 @@
 import { makeStyles } from '@material-ui/core';
-import { AnimateSharedLayout } from 'framer-motion';
+import { LayoutGroup } from 'framer-motion';
 import _ from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -114,11 +114,11 @@ export default function SceneView() {
    return (
       <MediaControlsContext.Provider value={mediaControlsContextValue}>
          <div className={classes.root} ref={contentRef} onMouseMove={handleMouseMove} id="scene-view">
-            <AnimateSharedLayout>
+            <LayoutGroup>
                {dimensions && sceneStack ? (
                   <SceneSelector className={classes.currentScene} dimensions={dimensions} sceneStack={sceneStack} />
                ) : null}
-            </AnimateSharedLayout>
+            </LayoutGroup>
             <MediaControls className={classes.mediaControls} show={showControls} leftActionsRef={mediaLeftActionsRef} />
          </div>
       </MediaControlsContext.Provider>

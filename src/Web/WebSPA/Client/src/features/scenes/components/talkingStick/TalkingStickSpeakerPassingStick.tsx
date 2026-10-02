@@ -69,7 +69,7 @@ function NoPresenter({ className, scene, dimensions }: NoPresenterProps) {
       >
          {canTake && (
             <Fab variant="extended" color="primary" className={classes.primaryAction} onClick={handleTake}>
-               {t<string>('conference.scenes.talking_stick_modes.take_stick')}
+               {t('conference.scenes.talking_stick_modes.take_stick')}
             </Fab>
          )}
          {!canTake && <AddToListFab />}

@@ -1,6 +1,6 @@
 import { PortalProps } from '@material-ui/core';
 import { UseFormReturn } from 'react-hook-form';
-import { TFunction } from 'react-i18next';
+import { TFunction } from 'i18next';
 import { CreatePollDto } from 'src/core-hub.types';
 import { PollAnswer, PollInstruction, PollViewModel } from '../types';
 

@@ -1,5 +1,5 @@
 import { Theme, useTheme } from '@material-ui/core';
-import { Theme as NivoTheme } from '@nivo/core';
+import { PartialTheme as NivoTheme } from '@nivo/theming';
 import { ResponsiveSwarmPlot } from '@nivo/swarmplot';
 import _ from 'lodash';
 import React from 'react';
@@ -8,7 +8,7 @@ import NivoTooltip from '../NivoTooltip';
 import { PollResultsProps } from '../types';
 
 const getNivoTheme: (theme: Theme) => NivoTheme = (theme) => ({
-   textColor: theme.palette.text.secondary,
+   text: { fill: theme.palette.text.secondary },
    axis: {
       ticks: {
          line: {
@@ -50,7 +50,7 @@ export default function NumericPollResults({ viewModel: { poll, results } }: Pol
             data={data}
             groups={['A']}
             value="key"
-            identity="key"
+            id={(x) => String(x.key)}
             valueScale={{
                type: 'linear',
                min: poll.instruction.min ?? undefined,

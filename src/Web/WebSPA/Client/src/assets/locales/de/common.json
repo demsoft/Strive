@@ -4,8 +4,8 @@
   "create": "Erstellen",
   "change": "Ändern",
   "cancel": "Abbrechen",
-  "moderator": "Moderator",
-  "moderator_plural": "Moderatoren",
+  "moderator_one": "Moderator",
+  "moderator_other": "Moderatoren",
   "close": "Schließen",
   "back_to_start": "Zurück zum Start",
   "settings": "Einstellungen",
@@ -22,7 +22,7 @@
   "language": "Sprache",
   "screen": "Bildschirm",
   "delete": "Löschen",
-  "participant": "Teilnehmer",
-  "participant_plural": "Teilnehmer",
+  "participant_one": "Teilnehmer",
+  "participant_other": "Teilnehmer",
   "try_again": "Erneut versuchen"
 }

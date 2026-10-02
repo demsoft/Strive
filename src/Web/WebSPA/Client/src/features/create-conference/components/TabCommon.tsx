@@ -239,7 +239,7 @@ export default function TabCommon({
          </Grid>
          <Grid item xs={12} className={classes.sectionGrid}>
             <Typography variant="h6" gutterBottom>
-               {t('glossary:scene_plural')}
+               {t('glossary:scene_other')}
             </Typography>
             <div className={classes.selectFormControl}>
                <FormControl fullWidth>
@@ -255,8 +255,8 @@ export default function TabCommon({
                            onChange={onChange}
                         >
                            {[
-                              { value: 'grid', label: t<string>('conference.scenes.grid') },
-                              { value: 'activeSpeaker', label: t<string>('conference.scenes.active_speaker') },
+                              { value: 'grid', label: t('conference.scenes.grid') },
+                              { value: 'activeSpeaker', label: t('conference.scenes.active_speaker') },
                            ]}
                         </MobileAwareSelect>
                      )}

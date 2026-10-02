@@ -49,10 +49,10 @@ export default function SendMessageOptions({ value, onChange, channel }: Props) 
    return (
       <div>
          {isPrivateChat && (
-            <Tooltip title={t<string>('conference.chat.options.close_private_chat')}>
+            <Tooltip title={t('conference.chat.options.close_private_chat')}>
                <IconButton
                   id="chat-close-private"
-                  aria-label={t<string>('conference.chat.options.close_private_chat')}
+                  aria-label={t('conference.chat.options.close_private_chat')}
                   onClick={handleClosePrivateChat}
                   color="secondary"
                >
@@ -61,10 +61,10 @@ export default function SendMessageOptions({ value, onChange, channel }: Props) 
             </Tooltip>
          )}
          {canSendAnonymousMessage && !isPrivateChat && (
-            <Tooltip title={t<string>('conference.chat.options.send_anonymously')}>
+            <Tooltip title={t('conference.chat.options.send_anonymously')}>
                <IconButton
                   id="chat-send-anonymously"
-                  aria-label={t<string>('conference.chat.options.send_anonymously')}
+                  aria-label={t('conference.chat.options.send_anonymously')}
                   className={selectIconButtonClass(value.isAnonymous)}
                   onClick={handleToggleAnonymous}
                >
@@ -73,10 +73,10 @@ export default function SendMessageOptions({ value, onChange, channel }: Props) 
             </Tooltip>
          )}
          {canSendAnnouncement && (
-            <Tooltip title={t<string>('conference.chat.options.send_announcement')}>
+            <Tooltip title={t('conference.chat.options.send_announcement')}>
                <IconButton
                   id="chat-send-announcement"
-                  aria-label={t<string>('conference.chat.options.send_announcement')}
+                  aria-label={t('conference.chat.options.send_announcement')}
                   className={selectIconButtonClass(value.isAnnouncement)}
                   onClick={handleToggleHighlighted}
                >

@@ -55,7 +55,7 @@ export default function TalkingStickFrame({ children, className }: Props) {
                      className={classes.primaryAction}
                      onClick={handleReturnStick}
                   >
-                     {t<string>('conference.scenes.talking_stick_modes.return_stick')}
+                     {t('conference.scenes.talking_stick_modes.return_stick')}
                   </Fab>
                </Grid>
             )}
@@ -68,7 +68,7 @@ export default function TalkingStickFrame({ children, className }: Props) {
                      onClick={handleEnqueue}
                      subtitle={t('conference.scenes.talking_stick_modes.enqueue_status', { count: queue.length })}
                   >
-                     {t<string>('conference.scenes.talking_stick_modes.enqueue')}
+                     {t('conference.scenes.talking_stick_modes.enqueue')}
                   </TwoLineFab>
                </Grid>
             )}
@@ -88,14 +88,14 @@ export default function TalkingStickFrame({ children, className }: Props) {
                              })
                      }
                   >
-                     {t<string>('conference.scenes.talking_stick_modes.dequeue')}
+                     {t('conference.scenes.talking_stick_modes.dequeue')}
                   </TwoLineFab>
                </Grid>
             )}
             {canTake && !isPresenter && (
                <Grid item>
                   <Fab variant="extended" color="primary" onClick={handleTake}>
-                     {t<string>('conference.scenes.talking_stick_modes.take_stick')}
+                     {t('conference.scenes.talking_stick_modes.take_stick')}
                   </Fab>
                </Grid>
             )}

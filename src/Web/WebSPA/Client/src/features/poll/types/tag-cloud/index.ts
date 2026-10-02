@@ -1,4 +1,4 @@
-import { TFunction } from 'react-i18next';
+import { TFunction } from 'i18next';
 import { TagCloudAnswer, TagCloudInstruction } from '../../types';
 import { PollTypePresenter } from '../types';
 import TagCloudAnswerForm from './TagCloudAnswerForm';

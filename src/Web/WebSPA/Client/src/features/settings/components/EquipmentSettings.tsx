@@ -1,6 +1,6 @@
 import { Box, Button, Chip, Grid, makeStyles, TextField, Typography } from '@material-ui/core';
 import { Skeleton } from '@material-ui/lab';
-import QRCode from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouteMatch } from 'react-router-dom';
@@ -63,7 +63,7 @@ export default function EquipmentSettings() {
             <Box display="flex" mt={4}>
                {token ? (
                   <div className={classes.qrCodeContainer}>
-                     <QRCode value={url} size={200} renderAs="svg" />
+                     <QRCodeSVG value={url} size={200} />
                   </div>
                ) : (
                   <Skeleton variant="rect" width={200} height={200} />

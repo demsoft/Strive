@@ -38,7 +38,7 @@ function QueueNoPresenter({ className, dimensions }: QueueNoPresenterProps) {
             disabled={!canEnqueue}
             onClick={handleEnqueue}
          >
-            {t<string>('conference.scenes.talking_stick_modes.take_stick')}
+            {t('conference.scenes.talking_stick_modes.take_stick')}
          </Fab>
       </TalkingStickScreen>
    );

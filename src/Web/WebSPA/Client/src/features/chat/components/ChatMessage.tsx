@@ -2,8 +2,8 @@ import { makeStyles, Typography } from '@material-ui/core';
 import { Skeleton } from '@material-ui/lab';
 import clsx from 'classnames';
 import emojiRegex from 'emoji-regex/RGI_Emoji';
-import { Options } from 'linkifyjs';
-import Linkify from 'linkifyjs/react';
+import Linkify from 'linkify-react';
+import { Opts } from 'linkifyjs';
 import { DateTime } from 'luxon';
 import { Bullhorn } from 'mdi-material-ui';
 import { useMemo, useRef } from 'react';
@@ -78,7 +78,7 @@ export default function ChatMessage({ message, participantColors }: Props) {
    const isAnonymous = message && !message.sender;
    const isDisconnected = message?.sender && !sender;
 
-   const linifyOptions = useRef<Options>({ className: classes.anchor, target: '_blank' });
+   const linifyOptions = useRef<Opts>({ className: classes.anchor, target: '_blank' });
 
    const participantColor = useMemo(
       () =>

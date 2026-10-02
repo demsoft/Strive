@@ -25,7 +25,7 @@ export default function SingleChoiceInstructionForm({
          autoFocus
          label={t('conference.poll.create_dialog.choices_label')}
          fullWidth
-         {...wrapForInputRef(register('instruction.options', { validate: validateOptionsText }))}
+         {...wrapForInputRef(register('instruction.options', { validate: (value) => validateOptionsText(value as unknown as string) }))}
          rows={4}
          InputLabelProps={{ shrink: Boolean(options) }}
          multiline

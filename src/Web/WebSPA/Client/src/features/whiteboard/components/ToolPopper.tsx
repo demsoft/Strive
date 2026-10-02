@@ -2,8 +2,9 @@ import { ClickAwayListener, Grow, Paper, PopperProps } from '@material-ui/core';
 import { Popper } from '@material-ui/core';
 import React from 'react';
 
-type Props = PopperProps & {
+type Props = Omit<PopperProps, 'children'> & {
    onClose: () => void;
+   children: React.ReactElement;
 };
 
 export default function ToolPopper({ children, onClose, ...props }: Props) {

@@ -143,7 +143,7 @@ export default function CreateConferenceForm({
                   aria-label="options tabs"
                >
                   <Tab label={t('common:common')} {...a11yProps(0)} />
-                  <Tab label={t('common:moderator_plural')} {...a11yProps(1)} />
+                  <Tab label={t('common:moderator_other')} {...a11yProps(1)} />
                   <Tab label={t('common:permissions')} {...a11yProps(2)} />
                </Tabs>
             </Paper>

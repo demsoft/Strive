@@ -112,7 +112,7 @@ export default function SceneManagement() {
             <>
                <Divider className={classes.divider} />
                <List dense disablePadding id="scene-management-selection-list">
-                  <ListSubheader>{t('glossary:scene_plural')}</ListSubheader>
+                  <ListSubheader>{t('glossary:scene_other')}</ListSubheader>
                   {canSetScene && (
                      <div className={classes.modeButtonContainer}>
                         <Button

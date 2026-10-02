@@ -18,7 +18,7 @@ type PermissionTypeButton = {
 
 const permissionTypeButtons: (t: TFunction) => PermissionTypeButton[] = (t) => [
    { label: t('dialog_create_conference.tabs.permissions.all'), type: 'conference' },
-   { label: t('common:moderator_plural'), type: 'moderator' },
+   { label: t('common:moderator_other'), type: 'moderator' },
    { label: t('dialog_create_conference.tabs.permissions.breakout_room'), type: 'breakoutRoom' },
 ];
 

@@ -39,7 +39,7 @@ export default function FrameWithPassFab({ children }: FrameProps) {
             {isPresenter && (
                <Grid item>
                   <Fab variant="extended" color="secondary" onClick={handleReturnStick}>
-                     {t<string>('conference.scenes.talking_stick_modes.return_stick')}
+                     {t('conference.scenes.talking_stick_modes.return_stick')}
                   </Fab>
                </Grid>
             )}
@@ -51,7 +51,7 @@ export default function FrameWithPassFab({ children }: FrameProps) {
             {canTake && !isPresenter && (
                <Grid item>
                   <Fab variant="extended" color="primary" onClick={handleTake}>
-                     {t<string>('conference.scenes.talking_stick_modes.take_stick')}
+                     {t('conference.scenes.talking_stick_modes.take_stick')}
                   </Fab>
                </Grid>
             )}

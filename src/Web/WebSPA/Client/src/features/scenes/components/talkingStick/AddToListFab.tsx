@@ -41,8 +41,8 @@ export default function AddToListFab() {
          })}
       >
          {isInQueue
-            ? t<string>('conference.scenes.talking_stick_modes.remove_from_list')
-            : t<string>('conference.scenes.talking_stick_modes.add_to_list')}
+            ? t('conference.scenes.talking_stick_modes.remove_from_list')
+            : t('conference.scenes.talking_stick_modes.add_to_list')}
       </TwoLineFab>
    );
 }
