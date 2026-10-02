@@ -1,4 +1,5 @@
-import { makeStyles, Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -10,7 +11,7 @@ import { RootState } from 'src/store';
 import useConsumer from 'src/store/webrtc/hooks/useConsumer';
 import useWebcam from 'src/store/webrtc/hooks/useWebcam';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    videoContainer: {
       position: 'relative',
       borderRadius: theme.shape.borderRadius,
@@ -34,7 +35,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function WebcamSettingsTest() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const myId = useMyParticipantId();
    const { t } = useTranslation();
    const consumer = useConsumer(myId, 'loopback-webcam');

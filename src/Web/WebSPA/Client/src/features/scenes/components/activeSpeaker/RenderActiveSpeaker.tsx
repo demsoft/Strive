@@ -1,5 +1,4 @@
-import { makeStyles } from '@material-ui/core';
-import clsx from 'classnames';
+import { makeStyles } from 'tss-react/mui';
 import React, { useContext } from 'react';
 import { Participant } from 'src/features/conference/types';
 import { Size } from 'src/types';
@@ -15,7 +14,7 @@ const MAIN_SPEAKER_MARGIN_BOTTOM = 16;
 const MAIN_SPEAKER_MARGIN_LEFT = 8;
 const MAIN_SPEAKER_MARGIN_RIGHT = 8;
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       display: 'flex',
       flexDirection: 'column',
@@ -45,12 +44,12 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function RenderActiveSpeaker({ className, dimensions }: RenderSceneProps<ActiveSpeakerScene>) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
    const activeParticipants = useSomeParticipants({}, 16);
    if (activeParticipants.length === 0) return null;
 
    return (
-      <div className={clsx(className, classes.root)}>
+      <div className={cx(className, classes.root)}>
          <div className={classes.content}>
             <TilesBarLayout participants={activeParticipants.slice(1)} sceneSize={dimensions}>
                <RenderMainSpeakerTile participant={activeParticipants[0]} />
@@ -66,7 +65,7 @@ type RenderMainSpeakerTileProps = {
 
 function RenderMainSpeakerTile({ participant }: RenderMainSpeakerTileProps) {
    const size = useContext(LayoutChildSizeContext);
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const contentSize: Size = {
       width: size.width - MAIN_SPEAKER_MARGIN_LEFT - MAIN_SPEAKER_MARGIN_RIGHT,

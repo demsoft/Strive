@@ -1,5 +1,5 @@
-import { Chip, Portal, TextField } from '@material-ui/core';
-import { Autocomplete } from '@material-ui/lab';
+import { Chip, Portal, TextField } from '@mui/material';
+import { Autocomplete } from '@mui/material';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -55,10 +55,11 @@ export default function TagCloudAnswerForm({
             freeSolo
             disableClearable
             options={new Array<string>()}
-            renderTags={(value, getTagProps) =>
-               value.map((option: string, index: number) => (
-                  <Chip key={option} variant="outlined" label={option} {...getTagProps({ index })} />
-               ))
+            renderValue={(value, getItemProps) =>
+               value.map((option: string, index: number) => {
+                  const { key, ...itemProps } = getItemProps({ index });
+                  return <Chip key={key} variant="outlined" label={option} {...itemProps} />;
+               })
             }
             renderInput={(params) => (
                <TextField

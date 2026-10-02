@@ -1,8 +1,9 @@
-import { Accordion, AccordionDetails, AccordionSummary, makeStyles, Typography } from '@material-ui/core';
+import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    heading: {
       fontSize: theme.typography.pxToRem(15),
       flex: 1,
@@ -26,7 +27,7 @@ type Props = {
 };
 
 export default function TroubleshootAccordion({ expanded, onChange, title, renderStatus, children }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const handleChange = (_: React.ChangeEvent<unknown>, isExpanded: boolean) => {
       onChange(isExpanded);

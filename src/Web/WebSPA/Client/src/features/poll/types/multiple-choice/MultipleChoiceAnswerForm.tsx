@@ -1,4 +1,5 @@
-import { Chip, Grid, makeStyles, Portal } from '@material-ui/core';
+import { Chip, Grid, Portal } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React, { useState } from 'react';
 import PollCardSubmitButton from '../../components/PollCardSubmitButton';
 import { MultipleChoiceAnswer } from '../../types';
@@ -29,7 +30,7 @@ function SelectionChip({ className, option, selected, applied, disabled, onClick
    );
 }
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    chip: {
       minWidth: 56,
    },
@@ -48,7 +49,7 @@ export default function MultipleChoiceAnswerForm({
 }: PollAnswerFormProps<MultipleChoiceAnswer>) {
    if (poll.instruction.type !== 'multipleChoice') throw new Error('Multiple choice instruction required');
 
-   const classes = useStyles();
+   const { classes } = useStyles();
    const [selected, setSelected] = useState(new Array<string>());
 
    const selectedMax = poll.instruction.maxSelections
@@ -72,9 +73,15 @@ export default function MultipleChoiceAnswerForm({
 
    return (
       <>
-         <Grid container spacing={1} justify="center">
+         <Grid
+            container
+            spacing={1}
+            sx={{
+               justifyContent: 'center',
+            }}
+         >
             {poll.instruction.options.map((x) => (
-               <Grid item key={x}>
+               <Grid key={x}>
                   <SelectionChip
                      option={x}
                      className={classes.chip}

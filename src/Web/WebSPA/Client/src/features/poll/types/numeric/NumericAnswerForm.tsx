@@ -1,4 +1,4 @@
-import { Portal, TextField } from '@material-ui/core';
+import { Portal, TextField } from '@mui/material';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PollCardSubmitButton from '../../components/PollCardSubmitButton';
@@ -75,13 +75,16 @@ export default function NumericAnswerForm({
             type="number"
             error={!numberValidation.valid}
             helperText={numberValidation.error ? t(numberValidation.error) : undefined}
-            InputLabelProps={{
-               shrink: true,
-            }}
-            InputProps={{
-               inputProps: { min: poll.instruction.min, max: poll.instruction.max, step: poll.instruction.step },
-            }}
             disabled={canSubmitAnswer}
+            slotProps={{
+               input: {
+                  inputProps: { min: poll.instruction.min, max: poll.instruction.max, step: poll.instruction.step },
+               },
+
+               inputLabel: {
+                  shrink: true,
+               },
+            }}
          />
          {(!poll.config.isAnswerFinal || !answer) && (
             <Portal container={footerPortalRef}>

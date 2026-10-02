@@ -1,7 +1,7 @@
 import React from 'react';
 
 export type MediaControlsContextType = {
-   leftControlsContainer?: React.ReactInstance | null;
+   leftControlsContainer?: HTMLElement | null;
 };
 
 const MediaControlsContext = React.createContext<MediaControlsContextType>({});

@@ -1,4 +1,4 @@
-import { Theme, useTheme } from '@material-ui/core';
+import { Theme, useTheme } from '@mui/material';
 import { PartialTheme as NivoTheme } from '@nivo/theming';
 import { ResponsiveSwarmPlot } from '@nivo/swarmplot';
 import _ from 'lodash';

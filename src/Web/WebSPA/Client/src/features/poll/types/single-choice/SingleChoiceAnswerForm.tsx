@@ -1,9 +1,10 @@
-import { Chip, Grid, makeStyles } from '@material-ui/core';
+import { Chip, Grid } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { SingleChoiceAnswer } from '../../types';
 import { PollAnswerFormProps } from '../types';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    chip: {
       minWidth: 56,
    },
@@ -14,7 +15,7 @@ export default function SingleChoiceAnswerForm({
    onDelete,
    poll: { poll, answer },
 }: PollAnswerFormProps<SingleChoiceAnswer>) {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    if (poll.instruction.type !== 'singleChoice') throw new Error('Single choice instruction required');
 
@@ -29,9 +30,15 @@ export default function SingleChoiceAnswerForm({
    };
 
    return (
-      <Grid container spacing={1} justify="center">
+      <Grid
+         container
+         spacing={1}
+         sx={{
+            justifyContent: 'center',
+         }}
+      >
          {poll.instruction.options.map((x) => (
-            <Grid item key={x}>
+            <Grid key={x}>
                <Chip
                   className={classes.chip}
                   label={x}

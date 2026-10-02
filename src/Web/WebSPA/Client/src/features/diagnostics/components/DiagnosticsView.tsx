@@ -1,6 +1,6 @@
-import { Chip, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from '@material-ui/core';
-import PauseIcon from '@material-ui/icons/Pause';
-import PlayArrowIcon from '@material-ui/icons/PlayArrow';
+import { Chip, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
+import PauseIcon from '@mui/icons-material/Pause';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import _ from 'lodash';
 import { Consumer } from 'mediasoup-client/lib/Consumer';
 import React, { useEffect, useState } from 'react';
@@ -65,14 +65,25 @@ export default function DiagnosticsView() {
                         style={{ backgroundColor: myId === participantId ? 'rgba(230, 126, 34, 0.15)' : undefined }}
                      >
                         <TableCell>
-                           <Tooltip title={participantId} PopperProps={{ disablePortal: true }}>
+                           <Tooltip
+                              title={participantId}
+                              slotProps={{
+                                 popper: { disablePortal: true },
+                              }}
+                           >
                               <Typography>{displayName}</Typography>
                            </Tooltip>
                         </TableCell>
                         <TableCell>{Boolean(participantsOfRoom.includes(participantId)).toString()}</TableCell>
                         <TableCell>
                            {Object.entries(streams?.[participantId]?.producers ?? {}).map(([id, info]) => (
-                              <Tooltip key={id} title={`Paused=${info.paused}`} PopperProps={{ disablePortal: true }}>
+                              <Tooltip
+                                 key={id}
+                                 title={`Paused=${info.paused}`}
+                                 slotProps={{
+                                    popper: { disablePortal: true },
+                                 }}
+                              >
                                  <Chip
                                     style={{ margin: 2 }}
                                     label={id}
@@ -92,7 +103,9 @@ export default function DiagnosticsView() {
                                  <Tooltip
                                     key={participantId}
                                     title={`Id=${participantId}, participant id=${info.participantId}, remote paused=${info.paused}, local paused=${consumer?.paused}`}
-                                    PopperProps={{ disablePortal: true }}
+                                    slotProps={{
+                                       popper: { disablePortal: true },
+                                    }}
                                  >
                                     <Chip
                                        style={{ margin: 2 }}

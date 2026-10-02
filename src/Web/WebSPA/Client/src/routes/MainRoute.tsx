@@ -1,5 +1,6 @@
 import { AuthenticationContext } from '@axa-fr/react-oidc-context';
-import { Button, makeStyles, Typography } from '@material-ui/core';
+import { Button, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,14 +9,14 @@ import { fetchConferenceLinks } from 'src/features/conference/reducer';
 import ConferenceControls from 'src/features/create-conference/components/ConferenceControls';
 import { RootState } from 'src/store';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       position: 'relative',
       height: '100%',
       width: '100%',
       display: 'flex',
       flexDirection: 'row',
-      [theme.breakpoints.down('sm')]: {
+      [theme.breakpoints.down('md')]: {
          flexDirection: 'column-reverse',
          alignItems: 'center',
          justifyContent: 'center',
@@ -24,7 +25,7 @@ const useStyles = makeStyles((theme) => ({
    sideList: {
       width: 300,
       minHeight: 200,
-      [theme.breakpoints.down('sm')]: {
+      [theme.breakpoints.down('md')]: {
          marginTop: 40,
       },
    },
@@ -34,7 +35,7 @@ const useStyles = makeStyles((theme) => ({
       alignItems: 'center',
       justifyContent: 'center',
       flex: 1,
-      [theme.breakpoints.down('sm')]: {
+      [theme.breakpoints.down('md')]: {
          height: 'auto',
          flex: '0 1 auto',
       },
@@ -47,7 +48,7 @@ const useStyles = makeStyles((theme) => ({
       marginBottom: theme.spacing(4),
       height: 72,
       marginTop: -72,
-      [theme.breakpoints.down('md')]: {
+      [theme.breakpoints.down('lg')]: {
          fontSize: '2rem',
          marginTop: 0,
          height: 'auto',
@@ -69,7 +70,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function MainRoute() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const dispatch = useDispatch();
    const { t } = useTranslation();
 

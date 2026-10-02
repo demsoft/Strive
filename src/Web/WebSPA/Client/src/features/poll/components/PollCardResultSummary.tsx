@@ -1,4 +1,4 @@
-import { Box, Chip } from '@material-ui/core';
+import { Box, Chip } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { PollViewModel } from '../types';
@@ -10,7 +10,12 @@ type Props = {
 export default function PollCardResultSummary({ viewModel }: Props) {
    const { t } = useTranslation();
    return (
-      <Box display="flex" justifyContent="center">
+      <Box
+         sx={{
+            display: 'flex',
+            justifyContent: 'center',
+         }}
+      >
          <Chip
             size="small"
             label={

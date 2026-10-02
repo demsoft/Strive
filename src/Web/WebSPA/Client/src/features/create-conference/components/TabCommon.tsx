@@ -8,11 +8,11 @@ import {
    IconButton,
    InputAdornment,
    InputLabel,
-   makeStyles,
    TextField,
    Typography,
-} from '@material-ui/core';
-import ScheduleIcon from '@material-ui/icons/Schedule';
+} from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import cronstrue from 'cronstrue/i18n';
 import { DateTime } from 'luxon';
 import React, { useEffect, useRef, useState } from 'react';
@@ -26,7 +26,7 @@ import SceneLayoutSelect from './SceneLayoutSelect';
 
 const checkBoxWidth = 150;
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       padding: theme.spacing(3),
       width: '100%',
@@ -58,7 +58,7 @@ export default function TabCommon({
       getValues,
    },
 }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const startTime: boolean = watch('additionalFormData.enableStartTime');
    const scheduleCron: boolean = watch('additionalFormData.enableSchedule');
    const { t, i18n } = useTranslation();
@@ -87,8 +87,14 @@ export default function TabCommon({
 
    return (
       <Grid container className={classes.root}>
-         <Grid item xs={12}>
-            <Box display="flex" flexDirection="row" alignItems="center">
+         <Grid size={12}>
+            <Box
+               sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+               }}
+            >
                <FormControlLabel
                   className={classes.checkBoxLabel}
                   control={
@@ -116,9 +122,15 @@ export default function TabCommon({
                />
             </Box>
          </Grid>
-         <Grid item xs={12}>
+         <Grid size={12}>
             <div>
-               <Box display="flex" flexDirection="row" alignItems="center">
+               <Box
+                  sx={{
+                     display: 'flex',
+                     flexDirection: 'row',
+                     alignItems: 'center',
+                  }}
+               >
                   <FormControlLabel
                      className={classes.checkBoxLabel}
                      control={
@@ -142,21 +154,24 @@ export default function TabCommon({
                            validate: validateSchedulerCron,
                         }),
                      )}
-                     InputProps={{
-                        endAdornment: (
-                           <InputAdornment position="end">
-                              <IconButton
-                                 disabled={!scheduleCron}
-                                 title={t('dialog_create_conference.tabs.common.open_cron_expression_generator')}
-                                 href="https://www.freeformatter.com/cron-expression-generator-quartz.html"
-                                 target="_blank"
-                              >
-                                 <ScheduleIcon />
-                              </IconButton>
-                           </InputAdornment>
-                        ),
-                     }}
                      aria-describedby="schedule-error-text"
+                     slotProps={{
+                        input: {
+                           endAdornment: (
+                              <InputAdornment position="end">
+                                 <IconButton
+                                    disabled={!scheduleCron}
+                                    title={t('dialog_create_conference.tabs.common.open_cron_expression_generator')}
+                                    href="https://www.freeformatter.com/cron-expression-generator-quartz.html"
+                                    target="_blank"
+                                    size="large"
+                                 >
+                                    <ScheduleIcon />
+                                 </IconButton>
+                              </InputAdornment>
+                           ),
+                        },
+                     }}
                   />
                </Box>
                <Collapse in={scheduleCron}>
@@ -172,7 +187,7 @@ export default function TabCommon({
                </Collapse>
             </div>
          </Grid>
-         <Grid item xs={12} className={classes.sectionGrid}>
+         <Grid className={classes.sectionGrid} size={12}>
             <Typography variant="h6">{t('glossary:chat')}</Typography>
             <Box>
                <FormControlLabel
@@ -237,7 +252,7 @@ export default function TabCommon({
                label={t('dialog_create_conference.tabs.common.show_participants_typing')}
             />
          </Grid>
-         <Grid item xs={12} className={classes.sectionGrid}>
+         <Grid className={classes.sectionGrid} size={12}>
             <Typography variant="h6" gutterBottom>
                {t('glossary:scene_other')}
             </Typography>
@@ -266,7 +281,12 @@ export default function TabCommon({
                </FormControl>
             </div>
          </Grid>
-         <Grid item xs={12} md={6}>
+         <Grid
+            size={{
+               xs: 12,
+               md: 6,
+            }}
+         >
             <div className={classes.selectFormControl}>
                <FormControl fullWidth>
                   <InputLabel id="scene-layout-select-label">
@@ -287,7 +307,12 @@ export default function TabCommon({
                </FormControl>
             </div>
          </Grid>
-         <Grid item xs={12} md={6}>
+         <Grid
+            size={{
+               xs: 12,
+               md: 6,
+            }}
+         >
             <div className={classes.selectFormControl}>
                <FormControl fullWidth>
                   <InputLabel id="scene-layout-screenshare-select-label">
@@ -308,7 +333,7 @@ export default function TabCommon({
                </FormControl>
             </div>
          </Grid>
-         <Grid item xs={12}>
+         <Grid size={12}>
             <FormControlLabel
                control={
                   <Controller

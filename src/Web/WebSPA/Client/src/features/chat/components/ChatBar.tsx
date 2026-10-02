@@ -1,4 +1,5 @@
-import { makeStyles, Paper } from '@material-ui/core';
+import { Paper } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React, { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectParticipantList } from 'src/features/conference/selectors';
@@ -12,7 +13,7 @@ import { getParticipantColor } from '../utils';
 import Chat from './Chat';
 import ChatChannelTabs from './ChatChannelTabs';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       flex: 1,
       display: 'flex',
@@ -25,7 +26,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function ChatBar() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const participants = useSelector(selectParticipantList);
    const connected = useSelector((state: RootState) => state.signalr.isConnected);
    const channels = useSelector(selectChannels);

@@ -1,4 +1,4 @@
-import { Fab } from '@material-ui/core';
+import { Fab } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';

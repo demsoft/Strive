@@ -1,7 +1,8 @@
-import { ClickAwayListener, Grow, makeStyles, Paper, Popper, PopperProps } from '@material-ui/core';
+import { ClickAwayListener, Grow, Paper, Popper, PopperProps } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    includePadding: {
       padding: theme.spacing(2),
    },
@@ -11,7 +12,7 @@ type Props = {
    open: boolean;
    anchorEl: PopperProps['anchorEl'];
    onClose: () => void;
-   children?: React.ReactNode;
+   children: React.ReactElement;
 
    placement: PopperProps['placement'];
    transformOrigin: string;
@@ -28,7 +29,7 @@ export default function PopperWrapper({
    transformOrigin,
    padding,
 }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    return (
       <Popper open={open} anchorEl={anchorEl} transition placement={placement}>

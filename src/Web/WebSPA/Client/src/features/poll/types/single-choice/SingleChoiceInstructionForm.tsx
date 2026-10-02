@@ -1,4 +1,4 @@
-import { TextField } from '@material-ui/core';
+import { TextField } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { wrapForInputRef } from 'src/utils/reat-hook-form-utils';
@@ -25,9 +25,10 @@ export default function SingleChoiceInstructionForm({
          autoFocus
          label={t('conference.poll.create_dialog.choices_label')}
          fullWidth
-         {...wrapForInputRef(register('instruction.options', { validate: (value) => validateOptionsText(value as unknown as string) }))}
+         {...wrapForInputRef(
+            register('instruction.options', { validate: (value) => validateOptionsText(value as unknown as string) }),
+         )}
          rows={4}
-         InputLabelProps={{ shrink: Boolean(options) }}
          multiline
          error={Boolean((errors.instruction as any)?.options)}
          helperText={
@@ -35,6 +36,9 @@ export default function SingleChoiceInstructionForm({
                ? t('conference.poll.create_dialog.choices_error_at_least_two')
                : t('conference.poll.create_dialog.choices_helper_text')
          }
+         slotProps={{
+            inputLabel: { shrink: Boolean(options) },
+         }}
       />
    );
 }

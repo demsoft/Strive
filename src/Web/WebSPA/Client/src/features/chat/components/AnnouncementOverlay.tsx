@@ -1,4 +1,4 @@
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { ChatMessageDto } from 'src/core-hub.types';
@@ -7,7 +7,7 @@ import AnnouncementCard from './AnnouncementCard';
 import { removeAnnouncement } from '../reducer';
 import { AnimatePresence } from 'framer-motion';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       position: 'absolute',
       zIndex: theme.zIndex.modal,
@@ -26,7 +26,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function AnnouncementOverlay() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const announcements = useSelector(selectAnnouncements);
    const dispatch = useDispatch();
 

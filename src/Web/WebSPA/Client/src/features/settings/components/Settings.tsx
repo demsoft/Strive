@@ -1,4 +1,5 @@
-import { makeStyles, Tab, Tabs } from '@material-ui/core';
+import { Tab, Tabs } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import About from './About';
@@ -39,7 +40,7 @@ function a11yProps(index: any) {
    };
 }
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       flexGrow: 1,
       backgroundColor: theme.palette.background.paper,
@@ -55,7 +56,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function Settings() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const [value, setValue] = React.useState(0);
    const { t } = useTranslation();
 

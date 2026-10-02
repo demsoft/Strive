@@ -1,6 +1,6 @@
-import { Dialog, DialogContent, DialogTitle, Fab, Grid, makeStyles, Tooltip } from '@material-ui/core';
-import BugReportIcon from '@material-ui/icons/BugReport';
-import clsx from 'classnames';
+import { Dialog, DialogContent, DialogTitle, Fab, Grid, Tooltip } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import BugReportIcon from '@mui/icons-material/BugReport';
 import { motion } from 'framer-motion';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +20,7 @@ import useWebcam from 'src/store/webrtc/hooks/useWebcam';
 import useDeviceManagement from '../useDeviceManagement';
 import MediaFab from './MediaFab';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       display: 'flex',
       flexDirection: 'row',
@@ -74,7 +74,7 @@ const item = {
 };
 
 export default function MediaControls({ className, show, leftActionsRef }: Props) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
    const { t } = useTranslation();
 
    const gain = useSelector((state: RootState) => state.settings.obj.mic.audioGain);
@@ -111,7 +111,7 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
 
    return (
       <motion.div
-         className={clsx(classes.root, className)}
+         className={cx(classes.root, className)}
          initial="hidden"
          animate={show ? 'visible' : 'hidden'}
          variants={variants}
@@ -171,7 +171,9 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
             id="troubleshooting-dialog"
             open={debugDialogOpen}
             onClose={handleCloseDebugDialog}
-            PaperProps={{ className: classes.dialog }}
+            slotProps={{
+               paper: { className: classes.dialog },
+            }}
          >
             <DialogTitle>{t('conference.troubleshooting.title')}</DialogTitle>
             <DialogContent>

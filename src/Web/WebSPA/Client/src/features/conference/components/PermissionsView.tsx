@@ -1,4 +1,4 @@
-import { Chip, Table, TableBody, TableCell, TableRow, Tooltip, Typography } from '@material-ui/core';
+import { Chip, Table, TableBody, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
 import _ from 'lodash';
 import React, { Fragment, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';

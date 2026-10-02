@@ -1,8 +1,9 @@
-import { makeStyles, Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
    root: {
       height: '100%',
       width: '100%',
@@ -28,7 +29,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 export default function RequestUserInteractionView() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
    return (

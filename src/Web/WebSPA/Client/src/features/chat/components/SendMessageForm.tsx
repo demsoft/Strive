@@ -1,6 +1,6 @@
-import { Box, ClickAwayListener, Grow, IconButton, Paper, Popper } from '@material-ui/core';
-import EmojiEmotionsIcon from '@material-ui/icons/EmojiEmotions';
-import SendIcon from '@material-ui/icons/Send';
+import { Box, ClickAwayListener, Grow, IconButton, Paper, Popper } from '@mui/material';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
+import SendIcon from '@mui/icons-material/Send';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
@@ -82,7 +82,11 @@ export default function SendMessageForm({ onSendMessage, isTyping, channel }: Pr
 
    return (
       <div>
-         <Box m={1}>
+         <Box
+            sx={{
+               m: 1,
+            }}
+         >
             <ChatMessageInput
                onSubmit={handleSubmit}
                ref={inputRef}
@@ -92,16 +96,28 @@ export default function SendMessageForm({ onSendMessage, isTyping, channel }: Pr
                watchUserTyping={watchUserTyping}
             />
          </Box>
-         <Box display="flex" flexDirection="row" justifyContent="space-between" alignItems="center">
+         <Box
+            sx={{
+               display: 'flex',
+               flexDirection: 'row',
+               justifyContent: 'space-between',
+               alignItems: 'center',
+            }}
+         >
             <Box>
                <SendMessageOptions value={options} onChange={setOptions} channel={channel} />
             </Box>
-            <Box display="flex">
+            <Box
+               sx={{
+                  display: 'flex',
+               }}
+            >
                <IconButton
                   aria-label={t('conference.chat.open_emojis')}
                   ref={emojisButtonRef}
                   onClick={handleOpenEmojis}
                   id="chat-open-emojis"
+                  size="large"
                >
                   <EmojiEmotionsIcon fontSize="small" />
                </IconButton>
@@ -110,6 +126,7 @@ export default function SendMessageForm({ onSendMessage, isTyping, channel }: Pr
                   aria-label={t('conference.chat.send')}
                   onClick={handleSubmit}
                   disabled={!message}
+                  size="large"
                >
                   <SendIcon fontSize="small" />
                </IconButton>
@@ -121,7 +138,11 @@ export default function SendMessageForm({ onSendMessage, isTyping, channel }: Pr
                <Grow {...TransitionProps} style={{ transformOrigin: 'right bottom' }}>
                   <Paper>
                      <ClickAwayListener onClickAway={handleCloseEmojis}>
-                        <Box p={1}>
+                        <Box
+                           sx={{
+                              p: 1,
+                           }}
+                        >
                            <EmojisPopper onClose={handleCloseEmojis} onEmojiSelected={handleInsertEmoji} />
                         </Box>
                      </ClickAwayListener>

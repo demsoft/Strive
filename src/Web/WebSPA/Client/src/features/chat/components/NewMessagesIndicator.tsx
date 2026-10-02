@@ -1,7 +1,7 @@
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    root: {
       width: 10,
       height: 10,
@@ -12,6 +12,6 @@ const useStyles = makeStyles({
 });
 
 export default function NewMessagesIndicator() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    return <div className={classes.root} />;
 }

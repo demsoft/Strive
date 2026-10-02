@@ -1,4 +1,4 @@
-import { Fab, Typography } from '@material-ui/core';
+import { Fab, Typography } from '@mui/material';
 import React from 'react';
 
 type TwoLineFabProps = React.ComponentProps<typeof Fab> & {

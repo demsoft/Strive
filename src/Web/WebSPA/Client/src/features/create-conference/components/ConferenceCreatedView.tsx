@@ -1,11 +1,12 @@
-import { Box, Button, DialogActions, DialogContent, makeStyles, TextField } from '@material-ui/core';
+import { Box, Button, DialogActions, DialogContent, TextField } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useDispatch } from 'react-redux';
 import { closeDialog } from '../reducer';
 import to from 'src/utils/to';
 import { useTranslation } from 'react-i18next';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    conferenceUrlField: {
       flex: 1,
       marginRight: theme.spacing(2),
@@ -17,7 +18,7 @@ type Props = {
 };
 
 export default function ConferenceCreatedView({ conferenceId }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const dispatch = useDispatch();
    const { t } = useTranslation();
 
@@ -25,14 +26,22 @@ export default function ConferenceCreatedView({ conferenceId }: Props) {
 
    return (
       <DialogContent>
-         <Box display="flex" flexDirection="row" alignItems="center">
+         <Box
+            sx={{
+               display: 'flex',
+               flexDirection: 'row',
+               alignItems: 'center',
+            }}
+         >
             <TextField
                id="created-conference-url"
                variant="outlined"
                label={t('dialog_create_conference.created.conference_url')}
-               InputProps={{ readOnly: true }}
                value={new URL('/c/' + conferenceId, document.baseURI).href}
                className={classes.conferenceUrlField}
+               slotProps={{
+                  input: { readOnly: true },
+               }}
             />
             <Button
                id="join-conference-button"

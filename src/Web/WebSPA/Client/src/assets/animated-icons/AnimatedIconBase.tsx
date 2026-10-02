@@ -1,4 +1,4 @@
-import { useTheme } from '@material-ui/core';
+import { useTheme } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useEffect, useRef } from 'react';
 

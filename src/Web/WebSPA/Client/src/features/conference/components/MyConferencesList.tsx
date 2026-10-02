@@ -1,13 +1,16 @@
-import { Chip, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, makeStyles } from '@material-ui/core';
-import MoreVertIcon from '@material-ui/icons/MoreVert';
-import StarIcon from '@material-ui/icons/Star';
-import StarBorder from '@material-ui/icons/StarBorder';
+import { Chip, IconButton, List, ListItemSecondaryAction, ListItemText } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorder from '@mui/icons-material/StarBorder';
 import _ from 'lodash';
 import React from 'react';
 import to from 'src/utils/to';
 import { ConferenceLink } from '../types';
 
-const useStyles = makeStyles(() => ({
+import ListItemButton from '@mui/material/ListItemButton';
+
+const useStyles = makeStyles()(() => ({
    chipsRoot: {
       display: 'flex',
       '& > *': {
@@ -24,12 +27,12 @@ type Props = {
 };
 
 export default function MyConferencesList({ links }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    return (
       <List>
          {_.orderBy(links, [(x) => x.starred, (x) => x.lastJoin], ['asc', 'desc']).map((x) => (
-            <ListItem key={x.conferenceId} button {...to(`/c/${x.conferenceId}`)}>
+            <ListItemButton key={x.conferenceId} {...to(`/c/${x.conferenceId}`)}>
                <ListItemText
                   primary={x.conferenceName || 'Unnamed conference'}
                   secondary={
@@ -53,14 +56,14 @@ export default function MyConferencesList({ links }: Props) {
                   }
                />
                <ListItemSecondaryAction>
-                  <IconButton edge="start" aria-label="star">
+                  <IconButton edge="start" aria-label="star" size="large">
                      {x.starred ? <StarIcon /> : <StarBorder />}
                   </IconButton>
-                  <IconButton edge="end" aria-label="options">
+                  <IconButton edge="end" aria-label="options" size="large">
                      <MoreVertIcon />
                   </IconButton>
                </ListItemSecondaryAction>
-            </ListItem>
+            </ListItemButton>
          ))}
       </List>
    );

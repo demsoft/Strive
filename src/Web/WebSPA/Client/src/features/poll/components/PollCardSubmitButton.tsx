@@ -1,9 +1,9 @@
-import { Button, makeStyles } from '@material-ui/core';
+import { Button } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
-import clsx from 'classnames';
 import { useTranslation } from 'react-i18next';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    pulsing: {
       color: theme.palette.secondary.main,
       animationName: '$pulsing',
@@ -27,10 +27,10 @@ type Props = React.ComponentProps<typeof Button>;
 
 export default function PollCardSubmitButton({ className, ...props }: Props) {
    const { t } = useTranslation();
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
 
    return (
-      <Button className={clsx(className, !props.disabled && classes.pulsing)} size="small" color="secondary" {...props}>
+      <Button className={cx(className, !props.disabled && classes.pulsing)} size="small" color="secondary" {...props}>
          {t('conference.poll.submit_answer')}
       </Button>
    );

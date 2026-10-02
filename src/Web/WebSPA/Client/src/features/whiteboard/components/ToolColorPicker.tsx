@@ -1,4 +1,4 @@
-import { Box, Grid, IconButton } from '@material-ui/core';
+import { Box, Grid, IconButton } from '@mui/material';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ColorIcon from './ColorIcon';
@@ -55,11 +55,21 @@ export default function ToolColorPicker({ value, onChange }: Props) {
          />
 
          <ToolPopper open={open} anchorEl={anchorEl.current} onClose={handleClose}>
-            <Box p={1} width={160}>
-               <Grid container justify="center">
+            <Box
+               sx={{
+                  p: 1,
+                  width: 160,
+               }}
+            >
+               <Grid
+                  container
+                  sx={{
+                     justifyContent: 'center',
+                  }}
+               >
                   {availableColors.map((color) => (
-                     <Grid item key={color}>
-                        <IconButton onClick={handleSelectColor(color)}>
+                     <Grid key={color}>
+                        <IconButton onClick={handleSelectColor(color)} size="large">
                            <ColorIcon color={color} />
                         </IconButton>
                      </Grid>

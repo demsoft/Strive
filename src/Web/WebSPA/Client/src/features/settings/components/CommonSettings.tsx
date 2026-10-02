@@ -1,10 +1,11 @@
-import { FormControl, InputLabel, makeStyles } from '@material-ui/core';
+import { FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import MobileAwareSelect from 'src/components/MobileAwareSelect';
 import { supportedLanguages } from 'src/services/i18n';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       width: '100%',
       padding: theme.spacing(3),
@@ -16,10 +17,10 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function CommonSettings() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t, i18n } = useTranslation();
 
-   const handleChangeLanguage = (event: React.ChangeEvent<{ value: unknown }>) => {
+   const handleChangeLanguage = (event: SelectChangeEvent<unknown>) => {
       const lang = event.target.value as string;
       i18n.changeLanguage(lang);
       localStorage.setItem('i18nextLng', lang);

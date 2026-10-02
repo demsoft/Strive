@@ -1,5 +1,5 @@
-import { MenuItem } from '@material-ui/core';
-import GroupWorkIcon from '@material-ui/icons/GroupWork';
+import { MenuItem } from '@mui/material';
+import GroupWorkIcon from '@mui/icons-material/GroupWork';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';

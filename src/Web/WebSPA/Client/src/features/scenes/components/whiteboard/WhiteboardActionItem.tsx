@@ -1,4 +1,4 @@
-import { MenuItem } from '@material-ui/core';
+import { MenuItem } from '@mui/material';
 import { Draw } from 'mdi-material-ui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

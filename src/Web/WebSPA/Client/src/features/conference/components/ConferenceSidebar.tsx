@@ -1,5 +1,6 @@
-import { fade, IconButton, makeStyles, Paper } from '@material-ui/core';
-import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import { alpha, IconButton, Paper } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { motion } from 'framer-motion';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,7 +11,7 @@ import { setSidebarOpen } from '../reducer';
 
 const drawerWidth = 216;
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    drawerContainer: {
       padding: theme.spacing(1, 0, 1, 1),
       width: drawerWidth,
@@ -24,7 +25,7 @@ const useStyles = makeStyles((theme) => ({
       width: '100%',
       whiteSpace: 'nowrap',
 
-      backgroundColor: fade(theme.palette.background.paper, 0.5),
+      backgroundColor: alpha(theme.palette.background.paper, 0.5),
       height: '100%',
 
       borderColor: theme.palette.divider,
@@ -50,7 +51,7 @@ const arrowVariants = {
 };
 
 export default function ConferenceSidebar() {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const dispatch = useDispatch();
    const open = useSelector((state: RootState) => state.conference.sidebarOpen);

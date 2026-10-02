@@ -1,4 +1,4 @@
-import { Box, Collapse, Input } from '@material-ui/core';
+import { Box, Collapse, Input } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { wrapForInputRef } from 'src/utils/reat-hook-form-utils';
@@ -19,7 +19,11 @@ export default function MultipleChoiceInstructionForm(props: InstructionFormProp
       <>
          <SingleChoiceInstructionForm {...props} />
          <Collapse in={showAdvanced}>
-            <Box mt={1}>
+            <Box
+               sx={{
+                  mt: 1,
+               }}
+            >
                {t('conference.poll.create_dialog.multiple_choice_limit_choices') + ' '}
                <Input
                   {...wrapForInputRef(

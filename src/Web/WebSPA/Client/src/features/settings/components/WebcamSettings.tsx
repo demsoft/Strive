@@ -1,4 +1,5 @@
-import { Box, makeStyles } from '@material-ui/core';
+import { Box } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'src/store';
@@ -11,7 +12,7 @@ import ErrorWrapper from 'src/components/ErrorWrapper';
 import { useTranslation } from 'react-i18next';
 import useSelectorFactory from 'src/hooks/useSelectorFactory';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       width: '100%',
       padding: theme.spacing(3),
@@ -23,7 +24,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function WebcamSettings() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
    const selectedDevice = useSelector((state: RootState) => state.settings.obj.webcam.device);
    const availableDevices = useSelectorFactory(selectAvailableInputDevicesFactory, (state: RootState, selector) =>
@@ -41,7 +42,11 @@ export default function WebcamSettings() {
             selectedDevice={selectedDevice}
             onChange={(device) => dispatch(setCurrentDevice({ device, source: 'webcam' }))}
          />
-         <Box mt={4}>
+         <Box
+            sx={{
+               mt: 4,
+            }}
+         >
             <ErrorWrapper
                failed={webrtcState !== 'connected'}
                error={t('conference.settings.webrtc_not_connected_error')}

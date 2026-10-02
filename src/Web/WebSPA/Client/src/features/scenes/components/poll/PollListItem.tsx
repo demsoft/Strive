@@ -1,11 +1,11 @@
-import PollIcon from '@material-ui/icons/Poll';
+import PollIcon from '@mui/icons-material/Poll';
 import React, { useMemo } from 'react';
 import { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { AvailableSceneListItemProps } from '../../types';
 import SceneListItemWithPopper from '../SceneListItemWithPopper';
 import PollOptionsPopper from './PollOptionsPopper';
-import MoreVertIcon from '@material-ui/icons/MoreVert';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useSelector } from 'react-redux';
 import { selectPoll } from 'src/features/poll/selectors';
 import { RootState } from 'src/store';

@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from '@material-ui/core';
+import { Box, Button, Typography } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
@@ -80,7 +80,12 @@ export default function AudioRecorderTest({ stream, className }: Props) {
          <audio ref={playbackAudioElem} onEnded={handlePlaybackEnded} />
 
          <Typography gutterBottom>{t('conference.settings.audio.repeat_audio_description')}</Typography>
-         <Box display="flex" alignItems="flex-start">
+         <Box
+            sx={{
+               display: 'flex',
+               alignItems: 'flex-start',
+            }}
+         >
             <Button
                variant="contained"
                color="secondary"
@@ -94,7 +99,11 @@ export default function AudioRecorderTest({ stream, className }: Props) {
                   ? t('conference.settings.audio.repeat_idle')
                   : t('conference.settings.audio.repeat_playing')}
             </Button>
-            <Box ml={2}>
+            <Box
+               sx={{
+                  ml: 2,
+               }}
+            >
                <Typography variant="caption">{t('conference.settings.audio.something_to_say')}</Typography>
                <Typography variant="subtitle2">{t('conference.settings.audio.something_to_say_text')}</Typography>
             </Box>

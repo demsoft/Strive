@@ -1,5 +1,5 @@
-import { ClickAwayListener, Grow, Paper, PopperProps } from '@material-ui/core';
-import { Popper } from '@material-ui/core';
+import { ClickAwayListener, Grow, Paper, PopperProps } from '@mui/material';
+import { Popper } from '@mui/material';
 import React from 'react';
 
 type Props = Omit<PopperProps, 'children'> & {

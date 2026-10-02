@@ -1,8 +1,9 @@
-import { Box, Divider, IconButton, ListItemIcon, makeStyles, MenuItem, Slider, Typography } from '@material-ui/core';
-import MicOffRounded from '@material-ui/icons/MicOff';
-import SendIcon from '@material-ui/icons/Send';
-import VolumeOffIcon from '@material-ui/icons/VolumeOff';
-import VolumeUpIcon from '@material-ui/icons/VolumeUp';
+import { Box, Divider, IconButton, ListItemIcon, MenuItem, Slider, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import MicOffRounded from '@mui/icons-material/MicOff';
+import SendIcon from '@mui/icons-material/Send';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import { throttle } from 'lodash';
 import { AccountRemove, AccountVoice } from 'mdi-material-ui';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -31,7 +32,7 @@ import { showMessage } from 'src/store/notifier/actions';
 import { Participant } from '../types';
 import ParticipantContextMenuTempPermissions from './ParticipantContextMenuTempPermissions';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    infoMenuItem: {
       padding: theme.spacing(0, 1),
    },
@@ -48,7 +49,7 @@ type Props = {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ParticipantContextMenu = React.forwardRef<HTMLElement, Props>(({ participant, onClose }, _) => {
    const dispatch = useDispatch();
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
    const audioInfo = useSelector((state: RootState) => selectParticipantAudioInfo(state, participant.id));
@@ -149,7 +150,13 @@ const ParticipantContextMenu = React.forwardRef<HTMLElement, Props>(({ participa
          <div className={classes.infoMenuItem}>
             <Typography>{participant.displayName}</Typography>
             {audioInfo && (
-               <Box display="flex" alignItems="center" style={{ marginTop: 4, marginBottom: 4 }}>
+               <Box
+                  style={{ marginTop: 4, marginBottom: 4 }}
+                  sx={{
+                     display: 'flex',
+                     alignItems: 'center',
+                  }}
+               >
                   <IconButton
                      size="small"
                      onClick={handleToggleMuted}

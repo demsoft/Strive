@@ -1,7 +1,7 @@
 import { AuthenticationProvider, oidcLog, OidcSecure } from '@axa-fr/react-oidc-context';
-import { createMuiTheme, CssBaseline, makeStyles, responsiveFontSizes } from '@material-ui/core';
-import { blue, pink } from '@material-ui/core/colors';
-import { ThemeProvider } from '@material-ui/styles';
+import { createTheme, CssBaseline, responsiveFontSizes, ThemeProvider } from '@mui/material';
+import { blue, pink } from '@mui/material/colors';
+import { makeStyles } from 'tss-react/mui';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { ocidConfig } from 'src/config';
@@ -14,7 +14,7 @@ import RedirectToConference from './RedirectToConference';
 import AuthenticatedRoutes from './routes/AuthenticatedRoutes';
 import EquipmentRoute from './routes/EquipmentRoute';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    toast: {
       backgroundColor: theme.palette.background.paper,
       color: theme.palette.text.primary,
@@ -22,9 +22,9 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const theme = responsiveFontSizes(
-   createMuiTheme({
+   createTheme({
       palette: {
-         type: 'dark',
+         mode: 'dark',
          primary: {
             main: blue[500],
          },
@@ -35,6 +35,12 @@ const theme = responsiveFontSizes(
             default: 'rgb(20, 20, 22)',
             paper: '#303030',
          },
+      },
+      components: {
+         // keep the MUI v4 default (standard) instead of the outlined variant introduced in v5
+         MuiTextField: { defaultProps: { variant: 'standard' } },
+         MuiSelect: { defaultProps: { variant: 'standard' } },
+         MuiFormControl: { defaultProps: { variant: 'standard' } },
       },
    }),
 );
@@ -71,7 +77,7 @@ function App() {
 }
 
 function MaterialUiToaster() {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    return <Toaster position="top-center" toastOptions={{ className: classes.toast }} />;
 }

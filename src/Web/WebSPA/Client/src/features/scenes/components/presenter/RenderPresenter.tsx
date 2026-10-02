@@ -1,4 +1,5 @@
-import { makeStyles, Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +9,7 @@ import useMyParticipantId from 'src/hooks/useMyParticipantId';
 import { RootState } from 'src/store';
 import { PresenterScene, RenderSceneProps } from '../../types';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    overlay: {
       position: 'absolute',
       top: 0,
@@ -30,7 +31,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function RenderPresenter({ next, scene, className }: RenderSceneProps<PresenterScene>) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
    const myId = useMyParticipantId();

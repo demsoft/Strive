@@ -1,5 +1,6 @@
-import { Button, Chip, Collapse, makeStyles, Typography } from '@material-ui/core';
-import { Alert } from '@material-ui/lab';
+import { Button, Chip, Collapse, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import { Alert } from '@mui/material';
 import { Incognito, IncognitoOff, Pencil, PencilOff } from 'mdi-material-ui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +15,7 @@ import { RootState } from 'src/store';
 import { PollScene, RenderSceneProps } from '../../types';
 import AutoSceneLayout from '../AutoSceneLayout';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       margin: theme.spacing(3),
       display: 'flex',
@@ -46,7 +47,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function RenderPollScene({ className, scene, dimensions }: RenderSceneProps<PollScene>) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
    const canOpenPoll = usePermission(POLL_CAN_OPEN);
    const dispatch = useDispatch();

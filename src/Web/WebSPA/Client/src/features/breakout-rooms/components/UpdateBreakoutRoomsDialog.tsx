@@ -1,4 +1,4 @@
-import { Box, Button, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@material-ui/core';
+import { Box, Button, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { compare } from 'fast-json-patch';
 import { DateTime } from 'luxon';
 import React, { useRef } from 'react';
@@ -65,7 +65,11 @@ export default function UpdateBreakoutRoomsDialog({ active, onClose }: Props) {
          <DialogContent>
             <DialogContentText>{t('conference.dialog_breakout_rooms.update_description')}</DialogContentText>
             <form onSubmit={handleSubmit(handleApplyForm)} id="breakout-room-dialog-form">
-               <Box mt={4}>
+               <Box
+                  sx={{
+                     mt: 4,
+                  }}
+               >
                   <BreakoutRoomsForm form={form} participants={null} />
                </Box>
             </form>

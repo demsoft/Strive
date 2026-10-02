@@ -1,7 +1,7 @@
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    root: {
       width: 18,
       height: 18,
@@ -14,6 +14,6 @@ type Props = {
 };
 
 export default function ColorIcon({ color }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    return <div className={classes.root} style={{ backgroundColor: color }} />;
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { AvailableSceneListItemProps, GridScene, ScenePresenter } from '../../types';
 import SceneListItem from '../SceneListItem';
-import AppsIcon from '@material-ui/icons/Apps';
+import AppsIcon from '@mui/icons-material/Apps';
 import ParticipantsGrid from './ParticipantsGrid';
 import { useTranslation } from 'react-i18next';
 import allowOverwrite from '../../allow-overwrite-hoc';

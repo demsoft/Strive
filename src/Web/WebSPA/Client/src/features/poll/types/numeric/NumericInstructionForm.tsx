@@ -1,4 +1,4 @@
-import { Grid, TextField, Typography } from '@material-ui/core';
+import { Grid, TextField, Typography } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { wrapForInputRef } from 'src/utils/reat-hook-form-utils';
@@ -11,7 +11,7 @@ export default function NumericInstructionForm({ form: { register } }: Instructi
       <div>
          <Typography variant="caption">{t('conference.poll.create_dialog.numeric_description')}</Typography>
          <Grid container spacing={2} style={{ marginTop: 8 }}>
-            <Grid item xs={4}>
+            <Grid size={4}>
                <TextField
                   type="number"
                   label={t('conference.poll.create_dialog.min')}
@@ -23,7 +23,7 @@ export default function NumericInstructionForm({ form: { register } }: Instructi
                   )}
                />
             </Grid>
-            <Grid item xs={4}>
+            <Grid size={4}>
                <TextField
                   type="number"
                   label={t('conference.poll.create_dialog.max')}
@@ -35,7 +35,7 @@ export default function NumericInstructionForm({ form: { register } }: Instructi
                   )}
                />
             </Grid>
-            <Grid item xs={4}>
+            <Grid size={4}>
                <TextField
                   type="number"
                   label={t('conference.poll.create_dialog.step')}
@@ -45,7 +45,9 @@ export default function NumericInstructionForm({ form: { register } }: Instructi
                         shouldUnregister: true,
                      }),
                   )}
-                  InputProps={{ inputProps: { step: 0.1 } }}
+                  slotProps={{
+                     input: { inputProps: { step: 0.1 } },
+                  }}
                />
             </Grid>
          </Grid>

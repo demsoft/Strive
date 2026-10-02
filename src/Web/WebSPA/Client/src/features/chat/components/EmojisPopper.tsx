@@ -1,6 +1,8 @@
-import { Grid, IconButton, makeStyles, Typography } from '@material-ui/core';
+import { Grid, IconButton, Typography } from '@mui/material';
 
-const useStyles = makeStyles({
+import { makeStyles } from 'tss-react/mui';
+
+const useStyles = makeStyles()({
    container: {
       width: 200,
    },
@@ -17,12 +19,12 @@ type Props = {
 const emojis: string[] = ['👍', '👎', '🎉', '😂', '😭', '❤️', '🔥', '🤔', '😫', '🙄', '🚀', '👀'];
 
 export default function EmojisPopper({ onEmojiSelected }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    return (
       <Grid container className={classes.container}>
          {emojis.map((x) => (
-            <Grid item xs={3} key={x}>
-               <IconButton onClick={() => onEmojiSelected(x)} aria-label={`Insert emoji ${x}`}>
+            <Grid key={x} size={3}>
+               <IconButton onClick={() => onEmojiSelected(x)} aria-label={`Insert emoji ${x}`} size="large">
                   <Typography className={classes.emojiIcon}>{x}</Typography>
                </IconButton>
             </Grid>

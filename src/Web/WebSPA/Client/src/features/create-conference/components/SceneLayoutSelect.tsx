@@ -1,4 +1,4 @@
-import { FormHelperText, Select } from '@material-ui/core';
+import { FormHelperText, Select } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import MobileAwareSelect from 'src/components/MobileAwareSelect';

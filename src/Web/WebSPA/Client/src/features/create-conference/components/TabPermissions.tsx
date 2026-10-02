@@ -1,4 +1,4 @@
-import { Box, Divider, FormControlLabel, Radio, RadioGroup } from '@material-ui/core';
+import { Box, Divider, FormControlLabel, Radio, RadioGroup } from '@mui/material';
 import { TFunction } from 'i18next';
 import React, { useState } from 'react';
 import { Controller, UseFormReturn } from 'react-hook-form';
@@ -31,8 +31,21 @@ export default function TabPermissions({ form: { control } }: Props) {
    };
 
    return (
-      <Box display="flex" flexDirection="column" height="100%">
-         <Box display="flex" justifyContent="space-between" mx={3} mt={3}>
+      <Box
+         sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+         }}
+      >
+         <Box
+            sx={{
+               display: 'flex',
+               justifyContent: 'space-between',
+               mx: 3,
+               mt: 3,
+            }}
+         >
             <RadioGroup row value={permissionType} onChange={handleChangePermissionType}>
                {permissionTypeButtons(t).map(({ label, type }) => (
                   <FormControlLabel key={type} value={type} control={<Radio />} label={label} />

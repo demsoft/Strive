@@ -1,9 +1,11 @@
-import { List, ListItem, ListItemText, Typography } from '@material-ui/core';
+import { List, ListItemText, Typography } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { selectParticipants } from 'src/features/conference/selectors';
 import { Participant } from 'src/features/conference/types';
 import { selectTalkingStickQueue } from '../../selectors';
+
+import ListItemButton from '@mui/material/ListItemButton';
 
 type Props = {
    onPassStick: (participantId: string) => void;
@@ -26,9 +28,9 @@ export default function PassStickList({ onPassStick }: Props) {
             .map((id) => participants[id])
             .filter((x): x is Participant => !!x)
             .map(({ id, displayName }) => (
-               <ListItem key={id} button onClick={() => onPassStick(id)}>
+               <ListItemButton key={id} onClick={() => onPassStick(id)}>
                   <ListItemText primary={displayName} />
-               </ListItem>
+               </ListItemButton>
             ))}
       </List>
    );

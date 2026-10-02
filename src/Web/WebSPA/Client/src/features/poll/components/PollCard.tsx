@@ -1,6 +1,7 @@
-import { Button, IconButton, makeStyles, SvgIconTypeMap, Tooltip, Typography } from '@material-ui/core';
-import { OverridableComponent } from '@material-ui/core/OverridableComponent';
-import MoreVertIcon from '@material-ui/icons/MoreVert';
+import { Button, IconButton, SvgIconTypeMap, Tooltip, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import { OverridableComponent } from '@mui/material/OverridableComponent';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Incognito, IncognitoOff, Pencil, PencilOff } from 'mdi-material-ui';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,7 +33,7 @@ function PollStatusIconProps({ Icon, description }: PollStatusIconProps) {
    );
 }
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: { padding: theme.spacing(1) },
    bottomInfo: {
       paddingTop: theme.spacing(1),
@@ -64,7 +65,7 @@ type Props = {
 };
 export default function PollCard({ poll: viewModel }: Props) {
    const { poll } = viewModel;
-   const classes = useStyles();
+   const { classes } = useStyles();
    const dispatch = useDispatch();
    const { t } = useTranslation();
 
@@ -114,7 +115,7 @@ export default function PollCard({ poll: viewModel }: Props) {
             </div>
             {canOpenPoll && (
                <>
-                  <IconButton className={classes.moreIcon} onClick={handleToggleContextMenu}>
+                  <IconButton className={classes.moreIcon} onClick={handleToggleContextMenu} size="large">
                      <MoreVertIcon fontSize="small" />
                   </IconButton>
                   <PollContextMenu

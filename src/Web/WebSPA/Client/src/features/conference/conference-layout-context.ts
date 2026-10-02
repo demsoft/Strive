@@ -1,9 +1,9 @@
 import React from 'react';
 
 export type ConferenceLayoutContextType = {
-   sceneBarContainer?: React.ReactInstance | null;
+   sceneBarContainer?: HTMLElement | null;
    sceneBarWidth?: number;
-   chatContainer?: React.ReactInstance | null;
+   chatContainer?: HTMLElement | null;
    chatWidth: number;
 };
 

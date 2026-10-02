@@ -1,13 +1,13 @@
-import { Box, Grid, IconButton, makeStyles, Typography } from '@material-ui/core';
-import { FormatSize } from '@material-ui/icons';
-import clsx from 'classnames';
+import { Box, Grid, IconButton, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import { FormatSize } from '@mui/icons-material';
 import React, { useRef, useState } from 'react';
 import ToolIcon from './ToolIcon';
 import ToolPopper from './ToolPopper';
 
 const availableFontSizes = [12, 18, 24, 30, 36];
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    strokeButton: {
       height: '100%',
       width: 64,
@@ -23,7 +23,7 @@ type Props = {
 };
 
 export default function FontSizeTool({ value, onChange }: Props) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
 
    const [open, setOpen] = useState(false);
    const anchorEl = useRef(null);
@@ -41,14 +41,19 @@ export default function FontSizeTool({ value, onChange }: Props) {
          <ToolIcon icon={<FormatSize fontSize="small" />} ref={anchorEl} onClick={handleOpen} />
 
          <ToolPopper open={open} anchorEl={anchorEl.current} onClose={handleClose}>
-            <Box p={1}>
+            <Box
+               sx={{
+                  p: 1,
+               }}
+            >
                <Grid container>
                   {availableFontSizes.map((size) => (
-                     <Grid item key={size}>
+                     <Grid key={size}>
                         <IconButton
                            onClick={handleChange(size)}
-                           className={clsx(classes.strokeButton, value === size && classes.strokeButtonSelected)}
+                           className={cx(classes.strokeButton, value === size && classes.strokeButtonSelected)}
                            title={`${size}px`}
+                           size="large"
                         >
                            <Typography style={{ fontSize: size }}>A</Typography>
                         </IconButton>

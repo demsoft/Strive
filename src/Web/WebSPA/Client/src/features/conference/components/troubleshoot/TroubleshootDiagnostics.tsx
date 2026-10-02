@@ -1,4 +1,4 @@
-import { Box, Button, FormControlLabel, Switch } from '@material-ui/core';
+import { Box, Button, FormControlLabel, Switch } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -42,7 +42,11 @@ export default function TroubleshootDiagnostics({ expanded, onChange }: Props) {
                }
                label={t('conference.troubleshooting.diagnostics.enable_video_overlay')}
             />
-            <Box mt={2}>
+            <Box
+               sx={{
+                  mt: 2,
+               }}
+            >
                <Button onClick={handleShowDiagnostics} disabled={diagnosticsOpen} variant="contained" color="secondary">
                   {t('conference.troubleshooting.diagnostics.open_media_diagnostics')}
                </Button>

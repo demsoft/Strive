@@ -1,5 +1,5 @@
-import { useScrollTrigger } from '@material-ui/core';
-import { UseScrollTriggerOptions } from '@material-ui/core/useScrollTrigger/useScrollTrigger';
+import { useScrollTrigger } from '@mui/material';
+import { UseScrollTriggerOptions } from '@mui/material/useScrollTrigger/useScrollTrigger';
 
 export default function useBottomScrollTrigger(props: UseScrollTriggerOptions) {
    return useScrollTrigger({

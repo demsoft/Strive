@@ -1,6 +1,6 @@
-import { makeStyles, Typography } from '@material-ui/core';
-import { Skeleton } from '@material-ui/lab';
-import clsx from 'classnames';
+import { Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import { Skeleton } from '@mui/material';
 import emojiRegex from 'emoji-regex/RGI_Emoji';
 import Linkify from 'linkify-react';
 import { Opts } from 'linkifyjs';
@@ -14,7 +14,7 @@ import { Participant } from 'src/features/conference/types';
 import { RootState } from 'src/store';
 import { getParticipantColor } from '../utils';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       display: 'flex',
       flexDirection: 'column',
@@ -71,7 +71,7 @@ type Props = {
 };
 
 export default function ChatMessage({ message, participantColors }: Props) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
    const isEmoji = message && message.message.length <= 8 && onlyEmojisRegex.test(message.message);
    const sender = useSelector((state: RootState) => selectParticipant(state, message?.sender?.participantId));
 
@@ -94,7 +94,7 @@ export default function ChatMessage({ message, participantColors }: Props) {
                <Typography
                   variant="caption"
                   style={{ color: participantColor }}
-                  className={clsx(classes.senderText, {
+                  className={cx(classes.senderText, {
                      [classes.senderTextAnonymous]: isAnonymous,
                   })}
                >
@@ -111,7 +111,7 @@ export default function ChatMessage({ message, participantColors }: Props) {
                )}
             </Typography>
          </div>
-         <Typography variant="body1" className={clsx(classes.messageText, isEmoji && classes.emojiText)}>
+         <Typography variant="body1" className={cx(classes.messageText, isEmoji && classes.emojiText)}>
             <Linkify options={linifyOptions.current}>{message ? message.message : <Skeleton />}</Linkify>
          </Typography>
       </li>

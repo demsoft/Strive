@@ -1,4 +1,4 @@
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
 import { LayoutGroup } from 'framer-motion';
 import _ from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -14,7 +14,7 @@ import SceneSelector from './SceneSelector';
 
 const AUTO_HIDE_CONTROLS_DELAY_MS = 8000;
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    root: {
       width: '100%',
       height: '100%',
@@ -48,7 +48,7 @@ const getSceneAutoHideControls: (scene: Scene, participantId: string) => boolean
 };
 
 export default function SceneView() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const [contentRef, dimensions] = useThrottledResizeObserver(100);
 
    const sceneStack = useSelector(selectSceneStack);

@@ -1,4 +1,4 @@
-import { List, ListItem, ListItemIcon, ListItemText, ListSubheader, Typography } from '@material-ui/core';
+import { List, ListItem, ListItemIcon, ListItemText, ListSubheader, Typography } from '@mui/material';
 import { TFunction } from 'i18next';
 import { Microphone, MicrophoneOff, Monitor, MonitorOff, Video, VideoOff } from 'mdi-material-ui';
 import React from 'react';

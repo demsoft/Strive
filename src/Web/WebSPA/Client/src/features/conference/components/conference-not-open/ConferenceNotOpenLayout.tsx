@@ -1,5 +1,6 @@
-import { Box, Button, Checkbox, Container, FormControlLabel, IconButton, makeStyles } from '@material-ui/core';
-import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import { Box, Button, Checkbox, Container, FormControlLabel, IconButton } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,7 +9,7 @@ import { RootState } from 'src/store';
 import to from 'src/utils/to';
 import ConferenceOpenSound from './ConferenceOpenSound';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       height: '100%',
       position: 'relative',
@@ -26,7 +27,7 @@ const useStyles = makeStyles((theme) => ({
       top: theme.spacing(4),
       position: 'absolute',
 
-      [theme.breakpoints.down('md')]: {
+      [theme.breakpoints.down('lg')]: {
          right: theme.spacing(2),
          top: theme.spacing(2),
       },
@@ -36,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
       top: theme.spacing(4),
       position: 'absolute',
 
-      [theme.breakpoints.down('md')]: {
+      [theme.breakpoints.down('lg')]: {
          left: theme.spacing(2),
          top: theme.spacing(2),
       },
@@ -48,7 +49,7 @@ type Props = {
 };
 
 export default function ConferenceNotOpenLayout({ children }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const dispatch = useDispatch();
    const { t } = useTranslation();
 
@@ -64,11 +65,19 @@ export default function ConferenceNotOpenLayout({ children }: Props) {
             </Button>
          </div>
          <div className={classes.backButtonContainer}>
-            <IconButton {...to('/')} aria-label={t('common:back_to_start')}>
+            <IconButton {...to('/')} aria-label={t('common:back_to_start')} size="large">
                <ArrowBackIcon />
             </IconButton>
          </div>
-         <Box display="flex" flexDirection="row" position="absolute" left={32} bottom={32}>
+         <Box
+            sx={{
+               display: 'flex',
+               flexDirection: 'row',
+               position: 'absolute',
+               left: 32,
+               bottom: 32,
+            }}
+         >
             <FormControlLabel
                control={<Checkbox checked={Boolean(playSoundOnOpen)} />}
                onChange={(_, value) => dispatch(setPlaySoundOnOpen(value))}

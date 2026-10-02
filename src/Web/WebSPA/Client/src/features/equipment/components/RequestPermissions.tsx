@@ -1,8 +1,9 @@
-import { Button, makeStyles, Typography } from '@material-ui/core';
+import { Button, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    root: {
       width: '100%',
       height: '100%',
@@ -23,7 +24,7 @@ type Props = {
 };
 
 export default function RequestPermissions({ onPermissionsGranted }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
    const [error, setError] = useState(false);
 

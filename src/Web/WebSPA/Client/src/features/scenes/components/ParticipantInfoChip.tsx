@@ -1,6 +1,6 @@
-import { makeStyles, useTheme } from '@material-ui/core';
-import Chip, { ChipProps } from '@material-ui/core/Chip';
-import clsx from 'classnames';
+import { useTheme } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import Chip, { ChipProps } from '@mui/material/Chip';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import AnimatedMicIcon from 'src/assets/animated-icons/AnimatedMicIcon';
@@ -9,7 +9,7 @@ import { selectParticipantMicActivated } from 'src/features/media/selectors';
 import { ParticipantAudioInfo } from 'src/features/media/types';
 import { RootState } from 'src/store';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    chip: {
       padding: theme.spacing(0, 1),
       minWidth: 96,
@@ -36,14 +36,14 @@ type Props = ChipProps<any, { component: any }> & {
 };
 
 export default function ParticipantInfoChip({ className, participantId, participant, audioInfo, ...props }: Props) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
    const theme = useTheme();
    const micActivated = useSelector((state: RootState) => selectParticipantMicActivated(state, participantId));
 
    return (
       <Chip
          size="small"
-         className={clsx(classes.chip, className, {
+         className={cx(classes.chip, className, {
             [classes.chipSpeaking]: audioInfo?.speaking,
             [classes.chipMicDeactivated]: !micActivated,
          })}

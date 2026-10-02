@@ -1,10 +1,10 @@
-import { IconButton, makeStyles } from '@material-ui/core';
-import clsx from 'classnames';
+import { IconButton } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import { Delete } from 'mdi-material-ui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    iconButtonRipple: {
       color: theme.palette.error.main,
    },
@@ -24,15 +24,16 @@ export default function ClearWhiteboardButton({
    className,
    ...props
 }: React.ComponentProps<typeof IconButton>) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
    const { t } = useTranslation();
 
    return (
       <IconButton
-         className={clsx(className, classes.iconButton)}
+         className={cx(className, classes.iconButton)}
          TouchRippleProps={{ ...TouchRippleProps, className: classes.iconButtonRipple }}
          {...props}
          title={t('conference.whiteboard.toolbar.clear')}
+         size="large"
       >
          <Delete fontSize="small" />
       </IconButton>

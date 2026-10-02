@@ -1,4 +1,4 @@
-import { FormControl, Grid, InputLabel, TextField, Typography } from '@material-ui/core';
+import { FormControl, Grid, InputLabel, TextField, Typography } from '@mui/material';
 import React from 'react';
 import { Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +20,7 @@ export default function TagCloudInstructionForm({
       <div>
          <Typography variant="caption">{t('conference.poll.create_dialog.tag_cloud_description')}</Typography>
          <Grid container spacing={2} style={{ marginTop: 8 }}>
-            <Grid item xs={6}>
+            <Grid size={6}>
                <FormControl fullWidth>
                   <InputLabel id="poll-dialog-tag-cloud-mode-label">
                      {t('conference.poll.create_dialog.tag_cloud_mode')}
@@ -50,7 +50,7 @@ export default function TagCloudInstructionForm({
                </FormControl>
             </Grid>
             {showAdvanced && (
-               <Grid item xs={6}>
+               <Grid size={6}>
                   <TextField
                      type="number"
                      label={t('conference.poll.create_dialog.max')}
@@ -63,8 +63,10 @@ export default function TagCloudInstructionForm({
                         }),
                      )}
                      helperText={t('conference.poll.create_dialog.tag_cloud_max_helper')}
-                     inputProps={{ min: 1, step: 1 }}
                      error={Boolean((errors.instruction as any)?.maxTags)}
+                     slotProps={{
+                        htmlInput: { min: 1, step: 1 },
+                     }}
                   />
                </Grid>
             )}

@@ -1,4 +1,4 @@
-import { Box, TextField } from '@material-ui/core';
+import { Box, TextField } from '@mui/material';
 import React from 'react';
 import { Controller, UseFormReturn } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -33,8 +33,16 @@ export default function BreakoutRoomsForm({
 
    return (
       <div>
-         <Box mt={4}>
-            <Box display="flex">
+         <Box
+            sx={{
+               mt: 4,
+            }}
+         >
+            <Box
+               sx={{
+                  display: 'flex',
+               }}
+            >
                <TextField
                   {...wrapForInputRef(
                      register('amount', {
@@ -49,12 +57,14 @@ export default function BreakoutRoomsForm({
                   required
                   label={t('common:amount')}
                   autoFocus
-                  inputProps={{ min: 1, step: 1 }}
                   type="number"
                   error={!!errors.amount}
                   style={{ maxWidth: 80 }}
                   helperText={errors.amount?.message}
                   fullWidth
+                  slotProps={{
+                     htmlInput: { min: 1, step: 1 },
+                  }}
                />
                <TextField
                   {...wrapForInputRef(
@@ -67,12 +77,14 @@ export default function BreakoutRoomsForm({
                      }),
                   )}
                   label={t('conference.dialog_breakout_rooms.duration_in_minutes')}
-                  inputProps={{ min: 1, step: 1 }}
                   type="number"
                   error={!!errors.deadline}
                   style={{ maxWidth: 160, marginLeft: 16 }}
                   helperText={errors.deadline?.message}
                   fullWidth
+                  slotProps={{
+                     htmlInput: { min: 1, step: 1 },
+                  }}
                />
                <TextField
                   label={t('common:description')}
@@ -84,7 +96,12 @@ export default function BreakoutRoomsForm({
             </Box>
          </Box>
          {participants && (
-            <Box mt={3} height={300}>
+            <Box
+               sx={{
+                  mt: 3,
+                  height: 300,
+               }}
+            >
                <Controller
                   control={control}
                   name="assignedRooms"

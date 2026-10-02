@@ -1,8 +1,9 @@
-import { Box, CircularProgress, makeStyles, Typography } from '@material-ui/core';
+import { Box, CircularProgress, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       height: '100%',
       display: 'flex',
@@ -20,12 +21,18 @@ type Props = {
 };
 
 export default function ConferenceConnecting({ isReconnecting }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
    return (
       <div className={classes.root}>
-         <Box display="flex" flexDirection="row" alignItems="center">
+         <Box
+            sx={{
+               display: 'flex',
+               flexDirection: 'row',
+               alignItems: 'center',
+            }}
+         >
             <CircularProgress />
             <Typography className={classes.text}>
                {isReconnecting

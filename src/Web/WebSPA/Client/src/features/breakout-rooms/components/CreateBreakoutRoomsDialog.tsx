@@ -1,4 +1,4 @@
-import { Box, Button, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@material-ui/core';
+import { Box, Button, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { DateTime } from 'luxon';
 import React from 'react';
 import { useForm } from 'react-hook-form';
@@ -60,7 +60,11 @@ export default function CreateBreakoutRoomsDialog({ onClose }: Props) {
          <DialogContent>
             <DialogContentText>{t('conference.dialog_breakout_rooms.create_description')}</DialogContentText>
             <form onSubmit={handleSubmit(handleApplyForm)} id="breakout-room-dialog-form">
-               <Box mt={4}>
+               <Box
+                  sx={{
+                     mt: 4,
+                  }}
+               >
                   <BreakoutRoomsForm form={form} participants={participants} />
                </Box>
             </form>

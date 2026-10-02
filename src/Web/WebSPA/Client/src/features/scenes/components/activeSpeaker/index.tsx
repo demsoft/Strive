@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActiveSpeakerScene, AvailableSceneListItemProps, ScenePresenter } from '../../types';
 import SceneListItem from '../SceneListItem';
-import RecordVoiceOverIcon from '@material-ui/icons/RecordVoiceOver';
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import RenderActiveSpeaker from './RenderActiveSpeaker';
 import { useTranslation } from 'react-i18next';
 import allowOverwrite from '../../allow-overwrite-hoc';

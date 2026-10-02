@@ -1,6 +1,7 @@
-import { Divider, makeStyles, SvgIcon } from '@material-ui/core';
+import { Divider, SvgIcon } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import _ from 'lodash';
-import { CursorDefaultOutline, FormatText, HandRight, Minus, PencilOutline, Redo, Undo } from 'mdi-material-ui';
+import { CursorDefaultOutline, FormatText, HandBackRight, Minus, PencilOutline, Redo, Undo } from 'mdi-material-ui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import LineTool from '../tools/LineTool';
@@ -15,7 +16,7 @@ import LineWidthTool from './LineWidthTool';
 import ToolColorPicker from './ToolColorPicker';
 import ToolIcon from './ToolIcon';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       backgroundColor: theme.palette.background.paper,
       borderRadius: 24,
@@ -72,7 +73,7 @@ const tools: Tools = {
    },
    pan: {
       labelTranslationKey: 'conference.whiteboard.toolbar.pan',
-      Icon: HandRight,
+      Icon: HandBackRight,
       options: [],
       toolFactory: () => new PanTool(),
    },
@@ -111,7 +112,7 @@ export default function ToolsContainer({
    canRedo,
    onRedo,
 }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
    const requiredOptions = selectedTool ? tools[selectedTool].options : [];

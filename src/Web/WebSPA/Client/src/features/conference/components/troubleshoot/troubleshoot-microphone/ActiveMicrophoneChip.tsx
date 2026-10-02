@@ -1,4 +1,4 @@
-import { Chip } from '@material-ui/core';
+import { Chip } from '@mui/material';
 import { motion, useMotionTemplate } from 'framer-motion';
 import React from 'react';
 import { useSelector } from 'react-redux';

@@ -1,4 +1,4 @@
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
 import React, { useEffect, useRef, useState } from 'react';
 import '../fabric-style';
 import NoTool from '../tools/NoTool';
@@ -7,7 +7,7 @@ import WhiteboardController, { LiveUpdateHandler } from '../whiteboard-controlle
 import { WhiteboardToolOptions } from '../whiteboard-tool';
 import ToolsContainer, { getTool, ToolType } from './ToolsContainer';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    root: {
       display: 'flex',
       height: '100%',
@@ -54,7 +54,7 @@ export default function Whiteboard({
    participants,
    readOnly,
 }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const [selectedTool, setSelectedTool] = useState<ToolType | undefined>('select');
    const [options, setOptions] = useState<WhiteboardToolOptions>({ color: 'black', fontSize: 36, lineWidth: 5 });

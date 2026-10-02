@@ -1,5 +1,5 @@
 import { useReactOidc } from '@axa-fr/react-oidc-context';
-import { Link } from '@material-ui/core';
+import { Link } from '@mui/material';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';

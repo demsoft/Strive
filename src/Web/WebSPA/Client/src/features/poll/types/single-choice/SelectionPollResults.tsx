@@ -1,4 +1,4 @@
-import { useTheme } from '@material-ui/core';
+import { useTheme } from '@mui/material';
 import { ResponsiveBar } from '@nivo/bar';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,4 +1,5 @@
-import { makeStyles, Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import { scaleOrdinal } from 'd3-scale';
 import { schemeDark2 } from 'd3-scale-chromatic';
 import _ from 'lodash';
@@ -10,7 +11,7 @@ import 'tippy.js/animations/scale.css';
 import 'tippy.js/dist/tippy.css';
 import { PollResultsProps } from '../types';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    container: {
       display: 'flex',
       flexDirection: 'column',
@@ -30,7 +31,7 @@ const defaultColors = Array.from({ length: 23 /** prime */ })
    .map(scaleOrdinal(schemeDark2));
 
 export default function TagCloudResults({ viewModel }: PollResultsProps) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
    if (viewModel.results?.results.type !== 'tagCloud') return null;

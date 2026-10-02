@@ -1,12 +1,13 @@
-import { Fab, makeStyles } from '@material-ui/core';
-import AddIcon from '@material-ui/icons/Add';
+import { Fab } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import AddIcon from '@mui/icons-material/Add';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { openDialogToCreateAsync } from '../reducer';
 import CreateConferenceDialog from './CreateConferenceDialog';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    extendedIcon: {
       marginRight: theme.spacing(1),
    },
@@ -16,7 +17,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function ConferenceControls() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const dispatch = useDispatch();
    const { t } = useTranslation();
 

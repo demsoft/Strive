@@ -1,9 +1,10 @@
-import { Chip, makeStyles } from '@material-ui/core';
+import { Chip } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import useWebRtcHealth from '../troubleshoot/troubleshoot-connection/useWebRtcHealth';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    errorChip: {
       backgroundColor: theme.palette.error.main,
       color: theme.palette.error.contrastText,
@@ -12,7 +13,7 @@ const useStyles = makeStyles((theme) => ({
 
 export default function WebRtcStatusChip() {
    const { t } = useTranslation();
-   const classes = useStyles();
+   const { classes } = useStyles();
    const health = useWebRtcHealth();
 
    if (health.status !== 'error') return null;

@@ -1,5 +1,4 @@
-import { makeStyles } from '@material-ui/core';
-import clsx from 'classnames';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import * as coreHub from 'src/core-hub';
@@ -9,7 +8,7 @@ import useMyParticipantId from 'src/hooks/useMyParticipantId';
 import { selectRoomViewModels } from '../selectors';
 import RoomHeader from './RoomHeader';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       flex: 1,
       display: 'flex',
@@ -41,7 +40,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function RoomsList() {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
 
    const rooms = useSelector(selectRoomViewModels);
    const participants = useSelector(selectParticipants);
@@ -56,7 +55,7 @@ export default function RoomsList() {
             {rooms?.map((room) => (
                <div
                   key={room.roomId}
-                  className={clsx(classes.room, room.participants.length > 0 && classes.roomWithParticipants)}
+                  className={cx(classes.room, room.participants.length > 0 && classes.roomWithParticipants)}
                >
                   <RoomHeader
                      className={classes.roomHeader}

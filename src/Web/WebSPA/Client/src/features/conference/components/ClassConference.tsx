@@ -1,4 +1,5 @@
-import { Grid, makeStyles } from '@material-ui/core';
+import { Grid } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import AnnouncementOverlay from 'src/features/chat/components/AnnouncementOverlay';
@@ -23,7 +24,7 @@ const CHAT_DEFAULT_WIDTH = 320;
 // optimize for 16:9
 const defaultContentRatio: Size = { width: 16, height: 9 };
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       height: '100%',
       display: 'flex',
@@ -63,7 +64,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function ClassConference() {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const showChat = useSelector(selectShowChat);
 

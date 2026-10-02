@@ -1,16 +1,17 @@
 import React, { useMemo } from 'react';
 import { IncognitoCircle, Bullhorn } from 'mdi-material-ui';
-import { IconButton, makeStyles, Tooltip } from '@material-ui/core';
+import { IconButton, Tooltip } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import { ChatMessageOptions } from 'src/core-hub.types';
 import usePermission from 'src/hooks/usePermission';
 import { CHAT_CAN_SEND_ANNOUNCEMENT, CHAT_CAN_SEND_ANONYMOUSLY } from 'src/permissions';
 import { decode } from '../channel-serializer';
-import CloseIcon from '@material-ui/icons/Close';
+import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch } from 'react-redux';
 import { closePrivateChat } from '../reducer';
 import { useTranslation } from 'react-i18next';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       display: 'flex',
    },
@@ -30,7 +31,7 @@ type Props = {
 };
 
 export default function SendMessageOptions({ value, onChange, channel }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const dispatch = useDispatch();
    const { t } = useTranslation();
 
@@ -55,6 +56,7 @@ export default function SendMessageOptions({ value, onChange, channel }: Props) 
                   aria-label={t('conference.chat.options.close_private_chat')}
                   onClick={handleClosePrivateChat}
                   color="secondary"
+                  size="large"
                >
                   <CloseIcon />
                </IconButton>
@@ -67,6 +69,7 @@ export default function SendMessageOptions({ value, onChange, channel }: Props) 
                   aria-label={t('conference.chat.options.send_anonymously')}
                   className={selectIconButtonClass(value.isAnonymous)}
                   onClick={handleToggleAnonymous}
+                  size="large"
                >
                   <IncognitoCircle />
                </IconButton>
@@ -79,6 +82,7 @@ export default function SendMessageOptions({ value, onChange, channel }: Props) 
                   aria-label={t('conference.chat.options.send_announcement')}
                   className={selectIconButtonClass(value.isAnnouncement)}
                   onClick={handleToggleHighlighted}
+                  size="large"
                >
                   <Bullhorn />
                </IconButton>

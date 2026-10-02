@@ -4,15 +4,15 @@ import {
    DialogActions,
    Fab,
    LinearProgress,
-   makeStyles,
    Paper,
    Tab,
    Tabs,
    TextField,
    useTheme,
    Zoom,
-} from '@material-ui/core';
-import AddIcon from '@material-ui/icons/Add';
+} from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import AddIcon from '@mui/icons-material/Add';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +23,7 @@ import TabCommon from './TabCommon';
 import TabModerators from './TabModerators';
 import TabPermissions from './TabPermissions';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    form: {
       height: '100%',
       display: 'flex',
@@ -95,7 +95,7 @@ export default function CreateConferenceForm({
    mode,
    conferenceId,
 }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const theme = useTheme();
    const { t } = useTranslation();
 
@@ -125,8 +125,20 @@ export default function CreateConferenceForm({
 
    return (
       <form onSubmit={handleSubmit(patchConferenceData(onSubmit, defaultValues))} className={classes.form}>
-         <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
-            <Box mb={2} px={3}>
+         <Box
+            sx={{
+               display: 'flex',
+               flexDirection: 'column',
+               flex: 1,
+               minHeight: 0,
+            }}
+         >
+            <Box
+               sx={{
+                  mb: 2,
+                  px: 3,
+               }}
+            >
                <TextField
                   fullWidth
                   label={t('common:name')}
@@ -147,7 +159,13 @@ export default function CreateConferenceForm({
                   <Tab label={t('common:permissions')} {...a11yProps(2)} />
                </Tabs>
             </Paper>
-            <Box position="relative" flex={1} minHeight={0}>
+            <Box
+               sx={{
+                  position: 'relative',
+                  flex: 1,
+                  minHeight: 0,
+               }}
+            >
                <TabPanel value={currentTab} index={0} className={classes.tabPanel}>
                   <TabCommon form={form} />
                </TabPanel>

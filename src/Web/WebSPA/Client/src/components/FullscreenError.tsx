@@ -1,7 +1,8 @@
-import { makeStyles, Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    root: {
       height: '100%',
       width: '100%',
@@ -24,7 +25,7 @@ type Props = {
 };
 
 export default function FullscreenError({ message, children }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    return (
       <div className={classes.root}>

@@ -1,4 +1,5 @@
-import { Dialog, DialogContent, DialogTitle, makeStyles } from '@material-ui/core';
+import { Dialog, DialogContent, DialogTitle } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -7,7 +8,7 @@ import { selectTalkingStickQueue } from '../../selectors';
 import PassStickList from './PassStickList';
 import * as coreHub from 'src/core-hub';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    primaryAction: {
       minWidth: 220,
       padding: theme.spacing(0, 4),
@@ -17,7 +18,7 @@ const useStyles = makeStyles((theme) => ({
 export default function PassStickFab() {
    const { t } = useTranslation();
    const dispatch = useDispatch();
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const queue = useSelector(selectTalkingStickQueue);
 

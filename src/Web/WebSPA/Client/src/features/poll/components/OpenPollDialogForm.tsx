@@ -11,11 +11,11 @@ import {
    FormControlLabel,
    Grid,
    InputLabel,
-   makeStyles,
    Switch,
    TextField,
    Typography,
-} from '@material-ui/core';
+} from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React, { useEffect, useState } from 'react';
 import { Control, Controller, FieldPath, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -27,7 +27,7 @@ import { wrapForInputRef } from 'src/utils/reat-hook-form-utils';
 import getPresets from '../poll-presets';
 import pollTypes from '../types/register';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    divider: {
       margin: theme.spacing(1, 0),
    },
@@ -124,7 +124,7 @@ type Props = {
 };
 
 export default function OpenPollDialogForm({ open, onSubmit }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
    const presets = getPresets(t);
 
@@ -170,7 +170,7 @@ export default function OpenPollDialogForm({ open, onSubmit }: Props) {
             <Typography variant="caption">{t('conference.poll.create_dialog.presets.title')}:</Typography>
             <Grid container spacing={1}>
                {presets.map((x) => (
-                  <Grid item key={x.label}>
+                  <Grid key={x.label}>
                      <Chip label={x.label} size="small" onClick={() => handleApplyPreset(x.data)} />
                   </Grid>
                ))}
@@ -184,9 +184,13 @@ export default function OpenPollDialogForm({ open, onSubmit }: Props) {
                   fullWidth
                   {...wrapForInputRef(register('config.question'))}
                />
-               <Box mt={3}>
+               <Box
+                  sx={{
+                     mt: 3,
+                  }}
+               >
                   <Grid container spacing={4} style={{ width: '100%', margin: 0 }}>
-                     <Grid item xs={4}>
+                     <Grid size={4}>
                         <Box>
                            <FormControl fullWidth>
                               <InputLabel id="poll-dialog-select-mode-label">
@@ -212,7 +216,7 @@ export default function OpenPollDialogForm({ open, onSubmit }: Props) {
                            </FormControl>
                         </Box>
                      </Grid>
-                     <Grid item xs={8}>
+                     <Grid size={8}>
                         <InstructionForm form={form} showAdvanced={showAdvanced} />
                      </Grid>
                   </Grid>
@@ -222,7 +226,12 @@ export default function OpenPollDialogForm({ open, onSubmit }: Props) {
                         {t('conference.poll.create_dialog.advanced_options')}
                      </Typography>
                      <Grid container spacing={1}>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                           size={{
+                              xs: 12,
+                              sm: 6,
+                           }}
+                        >
                            <AdvancedOption
                               control={control}
                               label={t('conference.poll.create_dialog.advanced.anonymous_label')}
@@ -230,7 +239,12 @@ export default function OpenPollDialogForm({ open, onSubmit }: Props) {
                               name="config.isAnonymous"
                            />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                           size={{
+                              xs: 12,
+                              sm: 6,
+                           }}
+                        >
                            <AdvancedOption
                               control={control}
                               label={t('conference.poll.create_dialog.advanced.anwser_final_label')}
@@ -238,7 +252,12 @@ export default function OpenPollDialogForm({ open, onSubmit }: Props) {
                               name="config.isAnswerFinal"
                            />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                           size={{
+                              xs: 12,
+                              sm: 6,
+                           }}
+                        >
                            <AdvancedOption
                               control={control}
                               label={t('conference.poll.create_dialog.advanced.open_label')}
@@ -246,7 +265,12 @@ export default function OpenPollDialogForm({ open, onSubmit }: Props) {
                               name="initialState.isOpen"
                            />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                           size={{
+                              xs: 12,
+                              sm: 6,
+                           }}
+                        >
                            <AdvancedOption
                               control={control}
                               label={t('conference.poll.create_dialog.advanced.publish_results_label')}
@@ -254,7 +278,12 @@ export default function OpenPollDialogForm({ open, onSubmit }: Props) {
                               name="initialState.resultsPublished"
                            />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                           size={{
+                              xs: 12,
+                              sm: 6,
+                           }}
+                        >
                            <AdvancedOption
                               control={control}
                               label={t('conference.poll.create_dialog.advanced.global_label')}
