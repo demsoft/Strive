@@ -5,7 +5,9 @@ services:
     image: mongo
 
   rabbitmq:
-    image: masstransit/rabbitmq
+    image: masstransit/rabbitmq:4.3
+    volumes:
+      - "./rabbitmq.conf:/etc/rabbitmq/conf.d/20-strive.conf:ro"
 
   identity-api:
     image: ${DOCKER_REGISTRY-}identityapi
