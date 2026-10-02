@@ -9,6 +9,8 @@ namespace Strive.Hubs.Core
 
         public const string ChatMessage = "ChatMessage";
 
+        public const string OnReaction = "OnReaction";
+
         public const string OnEquipmentError = "OnEquipmentError";
         public const string OnWhiteboardLiveUpdate = "OnWhiteboardLiveUpdate";
 

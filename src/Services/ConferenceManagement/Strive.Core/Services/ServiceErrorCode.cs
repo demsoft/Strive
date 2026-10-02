@@ -23,6 +23,10 @@ namespace Strive.Core.Services
         Chat_InvalidChannel,
         Chat_PrivateMessagesDisabled,
 
+        // Reactions
+        Reactions_InvalidEmoji,
+        Reactions_RateLimited,
+
         // Permissions
         Permissions_PermissionKeyNotFound,
         Permissions_InvalidPermissionValueType,

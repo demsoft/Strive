@@ -31,6 +31,7 @@ using Strive.Core.Services.Permissions;
 using Strive.Core.Services.Permissions.Requests;
 using Strive.Core.Services.Permissions.Responses;
 using Strive.Core.Services.Poll.Requests;
+using Strive.Core.Services.Reactions.Requests;
 using Strive.Core.Services.Rooms;
 using Strive.Core.Services.Rooms.Requests;
 using Strive.Core.Services.Scenes;
@@ -197,6 +198,13 @@ namespace Strive.Hubs.Core
         public Task<SuccessOrError<Unit>> LowerHand()
         {
             return GetInvoker().Create(new LowerHandRequest(GetContextParticipant())).Send();
+        }
+
+        public Task<SuccessOrError<Unit>> SendReaction(SendReactionDto dto)
+        {
+            var participant = GetContextParticipant();
+            return GetInvoker().Create(new SendReactionRequest(participant, dto.Emoji)).ValidateObject(dto)
+                .RequirePermissions(DefinedPermissions.Reactions.CanSend).ConferenceMustBeOpen().Send();
         }
 
         public Task<SuccessOrError<Unit>> LowerParticipantsHand(LowerParticipantsHandDto dto)
