@@ -5,6 +5,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import AnimatedMicIcon from 'src/assets/animated-icons/AnimatedMicIcon';
 import { Participant } from 'src/features/conference/types';
+import { selectIsHandRaised } from 'src/features/hand-raise/selectors';
 import { selectParticipantMicActivated } from 'src/features/media/selectors';
 import { ParticipantAudioInfo } from 'src/features/media/types';
 import { RootState } from 'src/store';
@@ -38,6 +39,7 @@ type Props = ChipProps<any, { component: any }> & {
 export default function ParticipantInfoChip({ className, participantId, participant, audioInfo, ...props }: Props) {
    const { classes, cx } = useStyles();
    const theme = useTheme();
+   const handRaised = useSelector((state: RootState) => selectIsHandRaised(state, participantId));
    const micActivated = useSelector((state: RootState) => selectParticipantMicActivated(state, participantId));
 
    return (
@@ -48,7 +50,7 @@ export default function ParticipantInfoChip({ className, participantId, particip
             [classes.chipMicDeactivated]: !micActivated,
          })}
          classes={{ label: classes.chipLabel }}
-         label={participant?.displayName ?? participantId}
+         label={`${handRaised ? '✋ ' : ''}${participant?.displayName ?? participantId}`}
          variant="outlined"
          icon={<AnimatedMicIcon activated={micActivated} disabledColor={theme.palette.error.main} />}
          {...props}

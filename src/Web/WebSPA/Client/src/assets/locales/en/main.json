@@ -102,7 +102,8 @@
       "allow_screen": "allow screen sharing",
       "allow_webcam": "allow webcam",
       "allow_mic": "allow microphone",
-      "make_presenter": "Make Presenter"
+      "make_presenter": "Make Presenter",
+      "lower_hand": "Lower hand"
     },
     "notifications": {
       "kick": {
@@ -527,6 +528,14 @@
       },
       "allow_anyone": "Allow anyone to draw",
       "disallow_anyone": "Require permissions for drawing"
+    },
+    "hand_raise": {
+      "raise": "Raise hand",
+      "lower": "Lower hand",
+      "raised": "Hand raised"
+    },
+    "reactions": {
+      "send": "Send a reaction"
     }
   }
 }

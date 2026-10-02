@@ -17,6 +17,13 @@ export const CHAT_CAN_SEND_CHAT_MESSAGE: BoolPermission = { key: 'chat/canSendMe
 export const CHAT_CAN_SEND_ANONYMOUSLY: BoolPermission = { key: 'chat/canSendAnonymously', type: 'bool' };
 export const CHAT_CAN_SEND_ANNOUNCEMENT: BoolPermission = { key: 'chat/canSendAnnouncement', type: 'bool' };
 
+// Hand raise
+export const HAND_RAISE_CAN_RAISE: BoolPermission = { key: 'handRaise/canRaise', type: 'bool' };
+export const HAND_RAISE_CAN_LOWER_OTHERS: BoolPermission = { key: 'handRaise/canLowerOthers', type: 'bool' };
+
+// Reactions
+export const REACTIONS_CAN_SEND: BoolPermission = { key: 'reactions/canSend', type: 'bool' };
+
 // Media
 export const MEDIA_CAN_SHARE_AUDIO: BoolPermission = { key: 'media/canShareAudio', type: 'bool' };
 export const MEDIA_CAN_SHARE_SCREEN: BoolPermission = { key: 'media/canShareScreen', type: 'bool' };

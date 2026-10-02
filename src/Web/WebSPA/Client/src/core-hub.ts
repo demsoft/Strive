@@ -5,10 +5,12 @@ import {
    DeletePollDto,
    FetchChatMessagesDto,
    KickParticipantRequestDto,
+   LowerParticipantsHandDto,
    OpenBreakoutRoomsDto,
    RoomCreationInfo,
    SendChatMessageDto,
    SendEquipmentCommandDto,
+   SendReactionDto,
    SetTemporaryPermissionDto,
    SetUserIsTypingDto,
    SubmitPollAnswerDto,
@@ -47,6 +49,12 @@ export const getEquipmentToken = createHubFn('GetEquipmentToken');
 export const sendEquipmentCommand = createHubFn<SendEquipmentCommandDto>('SendEquipmentCommand');
 
 export const changeProducerSource = createHubFn<ChangeProducerSourceRequest>('ChangeParticipantProducer');
+
+export const raiseHand = createHubFn('RaiseHand');
+export const lowerHand = createHubFn('LowerHand');
+export const lowerParticipantsHand = createHubFn<LowerParticipantsHandDto>('LowerParticipantsHand');
+
+export const sendReaction = createHubFn<SendReactionDto>('SendReaction');
 
 export const fetchPermissions = createHubFn<string | null>('FetchPermissions');
 export const setTemporaryPermission = createHubFn<SetTemporaryPermissionDto>('SetTemporaryPermission');
@@ -90,4 +98,5 @@ export const events = {
    chatMessage: 'ChatMessage',
    onRequestDisconnect: 'OnRequestDisconnect',
    onEquipmentError: 'OnEquipmentError',
+   onReaction: 'OnReaction',
 };

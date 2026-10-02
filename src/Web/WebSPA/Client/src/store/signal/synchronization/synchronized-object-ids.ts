@@ -19,6 +19,12 @@ export const POLL = 'poll';
 export const POLL_RESULT = 'poll_result';
 export const POLL_ANSWERS = 'poll_answers';
 export const WHITEBOARDS = 'whiteboards';
+export const HAND_RAISES = 'handRaises';
+
+export type SynchronizedHandRaises = {
+   /** participant id -> iso timestamp of when the hand was raised */
+   raised: { [participantId: string]: string };
+};
 
 export type SynchronizedParticipants = {
    participants: { [participantId: string]: ParticipantData };

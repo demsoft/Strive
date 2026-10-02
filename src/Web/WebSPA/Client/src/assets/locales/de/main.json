@@ -310,7 +310,8 @@
       "open_private_chat": "Privaten Chat öffnen",
       "show_permissions": "Berechtigungen anzeigen",
       "unmute": "Stummschaltung aufheben",
-      "make_presenter": "Zum Präsentator machen"
+      "make_presenter": "Zum Präsentator machen",
+      "lower_hand": "Hand senken"
     },
     "scenes": {
       "actions": "Aktionen",
@@ -527,6 +528,14 @@
         "undo": "Rückgängig (Strg+Z)"
       },
       "whiteboard": "Whiteboard"
+    },
+    "hand_raise": {
+      "raise": "Hand heben",
+      "lower": "Hand senken",
+      "raised": "Hand gehoben"
+    },
+    "reactions": {
+      "send": "Reaktion senden"
     }
   }
 }

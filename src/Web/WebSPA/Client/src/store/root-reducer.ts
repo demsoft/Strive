@@ -7,9 +7,11 @@ import chat from '../features/chat/reducer';
 import conference from '../features/conference/reducer';
 import createConference from '../features/create-conference/reducer';
 import diagnostics from '../features/diagnostics/reducer';
+import handRaise from '../features/hand-raise/reducer';
 import equipment from '../features/equipment/reducer';
 import media from '../features/media/reducer';
 import poll from '../features/poll/reducer';
+import reactions from '../features/reactions/reducer';
 import rooms from '../features/rooms/reducer';
 import scenes from '../features/scenes/reducer';
 import settings from '../features/settings/reducer';
@@ -37,6 +39,8 @@ const rootReducer = combineReducers({
    diagnostics,
    poll,
    whiteboard,
+   handRaise,
+   reactions,
 });
 
 export default rootReducer;

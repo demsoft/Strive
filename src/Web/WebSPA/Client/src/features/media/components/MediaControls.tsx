@@ -12,7 +12,15 @@ import Debug from 'src/features/conference/components/troubleshoot/Troubleshooti
 import { selectIsDeviceAvailableFactory } from 'src/features/settings/selectors';
 import usePermission from 'src/hooks/usePermission';
 import useSelectorFactory from 'src/hooks/useSelectorFactory';
-import { MEDIA_CAN_SHARE_AUDIO, MEDIA_CAN_SHARE_SCREEN, MEDIA_CAN_SHARE_WEBCAM } from 'src/permissions';
+import HandRaiseFab from 'src/features/hand-raise/components/HandRaiseFab';
+import ReactionPicker from 'src/features/reactions/components/ReactionPicker';
+import {
+   HAND_RAISE_CAN_RAISE,
+   MEDIA_CAN_SHARE_AUDIO,
+   MEDIA_CAN_SHARE_SCREEN,
+   MEDIA_CAN_SHARE_WEBCAM,
+   REACTIONS_CAN_SEND,
+} from 'src/permissions';
 import { RootState } from 'src/store';
 import useMicrophone from 'src/store/webrtc/hooks/useMicrophone';
 import useScreen from 'src/store/webrtc/hooks/useScreen';
@@ -103,6 +111,8 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
    const canShareScreen = usePermission(MEDIA_CAN_SHARE_SCREEN);
    const canShareAudio = usePermission(MEDIA_CAN_SHARE_AUDIO);
    const canShareWebcam = usePermission(MEDIA_CAN_SHARE_WEBCAM);
+   const canRaiseHand = usePermission(HAND_RAISE_CAN_RAISE);
+   const canSendReaction = usePermission(REACTIONS_CAN_SEND);
 
    const [debugDialogOpen, setDebugDialogOpen] = useState(false);
 
@@ -151,6 +161,8 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
                   variants={item}
                />
             )}
+            {canRaiseHand && <HandRaiseFab className={classes.fab} variants={item} />}
+            {canSendReaction && <ReactionPicker className={classes.fab} variants={item} />}
          </div>
          <div className={classes.rightActions}>
             <Tooltip title={t('conference.troubleshooting.title')} arrow>

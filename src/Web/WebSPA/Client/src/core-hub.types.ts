@@ -32,6 +32,20 @@ export type ChatMessageSender = {
    meta: ParticipantMetadata;
 };
 
+export type LowerParticipantsHandDto = {
+   participantId: string;
+};
+
+export type SendReactionDto = {
+   emoji: string;
+};
+
+export type ReactionDto = {
+   participantId: string;
+   emoji: string;
+   timestamp: string;
+};
+
 export type SetUserIsTypingDto = {
    channel: string;
    isTyping: boolean;

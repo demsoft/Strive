@@ -3,6 +3,7 @@ import { LayoutGroup } from 'framer-motion';
 import _ from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
+import ReactionOverlay from 'src/features/reactions/components/ReactionOverlay';
 import MediaControls from 'src/features/media/components/MediaControls';
 import MediaControlsContext, { MediaControlsContextType } from 'src/features/media/media-controls-context';
 import useMyParticipantId from 'src/hooks/useMyParticipantId';
@@ -119,6 +120,7 @@ export default function SceneView() {
                   <SceneSelector className={classes.currentScene} dimensions={dimensions} sceneStack={sceneStack} />
                ) : null}
             </LayoutGroup>
+            <ReactionOverlay />
             <MediaControls className={classes.mediaControls} show={showControls} leftActionsRef={mediaLeftActionsRef} />
          </div>
       </MediaControlsContext.Provider>
