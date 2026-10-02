@@ -9,6 +9,19 @@ services:
     volumes:
       - "./rabbitmq.conf:/etc/rabbitmq/conf.d/20-strive.conf:ro"
 
+  coturn:
+    image: coturn/coturn:4.18.0
+    command:
+      - -c
+      - /etc/coturn/turnserver.conf
+      - --static-auth-secret=${TURN_SECRET}
+      - --realm=${TURN_REALM:-strive}
+      - --min-port=${TURN_MIN_PORT:-50000}
+      - --max-port=${TURN_MAX_PORT:-50199}
+    volumes:
+      - "./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro"
+    restart: unless-stopped
+
   identity-api:
     image: ${DOCKER_REGISTRY-}identityapi
     build: ./Services/Identity/Identity.API
@@ -28,6 +41,7 @@ services:
       - nosqldata
       - rabbitmq
       - identity-api
+      - coturn
 
   webspa:
     image: ${DOCKER_REGISTRY-}webspa

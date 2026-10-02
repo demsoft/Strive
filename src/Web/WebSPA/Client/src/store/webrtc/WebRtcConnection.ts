@@ -63,7 +63,7 @@ export class WebRtcConnection extends TypedEmitter<WebRtcConnectionEvents> {
    public consumerManager = new ConsumerManager();
    public consumerUsageControl = new ConsumerUsageControl(this);
 
-   constructor(private connection: HubConnection, private client: SfuClient) {
+   constructor(private connection: HubConnection, private client: SfuClient, private iceServers: RTCIceServer[]) {
       super();
       this.device = new Device();
 
@@ -220,7 +220,7 @@ export class WebRtcConnection extends TypedEmitter<WebRtcConnectionEvents> {
 
       const transport = this.device.createSendTransport({
          ...transportOptions.response,
-         iceServers: [],
+         iceServers: this.iceServers,
       });
 
       transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
@@ -277,7 +277,10 @@ export class WebRtcConnection extends TypedEmitter<WebRtcConnectionEvents> {
          throw new Error('Error creating receive transport.');
       }
 
-      const transport = this.device.createRecvTransport(transportOptions.response);
+      const transport = this.device.createRecvTransport({
+         ...transportOptions.response,
+         iceServers: this.iceServers,
+      });
 
       transport.on('connect', ({ dtlsParameters }, callback, errback) => {
          log('[Transport: %s] Attempt to connect local receive transport...', transport.id);

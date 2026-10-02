@@ -84,9 +84,17 @@ export type KickParticipantRequestDto = {
    participantId: string;
 };
 
+export type IceServerInfo = {
+   urls: string[];
+   username?: string;
+   credential?: string;
+};
+
 export type SfuConnectionInfo = {
    url: string;
    authToken: string;
+   /** STUN/TURN servers (e.g. to reach the SFU from behind a strict firewall), empty if none are configured */
+   iceServers: IceServerInfo[];
 };
 
 export type SendEquipmentCommandDto = {

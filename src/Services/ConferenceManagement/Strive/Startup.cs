@@ -106,6 +106,11 @@ namespace Strive
                 new SfuConnectionOptions(sfuOptions.UrlTemplate ??
                                          throw new ArgumentException("SFU url template not set."))));
 
+            // TURN (optional): relays media for participants that cannot reach the SFU directly
+            services.Configure<TurnOptions>(Configuration.GetSection("Turn"));
+            services.AddSingleton(TimeProvider.System);
+            services.AddSingleton<ITurnCredentialFactory, TurnCredentialFactory>();
+
             // SignalR
             // Since .NET 7, hub and API parameters are bound from DI if the container can resolve their type. Autofac
             // reports collection types (e.g. IReadOnlyList<T>) as resolvable, so client arguments would be injected

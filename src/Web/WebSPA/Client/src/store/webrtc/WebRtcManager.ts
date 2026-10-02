@@ -92,7 +92,7 @@ export class WebRtcManager extends TypedEmitter<WebRtcManagerEvents> {
 
       const client = new SfuClient(connectionInfo.response);
 
-      const connection = new WebRtcConnection(signalr, client);
+      const connection = new WebRtcConnection(signalr, client, connectionInfo.response.iceServers ?? []);
       const device = connection.device;
 
       const rtpResult = await client.getRouterCapabilities();
