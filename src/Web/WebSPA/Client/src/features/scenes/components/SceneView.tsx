@@ -1,5 +1,5 @@
-import { makeStyles } from '@material-ui/core';
-import { AnimateSharedLayout } from 'framer-motion';
+import { makeStyles } from 'tss-react/mui';
+import { LayoutGroup } from 'framer-motion';
 import _ from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -14,7 +14,7 @@ import SceneSelector from './SceneSelector';
 
 const AUTO_HIDE_CONTROLS_DELAY_MS = 8000;
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    root: {
       width: '100%',
       height: '100%',
@@ -48,7 +48,7 @@ const getSceneAutoHideControls: (scene: Scene, participantId: string) => boolean
 };
 
 export default function SceneView() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const [contentRef, dimensions] = useThrottledResizeObserver(100);
 
    const sceneStack = useSelector(selectSceneStack);
@@ -114,11 +114,11 @@ export default function SceneView() {
    return (
       <MediaControlsContext.Provider value={mediaControlsContextValue}>
          <div className={classes.root} ref={contentRef} onMouseMove={handleMouseMove} id="scene-view">
-            <AnimateSharedLayout>
+            <LayoutGroup>
                {dimensions && sceneStack ? (
                   <SceneSelector className={classes.currentScene} dimensions={dimensions} sceneStack={sceneStack} />
                ) : null}
-            </AnimateSharedLayout>
+            </LayoutGroup>
             <MediaControls className={classes.mediaControls} show={showControls} leftActionsRef={mediaLeftActionsRef} />
          </div>
       </MediaControlsContext.Provider>

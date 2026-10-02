@@ -2,19 +2,20 @@
 // See LICENSE in the project root for license information.
 
 
-using System;
 using System.Threading.Tasks;
-using Duende.IdentityServer;
+using System;
+using Duende.IdentityModel;
 using Duende.IdentityServer.Events;
 using Duende.IdentityServer.Extensions;
 using Duende.IdentityServer.Models;
 using Duende.IdentityServer.Services;
 using Duende.IdentityServer.Stores;
-using IdentityModel;
+using Duende.IdentityServer;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Identity.API.Quickstart.Account
 {
@@ -301,7 +302,9 @@ namespace Identity.API.Quickstart.Account
                 var idp = User.FindFirst(JwtClaimTypes.IdentityProvider)?.Value;
                 if (idp != null && idp != IdentityServerConstants.LocalIdentityProvider)
                 {
-                    var providerSupportsSignout = await HttpContext.GetSchemeSupportsSignOutAsync(idp);
+                    var handlerProvider = HttpContext.RequestServices.GetRequiredService<IAuthenticationHandlerProvider>();
+                    var handler = await handlerProvider.GetHandlerAsync(HttpContext, idp);
+                    var providerSupportsSignout = handler is IAuthenticationSignOutHandler;
                     if (providerSupportsSignout)
                     {
                         if (vm.LogoutId == null)

@@ -1,12 +1,12 @@
-import { IconButton, makeStyles, Paper, Typography } from '@material-ui/core';
+import { IconButton, Paper, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { ChatMessageDto } from 'src/core-hub.types';
 import { Bullhorn } from 'mdi-material-ui';
 import { motion, MotionProps } from 'framer-motion';
-import clsx from 'classnames';
-import CloseIcon from '@material-ui/icons/Close';
+import CloseIcon from '@mui/icons-material/Close';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       minWidth: '50vw',
       display: 'flex',
@@ -53,11 +53,11 @@ const paperProps: MotionProps = {
 };
 
 export default function AnnouncementCard({ message, className, onClose }: Props) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
 
    return (
       <Paper
-         className={clsx(classes.root, className)}
+         className={cx(classes.root, className)}
          component={motion.div as any}
          {...(paperProps as any)}
          elevation={5}
@@ -72,7 +72,7 @@ export default function AnnouncementCard({ message, className, onClose }: Props)
                {message.message}
             </Typography>
          </div>
-         <IconButton onClick={onClose}>
+         <IconButton onClick={onClose} size="large">
             <CloseIcon />
          </IconButton>
       </Paper>

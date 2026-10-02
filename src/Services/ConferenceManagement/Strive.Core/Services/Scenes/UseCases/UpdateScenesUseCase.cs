@@ -29,7 +29,7 @@ namespace Strive.Core.Services.Scenes.UseCases
             _sceneProviders = sceneProviders;
         }
 
-        public async Task<Unit> Handle(UpdateScenesRequest request, CancellationToken cancellationToken)
+        public async Task Handle(UpdateScenesRequest request, CancellationToken cancellationToken)
         {
             var (conferenceId, roomId) = request;
 
@@ -46,8 +46,6 @@ namespace Strive.Core.Services.Scenes.UseCases
 
             await _mediator.Send(
                 new UpdateSynchronizedObjectRequest(conferenceId, SynchronizedScene.SyncObjId(roomId)));
-
-            return Unit.Value;
         }
 
         private async Task ApplyScene(string conferenceId, string roomId, ActiveScene scene, SceneState currentState)

@@ -1,11 +1,12 @@
-import { makeStyles, Paper, Typography } from '@material-ui/core';
+import { Paper, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { selectParticipants } from 'src/features/conference/selectors';
 import { RootState } from 'src/store';
 import { selectPollResults } from '../selectors';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    paper: {
       padding: 8,
       maxWidth: 400,
@@ -19,7 +20,7 @@ type Props = {
 };
 
 export default function NivoTooltip(props: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    return (
       <Paper elevation={10} square className={classes.paper}>

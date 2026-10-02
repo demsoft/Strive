@@ -9,12 +9,12 @@ import {
    ListItemSecondaryAction,
    ListItemText,
    ListSubheader,
-   makeStyles,
-} from '@material-ui/core';
-import AddIcon from '@material-ui/icons/Add';
-import DeleteIcon from '@material-ui/icons/Delete';
-import PersonIcon from '@material-ui/icons/Person';
-import { Skeleton } from '@material-ui/lab';
+} from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import PersonIcon from '@mui/icons-material/Person';
+import { Skeleton } from '@mui/material';
 import React, { useEffect } from 'react';
 import { Controller, ControllerRenderProps, UseFormReturn } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -26,7 +26,9 @@ import { RootState } from 'src/store';
 import { ConferenceDataForm } from '../form';
 import { loadUserInfo } from '../reducer';
 
-const useStyles = makeStyles({
+import ListItemButton from '@mui/material/ListItemButton';
+
+const useStyles = makeStyles()({
    list: {
       height: '100%',
       minHeight: 0,
@@ -57,7 +59,7 @@ type ModeratorListProps = {
 function ModeratorList({ field: { value, onChange }, conferenceId }: ModeratorListProps) {
    const { t } = useTranslation();
    const dispatch = useDispatch();
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const userInfos = useSelector((state: RootState) => state.createConference.userInfo);
 
@@ -84,7 +86,7 @@ function ModeratorList({ field: { value, onChange }, conferenceId }: ModeratorLi
                return (
                   <ListItem key={id}>
                      <ListItemAvatar>
-                        <Skeleton variant="circle">
+                        <Skeleton variant="circular">
                            <Avatar />
                         </Skeleton>
                      </ListItemAvatar>
@@ -100,15 +102,17 @@ function ModeratorList({ field: { value, onChange }, conferenceId }: ModeratorLi
                      </Avatar>
                   </ListItemAvatar>
                   <ListItemText
-                     primaryTypographyProps={{ color: info.notFound ? 'error' : undefined }}
                      primary={
                         info.notFound
                            ? t('dialog_create_conference.tabs.moderators.error_user_not_found', { id: info.id })
                            : info.displayName
                      }
+                     slotProps={{
+                        primary: { color: info.notFound ? 'error' : undefined },
+                     }}
                   />
                   <ListItemSecondaryAction>
-                     <IconButton edge="end" aria-label="delete" onClick={() => handeDeleteUser(id)}>
+                     <IconButton edge="end" aria-label="delete" onClick={() => handeDeleteUser(id)} size="large">
                         <DeleteIcon />
                      </IconButton>
                   </ListItemSecondaryAction>
@@ -122,12 +126,12 @@ function ModeratorList({ field: { value, onChange }, conferenceId }: ModeratorLi
                   {t('dialog_create_conference.tabs.moderators.add_from_conference')}
                </ListSubheader>
                {participants.map(({ id, displayName }) => (
-                  <ListItem key={id} button dense onClick={handeAddUser(id)}>
+                  <ListItemButton key={id} dense onClick={handeAddUser(id)}>
                      <ListItemIcon>
                         <AddIcon />
                      </ListItemIcon>
                      <ListItemText primary={displayName} />
-                  </ListItem>
+                  </ListItemButton>
                ))}
             </>
          )}

@@ -1,4 +1,4 @@
-import { RouterOptions, WebRtcTransportOptions } from 'mediasoup/lib/types';
+import type { RouterOptions, WebRtcTransportOptions } from 'mediasoup/types';
 import MediaSoupWorkers from '../../media-soup-workers';
 import { ConferenceManagementClient } from '../synchronization/conference-management-client';
 import { ConferenceRepository } from '../synchronization/conference-repository';

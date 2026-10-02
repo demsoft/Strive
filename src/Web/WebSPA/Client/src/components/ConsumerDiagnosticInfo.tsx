@@ -1,9 +1,9 @@
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
 import { Consumer } from 'mediasoup-client/lib/Consumer';
 import React, { useEffect, useState } from 'react';
 import useConsumerStatusInfo from 'src/store/webrtc/hooks/useConsumerStatusInfo';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    root: {
       backgroundColor: 'rgba(0,0,0,0.4)',
       fontSize: 11,
@@ -18,7 +18,7 @@ type Props = {
 };
 
 export default function ConsumerDiagnosticInfo({ consumer, tileWidth, tileHeight }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const [videoWidth, setVideoWidth] = useState<number | undefined>();
    const [videoHeight, setVideoHeight] = useState<number | undefined>();

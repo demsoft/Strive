@@ -1,12 +1,12 @@
-import { ButtonBase, makeStyles, Typography } from '@material-ui/core';
-import { fade } from '@material-ui/core/styles';
-import clsx from 'classnames';
+import { ButtonBase, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import { alpha } from '@mui/material/styles';
 import CompassIcon from 'mdi-material-ui/CompassRose';
 import PoundIcon from 'mdi-material-ui/Pound';
 import React from 'react';
 import { RoomViewModel } from '../types';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles<void, 'selected'>()((theme, _params, classes) => ({
    root: {
       borderRadius: theme.shape.borderRadius,
       padding: theme.spacing(0, 1),
@@ -19,13 +19,13 @@ const useStyles = makeStyles((theme) => ({
       // transition: theme.transitions.create('background-color'),
       '&:hover': {
          textDecoration: 'none',
-         backgroundColor: fade(theme.palette.text.primary, 0.05),
+         backgroundColor: alpha(theme.palette.text.primary, 0.05),
       },
-      '&$selected': {
+      [`&.${classes.selected}`]: {
          color: theme.palette.action.active,
-         backgroundColor: fade(theme.palette.action.active, 0.06),
+         backgroundColor: alpha(theme.palette.action.active, 0.06),
          '&:hover': {
-            backgroundColor: fade(theme.palette.action.active, 0.15),
+            backgroundColor: alpha(theme.palette.action.active, 0.15),
          },
          '& + &': {
             borderLeft: 0,
@@ -36,7 +36,7 @@ const useStyles = makeStyles((theme) => ({
    /* Pseudo-class applied to the root element if `selected={true}`. */
    selected: {},
    rootSelected: {
-      backgroundColor: fade(theme.palette.text.primary, 0.1),
+      backgroundColor: alpha(theme.palette.text.primary, 0.1),
    },
    icon: {
       marginRight: 8,
@@ -61,10 +61,10 @@ type Props = {
 };
 
 export default function RoomHeader({ room: { displayName, isDefaultRoom }, selected, onClick, className }: Props) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
    return (
       <ButtonBase
-         className={clsx([classes.root, className, { [classes.selected]: selected }])}
+         className={cx([classes.root, className, { [classes.selected]: selected }])}
          onClick={selected ? undefined : onClick}
          aria-pressed={selected}
       >

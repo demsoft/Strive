@@ -1,4 +1,5 @@
-import { Box, makeStyles, Mark, Slider, Typography } from '@material-ui/core';
+import { Box, Slider, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -11,7 +12,7 @@ import { selectAvailableInputDevicesFactory } from '../selectors';
 import AudioSettingsTest from './AudioSettingsTest';
 import DeviceSelector from './DeviceSelector';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       width: '100%',
       padding: theme.spacing(3),
@@ -22,7 +23,7 @@ const useStyles = makeStyles((theme) => ({
    },
 }));
 
-const marks: Mark[] = [
+const marks: { value: number; label: string }[] = [
    { value: 1, label: '0%' },
    { value: 0, label: '-100%' },
    { value: 2, label: '100%' },
@@ -30,13 +31,13 @@ const marks: Mark[] = [
 ];
 
 export default function AudioSettings() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
    const audioGain = useSelector((state: RootState) => state.settings.obj.mic.audioGain);
    const audioDevice = useSelector((state: RootState) => state.settings.obj.mic.device);
    const dispatch = useDispatch();
 
-   const handleChangeGain = (_: React.ChangeEvent<unknown>, value: number | number[]) => {
+   const handleChangeGain = (_: Event, value: number | number[]) => {
       dispatch(setAudioGain(value as number));
    };
 
@@ -54,7 +55,11 @@ export default function AudioSettings() {
             selectedDevice={audioDevice}
             onChange={(device) => dispatch(setCurrentDevice({ device, source: 'mic' }))}
          />
-         <Box mt={4}>
+         <Box
+            sx={{
+               mt: 4,
+            }}
+         >
             <Typography variant="h6" gutterBottom>
                {t('conference.settings.audio.gain')}
             </Typography>
@@ -71,7 +76,11 @@ export default function AudioSettings() {
                />
             </div>
          </Box>
-         <Box mt={4}>
+         <Box
+            sx={{
+               mt: 4,
+            }}
+         >
             <ErrorWrapper
                failed={webrtcState !== 'connected'}
                error={t('conference.settings.webrtc_not_connected_error')}

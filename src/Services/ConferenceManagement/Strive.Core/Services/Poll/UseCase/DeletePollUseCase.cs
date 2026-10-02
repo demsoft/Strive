@@ -19,12 +19,12 @@ namespace Strive.Core.Services.Poll.UseCase
             _mediator = mediator;
         }
 
-        public async Task<Unit> Handle(DeletePollRequest request, CancellationToken cancellationToken)
+        public async Task Handle(DeletePollRequest request, CancellationToken cancellationToken)
         {
             var (conferenceId, pollId) = request;
 
             var poll = await _repository.GetPoll(conferenceId, pollId);
-            if (poll == null) return Unit.Value;
+            if (poll == null) return;
 
             await _repository.DeletePollAndState(conferenceId, pollId);
             var deletedAnswers = await _repository.DeletePollAnswers(conferenceId, pollId);
@@ -37,8 +37,6 @@ namespace Strive.Core.Services.Poll.UseCase
                 await _mediator.Send(new UpdateSynchronizedObjectRequest(conferenceId,
                     SynchronizedPollAnswers.SyncObjId(participantId)));
             }
-
-            return Unit.Value;
         }
     }
 }

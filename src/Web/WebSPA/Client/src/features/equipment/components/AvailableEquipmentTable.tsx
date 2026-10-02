@@ -1,10 +1,10 @@
-import { List, ListItem, ListItemIcon, ListItemText, ListSubheader } from '@material-ui/core';
+import { List, ListItem, ListItemIcon, ListItemText, ListSubheader } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from 'src/store';
-import VideocamIcon from '@material-ui/icons/Videocam';
-import MicIcon from '@material-ui/icons/Mic';
-import DesktopWindowsIcon from '@material-ui/icons/DesktopWindows';
+import VideocamIcon from '@mui/icons-material/Videocam';
+import MicIcon from '@mui/icons-material/Mic';
+import DesktopWindowsIcon from '@mui/icons-material/DesktopWindows';
 import { useTranslation } from 'react-i18next';
 
 export default function AvailableEquipmentTable() {

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using FluentValidation;
 using FluentValidation.AspNetCore;
 using MassTransit;
 using MediatR;
@@ -20,6 +20,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MongoDB.Driver;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
@@ -74,7 +75,7 @@ namespace Strive
             services.AddLogging();
 
             // Authentication
-            var authOptions = Configuration.GetSection("Authentication").Get<AuthOptions>();
+            var authOptions = Configuration.GetRequired<AuthOptions>("Authentication");
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
                 JwtBearerDefaults.AuthenticationScheme, options =>
                 {
@@ -88,7 +89,7 @@ namespace Strive
                 });
             services.AddSingleton<IAuthorizationHandler, UserIsModeratorOfConferenceHandler>();
 
-            var sfuOptions = Configuration.GetSection("SFU").Get<SfuOptions>();
+            var sfuOptions = Configuration.GetRequired<SfuOptions>("SFU");
             var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(sfuOptions.TokenSecret ??
                                                                               throw new ArgumentException(
                                                                                   "SFU token secret not set")));
@@ -105,26 +106,33 @@ namespace Strive
                 new SfuConnectionOptions(sfuOptions.UrlTemplate ??
                                          throw new ArgumentException("SFU url template not set."))));
 
+            // TURN (optional): relays media for participants that cannot reach the SFU directly
+            services.Configure<TurnOptions>(Configuration.GetSection("Turn"));
+            services.AddSingleton(TimeProvider.System);
+            services.AddSingleton<ITurnCredentialFactory, TurnCredentialFactory>();
+
             // SignalR
-            services.AddSignalR().AddNewtonsoftJsonProtocol(options =>
+            // Since .NET 7, hub and API parameters are bound from DI if the container can resolve their type. Autofac
+            // reports collection types (e.g. IReadOnlyList<T>) as resolvable, so client arguments would be injected
+            // instead. All injected parameters use [FromServices] explicitly.
+            services.AddSignalR(options => options.DisableImplicitFromServicesParameters = true)
+                .AddNewtonsoftJsonProtocol(options => { JsonConfig.Apply(options.PayloadSerializerSettings); });
+
+            services.AddMvc().ConfigureApiBehaviorOptions(options =>
                 {
-                    JsonConfig.Apply(options.PayloadSerializerSettings);
-                });
+                    options.UseInvalidModelStateToError();
+                    options.DisableImplicitFromServicesParameters = true;
+                })
+                .AddNewtonsoftJson(options => { JsonConfig.Apply(options.SerializerSettings); });
 
-            services.AddMvc().ConfigureApiBehaviorOptions(options => options.UseInvalidModelStateToError())
-                .AddFluentValidation(fv =>
-                    fv.RegisterValidatorsFromAssemblyContaining<Startup>()
-                        .RegisterValidatorsFromAssemblyContaining<CoreModule>()).AddNewtonsoftJson(options =>
-                    {
-                        JsonConfig.Apply(options.SerializerSettings);
-                    });
-
-            services.AddAutoMapper(Assembly.GetExecutingAssembly(), typeof(CoreModule).Assembly);
+            services.AddFluentValidationAutoValidation();
+            services.AddValidatorsFromAssemblyContaining<Startup>();
+            services.AddValidatorsFromAssemblyContaining<CoreModule>();
 
             var healthChecks = services.AddHealthChecks();
 
             // KeyValueDatabase
-            var keyValueOptions = Configuration.GetSection("KeyValueDatabase").Get<KeyValueDatabaseConfig>();
+            var keyValueOptions = Configuration.GetRequired<KeyValueDatabaseConfig>("KeyValueDatabase");
             if (keyValueOptions.UseInMemory)
             {
                 services.AddSingleton<IKeyValueDatabase, InMemoryKeyValueDatabase>(services =>
@@ -138,15 +146,17 @@ namespace Strive
                 services.AddSingleton(s => s.GetRequiredService<IRedisDatabase>().Database);
                 services.AddSingleton<IKeyValueDatabase, RedisKeyValueDatabase>();
 
-                healthChecks.AddRedis(config.ConnectionString);
+                // reuse the application's connection, the configuration may use Hosts instead of a connection string
+                healthChecks.AddRedis(s => s.GetRequiredService<IRedisDatabase>().Database.Multiplexer);
             }
 
             // MongoDb
             services.Configure<MongoDbOptions>(Configuration.GetSection("MongoDb"));
             services.AddHostedService<MongoDbBuilder>();
 
-            var mongoOptions = Configuration.GetSection("MongoDb").Get<MongoDbOptions>();
-            healthChecks.AddMongoDb(mongoOptions.ConnectionString);
+            var mongoOptions = Configuration.GetRequired<MongoDbOptions>("MongoDb");
+            var healthCheckMongoClient = new MongoClient(mongoOptions.ConnectionString);
+            healthChecks.AddMongoDb(_ => healthCheckMongoClient);
 
             services.Configure<HealthCheckPublisherOptions>(options =>
             {
@@ -157,7 +167,7 @@ namespace Strive
             services.Configure<SfuOptions>(Configuration.GetSection("SFU"));
             services.Configure<RabbitMqOptions>(Configuration.GetSection("RabbitMq"));
 
-            var rabbitMqOptions = Configuration.GetSection("RabbitMq").Get<RabbitMqOptions>();
+            var rabbitMqOptions = Configuration.GetRequired<RabbitMqOptions>("RabbitMq");
 
             services.AddMassTransit(config =>
             {
@@ -171,6 +181,10 @@ namespace Strive
                     config.AddMessageScheduler(schedulerEndpoint);
                     config.UsingInMemory((context, configurator) =>
                     {
+                        // MassTransit 8 defaults to System.Text.Json, keep Newtonsoft as in MassTransit 7
+                        configurator.UseNewtonsoftJsonSerializer();
+                        configurator.UseNewtonsoftJsonDeserializer();
+
                         configurator.UseInMemoryScheduler("scheduler");
                         configurator.ConfigureEndpoints(context);
 
@@ -199,11 +213,14 @@ namespace Strive
                         {
                             e.Durable = false;
 
-                            e.Consumer<StreamsUpdatedConsumer>(context);
-                            e.Consumer<NotifyConnectionConsumer>(context);
+                            e.ConfigureConsumer<StreamsUpdatedConsumer>(context);
+                            e.ConfigureConsumer<NotifyConnectionConsumer>(context);
                         });
 
-                        configurator.ConfigureJsonSerializer(jsonConfig =>
+                        // the SFU parses these messages, so keep the Newtonsoft wire format from MassTransit 7
+                        configurator.UseNewtonsoftJsonSerializer();
+                        configurator.UseNewtonsoftJsonDeserializer();
+                        configurator.ConfigureNewtonsoftJsonSerializer(jsonConfig =>
                         {
                             jsonConfig.DefaultValueHandling = DefaultValueHandling.Include;
                             JsonConfig.Apply(jsonConfig);
@@ -212,7 +229,6 @@ namespace Strive
                     });
                 }
             });
-            services.AddMassTransitHostedService();
             services.AddMediator();
 
             // Swagger
@@ -233,7 +249,8 @@ namespace Strive
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement {{scheme, new List<string>()}});
             });
 
-            services.AddMediatR(typeof(Startup), typeof(CoreModule));
+            services.AddMediatR(config =>
+                config.RegisterServicesFromAssemblies(typeof(Startup).Assembly, typeof(CoreModule).Assembly));
 
             if (Environment.IsDevelopment())
                 services.AddCors(options =>

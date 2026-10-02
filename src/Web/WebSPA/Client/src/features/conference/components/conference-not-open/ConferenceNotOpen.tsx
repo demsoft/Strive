@@ -1,4 +1,5 @@
-import { Box, makeStyles, Typography, useTheme } from '@material-ui/core';
+import { Box, Typography, useTheme } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import _ from 'lodash';
 import { DateTime } from 'luxon';
 import React from 'react';
@@ -8,7 +9,7 @@ import { SynchronizedConferenceInfo } from 'src/store/signal/synchronization/syn
 import { selectParticipantList } from '../../selectors';
 import ConferenceNotOpenLayout from './ConferenceNotOpenLayout';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       height: '100%',
       position: 'relative',
@@ -71,7 +72,7 @@ type Props = {
 };
 
 export default function ConferenceNotOpen({ conferenceInfo }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const theme = useTheme();
    const { t } = useTranslation();
    const participants = useSelector(selectParticipantList);
@@ -96,7 +97,11 @@ export default function ConferenceNotOpen({ conferenceInfo }: Props) {
                   )}
                </Typography>
             )}
-            <Box mt={6}>
+            <Box
+               sx={{
+                  mt: 6,
+               }}
+            >
                <Typography color="textSecondary" align="center">
                   {t('conference_not_open.you_dont_need_to_refresh')}
                </Typography>

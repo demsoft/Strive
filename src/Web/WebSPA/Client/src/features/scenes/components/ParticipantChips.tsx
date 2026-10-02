@@ -1,5 +1,4 @@
-import { makeStyles } from '@material-ui/core';
-import clsx from 'classnames';
+import { makeStyles } from 'tss-react/mui';
 import { AnimatePresence, motion, MotionProps } from 'framer-motion';
 import React from 'react';
 import { useSelector } from 'react-redux';
@@ -7,7 +6,7 @@ import { selectParticipants } from 'src/features/conference/selectors';
 import { selectParticipantAudio } from 'src/features/media/selectors';
 import ParticipantInfoChip from './ParticipantInfoChip';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       display: 'flex',
       justifyContent: 'flex-end',
@@ -36,10 +35,10 @@ type Props = {
 export default function ParticipantChips({ participantIds, className }: Props) {
    const participants = useSelector(selectParticipants);
    const audioInfo = useSelector(selectParticipantAudio);
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
 
    return (
-      <div className={clsx(className, classes.root)}>
+      <div className={cx(className, classes.root)}>
          <AnimatePresence>
             {participantIds.map((participantId, i) => (
                <ParticipantInfoChip

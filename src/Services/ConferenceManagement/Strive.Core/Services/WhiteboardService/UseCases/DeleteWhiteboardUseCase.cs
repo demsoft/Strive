@@ -19,7 +19,7 @@ namespace Strive.Core.Services.WhiteboardService.UseCases
             _repository = repository;
         }
 
-        public async Task<Unit> Handle(DeleteWhiteboardRequest request, CancellationToken cancellationToken)
+        public async Task Handle(DeleteWhiteboardRequest request, CancellationToken cancellationToken)
         {
             var (conferenceId, roomId, whiteboardId) = request;
 
@@ -34,8 +34,6 @@ namespace Strive.Core.Services.WhiteboardService.UseCases
 
             await _mediator.Send(new UpdateSynchronizedObjectRequest(conferenceId,
                 SynchronizedWhiteboards.SyncObjId(roomId)));
-
-            return Unit.Value;
         }
     }
 }

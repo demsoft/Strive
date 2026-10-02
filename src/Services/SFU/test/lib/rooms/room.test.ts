@@ -5,7 +5,6 @@ import { MEDIA_CAN_SHARE_AUDIO, MEDIA_CAN_SHARE_WEBCAM, Permission } from '../..
 import Room from '../../../src/lib/rooms/room';
 import { ConferenceRepository } from '../../../src/lib/synchronization/conference-repository';
 import { ConferenceInfo, ProducerLink } from '../../../src/lib/types';
-import fromEntries from 'object.fromentries';
 
 const createConferenceRepoMock = (conference: ConferenceInfo): ConferenceRepository => {
    return { getConference: jest.fn().mockReturnValue(conference) } as any;
@@ -29,7 +28,7 @@ const createProducer = (id: string) => ({ producer: { id } } as any as ProducerL
 
 const conferenceWithPermissions = (participantId: string, ...permissions: Permission<boolean>[]): ConferenceInfo => ({
    ...emptyConference,
-   participantPermissions: new Map().set(participantId, fromEntries(permissions.map((x) => [x.key, true]))),
+   participantPermissions: new Map().set(participantId, Object.fromEntries(permissions.map((x) => [x.key, true]))),
 });
 
 const emptyConference: ConferenceInfo = { participantPermissions: new Map(), participantToRoom: new Map() };

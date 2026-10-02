@@ -1,4 +1,4 @@
-import { Portal } from '@material-ui/core';
+import { Portal } from '@mui/material';
 import React, { useContext, useMemo } from 'react';
 import ConferenceLayoutContext from 'src/features/conference/conference-layout-context';
 import { Participant } from 'src/features/conference/types';

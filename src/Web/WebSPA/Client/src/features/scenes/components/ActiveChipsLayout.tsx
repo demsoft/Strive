@@ -1,11 +1,10 @@
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import ActiveParticipantsChips from './ActiveParticipantsChips';
-import clsx from 'classnames';
 
 export const ACTIVE_CHIPS_LAYOUT_HEIGHT = 40;
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       display: 'flex',
       flexDirection: 'column',
@@ -30,12 +29,12 @@ type Props = {
 };
 
 export default function ActiveChipsLayout({ children, className, style, contentClassName }: Props) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
 
    return (
-      <div className={clsx(classes.root, className)} style={style}>
+      <div className={cx(classes.root, className)} style={style}>
          <ActiveParticipantsChips className={classes.chips} />
-         <div className={clsx(classes.content, contentClassName)}>{children}</div>
+         <div className={cx(classes.content, contentClassName)}>{children}</div>
       </div>
    );
 }

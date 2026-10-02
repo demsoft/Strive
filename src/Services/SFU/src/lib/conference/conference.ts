@@ -1,6 +1,6 @@
 import _ from 'lodash';
-import { Router } from 'mediasoup/lib/Router';
-import { Consumer, MediaKind, Producer, RtpCapabilities, WebRtcTransportOptions } from 'mediasoup/lib/types';
+import type { Router } from 'mediasoup/types';
+import type { Consumer, MediaKind, Producer, RtpCapabilities, WebRtcTransportOptions } from 'mediasoup/types';
 import { SuccessOrError } from '../../common-types';
 import * as errors from '../../errors';
 import Logger from '../../utils/logger';
@@ -57,7 +57,6 @@ export class Conference {
    public async addConnection(request: InitializeConnectionRequest): Promise<void> {
       const connection = new Connection(
          request.rtpCapabilities,
-         request.sctpCapabilities,
          request.connectionId,
          request.participantId,
       );
@@ -273,7 +272,7 @@ export class Conference {
       const transport = connection.transport.get(transportId);
       if (!transport) return { success: false, error: errors.transportNotFound(transportId) };
 
-      const source: ProducerSource = appData.source;
+      const source = appData?.source as ProducerSource;
       if (!this.verifyProducerSource(kind, source))
          return { success: false, error: errors.invalidProducerKind(source, kind) };
 
@@ -325,7 +324,7 @@ export class Conference {
     * Initialize a new transport
     */
    public async createTransport(
-      { sctpCapabilities, forceTcp, producing, consuming }: CreateTransportRequest,
+      { forceTcp, producing, consuming }: CreateTransportRequest,
       connectionId: string,
    ): Promise<SuccessOrError<CreateTransportResponse>> {
       const connection = this.connections.get(connectionId);
@@ -338,8 +337,6 @@ export class Conference {
 
       const webRtcTransportOptions: WebRtcTransportOptions = {
          ...this.options,
-         enableSctp: Boolean(sctpCapabilities),
-         numSctpStreams: sctpCapabilities?.numStreams,
          appData: { producing, consuming },
       };
 

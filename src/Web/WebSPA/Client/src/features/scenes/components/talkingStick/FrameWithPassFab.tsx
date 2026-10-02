@@ -1,4 +1,4 @@
-import { Fab, Grid, Portal } from '@material-ui/core';
+import { Fab, Grid, Portal } from '@mui/material';
 import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -32,26 +32,26 @@ export default function FrameWithPassFab({ children }: FrameProps) {
       <div>
          <Portal container={mediaContext.leftControlsContainer}>
             {canPass && (
-               <Grid item>
+               <Grid>
                   <PassStickFab />
                </Grid>
             )}
             {isPresenter && (
-               <Grid item>
+               <Grid>
                   <Fab variant="extended" color="secondary" onClick={handleReturnStick}>
-                     {t<string>('conference.scenes.talking_stick_modes.return_stick')}
+                     {t('conference.scenes.talking_stick_modes.return_stick')}
                   </Fab>
                </Grid>
             )}
             {!isPresenter && !canPass && (
-               <Grid item>
+               <Grid>
                   <AddToListFab />
                </Grid>
             )}
             {canTake && !isPresenter && (
-               <Grid item>
+               <Grid>
                   <Fab variant="extended" color="primary" onClick={handleTake}>
-                     {t<string>('conference.scenes.talking_stick_modes.take_stick')}
+                     {t('conference.scenes.talking_stick_modes.take_stick')}
                   </Fab>
                </Grid>
             )}

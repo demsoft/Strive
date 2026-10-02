@@ -1,4 +1,4 @@
-import { Grid, Typography, Box } from '@material-ui/core';
+import { Grid, Typography, Box } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import StatusChip from '../StatusChip';
@@ -34,7 +34,7 @@ export default function DetailedErrorStatus({ health: { connection, connector } 
    return (
       <div>
          <Grid container spacing={2}>
-            <Grid item>
+            <Grid>
                <StatusChip
                   status={connection.receiveTransport.status}
                   label={t(`${webRtcNamespace}.transport_${connection.receiveTransport.transportState}.message`, {
@@ -42,7 +42,7 @@ export default function DetailedErrorStatus({ health: { connection, connector } 
                   })}
                />
             </Grid>
-            <Grid item>
+            <Grid>
                <StatusChip
                   status={connection.sendTransport.status}
                   label={t(`${webRtcNamespace}.transport_${connection.sendTransport.transportState}.message`, {
@@ -51,7 +51,11 @@ export default function DetailedErrorStatus({ health: { connection, connector } 
                />
             </Grid>
          </Grid>
-         <Box mt={2}>
+         <Box
+            sx={{
+               mt: 2,
+            }}
+         >
             {connection.receiveTransport.transportState === 'new' &&
                connection.sendTransport.transportState === 'new' && (
                   <Typography>{t(`${webRtcNamespace}.transport_new.desc`)}</Typography>

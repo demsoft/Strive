@@ -44,7 +44,8 @@ namespace Strive.IntegrationTests
 
         protected override IWebHostBuilder CreateWebHostBuilder()
         {
-            return base.CreateWebHostBuilder().UseSerilog(GetLoggerConfig().CreateLogger());
+            return base.CreateWebHostBuilder().ConfigureServices(services =>
+                services.AddSerilog(GetLoggerConfig().CreateLogger(), true));
         }
 
         private LoggerConfiguration GetLoggerConfig()

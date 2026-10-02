@@ -1,5 +1,5 @@
-import { makeStyles, Portal } from '@material-ui/core';
-import clsx from 'classnames';
+import { Portal } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React, { useContext, useMemo } from 'react';
 import ConferenceLayoutContext from 'src/features/conference/conference-layout-context';
 import { Participant } from 'src/features/conference/types';
@@ -10,7 +10,7 @@ import TilesBarLayoutRow from './TilesBarLayoutRow';
 
 const MARGIN_HORIZONTAL = 8;
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    root: {
       width: '100%',
       height: '100%',
@@ -35,7 +35,7 @@ type Props = {
 
 export default function TilesBarLayout({ participants, sceneSize, children, className }: Props) {
    const context = useContext(ConferenceLayoutContext);
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
 
    const sceneBarWidth = context.sceneBarWidth;
 
@@ -88,7 +88,7 @@ export default function TilesBarLayout({ participants, sceneSize, children, clas
    }
 
    return (
-      <div className={clsx(className, classes.root)}>
+      <div className={cx(className, classes.root)}>
          {instructions && (
             <TilesBarLayoutRow
                marginHorizontal={MARGIN_HORIZONTAL}

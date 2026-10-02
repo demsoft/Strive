@@ -1,9 +1,9 @@
-import { IconButton, makeStyles } from '@material-ui/core';
-import clsx from 'classnames';
+import { IconButton } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import { motion, Variants } from 'framer-motion';
 import React from 'react';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       position: 'relative',
    },
@@ -21,6 +21,7 @@ const useStyles = makeStyles((theme) => ({
       alignItems: 'center',
    },
    label: {
+      display: 'flex',
       transition: theme.transitions.create('transform', {
          duration: theme.transitions.duration.shorter,
          easing: theme.transitions.easing.easeOut,
@@ -49,18 +50,12 @@ export default React.forwardRef<HTMLButtonElement, Props>(function ToolIcon(
    { className, icon, selected, onClick, ...props },
    ref,
 ) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
 
    return (
-      <div className={clsx(classes.root, className)}>
-         <IconButton
-            className={classes.iconButton}
-            onClick={onClick}
-            classes={{ label: clsx(classes.label, selected && classes.labelSelected) }}
-            ref={ref}
-            {...props}
-         >
-            {icon}
+      <div className={cx(classes.root, className)}>
+         <IconButton className={classes.iconButton} onClick={onClick} ref={ref} {...props} size="large">
+            <span className={cx(classes.label, selected && classes.labelSelected)}>{icon}</span>
          </IconButton>
          <div className={classes.indicatorContainer}>
             <svg width={8} height={16}>

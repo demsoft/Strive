@@ -26,7 +26,7 @@ namespace Strive.Core.Services.Rooms.UseCases
             _logger = logger;
         }
 
-        public async Task<Unit> Handle(SetParticipantRoomRequest request, CancellationToken cancellationToken)
+        public async Task Handle(SetParticipantRoomRequest request, CancellationToken cancellationToken)
         {
             var (conferenceId, assignments) = request;
 
@@ -55,8 +55,6 @@ namespace Strive.Core.Services.Rooms.UseCases
                 await _mediator.Send(new UpdateSynchronizedObjectRequest(conferenceId, SynchronizedRooms.SyncObjId));
                 await _mediator.Publish(new ParticipantsRoomChangedNotification(conferenceId, changedRooms));
             }
-
-            return Unit.Value;
         }
     }
 }

@@ -1,5 +1,6 @@
-import { Button, ButtonGroup, makeStyles, Typography } from '@material-ui/core';
-import SettingsIcon from '@material-ui/icons/Settings';
+import { Button, ButtonGroup, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { DateTime } from 'luxon';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +15,7 @@ import { SynchronizedConferenceInfo } from 'src/store/signal/synchronization/syn
 import { selectParticipantList } from '../../selectors';
 import ConferenceNotOpenLayout from './ConferenceNotOpenLayout';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    topContent: {
       flex: 1,
       display: 'flex',
@@ -45,7 +46,7 @@ type Props = {
 };
 
 export default function ConferenceNotOpenModerator({ conferenceInfo }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const dispatch = useDispatch();
    const { t } = useTranslation();
    const { id: conferenceId } = useParams<ConferenceRouteParams>();

@@ -1,4 +1,4 @@
-import { Router } from 'mediasoup/lib/Router';
+import type { Router } from 'mediasoup/types';
 import Logger from '../../utils/logger';
 import { ConferenceMessenger } from '../conference/conference-messenger';
 import { Participant } from '../participant';

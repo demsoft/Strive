@@ -1,4 +1,4 @@
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { Size } from 'src/types';
@@ -9,14 +9,14 @@ import RenderGrid from './RenderGrid';
 
 const GRID_MARGIN = 16;
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
    grid: {
       padding: GRID_MARGIN,
    },
 }));
 
 export default function ParticipantsGrid({ dimensions, className }: RenderSceneProps<GridScene>) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const visibleParticipants = useSelector(selectParticipantGridList);
    const hideParticipantsWithoutWebcam = useSelector(selectHideParticipantsWithoutWebcam);
 

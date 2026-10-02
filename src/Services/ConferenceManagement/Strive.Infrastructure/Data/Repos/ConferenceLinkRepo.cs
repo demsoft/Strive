@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson.Serialization;
-using MongoDB.Concurrency;
 using MongoDB.Driver;
 using Strive.Core.Domain.Entities;
 using Strive.Core.Interfaces.Gateways;
@@ -44,8 +43,8 @@ namespace Strive.Infrastructure.Data.Repos
 
         public Task<OptimisticUpdateResult> CreateOrReplaceAsync(ConferenceLink conferenceLink)
         {
-            return Collection.Optimistic(x => x.Version)
-                .UpdateAsync(conferenceLink, new ReplaceOptions {IsUpsert = true}).Wrap();
+            return Collection.OptimisticUpdateAsync(conferenceLink, x => x.Version,
+                new ReplaceOptions {IsUpsert = true});
         }
 
         public Task DeleteAsync(ConferenceLink conferenceLink)

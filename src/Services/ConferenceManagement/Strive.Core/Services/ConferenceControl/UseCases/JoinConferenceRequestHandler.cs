@@ -24,7 +24,7 @@ namespace Strive.Core.Services.ConferenceControl.UseCases
             _logger = logger;
         }
 
-        public async Task<Unit> Handle(JoinConferenceRequest request, CancellationToken cancellationToken)
+        public async Task Handle(JoinConferenceRequest request, CancellationToken cancellationToken)
         {
             var (participant, connectionId, meta) = request;
             var (conferenceId, participantId) = participant;
@@ -56,8 +56,6 @@ namespace Strive.Core.Services.ConferenceControl.UseCases
             await _mediator.Send(new EnableParticipantMessagingRequest(participant, connectionId), cancellationToken);
 
             await _mediator.Publish(new ParticipantJoinedNotification(participant, meta));
-
-            return Unit.Value;
         }
     }
 }

@@ -1,6 +1,6 @@
 import Logger from './utils/logger';
 import * as mediasoup from 'mediasoup';
-import { WorkerSettings, Worker } from 'mediasoup/lib/types';
+import type { WorkerSettings, Worker } from 'mediasoup/types';
 
 const logger = new Logger();
 

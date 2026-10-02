@@ -24,7 +24,7 @@ namespace Strive.Core.Services.Scenes.Providers.TalkingStick.UseCases
             _modeHandler = modeHandler;
         }
 
-        public async Task<Unit> Handle(TalkingStickReturnRequest request, CancellationToken cancellationToken)
+        public async Task Handle(TalkingStickReturnRequest request, CancellationToken cancellationToken)
         {
             var participant = request.Participant;
 
@@ -45,14 +45,12 @@ namespace Strive.Core.Services.Scenes.Providers.TalkingStick.UseCases
                 }
                 else
                 {
-                    return Unit.Value;
+                    return;
                 }
             }
 
             await _mediator.Send(new UpdateSynchronizedObjectRequest(participant.ConferenceId,
                 SynchronizedSceneTalkingStick.SyncObjId(roomId)));
-
-            return Unit.Value;
         }
     }
 }

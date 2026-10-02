@@ -1,4 +1,4 @@
-import { TextField } from '@material-ui/core';
+import { TextField } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -34,7 +34,7 @@ export default React.forwardRef<HTMLInputElement, Props>(function ChatMessageInp
       <TextField
          name="message"
          multiline
-         rowsMax={3}
+         maxRows={3}
          placeholder={t('conference.chat.type_your_message')}
          autoComplete="off"
          fullWidth

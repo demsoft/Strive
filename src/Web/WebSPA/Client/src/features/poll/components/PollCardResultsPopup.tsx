@@ -1,9 +1,10 @@
-import { Box, ClickAwayListener, Grow, makeStyles, Paper, Popper, PopperProps, Typography } from '@material-ui/core';
+import { Box, ClickAwayListener, Grow, Paper, Popper, PopperProps, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { PollViewModel } from '../types';
 import PollResultsView from './PollResultsView';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       zIndex: theme.zIndex.modal,
    },
@@ -29,7 +30,7 @@ type Props = {
 };
 
 export default function PollCardResultsPopup({ open, viewModel, anchorEl, onClose }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    return (
       <Popper open={open} anchorEl={anchorEl} transition placement="right-start" className={classes.root}>
@@ -37,7 +38,12 @@ export default function PollCardResultsPopup({ open, viewModel, anchorEl, onClos
             <Grow {...TransitionProps} style={{ transformOrigin: 'right top' }}>
                <Paper className={classes.paper} elevation={5}>
                   <ClickAwayListener onClickAway={onClose}>
-                     <Box display="flex" flexDirection="column">
+                     <Box
+                        sx={{
+                           display: 'flex',
+                           flexDirection: 'column',
+                        }}
+                     >
                         <Typography align="center" variant="h6" className={classes.question}>
                            {viewModel.poll.config.question}
                         </Typography>

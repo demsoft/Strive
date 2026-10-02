@@ -1,10 +1,10 @@
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { Participant } from 'src/features/conference/types';
 import { TilesSceneBarInstructions } from '../tile-frame-calculations';
 import ParticipantTile from './ParticipantTile';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    root: {
       display: 'flex',
       width: '100%',
@@ -25,7 +25,7 @@ type Props = {
 };
 
 export default function TilesBarLayoutRow({ marginHorizontal, instructions, participants }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    return (
       <div className={classes.root} style={{ paddingLeft: marginHorizontal, paddingRight: marginHorizontal }}>

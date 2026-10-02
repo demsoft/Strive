@@ -1,5 +1,5 @@
-import { MenuItem } from '@material-ui/core';
-import PollIcon from '@material-ui/icons/Poll';
+import { MenuItem } from '@mui/material';
+import PollIcon from '@mui/icons-material/Poll';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';

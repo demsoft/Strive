@@ -1,4 +1,5 @@
-import { Fab, Grid, makeStyles, Portal } from '@material-ui/core';
+import { Fab, Grid, Portal } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,7 +11,7 @@ import usePermission from 'src/hooks/usePermission';
 import { SCENES_CAN_QUEUE_FOR_TALKING_STICK, SCENES_CAN_TAKE_TALKING_STICK } from 'src/permissions';
 import { selectTalkingStickIsMeSpeaker, selectTalkingStickQueue } from '../../selectors';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    primaryAction: {
       minWidth: 220,
    },
@@ -23,7 +24,7 @@ type Props = {
 
 export default function TalkingStickFrame({ children, className }: Props) {
    const { t } = useTranslation();
-   const classes = useStyles();
+   const { classes } = useStyles();
    const dispatch = useDispatch();
 
    const canQueue = usePermission(SCENES_CAN_QUEUE_FOR_TALKING_STICK);
@@ -48,19 +49,19 @@ export default function TalkingStickFrame({ children, className }: Props) {
       <div className={className}>
          <Portal container={mediaContext.leftControlsContainer}>
             {isPresenter && (
-               <Grid item>
+               <Grid>
                   <Fab
                      variant="extended"
                      color="secondary"
                      className={classes.primaryAction}
                      onClick={handleReturnStick}
                   >
-                     {t<string>('conference.scenes.talking_stick_modes.return_stick')}
+                     {t('conference.scenes.talking_stick_modes.return_stick')}
                   </Fab>
                </Grid>
             )}
             {canQueue && !isInQueue && (
-               <Grid item>
+               <Grid>
                   <TwoLineFab
                      variant="extended"
                      color="secondary"
@@ -68,12 +69,12 @@ export default function TalkingStickFrame({ children, className }: Props) {
                      onClick={handleEnqueue}
                      subtitle={t('conference.scenes.talking_stick_modes.enqueue_status', { count: queue.length })}
                   >
-                     {t<string>('conference.scenes.talking_stick_modes.enqueue')}
+                     {t('conference.scenes.talking_stick_modes.enqueue')}
                   </TwoLineFab>
                </Grid>
             )}
             {isInQueue && (
-               <Grid item>
+               <Grid>
                   <TwoLineFab
                      variant="extended"
                      color="secondary"
@@ -88,14 +89,14 @@ export default function TalkingStickFrame({ children, className }: Props) {
                              })
                      }
                   >
-                     {t<string>('conference.scenes.talking_stick_modes.dequeue')}
+                     {t('conference.scenes.talking_stick_modes.dequeue')}
                   </TwoLineFab>
                </Grid>
             )}
             {canTake && !isPresenter && (
-               <Grid item>
+               <Grid>
                   <Fab variant="extended" color="primary" onClick={handleTake}>
-                     {t<string>('conference.scenes.talking_stick_modes.take_stick')}
+                     {t('conference.scenes.talking_stick_modes.take_stick')}
                   </Fab>
                </Grid>
             )}

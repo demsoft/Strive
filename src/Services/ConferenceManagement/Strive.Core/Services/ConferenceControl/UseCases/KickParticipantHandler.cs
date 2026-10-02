@@ -15,12 +15,11 @@ namespace Strive.Core.Services.ConferenceControl.UseCases
             _mediator = mediator;
         }
 
-        public async Task<Unit> Handle(KickParticipantRequest request, CancellationToken cancellationToken)
+        public async Task Handle(KickParticipantRequest request, CancellationToken cancellationToken)
         {
             // there is not much we can do
             await _mediator.Publish(new ParticipantKickedNotification(request.Participant, null,
                 ParticipantKickedReason.ByModerator));
-            return Unit.Value;
         }
     }
 }

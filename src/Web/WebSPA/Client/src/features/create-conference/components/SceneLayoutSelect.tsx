@@ -1,4 +1,4 @@
-import { FormHelperText, Select } from '@material-ui/core';
+import { FormHelperText, Select } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import MobileAwareSelect from 'src/components/MobileAwareSelect';
@@ -12,19 +12,19 @@ export default function SceneLayoutSelect(props: React.ComponentProps<typeof Sel
             {[
                {
                   value: 'auto',
-                  label: t<string>('dialog_create_conference.tabs.common.scene_layout_auto'),
+                  label: t('dialog_create_conference.tabs.common.scene_layout_auto'),
                },
                {
                   value: 'chips',
-                  label: t<string>('dialog_create_conference.tabs.common.scene_layout_chips'),
+                  label: t('dialog_create_conference.tabs.common.scene_layout_chips'),
                },
                {
                   value: 'chipsWithPresenter',
-                  label: t<string>('dialog_create_conference.tabs.common.scene_layout_chips_with_presenter'),
+                  label: t('dialog_create_conference.tabs.common.scene_layout_chips_with_presenter'),
                },
                {
                   value: 'tiles',
-                  label: t<string>('dialog_create_conference.tabs.common.scene_layout_tiles'),
+                  label: t('dialog_create_conference.tabs.common.scene_layout_tiles'),
                },
             ]}
          </MobileAwareSelect>

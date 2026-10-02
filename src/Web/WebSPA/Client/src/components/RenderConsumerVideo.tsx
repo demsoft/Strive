@@ -1,9 +1,8 @@
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
 import { Consumer } from 'mediasoup-client/lib/Consumer';
 import React, { useEffect, useRef } from 'react';
 import useWebRtc from 'src/store/webrtc/hooks/useWebRtc';
 import ConsumerDiagnosticInfo from './ConsumerDiagnosticInfo';
-import clsx from 'classnames';
 import { useSelector } from 'react-redux';
 import { selectEnableVideoOverlay } from 'src/features/settings/selectors';
 import { ProducerDevice, ProducerSource } from 'src/store/webrtc/types';
@@ -12,7 +11,7 @@ import { layerResolutions as webcamResolutions } from 'src/store/webrtc/hooks/us
 import { parseScalabilityMode } from 'mediasoup-client';
 import { ScalabilityMode } from 'mediasoup-client/lib/scalabilityModes';
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
    video: {
       position: 'absolute',
       top: 0,
@@ -98,14 +97,14 @@ export default function RenderConsumerVideo({
    ...props
 }: Props) {
    const connection = useWebRtc();
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
 
    const videoRef = useRef<HTMLVideoElement | null>(null);
    const showDiagnostics = useSelector(selectEnableVideoOverlay);
 
    useEffect(() => {
       if (connection && consumer) {
-         const source: ProducerSource = consumer.appData.source;
+         const source: ProducerSource = consumer.appData.source as ProducerSource;
          const device = getProducerDevice(source);
 
          const scalability = consumer.rtpParameters.encodings?.[0].scalabilityMode;
@@ -137,7 +136,7 @@ export default function RenderConsumerVideo({
       <>
          <video
             ref={videoRef}
-            className={clsx(className, classes.video)}
+            className={cx(className, classes.video)}
             hidden={!isActive}
             autoPlay
             style={videoContain ? { objectFit: 'contain' } : undefined}
@@ -145,7 +144,7 @@ export default function RenderConsumerVideo({
          />
          {consumer && showDiagnostics && (
             <div
-               className={clsx({
+               className={cx({
                   [classes.consumerInfoBottomRight]: diagnosticsLocation === 'bottom-right',
                   [classes.consumerInfoTopRight]: diagnosticsLocation === 'top-right',
                })}

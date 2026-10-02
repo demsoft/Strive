@@ -24,7 +24,7 @@ namespace Strive.Core.Services.Poll.UseCase
             _mediator = mediator;
         }
 
-        public async Task<Unit> Handle(SubmitAnswerRequest request, CancellationToken cancellationToken)
+        public async Task Handle(SubmitAnswerRequest request, CancellationToken cancellationToken)
         {
             var (participant, pollId, answer) = request;
 
@@ -74,8 +74,6 @@ namespace Strive.Core.Services.Poll.UseCase
                 SynchronizedPollAnswers.SyncObjId(participant.Id)));
             await _mediator.Send(new UpdateSynchronizedObjectRequest(participant.ConferenceId,
                 SynchronizedPollResult.SyncObjId(pollId)));
-
-            return Unit.Value;
         }
     }
 }

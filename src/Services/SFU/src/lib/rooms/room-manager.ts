@@ -1,5 +1,5 @@
 import AsyncLock from 'async-lock';
-import { Router } from 'mediasoup/lib/types';
+import type { Router } from 'mediasoup/types';
 import { ConferenceMessenger } from '../conference/conference-messenger';
 import { Participant } from '../participant';
 import { ConferenceRepository } from '../synchronization/conference-repository';

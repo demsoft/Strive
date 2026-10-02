@@ -28,7 +28,7 @@ namespace Strive.Core.Services.Synchronization.UseCases
             _logger = logger;
         }
 
-        public async Task<Unit> Handle(UpdateSynchronizedObjectRequest request, CancellationToken cancellationToken)
+        public async Task Handle(UpdateSynchronizedObjectRequest request, CancellationToken cancellationToken)
         {
             var (conferenceId, synchronizedObjectId) = request;
 
@@ -43,20 +43,18 @@ namespace Strive.Core.Services.Synchronization.UseCases
             if (!subscribedParticipants.Any())
             {
                 await _synchronizedObjectRepository.Remove(conferenceId, synchronizedObjectId.ToString());
-                return Unit.Value;
+                return;
             }
 
             var newValue = await provider.FetchValue(conferenceId, synchronizedObjectId);
             var previousValue = await _synchronizedObjectRepository.Create(conferenceId,
                 synchronizedObjectId.ToString(), newValue, provider.Type);
 
-            if (Equals(newValue, previousValue)) return Unit.Value;
+            if (Equals(newValue, previousValue)) return;
 
             await _mediator.Publish(
                 new SynchronizedObjectUpdatedNotification(subscribedParticipants, synchronizedObjectId.ToString(),
                     newValue, previousValue), cancellationToken);
-
-            return Unit.Value;
         }
 
         private ISynchronizedObjectProvider GetProvider(SynchronizedObjectId synchronizedObjectId)

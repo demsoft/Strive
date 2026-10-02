@@ -1,12 +1,13 @@
-import { Accordion, AccordionDetails, AccordionSummary, Button, makeStyles, Typography } from '@material-ui/core';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import PlayArrowIcon from '@material-ui/icons/PlayArrow';
-import StopIcon from '@material-ui/icons/Stop';
+import { Accordion, AccordionDetails, AccordionSummary, Button, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import StopIcon from '@mui/icons-material/Stop';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useStriveSound from 'src/hooks/useStriveSound';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    heading: {
       fontSize: theme.typography.pxToRem(15),
       flex: 1,
@@ -28,7 +29,7 @@ type Props = {
 };
 
 export default function TroubleshootSpeakers({ expanded, onChange }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
    const [isPlaying, setIsPlaying] = useState(false);

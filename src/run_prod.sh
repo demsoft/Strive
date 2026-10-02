@@ -8,6 +8,11 @@ export FRONTEND_DNS_OR_IP=www.yourdomain.com
 export STRIVE_TOKEN_SECRET=fill_in_random_token
 export STRIVE_API_KEY=fill_in_random_token
 
+export TURN_HOST=turn.yourdomain.com # public DNS name or IP of this server
+export TURN_SECRET=fill_in_random_token
+export TURN_MIN_PORT=50000 # two ports per participant, must not overlap with the MEDIASOUP ports
+export TURN_MAX_PORT=59999
+
 export MEDIASOUP_MIN_PORT=40000 # Minimun RTC port for ICE, DTLS, RTP, etc.
 export MEDIASOUP_MAX_PORT=49999 # Maximum RTC port for ICE, DTLS, RTP, etc.
 

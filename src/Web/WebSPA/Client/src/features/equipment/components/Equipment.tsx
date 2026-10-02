@@ -1,4 +1,5 @@
-import { makeStyles, Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'src/store';
@@ -19,7 +20,7 @@ import { DomainError } from 'src/communication-types';
 import FullscreenError from 'src/components/FullscreenError';
 import { formatErrorMessage } from 'src/utils/error-utils';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       marginLeft: 'auto',
       marginRight: 'auto',
@@ -36,7 +37,7 @@ const deviceName = getDeviceName();
 
 export default function Equipment() {
    const dispatch = useDispatch();
-   const classes = useStyles();
+   const { classes } = useStyles();
    const executingCommands = useRef(new Set<number>());
 
    const availableEquipment = useSelector((state: RootState) => state.settings.availableDevices);

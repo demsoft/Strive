@@ -4,18 +4,17 @@ import {
    Divider,
    Grow,
    List,
-   ListItem,
    ListItemIcon,
    ListItemText,
    ListSubheader,
-   makeStyles,
    MenuList,
    Paper,
    Popper,
    Typography,
-} from '@material-ui/core';
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
-import CloseIcon from '@material-ui/icons/Close';
+} from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import CloseIcon from '@mui/icons-material/Close';
 import _ from 'lodash';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,9 +27,11 @@ import { default as presenters, default as scenePresenters } from '../scene-pres
 import { Scene } from '../types';
 import SceneManagementModeSelectionDialog from './SceneManagementModeSelectionDialog';
 
+import ListItemButton from '@mui/material/ListItemButton';
+
 const sceneDisplayOrder: Scene['type'][] = ['autonomous', 'grid', 'activeSpeaker', 'screenShare', 'breakoutRoom'];
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       padding: theme.spacing(1, 2),
       display: 'flex',
@@ -55,7 +56,7 @@ const useStyles = makeStyles((theme) => ({
 
 export default function SceneManagement() {
    const dispatch = useDispatch();
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
    const [actionPopper, setActionPopper] = useState(false);
@@ -112,7 +113,7 @@ export default function SceneManagement() {
             <>
                <Divider className={classes.divider} />
                <List dense disablePadding id="scene-management-selection-list">
-                  <ListSubheader>{t('glossary:scene_plural')}</ListSubheader>
+                  <ListSubheader>{t('glossary:scene_other')}</ListSubheader>
                   {canSetScene && (
                      <div className={classes.modeButtonContainer}>
                         <Button
@@ -141,19 +142,20 @@ export default function SceneManagement() {
                         ),
                   )}
                   {overwrittenContent && (
-                     <ListItem
-                        button
+                     <ListItemButton
                         onClick={() => handleOverwriteScene(null)}
-                        title={t('conference.scenes.remove_overwrite')}
+                        title={t('conference.scenes.remove_overwrite') as string}
                      >
                         <ListItemIcon style={{ minWidth: 32 }}>
                            <CloseIcon />
                         </ListItemIcon>
                         <ListItemText
-                           primaryTypographyProps={{ noWrap: true }}
                            primary={t('conference.scenes.remove_overwrite')}
+                           slotProps={{
+                              primary: { noWrap: true },
+                           }}
                         />
-                     </ListItem>
+                     </ListItemButton>
                   )}
                </List>
             </>

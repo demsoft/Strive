@@ -1,9 +1,11 @@
-import { ListItem, ListItemIcon, ListItemText } from '@material-ui/core';
-import StarIcon from '@material-ui/icons/Star';
+import { ListItemIcon, ListItemText } from '@mui/material';
+import StarIcon from '@mui/icons-material/Star';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AutonomousScene, ModeSceneListItemProps, ScenePresenter } from '../../types';
 import RenderAutonomous from './RenderAutonomous';
+
+import ListItemButton from '@mui/material/ListItemButton';
 
 function ModeSceneListItem({ selectedScene, onChangeScene }: ModeSceneListItemProps) {
    const { t } = useTranslation();
@@ -12,7 +14,7 @@ function ModeSceneListItem({ selectedScene, onChangeScene }: ModeSceneListItemPr
    const handleSetScene = () => onChangeScene({ type: 'autonomous' });
 
    return (
-      <ListItem button selected={isSelected} onClick={handleSetScene}>
+      <ListItemButton selected={isSelected} onClick={handleSetScene}>
          <ListItemIcon>
             <StarIcon />
          </ListItemIcon>
@@ -20,7 +22,7 @@ function ModeSceneListItem({ selectedScene, onChangeScene }: ModeSceneListItemPr
             primary={t('conference.scenes.autonomous')}
             secondary={t('conference.scenes.autonomous_description')}
          />
-      </ListItem>
+      </ListItemButton>
    );
 }
 

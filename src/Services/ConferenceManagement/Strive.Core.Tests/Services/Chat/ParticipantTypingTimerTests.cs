@@ -47,7 +47,7 @@ namespace Strive.Core.Tests.Services.Chat
             var trigger = SetupTaskDelayGetTrigger();
 
             var timer = Create();
-            var capturedRequest = _mediator.CaptureRequest<SetParticipantTypingRequest, Unit>();
+            var capturedRequest = _mediator.CaptureRequest<SetParticipantTypingRequest>();
 
             // act
             timer.RemoveParticipantTypingAfter(_testParticipant, Channel, TimeSpan.FromMilliseconds(50));
@@ -68,8 +68,7 @@ namespace Strive.Core.Tests.Services.Chat
 
             var receivedRequests = new ConcurrentBag<SetParticipantTypingRequest>();
             _mediator.Setup(x => x.Send(It.IsAny<SetParticipantTypingRequest>(), It.IsAny<CancellationToken>()))
-                .Callback((IRequest<Unit> request, CancellationToken _) =>
-                    receivedRequests.Add((SetParticipantTypingRequest) request));
+                .Callback((SetParticipantTypingRequest request, CancellationToken _) => receivedRequests.Add(request));
 
             // act
             var expectedRequests = new ConcurrentBag<SetParticipantTypingRequest>();
@@ -119,7 +118,7 @@ namespace Strive.Core.Tests.Services.Chat
             var trigger = SetupTaskDelayGetTrigger();
 
             var timer = Create();
-            var capturedRequest = _mediator.CaptureRequest<SetParticipantTypingRequest, Unit>();
+            var capturedRequest = _mediator.CaptureRequest<SetParticipantTypingRequest>();
 
             timer.RemoveParticipantTypingAfter(_testParticipant, Channel, TimeSpan.FromMilliseconds(100));
 
@@ -132,7 +131,7 @@ namespace Strive.Core.Tests.Services.Chat
         }
 
         [Fact]
-        public void CancelTimer_TimerWasSet_Reschedule()
+        public async Task CancelTimer_TimerWasSet_Reschedule()
         {
             ChatChannel channel2 = new RoomChatChannel("test123");
 
@@ -140,7 +139,7 @@ namespace Strive.Core.Tests.Services.Chat
             var trigger = SetupTaskDelayGetTrigger();
 
             var timer = Create();
-            var capturedRequest = _mediator.CaptureRequest<SetParticipantTypingRequest, Unit>();
+            var capturedRequest = _mediator.CaptureRequest<SetParticipantTypingRequest>();
 
             timer.RemoveParticipantTypingAfter(_testParticipant, Channel, TimeSpan.FromMilliseconds(100));
             timer.RemoveParticipantTypingAfter(_testParticipant, channel2, TimeSpan.FromMilliseconds(101));
@@ -150,7 +149,7 @@ namespace Strive.Core.Tests.Services.Chat
 
             // assert
             trigger();
-            capturedRequest.AssertReceived();
+            await capturedRequest.WaitForRequest();
 
             var request = capturedRequest.GetRequest();
             Assert.Equal(channel2, request.Channel);
@@ -176,7 +175,7 @@ namespace Strive.Core.Tests.Services.Chat
             var trigger = SetupTaskDelayGetTrigger();
 
             var timer = Create();
-            var capturedRequest = _mediator.CaptureRequest<SetParticipantTypingRequest, Unit>();
+            var capturedRequest = _mediator.CaptureRequest<SetParticipantTypingRequest>();
 
             timer.RemoveParticipantTypingAfter(_testParticipant, Channel, TimeSpan.FromMilliseconds(100));
 
@@ -208,7 +207,7 @@ namespace Strive.Core.Tests.Services.Chat
 
             // arrange
             var trigger = SetupTaskDelayGetTrigger();
-            var capturedRequest = _mediator.CaptureRequest<SetParticipantTypingRequest, Unit>();
+            var capturedRequest = _mediator.CaptureRequest<SetParticipantTypingRequest>();
 
             var timer = Create();
             timer.RemoveParticipantTypingAfter(_testParticipant, Channel, TimeSpan.FromDays(1));

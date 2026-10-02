@@ -1,4 +1,4 @@
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -9,7 +9,7 @@ import usePermission from 'src/hooks/usePermission';
 import { SCENES_CAN_QUEUE_FOR_TALKING_STICK } from 'src/permissions';
 import { selectTalkingStickQueue } from '../../selectors';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    primaryAction: {
       minWidth: 220,
       padding: theme.spacing(0, 4),
@@ -17,7 +17,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function AddToListFab() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const dispatch = useDispatch();
    const { t } = useTranslation();
 
@@ -41,8 +41,8 @@ export default function AddToListFab() {
          })}
       >
          {isInQueue
-            ? t<string>('conference.scenes.talking_stick_modes.remove_from_list')
-            : t<string>('conference.scenes.talking_stick_modes.add_to_list')}
+            ? t('conference.scenes.talking_stick_modes.remove_from_list')
+            : t('conference.scenes.talking_stick_modes.add_to_list')}
       </TwoLineFab>
    );
 }

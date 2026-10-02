@@ -1,4 +1,5 @@
-import { Box, Button, ButtonGroup, makeStyles, Typography } from '@material-ui/core';
+import { Box, Button, ButtonGroup, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import { DateTime } from 'luxon';
 import React from 'react';
 import Countdown from 'react-countdown';
@@ -13,7 +14,7 @@ import { setCreationDialogOpen } from '../../../breakout-rooms/reducer';
 import { selectBreakoutRoomState } from '../../../breakout-rooms/selectors';
 import { ListItemPopperProps } from '../SceneListItemWithPopper';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    marginLeft: {
       marginLeft: theme.spacing(1),
    },
@@ -22,7 +23,7 @@ const useStyles = makeStyles((theme) => ({
 export default function BreakoutRoomsPopper(props: ListItemPopperProps) {
    const dispatch = useDispatch();
    const { t } = useTranslation();
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const state = useSelector(selectBreakoutRoomState);
    const canModify = usePermission(ROOMS_CAN_CREATE_REMOVE);
@@ -48,13 +49,23 @@ export default function BreakoutRoomsPopper(props: ListItemPopperProps) {
    return (
       <PopperWrapper {...props} placement="right-end" transformOrigin="left bottom" padding>
          <div>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Box
+               sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+               }}
+            >
                <Typography variant="h6">
                   {t('conference.scenes.breakout_rooms.title', { count: state.amount })}
                </Typography>
             </Box>
             {deadline && (
-               <Box mt={2}>
+               <Box
+                  sx={{
+                     mt: 2,
+                  }}
+               >
                   <Typography gutterBottom>
                      {t('conference.scenes.breakout_rooms.deadline_description', {
                         date: deadline.toLocaleString(DateTime.TIME_24_SIMPLE),
@@ -65,7 +76,7 @@ export default function BreakoutRoomsPopper(props: ListItemPopperProps) {
                   {canModify && (
                      <ButtonGroup
                         variant="outlined"
-                        aria-label={t('conference.scenes.breakout_rooms.add_time_button_group')}
+                        aria-label={t('conference.scenes.breakout_rooms.add_time_button_group') as string}
                         size="small"
                      >
                         <Button onClick={handleAddMinutes(1)}>+1 min</Button>
@@ -76,7 +87,11 @@ export default function BreakoutRoomsPopper(props: ListItemPopperProps) {
                </Box>
             )}
             {canModify && (
-               <Box mt={2}>
+               <Box
+                  sx={{
+                     mt: 2,
+                  }}
+               >
                   <Button variant="contained" color="primary" size="small" onClick={handleUpdateBreakoutRooms}>
                      {t('conference.scenes.breakout_rooms.change_breakout_rooms')}
                   </Button>

@@ -1,6 +1,6 @@
-import { useReactOidc } from '@axa-fr/react-oidc-context';
+import useUser from 'src/features/auth/useUser';
 import Axios from 'axios';
-import React, { useEffect } from 'react';
+import React, { useLayoutEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Route, Switch } from 'react-router-dom';
 import { setParticipantId } from 'src/features/auth/reducer';
@@ -8,10 +8,11 @@ import ConferenceRoute from './ConferenceRoute';
 import MainRoute from './MainRoute';
 
 export default function AuthenticatedRoutes() {
-   const { oidcUser } = useReactOidc();
+   const oidcUser = useUser();
    const dispatch = useDispatch();
 
-   useEffect(() => {
+   // a layout effect runs before the effects of the routes below, which already request the API
+   useLayoutEffect(() => {
       dispatch(setParticipantId(oidcUser.profile.sub));
       Axios.defaults.headers.common = {
          Authorization: `Bearer ${oidcUser.access_token}`,

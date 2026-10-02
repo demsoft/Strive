@@ -33,7 +33,7 @@ namespace Strive.Core.Services.Synchronization.UseCases
             _logger = logger;
         }
 
-        public async Task<Unit> Handle(UpdateSubscriptionsRequest request, CancellationToken cancellationToken)
+        public async Task Handle(UpdateSubscriptionsRequest request, CancellationToken cancellationToken)
         {
             var participant = request.Participant;
 
@@ -56,7 +56,7 @@ namespace Strive.Core.Services.Synchronization.UseCases
             {
                 _logger.LogWarning("The participant does not seem to be joined, remove all subscriptions");
                 await _subscriptionsRepository.Remove(participant);
-                return Unit.Value;
+                return;
             }
 
             var added = subscriptions.Where(x => !oldSubscriptions.Contains(x.ToString())).ToList();
@@ -67,8 +67,6 @@ namespace Strive.Core.Services.Synchronization.UseCases
 
             if (removed.Any() || added.Any())
                 await _mediator.Publish(new ParticipantSubscriptionsUpdatedNotification(participant, removed, added));
-
-            return Unit.Value;
         }
 
         private async ValueTask SendCurrentSynchronizedObjectValues(Participant participant,

@@ -1,4 +1,4 @@
-import { Fab } from '@material-ui/core';
+import { Fab } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
@@ -38,7 +38,7 @@ function QueueNoPresenter({ className, dimensions }: QueueNoPresenterProps) {
             disabled={!canEnqueue}
             onClick={handleEnqueue}
          >
-            {t<string>('conference.scenes.talking_stick_modes.take_stick')}
+            {t('conference.scenes.talking_stick_modes.take_stick')}
          </Fab>
       </TalkingStickScreen>
    );

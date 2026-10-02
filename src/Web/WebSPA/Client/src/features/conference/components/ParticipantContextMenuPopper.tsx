@@ -1,9 +1,10 @@
-import { makeStyles, Menu } from '@material-ui/core';
+import { Menu } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { Participant } from '../types';
 import ParticipantContextMenu from './ParticipantContextMenu';
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
    menu: {
       minWidth: 256,
    },
@@ -15,10 +16,16 @@ type Props = Omit<React.ComponentProps<typeof Menu>, 'children'> & {
 };
 
 export default function ParticipantContextMenuPopper({ participant, onClose, ...props }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    return (
-      <Menu {...props} onClose={onClose} MenuListProps={{ className: classes.menu }}>
+      <Menu
+         {...props}
+         onClose={onClose}
+         slotProps={{
+            list: { className: classes.menu },
+         }}
+      >
          <ParticipantContextMenu participant={participant} onClose={onClose} />
       </Menu>
    );

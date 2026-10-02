@@ -1,18 +1,19 @@
-import { makeStyles, Typography } from '@material-ui/core';
-import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab';
+import { Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import { ToggleButtonGroup, ToggleButton } from '@mui/material';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'src/store';
 import { selectParticipantTempPermissions } from '../selectors';
-import DesktopWindowsIcon from '@material-ui/icons/DesktopWindows';
-import MicIcon from '@material-ui/icons/Mic';
-import VideocamIcon from '@material-ui/icons/Videocam';
+import DesktopWindowsIcon from '@mui/icons-material/DesktopWindows';
+import MicIcon from '@mui/icons-material/Mic';
+import VideocamIcon from '@mui/icons-material/Videocam';
 import { setTemporaryPermission } from 'src/core-hub';
 import { MEDIA_CAN_SHARE_AUDIO, MEDIA_CAN_SHARE_SCREEN, MEDIA_CAN_SHARE_WEBCAM } from 'src/permissions';
 import { showMessage } from 'src/store/notifier/actions';
 import { useTranslation } from 'react-i18next';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    menuEntry: {
       display: 'flex',
       justifyContent: 'space-between',
@@ -31,7 +32,7 @@ export default function ParticipantContextMenuTempPermissions({ participantId }:
    const { t } = useTranslation();
    const tempPermissions = useSelector((state: RootState) => selectParticipantTempPermissions(state, participantId));
    const dispatch = useDispatch();
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const currentTruthyPermissions = tempPermissions
       ? Object.entries(tempPermissions)

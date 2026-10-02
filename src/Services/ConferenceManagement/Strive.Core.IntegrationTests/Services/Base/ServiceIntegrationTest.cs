@@ -69,11 +69,8 @@ namespace Strive.Core.IntegrationTests.Services.Base
             //builder.RegisterModule<CoreModule>();
 
             builder.RegisterType<Mediator>().As<IMediator>().InstancePerLifetimeScope();
-            builder.Register<ServiceFactory>(context =>
-            {
-                var c = context.Resolve<IComponentContext>();
-                return t => c.Resolve(t);
-            });
+            builder.Register<IServiceProvider>(context =>
+                new ComponentContextServiceProvider(context.Resolve<IComponentContext>()));
 
             var serviceTypes = FetchServiceTypes().ToArray();
             builder.RegisterTypes(serviceTypes).AsImplementedInterfaces();
@@ -140,6 +137,21 @@ namespace Strive.Core.IntegrationTests.Services.Base
         {
             var request = new ParticipantLeftNotification(connection.Participant, connection.ConnectionId);
             await Mediator.Publish(request);
+        }
+
+        private class ComponentContextServiceProvider : IServiceProvider
+        {
+            private readonly IComponentContext _context;
+
+            public ComponentContextServiceProvider(IComponentContext context)
+            {
+                _context = context;
+            }
+
+            public object? GetService(Type serviceType)
+            {
+                return _context.ResolveOptional(serviceType);
+            }
         }
     }
 }

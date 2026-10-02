@@ -1,11 +1,11 @@
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { Participant } from 'src/features/conference/types';
 import { Size } from 'src/types';
 import { GridTopInstructions } from '../tile-frame-calculations';
 import ParticipantTile from './ParticipantTile';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    container: {
       width: '100%',
       height: '100%',
@@ -32,7 +32,7 @@ type Props = {
 };
 
 export default function TileFrameGridTop({ instructions, participants, render }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    return (
       <div className={classes.container}>

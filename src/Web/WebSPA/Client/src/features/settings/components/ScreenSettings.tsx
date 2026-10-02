@@ -1,4 +1,5 @@
-import { makeStyles, Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,7 +9,7 @@ import { setCurrentDevice } from '../reducer';
 import { selectAvailableInputDevicesFactory, selectIsDeviceAvailableFactory } from '../selectors';
 import DeviceSelector from './DeviceSelector';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       width: '100%',
       padding: theme.spacing(3),
@@ -17,7 +18,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function ScreenSettings() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
    const dispatch = useDispatch();
 

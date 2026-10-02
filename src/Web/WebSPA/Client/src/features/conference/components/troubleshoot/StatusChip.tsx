@@ -1,9 +1,9 @@
-import { Chip, makeStyles } from '@material-ui/core';
+import { Chip } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
-import clsx from 'classnames';
 import { HealthStatus } from './utils';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    statusChip: {
       cursor: 'pointer',
       maxWidth: 200,
@@ -21,11 +21,11 @@ type Props = React.ComponentProps<typeof Chip> & {
 };
 
 export default function StatusChip({ status, className, ...props }: Props) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
 
    return (
       <Chip
-         className={clsx(className, classes.statusChip, {
+         className={cx(className, classes.statusChip, {
             [classes.statusChipOk]: status === 'ok',
             [classes.statusChipError]: status === 'error',
          })}

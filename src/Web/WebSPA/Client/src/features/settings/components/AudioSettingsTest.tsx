@@ -1,4 +1,5 @@
-import { makeStyles, Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import { motion, useMotionTemplate } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +14,7 @@ import useConsumer from 'src/store/webrtc/hooks/useConsumer';
 import useMicrophone from 'src/store/webrtc/hooks/useMicrophone';
 import AudioRecorderTest from './AudioRecorderTest';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    audioBarContainer: {
       position: 'relative',
       backgroundColor: theme.palette.background.default,
@@ -34,7 +35,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function AudioSettingsTest() {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
    const myId = useMyParticipantId();

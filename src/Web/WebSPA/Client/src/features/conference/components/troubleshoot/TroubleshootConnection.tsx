@@ -1,4 +1,5 @@
-import { makeStyles, Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { isFirefox } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +10,7 @@ import TransportStats from './troubleshoot-connection/TransportStats';
 import useWebRtcHealth from './troubleshoot-connection/useWebRtcHealth';
 import TroubleshootAccordion from './TroubleshootAccordion';
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
    transportStats: {
       width: '100%',
    },
@@ -26,7 +27,7 @@ type Props = {
 };
 
 export default function TroubleshootConnection({ expanded, onChange }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
    const health = useWebRtcHealth();

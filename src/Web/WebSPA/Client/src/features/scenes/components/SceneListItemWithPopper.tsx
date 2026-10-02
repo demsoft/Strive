@@ -1,4 +1,4 @@
-import { IconButton, ListItemSecondaryAction, PopperProps } from '@material-ui/core';
+import { IconButton, ListItemSecondaryAction, PopperProps } from '@mui/material';
 import React, { useRef, useState } from 'react';
 import { Scene } from '../types';
 import SceneListItem, { Props as SceneListItemProps } from './SceneListItem';
@@ -27,7 +27,7 @@ export default function SceneListItemWithPopper({ PopperComponent, listItemIcon,
       <>
          <SceneListItem {...props}>
             <ListItemSecondaryAction>
-               <IconButton edge="end" aria-label="options" onClick={handleOpen} ref={listItemRef}>
+               <IconButton edge="end" aria-label="options" onClick={handleOpen} ref={listItemRef} size="large">
                   {listItemIcon}
                </IconButton>
             </ListItemSecondaryAction>

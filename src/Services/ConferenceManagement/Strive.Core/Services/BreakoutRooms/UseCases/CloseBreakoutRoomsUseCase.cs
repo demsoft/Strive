@@ -15,10 +15,9 @@ namespace Strive.Core.Services.BreakoutRooms.UseCases
             _mediator = mediator;
         }
 
-        public async Task<Unit> Handle(CloseBreakoutRoomsRequest request, CancellationToken cancellationToken)
+        public async Task Handle(CloseBreakoutRoomsRequest request, CancellationToken cancellationToken)
         {
             await _mediator.Send(new ApplyBreakoutRoomRequest(request.ConferenceId, null), cancellationToken);
-            return Unit.Value;
         }
     }
 }

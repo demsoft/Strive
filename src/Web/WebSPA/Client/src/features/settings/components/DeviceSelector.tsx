@@ -1,5 +1,5 @@
-import { Box, Button, FormControl, InputLabel, makeStyles } from '@material-ui/core';
-import clsx from 'classnames';
+import { Box, Button, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import _, { Collection } from 'lodash';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,7 @@ import { DeviceGroup, EquipmentDeviceGroup } from '../selectors';
 import { fetchDevices } from '../thunks';
 import { AnyInputDevice } from '../types';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    control: {
       minWidth: 400,
    },
@@ -37,21 +37,23 @@ const getId = (device: AnyInputDevice) =>
 
 export default function DeviceSelector({ devices, defaultName, className, selectedDevice, onChange, label }: Props) {
    const selectId = defaultName.toLowerCase() + '-select';
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
    const dispatch = useDispatch();
    const { t } = useTranslation();
 
-   const handleChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+   const handleChange = (event: SelectChangeEvent<unknown>) => {
       const value = event.target.value as string;
       if (!value) return;
 
-      let possibleDevices: Collection<DeviceGroup> | undefined;
+      let possibleDevices: Collection<DeviceGroup>;
 
       const [type, deviceId] = parseDeviceId(value);
       if (type === 'local') {
-         possibleDevices = _(devices).filter((x) => x.type === 'local');
+         possibleDevices = _(devices).filter((x) => x.type === 'local') as Collection<DeviceGroup>;
       } else {
-         possibleDevices = _(devices).filter((x) => x.type === 'equipment' && x.connectionId === type);
+         possibleDevices = _(devices).filter(
+            (x) => x.type === 'equipment' && x.connectionId === type,
+         ) as Collection<DeviceGroup>;
       }
 
       const viewModel = possibleDevices.flatMap((x) => x.devices).find((x) => x.device.deviceId === deviceId);
@@ -79,8 +81,13 @@ export default function DeviceSelector({ devices, defaultName, className, select
    const defaultDevice = devices[0]?.devices[0]?.device;
 
    return (
-      <Box display="flex" alignItems="flex-end">
-         <FormControl className={clsx(className, classes.control)}>
+      <Box
+         sx={{
+            display: 'flex',
+            alignItems: 'flex-end',
+         }}
+      >
+         <FormControl className={cx(className, classes.control)}>
             <InputLabel htmlFor={selectId}>{label}</InputLabel>
             <MobileAwareSelect
                id={selectId}
@@ -106,7 +113,12 @@ export default function DeviceSelector({ devices, defaultName, className, select
                ]}
             </MobileAwareSelect>
          </FormControl>
-         <Box ml={1} onClick={handleRefresh}>
+         <Box
+            onClick={handleRefresh}
+            sx={{
+               ml: 1,
+            }}
+         >
             <Button>{t('common:refresh')}</Button>
          </Box>
       </Box>

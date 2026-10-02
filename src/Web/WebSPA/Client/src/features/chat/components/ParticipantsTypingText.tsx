@@ -1,8 +1,8 @@
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
 import { Trans, useTranslation } from 'react-i18next';
 import { Participant } from 'src/features/conference/types';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    participantText: {
       color: theme.palette.secondary.main,
    },
@@ -14,7 +14,7 @@ type Props = {
 };
 
 export default function ParticipantsTypingText({ participants, participantColors }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
    const beginning = participants.slice(0, 2);

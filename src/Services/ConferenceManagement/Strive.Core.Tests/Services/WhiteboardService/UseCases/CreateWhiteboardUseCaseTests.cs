@@ -71,7 +71,7 @@ namespace Strive.Core.Tests.Services.WhiteboardService.UseCases
         public async Task Handle_RoomDoesExist_UpdateSyncObj()
         {
             // arrange
-            var captured = _mediator.CaptureRequest<UpdateSynchronizedObjectRequest, Unit>();
+            var captured = _mediator.CaptureRequest<UpdateSynchronizedObjectRequest>();
 
             var useCase = Create();
             SetupRooms(new Room(RoomId, "test"));

@@ -13,9 +13,9 @@ namespace Strive.Extensions
             options.InvalidModelStateResponseFactory = context =>
             {
                 var errorsWithMessage = context.ModelState
-                    .Where(x => x.Value.ValidationState == ModelValidationState.Invalid).ToDictionary(
+                    .Where(x => x.Value?.ValidationState == ModelValidationState.Invalid).ToDictionary(
                         x => string.Join('.', x.Key.Split('.').Select(StringExtensions.ToCamelCase)),
-                        x => x.Value.Errors.First().ErrorMessage);
+                        x => x.Value!.Errors.First().ErrorMessage);
 
                 var fieldValidationError = new FieldValidationError(errorsWithMessage);
                 return new BadRequestObjectResult(fieldValidationError);

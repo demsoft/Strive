@@ -1,11 +1,12 @@
-import { Divider, makeStyles, Paper } from '@material-ui/core';
+import { Divider, Paper } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import _ from 'lodash';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { selectPollViewModels } from '../selectors';
 import PollCard from './PollCard';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       display: 'flex',
       flexDirection: 'column',
@@ -18,7 +19,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function CurrentPollsBar() {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const polls = useSelector(selectPollViewModels);
    if (polls.length === 0) return null;

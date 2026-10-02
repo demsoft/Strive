@@ -1,5 +1,5 @@
-import { Box, Grid, IconButton, makeStyles } from '@material-ui/core';
-import clsx from 'classnames';
+import { Box, Grid, IconButton } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import { FormatLineStyle } from 'mdi-material-ui';
 import React, { useRef, useState } from 'react';
 import ToolIcon from './ToolIcon';
@@ -7,7 +7,7 @@ import ToolPopper from './ToolPopper';
 
 const availableStrokes = [3, 5, 10, 15, 20];
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    strokeButton: {
       height: '100%',
       width: 44,
@@ -23,7 +23,7 @@ type Props = {
 };
 
 export default function LineWidthTool({ value, onChange }: Props) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
 
    const [open, setOpen] = useState(false);
    const anchorEl = useRef(null);
@@ -41,14 +41,19 @@ export default function LineWidthTool({ value, onChange }: Props) {
          <ToolIcon icon={<FormatLineStyle fontSize="small" />} ref={anchorEl} onClick={handleOpen} />
 
          <ToolPopper open={open} anchorEl={anchorEl.current} onClose={handleClose}>
-            <Box p={1}>
+            <Box
+               sx={{
+                  p: 1,
+               }}
+            >
                <Grid container>
                   {availableStrokes.map((width) => (
-                     <Grid item key={width}>
+                     <Grid key={width}>
                         <IconButton
                            onClick={handleChange(width)}
-                           className={clsx(classes.strokeButton, value === width && classes.strokeButtonSelected)}
+                           className={cx(classes.strokeButton, value === width && classes.strokeButtonSelected)}
                            title={`${width}px`}
+                           size="large"
                         >
                            <div style={{ width, height: width, borderRadius: width / 2, backgroundColor: 'white' }} />
                         </IconButton>

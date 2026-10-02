@@ -1,11 +1,11 @@
-import { fade, makeStyles, Typography, useTheme } from '@material-ui/core';
-import clsx from 'classnames';
+import { alpha, Typography, useTheme } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import AnimatedMicIcon from 'src/assets/animated-icons/AnimatedMicIcon';
 
 const INFO_BOX_MARGIN = 16;
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    infoBox: {
       position: 'absolute',
       display: 'flex',
@@ -23,7 +23,7 @@ const useStyles = makeStyles((theme) => ({
       alignItems: 'flex-end',
    },
    infoBoxWebcamEnabled: {
-      backgroundColor: fade(theme.palette.background.paper, 0.75),
+      backgroundColor: alpha(theme.palette.background.paper, 0.75),
       borderRadius: theme.shape.borderRadius,
       paddingLeft: theme.spacing(1),
       alignItems: 'center',
@@ -49,14 +49,14 @@ type Props = {
 };
 
 export default function ParticipantTileLabel({ micActivated, webcamActivated, tileWidth, tileHeight, label }: Props) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
    const theme = useTheme();
 
    const isSmall = tileWidth < 400;
 
    return (
       <div
-         className={clsx(classes.infoBox, {
+         className={cx(classes.infoBox, {
             [classes.infoBoxWebcamEnabled]: webcamActivated,
             [classes.infoBoxWebcamDisabled]: !webcamActivated,
             [classes.infoBoxEnabledSmall]: webcamActivated && isSmall,
@@ -65,7 +65,7 @@ export default function ParticipantTileLabel({ micActivated, webcamActivated, ti
          <AnimatedMicIcon activated={micActivated} disabledColor={theme.palette.error.main} />
          <Typography
             variant="h4"
-            className={clsx(classes.label)}
+            className={cx(classes.label)}
             style={{
                fontSize: isSmall ? 16 : 24,
                transform: webcamActivated

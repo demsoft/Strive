@@ -132,7 +132,7 @@ Then you need to start the required microservices you do NOT want to modify:
    ```sh
    cd src/Web/WebSPA && dotnet run
    ```
-  Do not use yarn start in the ClientApp folder, as the ASP.Net Core app injects some parameters required for the frontend to work. Fast refresh will still work in the React app.
+  Do not use yarn start in the Client folder, as the ASP.Net Core app injects some parameters required for the frontend to work (it starts the Vite dev server itself). Hot module replacement will still work in the React app. The frontend requires Node 20.19+.
 - SFU (runs on `http://localhost:3000`)
    ```sh
    cd src/Services/SFU && yarn dev
@@ -142,6 +142,15 @@ Then you need to start the required microservices you do NOT want to modify:
    cd src/Services/ConferenceManagement/Strive && dotnet run
    ```
 Do not change these ports as they are configured to work together in a local development environment. You can then attach a debugger to the microservice you want to change. For ASP.Net Core projects, instead of executing this command you may also open the solution with Visual Studio and run the debugger here.
+
+### Self-signed certificate in development
+`compose.sh` creates a self-signed certificate for `localhost` and `*.localhost` in `src/certs` (valid 10 years) and Traefik serves it, so it
+stays the same when containers are recreated. Your browser asks you once to accept it for each of `localhost`, `api.localhost`,
+`identity.localhost` and `sfu.localhost`. Until you do so for `sfu.localhost`, camera and microphone report a WebRTC connection error.
+To avoid the warnings completely, trust the certificate on macOS:
+```sh
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain src/certs/localhost.crt
+```
 
 ### Known Issues
 - Firefox will not connect to the SFU on localhost (in simple language, if you are running Strive on localhost, you cannot use your microphone, webcam, etc.) as Firefox has [limitations for ICE over TCP](https://mediasoup.discourse.group/t/firefox-ice-failed-add-a-stun-server-and-see-about-webrtc-for-more-details/805). For local development, I suggest to use a different browser (e. g. Google Chrome).

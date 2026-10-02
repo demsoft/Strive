@@ -18,14 +18,12 @@ namespace Strive.Core.Services.Media.UseCases
             _mediator = mediator;
         }
 
-        public async Task<Unit> Handle(ApplyMediaStateRequest request, CancellationToken cancellationToken)
+        public async Task Handle(ApplyMediaStateRequest request, CancellationToken cancellationToken)
         {
             await _repository.Set(request.ConferenceId, request.Payload);
 
             await _mediator.Send(new UpdateSynchronizedObjectRequest(request.ConferenceId,
                 SynchronizedMediaState.SyncObjId));
-
-            return Unit.Value;
         }
     }
 }

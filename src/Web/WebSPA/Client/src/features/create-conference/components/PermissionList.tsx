@@ -1,22 +1,23 @@
 import {
    List,
    ListSubheader,
-   ListItem,
    ListItemIcon,
    Checkbox,
    ListItemText,
-   makeStyles,
    ListItemSecondaryAction,
    Switch,
-} from '@material-ui/core';
+} from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import _ from 'lodash';
 import React from 'react';
 import { Permissions } from 'src/core-hub.types';
 import * as allPermissions from 'src/permissions';
 
+import ListItemButton from '@mui/material/ListItemButton';
+
 const PERMISSION_DELIMITER = '/';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       backgroundColor: theme.palette.background.paper,
       overflowY: 'scroll',
@@ -39,7 +40,7 @@ type Props = {
 const extractPermissionName = (s: string) => s.split(PERMISSION_DELIMITER)[1];
 
 export default function PermissionsList({ value, onChange, inherited }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const handleSetPermission = (key: string, newValue: boolean) => onChange({ ...value, [key]: newValue });
 
@@ -67,11 +68,7 @@ export default function PermissionsList({ value, onChange, inherited }: Props) {
                         const inheritedValue = inherited[permission.key] as boolean | undefined;
 
                         return (
-                           <ListItem
-                              key={permission.key}
-                              button
-                              onClick={() => handleTogglePermissions(permission.key)}
-                           >
+                           <ListItemButton key={permission.key} onClick={() => handleTogglePermissions(permission.key)}>
                               <ListItemIcon>
                                  <Checkbox edge="start" checked={isSet} tabIndex={-1} disableRipple />
                               </ListItemIcon>
@@ -88,7 +85,7 @@ export default function PermissionsList({ value, onChange, inherited }: Props) {
                                     color="primary"
                                  />
                               </ListItemSecondaryAction>
-                           </ListItem>
+                           </ListItemButton>
                         );
                      })}
                   </ul>

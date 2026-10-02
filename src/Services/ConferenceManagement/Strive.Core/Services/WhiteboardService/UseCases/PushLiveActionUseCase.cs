@@ -9,7 +9,7 @@ using Strive.Core.Services.WhiteboardService.Requests;
 
 namespace Strive.Core.Services.WhiteboardService.UseCases
 {
-    public class PushLiveActionUseCase : IRequestHandler<PushLiveActionRequest, Unit>
+    public class PushLiveActionUseCase : IRequestHandler<PushLiveActionRequest>
     {
         private readonly IMediator _mediator;
 
@@ -18,7 +18,7 @@ namespace Strive.Core.Services.WhiteboardService.UseCases
             _mediator = mediator;
         }
 
-        public async Task<Unit> Handle(PushLiveActionRequest request, CancellationToken cancellationToken)
+        public async Task Handle(PushLiveActionRequest request, CancellationToken cancellationToken)
         {
             var rooms = await _mediator.FetchSynchronizedObject<SynchronizedRooms>(request.ConferenceId,
                 SynchronizedRooms.SyncObjId);
@@ -28,8 +28,6 @@ namespace Strive.Core.Services.WhiteboardService.UseCases
 
             await _mediator.Publish(new LiveActionPushedNotification(participants.ToList(), request.ParticipantId,
                 request.WhiteboardId, request.Action));
-
-            return Unit.Value;
         }
     }
 }

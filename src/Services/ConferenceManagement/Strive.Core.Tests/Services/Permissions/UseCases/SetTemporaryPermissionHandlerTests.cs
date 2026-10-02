@@ -56,7 +56,7 @@ namespace Strive.Core.Tests.Services.Permissions.UseCases
             Handle_ValidValueAndParticipantIsJoined_SetParticipantPermissionsInRepositoryAndPublishUpdateRequest()
         {
             // assert
-            var capturedRequest = _mediator.CaptureRequest<UpdateParticipantsPermissionsRequest, Unit>();
+            var capturedRequest = _mediator.CaptureRequest<UpdateParticipantsPermissionsRequest>();
 
             SetValidPermission(_testPermissionDescriptor);
             _joinedParticipants.JoinParticipant(Participant);
@@ -143,7 +143,7 @@ namespace Strive.Core.Tests.Services.Permissions.UseCases
         public async Task Handle_NullValue_RemovePermission()
         {
             // assert
-            var capturedRequest = _mediator.CaptureRequest<UpdateParticipantsPermissionsRequest, Unit>();
+            var capturedRequest = _mediator.CaptureRequest<UpdateParticipantsPermissionsRequest>();
 
             SetValidPermission(_testPermissionDescriptor);
             _joinedParticipants.JoinParticipant(Participant);

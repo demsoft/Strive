@@ -1,5 +1,5 @@
 import { ConferenceParticipantStreamInfo } from '../../../src/lib/conference/pub-types';
-import { Consumer } from 'mediasoup/lib/Consumer';
+import type { Consumer } from 'mediasoup/types';
 import { ConferenceMessenger } from '../../../src/lib/conference/conference-messenger';
 import { StreamInfoRepo } from '../../../src/lib/conference/stream-info-repo';
 import { Participant } from '../../../src/lib/participant';

@@ -1,4 +1,4 @@
-import { UserManagerSettings } from 'oidc-client';
+import { Log, UserManagerSettings } from 'oidc-client-ts';
 
 export type AppGitInfo = {
    commit: string;
@@ -36,3 +36,6 @@ export const ocidConfig: UserManagerSettings = {
    automaticSilentRenew: true,
    loadUserInfo: true,
 };
+
+Log.setLogger(console);
+Log.setLevel(Log.ERROR);

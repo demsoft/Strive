@@ -5,6 +5,16 @@ import Logger from '../utils/logger';
 
 const logger = new Logger('RabbitMqConnection');
 
+/**
+ * RabbitMQ 4 rejects connections with a frame size below 8192, older amqplib versions negotiate 4096.
+ * Use 128 KiB (the RabbitMQ default) unless the url sets frameMax explicitly.
+ */
+export function withFrameMax(url: string): string {
+   const parsed = new URL(url);
+   if (!parsed.searchParams.has('frameMax')) parsed.searchParams.set('frameMax', '131072');
+   return parsed.toString();
+}
+
 export type RabbitChannel = {
    pub: Channel;
    sub: Channel;
@@ -38,7 +48,7 @@ export default class RabbitMqConn extends EventEmitter {
                   this.getChannel(); // reconnect
                };
 
-               const conn = await amqp.connect(this.url);
+               const conn = await amqp.connect(withFrameMax(this.url));
                conn.on('error', onError);
 
                const pub = await conn.createChannel();

@@ -1,5 +1,5 @@
-import { Table, TableBody, TableCell, TableHead, TableRow } from '@material-ui/core';
-import { Skeleton } from '@material-ui/lab';
+import { Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { Skeleton } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useWebRtc from 'src/store/webrtc/hooks/useWebRtc';

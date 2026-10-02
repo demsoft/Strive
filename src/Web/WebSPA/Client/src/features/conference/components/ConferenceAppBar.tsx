@@ -1,19 +1,9 @@
-import { useReactOidc } from '@axa-fr/react-oidc-context';
-import {
-   AppBar,
-   Box,
-   Chip,
-   createStyles,
-   IconButton,
-   makeStyles,
-   Menu,
-   MenuItem,
-   Toolbar,
-   Typography,
-} from '@material-ui/core';
-import MoreVertIcon from '@material-ui/icons/MoreVert';
-import SettingsIcon from '@material-ui/icons/Settings';
-import clsx from 'classnames';
+import { useAuth } from 'react-oidc-context';
+import useUser from 'src/features/auth/useUser';
+import { AppBar, Box, Chip, IconButton, Menu, MenuItem, Toolbar, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import SettingsIcon from '@mui/icons-material/Settings';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -30,39 +20,37 @@ import AppBarLogo from './appbar/AppBarLogo';
 import BreakoutRoomChip from './appbar/BreakoutRoomChip';
 import WebRtcStatusChip from './appbar/WebRtcStatusChip';
 
-const useStyles = makeStyles((theme) =>
-   createStyles({
-      root: {
-         flexGrow: 1,
-      },
-      title: {
-         padding: theme.spacing(1, 2),
-         borderRadius: theme.shape.borderRadius,
-      },
-      noPointerEvents: {
-         pointerEvents: 'none',
-      },
-      toolbar: {
-         backgroundColor: 'rgb(35, 35, 37)',
-      },
-      chip: {
-         backgroundColor: 'rgb(55, 55, 57)',
-         padding: theme.spacing(0, 1),
-      },
-      breakoutRoomChip: {
-         marginRight: theme.spacing(1),
-         backgroundColor: theme.palette.primary.dark,
-         minWidth: 0,
-      },
-   }),
-);
+const useStyles = makeStyles()((theme) => ({
+   root: {
+      flexGrow: 1,
+   },
+   title: {
+      padding: theme.spacing(1, 2),
+      borderRadius: theme.shape.borderRadius,
+   },
+   noPointerEvents: {
+      pointerEvents: 'none',
+   },
+   toolbar: {
+      backgroundColor: 'rgb(35, 35, 37)',
+   },
+   chip: {
+      backgroundColor: 'rgb(55, 55, 57)',
+      padding: theme.spacing(0, 1),
+   },
+   breakoutRoomChip: {
+      marginRight: theme.spacing(1),
+      backgroundColor: theme.palette.primary.dark,
+      minWidth: 0,
+   },
+}));
 
 type Props = {
    chatWidth: number;
 };
 
 export default function ConferenceAppBar({ chatWidth }: Props) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
    const dispatch = useDispatch();
    const { t } = useTranslation();
 
@@ -72,7 +60,8 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
    const handleCloseConference = () => dispatch(coreHub.closeConference());
    const handleOpenSettings = () => dispatch(openSettings());
 
-   const { logout, oidcUser } = useReactOidc();
+   const auth = useAuth();
+   const oidcUser = useUser();
    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
    const handleOpenMenu = () => setIsMenuOpen(true);
@@ -100,15 +89,23 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
    return (
       <AppBar position="static">
          <Toolbar variant="dense" className={classes.toolbar}>
-            <Box pr={2}>
+            <Box
+               sx={{
+                  pr: 2,
+               }}
+            >
                <AppBarLogo />
             </Box>
-            <Box display="flex" justifyContent="flex-end" flex={1} minWidth={0}>
+            <Box
+               sx={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  flex: 1,
+                  minWidth: 0,
+               }}
+            >
                {breakoutRoomState && (
-                  <BreakoutRoomChip
-                     className={clsx(classes.chip, classes.breakoutRoomChip)}
-                     state={breakoutRoomState}
-                  />
+                  <BreakoutRoomChip className={cx(classes.chip, classes.breakoutRoomChip)} state={breakoutRoomState} />
                )}
                <WebRtcStatusChip />
                {participants && (
@@ -120,22 +117,34 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
                )}
             </Box>
             <Box
-               width={chatWidth - 24 /** padding toolbar */}
-               display="flex"
-               alignItems="center"
-               justifyContent="flex-end"
+               sx={{
+                  width: chatWidth - 24 /** padding toolbar */,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+               }}
             >
                {oidcUser && (
-                  <Box mr={2}>
+                  <Box
+                     sx={{
+                        mr: 2,
+                     }}
+                  >
                      <Typography variant="caption">
                         {t('conference.appbar.signed_in_as')} <b>{oidcUser.profile.name}</b>
                      </Typography>
                   </Box>
                )}
-               <IconButton aria-label={t('common:settings')} color="inherit" onClick={handleOpenSettings}>
+               <IconButton aria-label={t('common:settings')} color="inherit" onClick={handleOpenSettings} size="large">
                   <SettingsIcon />
                </IconButton>
-               <IconButton aria-label="more" color="inherit" onClick={handleOpenMenu} ref={moreIconButtonRef}>
+               <IconButton
+                  aria-label="more"
+                  color="inherit"
+                  onClick={handleOpenMenu}
+                  ref={moreIconButtonRef}
+                  size="large"
+               >
                   <MoreVertIcon />
                </IconButton>
             </Box>
@@ -147,7 +156,7 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
                {canCloseConference && (
                   <MenuItem onClick={handleCloseConference}>{t('conference.appbar.close_conference')}</MenuItem>
                )}
-               <MenuItem onClick={logout as any}>{t('common:sign_out')}</MenuItem>
+               <MenuItem onClick={() => auth.signoutRedirect()}>{t('common:sign_out')}</MenuItem>
             </Menu>
          </Toolbar>
       </AppBar>

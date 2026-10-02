@@ -1,4 +1,4 @@
-import { Consumer, ConsumerLayers, Producer, Router } from 'mediasoup/lib/types';
+import type { Consumer, ConsumerLayers, Producer, Router } from 'mediasoup/types';
 import Logger from '../../utils/logger';
 import { ConferenceMessenger } from '../conference/conference-messenger';
 import Connection from '../connection';

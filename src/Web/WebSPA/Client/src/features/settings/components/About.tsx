@@ -1,11 +1,12 @@
-import { Box, Link, makeStyles, Typography } from '@material-ui/core';
+import { Box, Link, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import appSettings from 'src/config';
 
 const gitInfo = appSettings.gitInfo;
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       width: '100%',
       padding: theme.spacing(3),
@@ -15,7 +16,7 @@ const useStyles = makeStyles((theme) => ({
 
 export default function About() {
    const { t } = useTranslation();
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    return (
       <div className={classes.root}>
@@ -29,19 +30,32 @@ export default function About() {
                ({gitInfo.ref} at {gitInfo.timestamp})
             </Typography>
          </Typography>
-         <Box display="flex" mt={2}>
+         <Box
+            sx={{
+               display: 'flex',
+               mt: 2,
+            }}
+         >
             <Box>
                <Link target="_blank" href="https://github.com/Anapher/Strive">
                   GitHub
                </Link>
             </Box>
-            <Box ml={1}>
+            <Box
+               sx={{
+                  ml: 1,
+               }}
+            >
                <Link target="_blank" href="https://www.openstrive.org/">
                   Website
                </Link>
             </Box>
          </Box>
-         <Box mt={4}>
+         <Box
+            sx={{
+               mt: 4,
+            }}
+         >
             <Typography gutterBottom>
                {t('conference.settings.about.sound_effects_obtained_from')}{' '}
                <Link target="_blank" href="https://www.zapsplat.com">

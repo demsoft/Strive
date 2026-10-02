@@ -54,6 +54,14 @@ Cypress.Commands.add("loginAndLoadMainSite", (username) => {
 
   cy.identityServerLogin(username);
 
+  // The app runs in Cypress' iframe, whose parent is on another origin (identity.localhost) after the login. Browsers
+  // only allow camera, microphone and screen capture in cross-origin iframes if they are delegated explicitly.
+  cy.window().then((win) => {
+    win.parent.document
+      .querySelector("iframe.aut-iframe")
+      .setAttribute("allow", "camera *; microphone *; display-capture *");
+  });
+
   cy.forceVisit("https://localhost");
 });
 

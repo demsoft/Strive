@@ -1,11 +1,12 @@
-import { makeStyles, Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { selectParticipants } from 'src/features/conference/selectors';
 import { Participant } from 'src/features/conference/types';
 import ParticipantsTypingText from './ParticipantsTypingText';
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
    defaultHeightSpan: {
       '&::before': {
          content: '"\u200b"',
@@ -20,7 +21,7 @@ type Props = {
 
 export default function ParticipantsTyping({ participantsTyping, participantColors }: Props) {
    const participants = useSelector(selectParticipants);
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const mappedParticipantsTyping = participantsTyping
       .map((id) => participants[id])

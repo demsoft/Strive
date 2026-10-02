@@ -3,16 +3,14 @@ import {
    Button,
    Grid,
    List,
-   ListItem,
    ListItemIcon,
    ListItemText,
-   makeStyles,
    Typography,
    useMediaQuery,
    useTheme,
-} from '@material-ui/core';
-import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
-import clsx from 'classnames';
+} from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import _ from 'lodash';
 import React, { useEffect } from 'react';
 import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
@@ -20,7 +18,9 @@ import { useTranslation } from 'react-i18next';
 import { Participant } from 'src/features/conference/types';
 import useMyParticipantId from 'src/hooks/useMyParticipantId';
 
-const useStyles = makeStyles((theme) => ({
+import ListItemButton from '@mui/material/ListItemButton';
+
+const useStyles = makeStyles()((theme) => ({
    roomList: {
       minHeight: 64,
       borderRadius: theme.shape.borderRadius,
@@ -136,7 +136,14 @@ export default function BreakoutRoomsAssignments({ data, participants, createdRo
 
    return (
       <div>
-         <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+         <Box
+            sx={{
+               display: 'flex',
+               justifyContent: 'space-between',
+               alignItems: 'center',
+               mb: 1,
+            }}
+         >
             <Typography variant="h6">{t('conference.dialog_breakout_rooms.assign_participants_to_rooms')}</Typography>
             <Button size="small" variant="contained" color="secondary" onClick={handleRandomlyAssignParticipants}>
                {t('conference.dialog_breakout_rooms.randomly_assign_rooms')}
@@ -144,7 +151,13 @@ export default function BreakoutRoomsAssignments({ data, participants, createdRo
          </Box>
          <DragDropContext onDragEnd={handleDragEnd}>
             <Grid container spacing={2}>
-               <Grid item lg={4} md={6} xs={12}>
+               <Grid
+                  size={{
+                     lg: 4,
+                     md: 6,
+                     xs: 12,
+                  }}
+               >
                   <RoomList
                      id="defaultRoom"
                      title={t('conference.dialog_breakout_rooms.unassigned')}
@@ -154,7 +167,11 @@ export default function BreakoutRoomsAssignments({ data, participants, createdRo
                </Grid>
                {isLg && (
                   <>
-                     <Grid item lg={4}>
+                     <Grid
+                        size={{
+                           lg: 4,
+                        }}
+                     >
                         {Array.from({ length: createdRooms }).map(
                            (_, i) =>
                               i % 2 === 0 && (
@@ -167,7 +184,11 @@ export default function BreakoutRoomsAssignments({ data, participants, createdRo
                               ),
                         )}
                      </Grid>
-                     <Grid item lg={4}>
+                     <Grid
+                        size={{
+                           lg: 4,
+                        }}
+                     >
                         {Array.from({ length: createdRooms }).map(
                            (_, i) =>
                               i % 2 === 1 && (
@@ -183,7 +204,12 @@ export default function BreakoutRoomsAssignments({ data, participants, createdRo
                   </>
                )}
                {!isLg && (
-                  <Grid item md={6} xs={12}>
+                  <Grid
+                     size={{
+                        md: 6,
+                        xs: 12,
+                     }}
+                  >
                      {Array.from({ length: createdRooms }).map((_, i) => (
                         <RoomList
                            key={i}
@@ -208,14 +234,14 @@ type RoomListProps = {
 };
 
 function RoomList({ id, participants, title, fullHeight }: RoomListProps) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
 
    return (
       <Droppable droppableId={id}>
          {(provided, snapshot) => (
             <div
                ref={provided.innerRef}
-               className={clsx(classes.roomList, snapshot.isDraggingOver && classes.roomListDragOver)}
+               className={cx(classes.roomList, snapshot.isDraggingOver && classes.roomListDragOver)}
                style={{ marginBottom: 8, height: fullHeight ? '100%' : undefined }}
                {...provided.droppableProps}
             >
@@ -227,20 +253,19 @@ function RoomList({ id, participants, title, fullHeight }: RoomListProps) {
                      {participants.map((item, index) => (
                         <Draggable key={item.id} draggableId={item.id} index={index}>
                            {(provided, snapshot) => (
-                              <ListItem
+                              <ListItemButton
                                  dense
-                                 button
                                  ref={provided.innerRef}
                                  {...provided.draggableProps}
                                  {...provided.dragHandleProps}
-                                 className={clsx(snapshot.isDragging && classes.roomListItemDragging)}
+                                 className={cx(snapshot.isDragging && classes.roomListItemDragging)}
                                  style={provided.draggableProps.style}
                               >
                                  <ListItemIcon>
                                     <DragIndicatorIcon />
                                  </ListItemIcon>
                                  <ListItemText primary={item.displayName} />
-                              </ListItem>
+                              </ListItemButton>
                            )}
                         </Draggable>
                      ))}

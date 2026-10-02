@@ -1,4 +1,5 @@
-import { makeStyles, Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import { motion } from 'framer-motion';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +7,7 @@ import { Size } from 'src/types';
 import { TalkingStickMode } from '../../types';
 import AutoSceneLayout from '../AutoSceneLayout';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       display: 'flex',
       flexDirection: 'column',
@@ -37,7 +38,7 @@ type Props = {
 };
 
 export default function TalkingStickScreen({ children, className, mode, footerChildren, dimensions }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
    return (

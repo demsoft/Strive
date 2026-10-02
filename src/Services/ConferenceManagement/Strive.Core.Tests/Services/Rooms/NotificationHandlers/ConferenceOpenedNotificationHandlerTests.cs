@@ -58,7 +58,7 @@ namespace Strive.Core.Tests.Services.Rooms.NotificationHandlers
         {
             var testParticipant = new Participant(ConferenceId, "asd");
 
-            var capturedRequest = _mediator.CaptureRequest<SetParticipantRoomRequest, Unit>();
+            var capturedRequest = _mediator.CaptureRequest<SetParticipantRoomRequest>();
 
             var handler = Create();
             SetParticipantsJoined(testParticipant);

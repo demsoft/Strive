@@ -1,4 +1,4 @@
-import MoreVertIcon from '@material-ui/icons/MoreVert';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Draw } from 'mdi-material-ui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

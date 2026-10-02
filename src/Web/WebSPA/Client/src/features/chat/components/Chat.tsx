@@ -1,4 +1,5 @@
-import { makeStyles, Paper } from '@material-ui/core';
+import { Paper } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import * as coreHub from 'src/core-hub';
@@ -16,9 +17,9 @@ import NewChat from './NewChat';
 import ParticipantsTyping from './ParticipantsTyping';
 import SendMessageForm from './SendMessageForm';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    chat: {
-      backgroundColor: theme.palette.type === 'dark' ? 'rgb(32, 32, 34)' : 'red',
+      backgroundColor: theme.palette.mode === 'dark' ? 'rgb(32, 32, 34)' : 'red',
       flex: 1,
       minHeight: 0,
       height: '100%',
@@ -35,7 +36,7 @@ type Props = {
 
 export default function Chat({ channel, participantId, participantColors }: Props) {
    const dispatch = useDispatch();
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const messages = useSelector((state: RootState) => selectMessages(state, channel));
    const messagesFetched = useSelector((state: RootState) => selectMessagesFetched(state, channel));

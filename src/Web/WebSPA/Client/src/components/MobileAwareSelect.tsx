@@ -1,4 +1,4 @@
-import { ListSubheader, MenuItem, Select } from '@material-ui/core';
+import { ListSubheader, MenuItem, Select } from '@mui/material';
 import React from 'react';
 import { isMobile } from 'react-device-detect';
 

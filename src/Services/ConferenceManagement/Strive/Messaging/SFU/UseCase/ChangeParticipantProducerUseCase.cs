@@ -16,12 +16,10 @@ namespace Strive.Messaging.SFU.UseCase
         }
 
 
-        public async Task<Unit> Handle(ChangeParticipantProducerRequest request, CancellationToken cancellationToken)
+        public async Task Handle(ChangeParticipantProducerRequest request, CancellationToken cancellationToken)
         {
             await _sfuNotifier.ChangeProducer(request.Participant.ConferenceId,
                 new ChangeParticipantProducerDto(request.Participant.Id, request.Source, request.Action));
-
-            return Unit.Value;
         }
     }
 }

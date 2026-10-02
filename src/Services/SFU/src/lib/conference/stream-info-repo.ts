@@ -68,7 +68,7 @@ export class StreamInfoRepo {
          for (const [, consumer] of connection.consumers) {
             streams.consumers[consumer.id] = {
                paused: consumer.paused,
-               participantId: consumer.appData.participantId,
+               participantId: consumer.appData.participantId as string,
                source: consumer.appData.source as ProducerSource,
             };
          }

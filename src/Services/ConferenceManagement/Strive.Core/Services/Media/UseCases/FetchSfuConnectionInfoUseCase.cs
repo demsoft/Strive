@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -11,11 +12,14 @@ namespace Strive.Core.Services.Media.UseCases
     {
         private readonly ISfuAuthTokenFactory _tokenFactory;
         private readonly SfuConnectionOptions _options;
+        private readonly ITurnCredentialFactory _turnCredentialFactory;
 
-        public FetchSfuConnectionInfoUseCase(ISfuAuthTokenFactory tokenFactory, IOptions<SfuConnectionOptions> options)
+        public FetchSfuConnectionInfoUseCase(ISfuAuthTokenFactory tokenFactory, IOptions<SfuConnectionOptions> options,
+            ITurnCredentialFactory turnCredentialFactory)
         {
             _tokenFactory = tokenFactory;
             _options = options.Value;
+            _turnCredentialFactory = turnCredentialFactory;
         }
 
         public async Task<SfuConnectionInfo> Handle(FetchSfuConnectionInfoRequest request,
@@ -27,7 +31,10 @@ namespace Strive.Core.Services.Media.UseCases
             var urlTemplate = _options.UrlTemplate;
             var url = string.Format(urlTemplate, participant.ConferenceId);
 
-            return new SfuConnectionInfo(url, token);
+            var turnServer = _turnCredentialFactory.Create(participant);
+            var iceServers = turnServer == null ? Array.Empty<IceServerInfo>() : new[] {turnServer};
+
+            return new SfuConnectionInfo(url, token, iceServers);
         }
     }
 }

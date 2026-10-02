@@ -1,7 +1,10 @@
-import { ListItem, ListItemIcon, ListItemText, makeStyles } from '@material-ui/core';
+import { ListItemIcon, ListItemText } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import _ from 'lodash';
 import React from 'react';
 import { AvailableSceneListItemProps } from '../types';
+
+import ListItemButton from '@mui/material/ListItemButton';
 
 export type Props = AvailableSceneListItemProps & {
    title: string;
@@ -10,7 +13,7 @@ export type Props = AvailableSceneListItemProps & {
    children?: React.ReactNode;
 };
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       paddingRight: 8,
    },
@@ -34,7 +37,7 @@ export default React.forwardRef<HTMLDivElement, Props>(function SceneListItem(
    { scene, stack, title, onChangeScene, icon, children },
    ref,
 ) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const applied = _.isEqual(stack[stack.length - 1], scene);
 
    const handleToggle = () => {
@@ -44,10 +47,16 @@ export default React.forwardRef<HTMLDivElement, Props>(function SceneListItem(
    };
 
    return (
-      <ListItem button className={classes.root} onClick={handleToggle} selected={applied} ref={ref}>
+      <ListItemButton className={classes.root} onClick={handleToggle} selected={applied} ref={ref}>
          <ListItemIcon className={classes.icon}>{icon}</ListItemIcon>
-         <ListItemText primary={title} className={classes.listItemText} primaryTypographyProps={{ noWrap: true }} />
+         <ListItemText
+            primary={title}
+            className={classes.listItemText}
+            slotProps={{
+               primary: { noWrap: true },
+            }}
+         />
          {children}
-      </ListItem>
+      </ListItemButton>
    );
 });

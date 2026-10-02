@@ -1,4 +1,5 @@
-import { Dialog, DialogTitle, makeStyles, useMediaQuery, useTheme } from '@material-ui/core';
+import { Dialog, DialogTitle, useMediaQuery, useTheme } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import { compare } from 'fast-json-patch';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,19 +11,19 @@ import ConferenceCreatedView from './ConferenceCreatedView';
 import CreateConferenceForm from './CreateConferenceForm';
 import CreateConferenceFormSkeleton from './CreateConferenceFormSkeleton';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    dialog: {
       display: 'flex',
       flexDirection: 'column',
 
-      [theme.breakpoints.down('xs')]: {
+      [theme.breakpoints.down('sm')]: {
          height: '100%',
       },
    },
    dialogContent: {
       minHeight: 0,
       height: 496,
-      [theme.breakpoints.down('xs')]: {
+      [theme.breakpoints.down('sm')]: {
          flex: 1,
       },
    },
@@ -31,10 +32,10 @@ const useStyles = makeStyles((theme) => ({
 function CreateConferenceDialog() {
    const dispatch = useDispatch();
    const theme = useTheme();
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
-   const fullScreen = useMediaQuery(theme.breakpoints.down('xs'));
+   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
    const { dialogOpen, createdConferenceId, isCreating, conferenceData, mode } = useSelector(
       (state: RootState) => state.createConference,

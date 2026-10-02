@@ -6,6 +6,8 @@ namespace Strive.Hubs.Core.Services
 {
     public interface IServiceInvoker
     {
+        IServiceRequestBuilder<Unit> Create(IRequest request);
+        IServiceRequestBuilder<Unit> Create(Func<IRequest> requestFactory);
         IServiceRequestBuilder<TResponse> Create<TResponse>(IRequest<TResponse> request);
 
         IServiceRequestBuilder<TResponse> Create<TResponse>(Func<IRequest<TResponse>> request);

@@ -4,8 +4,8 @@
   "create": "Create",
   "change": "Change",
   "cancel": "Cancel",
-  "moderator": "Moderator",
-  "moderator_plural": "Moderators",
+  "moderator_one": "Moderator",
+  "moderator_other": "Moderators",
   "close": "Close",
   "back_to_start": "Back to start",
   "settings": "Settings",
@@ -22,7 +22,7 @@
   "room": "Room",
   "language": "Language",
   "delete": "Delete",
-  "participant": "participant",
-  "participant_plural": "participants",
+  "participant_one": "participant",
+  "participant_other": "participants",
   "try_again": "Try again"
 }

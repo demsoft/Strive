@@ -1,4 +1,4 @@
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
 import React, { useContext } from 'react';
 import { useSelector } from 'react-redux';
 import { Participant } from 'src/features/conference/types';
@@ -7,7 +7,7 @@ import LayoutChildSizeContext from '../layout-child-size-context';
 import { hasAnyParticipantInCurrentRoomWebcamActicated, selectSceneLayoutType } from '../selectors';
 import SceneLayout from './SceneLayout';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    centered: {
       width: '100%',
       height: '100%',
@@ -57,7 +57,7 @@ type CenteredLayoutProps = {
    children?: React.ReactNode;
 };
 function CenteredLayout({ children }: CenteredLayoutProps) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const size = useContext(LayoutChildSizeContext);
 
    const offsetTop = size.topOffset ?? 0;

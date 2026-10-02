@@ -19,12 +19,17 @@ jobs:
       run:
         working-directory: src/Services/SFU
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/cache@v4
         with:
           path: "src/Services/SFU/node_modules"
-          key: ${{ runner.os }}-sfu-modules-${{ hashFiles('src/Services/SFU/yarn.lock') }}
+          key: ${{ runner.os }}-node22-sfu-modules-${{ hashFiles('src/Services/SFU/yarn.lock') }}
       - name: Install modules
-        run: yarn
+        run: yarn install --frozen-lockfile
+      - name: Typecheck
+        run: yarn typecheck
       - name: Run tests
         run: yarn test

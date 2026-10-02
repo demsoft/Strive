@@ -1,9 +1,10 @@
-import { Button, makeStyles, Typography } from '@material-ui/core';
-import { Alert } from '@material-ui/lab';
+import { Button, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import { Alert } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    retryButton: {
       marginTop: theme.spacing(1),
    },
@@ -18,7 +19,7 @@ type Props = {
 };
 
 export default function ErrorWrapper({ failed, children, error, onRetry, type = 'alert' }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
    return failed ? (

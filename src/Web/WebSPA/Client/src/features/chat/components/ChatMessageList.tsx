@@ -1,5 +1,6 @@
-import { Badge, Box, Button, Fab, List, makeStyles, Typography, Zoom } from '@material-ui/core';
-import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
+import { Badge, Box, Button, Fab, List, Typography, Zoom } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import _ from 'lodash';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +10,7 @@ import useBottomScrollTrigger from 'src/hooks/useBottomScrollTrigger';
 import { getScrollbarWidth } from 'src/utils/browser-info';
 import ChatMessage from './ChatMessage';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
    root: {
       position: 'relative',
       flex: 1,
@@ -36,7 +37,7 @@ type Props = {
 };
 
 export default function ChatMessageList({ messages, participantId, participantColors, error, onRetry }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const { t } = useTranslation();
 
    const listRef = useRef<HTMLOListElement>(null);
@@ -72,7 +73,14 @@ export default function ChatMessageList({ messages, participantId, participantCo
             <div ref={bottomAnchor} />
             {messages == null || messages == undefined || error ? (
                error ? (
-                  <Box m={2} display="flex" flexDirection="column" alignItems="center">
+                  <Box
+                     sx={{
+                        m: 2,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                     }}
+                  >
                      <Typography color="error" gutterBottom align="center">
                         {t('conference.chat.error_fetch_chat', { error })}
                      </Typography>

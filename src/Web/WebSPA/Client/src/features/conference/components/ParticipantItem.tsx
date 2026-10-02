@@ -1,5 +1,6 @@
-import { ButtonBase, fade, makeStyles, Typography, useTheme } from '@material-ui/core';
-import { Skeleton } from '@material-ui/lab';
+import { ButtonBase, alpha, Typography, useTheme } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import { Skeleton } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -11,7 +12,7 @@ import { RootState } from 'src/store';
 import { Participant } from '../types';
 import ParticipantContextMenuPopper from './ParticipantContextMenuPopper';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       marginLeft: theme.spacing(1),
    },
@@ -25,7 +26,7 @@ const useStyles = makeStyles((theme) => ({
       width: '100%',
       '&:hover': {
          textDecoration: 'none',
-         backgroundColor: fade(theme.palette.text.primary, 0.05),
+         backgroundColor: alpha(theme.palette.text.primary, 0.05),
       },
    },
 }));
@@ -35,7 +36,7 @@ type Props = {
 };
 
 export default function ParticipantItem({ participant }: Props) {
-   const classes = useStyles();
+   const { classes } = useStyles();
    const producers = useSelector((state: RootState) => selectParticipantProducers(state, participant?.id));
    const myParticipantId = useMyParticipantId();
 

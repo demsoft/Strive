@@ -26,7 +26,7 @@ namespace Strive.Core.Services.Chat.UseCases
             _participantTypingTimer = participantTypingTimer;
         }
 
-        public async Task<Unit> Handle(SetParticipantTypingRequest request, CancellationToken cancellationToken)
+        public async Task Handle(SetParticipantTypingRequest request, CancellationToken cancellationToken)
         {
             var (participant, channel, isTyping) = request;
 
@@ -34,8 +34,6 @@ namespace Strive.Core.Services.Chat.UseCases
                 await AddParticipantTyping(participant, channel);
             else
                 await RemoveParticipantTyping(participant, channel);
-
-            return Unit.Value;
         }
 
         private async ValueTask AddParticipantTyping(Participant participant, ChatChannel channel)

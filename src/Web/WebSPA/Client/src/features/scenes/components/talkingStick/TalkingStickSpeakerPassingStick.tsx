@@ -1,4 +1,5 @@
-import { Divider, Fab, makeStyles } from '@material-ui/core';
+import { Divider, Fab } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
@@ -12,7 +13,7 @@ import FrameWithPassFab from './FrameWithPassFab';
 import TalkingStickScreen from './TalkingStickScreen';
 import { Size } from 'src/types';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    participantList: {
       marginTop: theme.spacing(3),
       maxWidth: 260,
@@ -45,7 +46,7 @@ type NoPresenterProps = {
 function NoPresenter({ className, scene, dimensions }: NoPresenterProps) {
    const { t } = useTranslation();
    const dispatch = useDispatch();
-   const classes = useStyles();
+   const { classes } = useStyles();
 
    const canTake = usePermission(SCENES_CAN_TAKE_TALKING_STICK);
    const canPass = usePermission(SCENES_CAN_PASS_TALKING_STICK);
@@ -69,7 +70,7 @@ function NoPresenter({ className, scene, dimensions }: NoPresenterProps) {
       >
          {canTake && (
             <Fab variant="extended" color="primary" className={classes.primaryAction} onClick={handleTake}>
-               {t<string>('conference.scenes.talking_stick_modes.take_stick')}
+               {t('conference.scenes.talking_stick_modes.take_stick')}
             </Fab>
          )}
          {!canTake && <AddToListFab />}

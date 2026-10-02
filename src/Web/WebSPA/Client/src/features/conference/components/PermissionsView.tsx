@@ -1,4 +1,4 @@
-import { Chip, Table, TableBody, TableCell, TableRow, Tooltip, Typography } from '@material-ui/core';
+import { Chip, Table, TableBody, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
 import _ from 'lodash';
 import React, { Fragment, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,7 +32,7 @@ export default function PermissionsView({ permissions: { layers } }: Props) {
                         permission.overwrittenIn ? (
                            <Tooltip
                               key={permission.key}
-                              title={t<string>('conference.dialog_permissions.notice_overwritten', {
+                              title={t('conference.dialog_permissions.notice_overwritten', {
                                  layer: permission.overwrittenIn,
                               })}
                            >

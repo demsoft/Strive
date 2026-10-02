@@ -1,6 +1,6 @@
-import { IconButton, makeStyles } from '@material-ui/core';
-import MoreVertIcon from '@material-ui/icons/MoreVert';
-import clsx from 'classnames';
+import { IconButton } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { motion, MotionValue, useTransform } from 'framer-motion';
 import React, { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -14,7 +14,7 @@ import { RootState } from 'src/store';
 import useConsumer from 'src/store/webrtc/hooks/useConsumer';
 import ParticipantTileLabel from './ParticipantTileLabel';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
    root: {
       position: 'relative',
       width: '100%',
@@ -54,7 +54,7 @@ type Props = {
 };
 
 export default function ParticipantTile({ className, participant, width, height, disableLayoutAnimation }: Props) {
-   const classes = useStyles();
+   const { classes, cx } = useStyles();
    const consumer = useConsumer(participant.id, 'webcam');
    const micActivated = useSelector((state: RootState) => selectParticipantMicActivated(state, participant?.id));
    const isWebcamActive = consumer?.paused === false;
@@ -83,7 +83,7 @@ export default function ParticipantTile({ className, participant, width, height,
          <motion.div
             layout={!disableLayoutAnimation}
             layoutId={disableLayoutAnimation ? undefined : participant.id}
-            className={clsx(classes.root, className)}
+            className={cx(classes.root, className)}
          >
             <RenderConsumerVideo consumer={consumer} height={height} width={width} className={classes.video} />
             <motion.div style={{ borderWidth: audioBorder }} className={classes.volumeBorder} />
@@ -106,7 +106,7 @@ export default function ParticipantTile({ className, participant, width, height,
                      size={isSmall ? 'small' : 'medium'}
                      onClick={handleOpenContextMenu}
                   >
-                     <MoreVertIcon fontSize={isSmall ? 'small' : 'default'} />
+                     <MoreVertIcon fontSize={isSmall ? 'small' : 'medium'} />
                   </IconButton>
                </div>
             )}

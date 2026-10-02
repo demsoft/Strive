@@ -19,7 +19,7 @@ namespace Strive.Core.Services.Equipment.UseCases
             _mediator = mediator;
         }
 
-        public async Task<Unit> Handle(SendEquipmentCommandRequest request, CancellationToken cancellationToken)
+        public async Task Handle(SendEquipmentCommandRequest request, CancellationToken cancellationToken)
         {
             var connection = await _repository.GetConnection(request.Participant, request.ConnectionId);
             if (connection == null)
@@ -28,8 +28,6 @@ namespace Strive.Core.Services.Equipment.UseCases
             await _mediator.Publish(
                 new SendEquipmentCommandNotification(request.Participant, request.ConnectionId, request.Source,
                     request.DeviceId, request.Action), cancellationToken);
-
-            return Unit.Value;
         }
     }
 }

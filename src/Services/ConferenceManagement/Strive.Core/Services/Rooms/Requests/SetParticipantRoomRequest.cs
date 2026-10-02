@@ -5,7 +5,7 @@ using Strive.Core.Extensions;
 namespace Strive.Core.Services.Rooms.Requests
 {
     public record SetParticipantRoomRequest (string ConferenceId,
-        IEnumerable<(string participantId, string roomId)> RoomAssignments) : IRequest<Unit>
+        IEnumerable<(string participantId, string roomId)> RoomAssignments) : IRequest
     {
         public static SetParticipantRoomRequest MoveParticipant(Participant participant, string roomId)
         {
