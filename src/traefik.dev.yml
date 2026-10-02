@@ -1,0 +1,36 @@
+# Traefik configuration for local development (docker-compose.dev.yml). Like traefik.yml, but serves a persistent
+# self-signed certificate (src/certs, created by compose.sh) instead of generating a new one on every start.
+# Browsers remember the exception for it, so "Proceed anyway" is only needed once.
+api:
+  insecure: true
+  dashboard: true
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+  file:
+    filename: "traefik.yml"
+
+certificatesResolvers:
+  letsEncrypt:
+    acme:
+      email: test@yourdomain.com
+      storage: acme.json
+      # caserver: https://acme-staging-v02.api.letsencrypt.org/directory # use this for tests
+      httpChallenge:
+        # used during the challenge
+        entryPoint: web
+
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/localhost.crt
+        keyFile: /certs/localhost.key

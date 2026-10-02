@@ -9,6 +9,15 @@ export COMMIT_INFO_AUTHOR=$(git show -s --pretty=%an)
 export COMMIT_INFO_SHA=$(git show -s --pretty=%H)
 export COMMIT_INFO_REMOTE=$(git config --get remote.origin.url)
 
+# Traefik serves a persistent self-signed certificate for localhost in development. Without it, Traefik generates a
+# new one whenever its container is recreated and browsers reject the old exception ("WebRTC connection error").
+if [ ! -f certs/localhost.crt ] || [ ! -f certs/localhost.key ]; then
+  echo "Creating the development certificate certs/localhost.crt"
+  mkdir -p certs
+  openssl req -x509 -newkey rsa:2048 -nodes -days 3650 -keyout certs/localhost.key -out certs/localhost.crt \
+    -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost,DNS:*.localhost,IP:127.0.0.1" 2>/dev/null
+fi
+
 echo "GITREF=$GITREF"
 echo "GITCOMMIT=$GITCOMMIT"
 echo "GITTIMESTAMP=$GITTIMESTAMP"

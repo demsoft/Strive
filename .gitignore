@@ -333,3 +333,5 @@ acme.json
 
 ## Identity Server
 is-signing-key*
+# development certificate (created by compose.sh)
+src/certs/
