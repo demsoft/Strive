@@ -23,6 +23,12 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      # Strive.Infrastructure.Redis.Tests run against localhost:6379
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
     defaults:
       run:
         working-directory: src/
@@ -36,4 +42,7 @@ jobs:
         run: dotnet restore Strive.sln
       - name: Test
         run: dotnet test Strive.sln --no-restore --verbosity normal --collect:"XPlat Code Coverage"
-      - uses: codecov/codecov-action@v1
+      - uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false

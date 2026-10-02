@@ -1,0 +1,35 @@
+name: WebSPA
+on:
+  push:
+    paths:
+      - src/Web/WebSPA/Client/**
+      - .github/workflows/webspa.yml
+
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - src/Web/WebSPA/Client/**
+      - .github/workflows/webspa.yml
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/Web/WebSPA/Client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: src/Web/WebSPA/Client/yarn.lock
+      - name: Install modules
+        run: yarn install --frozen-lockfile
+      - name: Typecheck
+        run: yarn typecheck
+      - name: Test
+        run: yarn test
+      - name: Build
+        run: yarn build

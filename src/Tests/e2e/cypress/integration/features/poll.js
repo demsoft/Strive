@@ -20,9 +20,12 @@ describe("Poll", () => {
 
     cy.contains("Baby don't hurt me").closest("button").click();
 
+    // answers are final by default: the chosen option is highlighted and all options are locked
     cy.contains("Baby don't hurt me")
       .closest("button")
-      .should("not.be.disabled");
+      .should("have.class", "MuiChip-colorPrimary")
+      .and("be.disabled");
+    cy.contains("I don't know").closest("button").should("be.disabled");
   });
 
   it("Create multiple choice answer not final and vote multiple", () => {

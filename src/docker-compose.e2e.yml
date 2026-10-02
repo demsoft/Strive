@@ -1,28 +1,12 @@
 version: "3.4"
 
 services:
-  traefik:
-    image: "traefik:v2.4"
-    container_name: "traefik"
-    command:
-      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
-
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-    volumes:
-      - "//var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./traefik.yml:/traefik.yml:ro"
-
   e2e:
     image: ${DOCKER_REGISTRY-}e2e
     build: ./Tests/e2e
     depends_on:
       - webspa
-    command: ${CYPRESS_COMMAND-}
+    command: --browser chrome ${CYPRESS_COMMAND-}
     # note: inside e2e container, the network allows accessing
     # "web" host under name "web"
     # so "curl http://web" would return whatever the webserver
@@ -38,7 +22,7 @@ services:
       - COMMIT_INFO_SHA=${COMMIT_INFO_SHA}
       - COMMIT_INFO_REMOTE=${COMMIT_INFO_REMOTE}
 
-    # mount the host directory e2e/cypress and the file e2e/cypress.json as
+    # mount the host directory e2e/cypress and the file e2e/cypress.config.js as
     # volumes within the container
     # this means that:
     #  1. anything that Cypress writes to these folders (e.g., screenshots,
@@ -47,7 +31,7 @@ services:
     #     machine immediately takes effect within the e2e container (no docker
     #     rebuild required).
     volumes:
-      - ./Tests/e2e/cypress:/cypress
-      - ./Tests/e2e/cypress.json:/cypress.json
+      - ./Tests/e2e/cypress:/e2e/cypress
+      - ./Tests/e2e/cypress.config.js:/e2e/cypress.config.js
 
     network_mode: host

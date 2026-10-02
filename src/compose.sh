@@ -13,4 +13,7 @@ echo "GITREF=$GITREF"
 echo "GITCOMMIT=$GITCOMMIT"
 echo "GITTIMESTAMP=$GITTIMESTAMP"
 
-docker-compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.dev.yml -f docker-compose.traefik.yml "$@"
+# Docker Compose v2 is a docker plugin ("docker compose"), fall back to the standalone binary
+if docker compose version >/dev/null 2>&1; then compose="docker compose"; else compose="docker-compose"; fi
+
+$compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.dev.yml -f docker-compose.traefik.yml "$@"

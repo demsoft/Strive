@@ -1,3 +1,5 @@
-FROM cypress/included:7.5.0
+FROM cypress/included:15.21.1
 
-RUN npm install cypress-wait-until@1.7.1
+# npm cannot install into the filesystem root (the image's default working directory)
+WORKDIR /e2e
+RUN npm init -y > /dev/null && npm install --no-save cypress-wait-until@3.0.2
