@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson.Serialization;
-using MongoDB.Concurrency;
 using MongoDB.Driver;
 using Strive.Core.Domain.Entities;
 using Strive.Core.Interfaces.Gateways;
@@ -46,7 +45,7 @@ namespace Strive.Infrastructure.Data.Repos
 
         public Task<OptimisticUpdateResult> Update(Conference conference)
         {
-            return Collection.Optimistic(x => x.Version).UpdateAsync(conference).Wrap();
+            return Collection.OptimisticUpdateAsync(conference, x => x.Version);
         }
     }
 }

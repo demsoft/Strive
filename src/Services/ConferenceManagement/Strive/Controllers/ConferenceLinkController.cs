@@ -6,16 +6,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using MongoDB.Concurrency.Optimistic;
 using Strive.Core;
 using Strive.Core.Dto;
 using Strive.Core.Errors;
+using Strive.Core.Interfaces.Gateways;
 using Strive.Core.Interfaces.Gateways.Repositories;
 using Strive.Core.Specifications;
 using Strive.Models.Request;
 using Strive.Models.Response;
 using Strive.Presenters;
-using Polly;
 using SpeciVacation;
 
 namespace Strive.Controllers
@@ -52,14 +51,7 @@ namespace Strive.Controllers
                 return NotFound(new Error(ErrorType.NotFound.ToString(), "The conference link was not found",
                     "ConferenceLink_NotFound"));
 
-            try
-            {
-                await repo.DeleteAsync(conferenceLink);
-            }
-            catch (MongoConcurrencyDeletedException)
-            {
-            }
-
+            await repo.DeleteAsync(conferenceLink);
             return Ok();
         }
 
@@ -72,35 +64,40 @@ namespace Strive.Controllers
         {
             var userId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
 
-            return await Policy<ActionResult>.Handle<MongoConcurrencyUpdatedException>()
-                .RetryAsync(options.Value.RetryCount).ExecuteAsync(async () =>
+            for (var attempt = 0;; attempt++)
+            {
+                var conferenceLink =
+                    (await repo.FindAsync(
+                        new ConferenceLinkByParticipant(userId).And(new ConferenceLinkByConference(conferenceId))))
+                    .FirstOrDefault();
+
+                if (conferenceLink == null) return ConferenceLinkNotFound();
+
+                var dto = new ChangeConferenceLinkStarDto {Starred = conferenceLink.Starred};
+                patch.ApplyTo(dto);
+
+                conferenceLink.Starred = dto.Starred;
+
+                var result = await repo.CreateOrReplaceAsync(conferenceLink);
+                switch (result)
                 {
-                    var conferenceLink =
-                        (await repo.FindAsync(
-                            new ConferenceLinkByParticipant(userId).And(new ConferenceLinkByConference(conferenceId))))
-                        .FirstOrDefault();
+                    case OptimisticUpdateResult.Ok:
+                        return Ok();
+                    case OptimisticUpdateResult.DeletedException:
+                        return ConferenceLinkNotFound();
+                    case OptimisticUpdateResult.ConcurrencyException when attempt < options.Value.RetryCount:
+                        continue;
+                    default:
+                        return Conflict(new Error(ErrorType.Conflict.ToString(),
+                            "The conference link was modified concurrently", "ConferenceLink_Conflict"));
+                }
+            }
+        }
 
-                    if (conferenceLink == null)
-                        return NotFound(new Error(ErrorType.NotFound.ToString(), "The conference link was not found",
-                            "ConferenceLink_NotFound"));
-
-                    var dto = new ChangeConferenceLinkStarDto {Starred = conferenceLink.Starred};
-                    patch.ApplyTo(dto);
-
-                    conferenceLink.Starred = dto.Starred;
-
-                    try
-                    {
-                        await repo.CreateOrReplaceAsync(conferenceLink);
-                    }
-                    catch (MongoConcurrencyDeletedException)
-                    {
-                        return NotFound(new Error(ErrorType.NotFound.ToString(), "The conference link was not found",
-                            "ConferenceLink_NotFound"));
-                    }
-
-                    return Ok();
-                });
+        private NotFoundObjectResult ConferenceLinkNotFound()
+        {
+            return NotFound(new Error(ErrorType.NotFound.ToString(), "The conference link was not found",
+                "ConferenceLink_NotFound"));
         }
     }
 }
