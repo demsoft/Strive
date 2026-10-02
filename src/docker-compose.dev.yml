@@ -14,6 +14,23 @@ services:
     environment:
       - DEBUG=strive-mediasoup**
   
+  coturn:
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      - "50000-50199:50000-50199/udp"
+    command:
+      - -c
+      - /etc/coturn/turnserver.conf
+      - --static-auth-secret=${TURN_SECRET}
+      - --realm=${TURN_REALM:-strive}
+      - --min-port=50000
+      - --max-port=50199
+      # in development the SFU is reached on private addresses (docker network), the base configuration denies them
+      - --allowed-peer-ip=10.0.0.0-10.255.255.255
+      - --allowed-peer-ip=172.16.0.0-172.31.255.255
+      - --allowed-peer-ip=192.168.0.0-192.168.255.255
+
   traefik:
     image: "traefik:v2.11"
     command:

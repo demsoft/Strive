@@ -33,6 +33,10 @@ services:
       - AMQP_CONNECTION_STRING=amqp://0.0.0.0:5672
     network_mode: host # we need to export a large port range https://docs.docker.com/network/host/
 
+  coturn:
+    # relays media for participants behind strict firewalls: needs its UDP port range, like the SFU
+    network_mode: host
+
   nosqldata:
     networks:
       - traefik

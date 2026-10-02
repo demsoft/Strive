@@ -15,6 +15,9 @@ services:
       - MongoDb__ConnectionString=mongodb://nosqldata
       - SFU__TokenSecret=${STRIVE_TOKEN_SECRET}
       - SFU__ApiKey=${STRIVE_API_KEY}
+      - Turn__Urls__0=turn:${TURN_HOST}:3478?transport=udp
+      - Turn__Urls__1=turn:${TURN_HOST}:3478?transport=tcp
+      - Turn__Secret=${TURN_SECRET}
 
   sfu:
     environment:
