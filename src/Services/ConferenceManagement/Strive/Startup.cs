@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -115,7 +116,11 @@ namespace Strive
             // Since .NET 7, hub and API parameters are bound from DI if the container can resolve their type. Autofac
             // reports collection types (e.g. IReadOnlyList<T>) as resolvable, so client arguments would be injected
             // instead. All injected parameters use [FromServices] explicitly.
-            services.AddSignalR(options => options.DisableImplicitFromServicesParameters = true)
+            services.AddSignalR(options =>
+                {
+                    options.DisableImplicitFromServicesParameters = true;
+                    options.AddFilter<JoinedParticipantHubFilter>();
+                })
                 .AddNewtonsoftJsonProtocol(options => { JsonConfig.Apply(options.PayloadSerializerSettings); });
 
             services.AddMvc().ConfigureApiBehaviorOptions(options =>

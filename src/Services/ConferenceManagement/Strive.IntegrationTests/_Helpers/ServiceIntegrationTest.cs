@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Json;
@@ -71,21 +72,29 @@ namespace Strive.IntegrationTests._Helpers
             return (connection, conference);
         }
 
+        /// <param name="user">The user</param>
+        /// <param name="conference">The conference</param>
+        /// <param name="waitForJoin">
+        ///     If false, do not wait until the participant joined (it may wait in the lobby, where it
+        ///     cannot call hub methods)
+        /// </param>
+        /// <param name="configure">Called before the connection is started, e.g. to register handlers</param>
         protected async Task<UserConnection> ConnectUserToConference(UserAccount user,
-            ConferenceCreatedResponseDto conference)
+            ConferenceCreatedResponseDto conference, bool waitForJoin = true, Action<HubConnection>? configure = null)
         {
             var conferenceId = conference.ConferenceId;
             var signalrUrl = BuildSignalRUrl(user, conferenceId);
             var connection = CreateHubConnection(signalrUrl);
 
             var syncObjListener = SynchronizedObjectListener.Initialize(connection, Logger);
+            configure?.Invoke(connection);
 
             Logger.Information("Establish connection to SignalR for conference {conferenceId}", conferenceId);
             await connection.StartAsync();
             Logger.Information("Connection to SignalR established.");
 
             var result = new UserConnection(connection, conferenceId, user, syncObjListener);
-            await EnsureClientJoinCompleted(result);
+            if (waitForJoin) await EnsureClientJoinCompleted(result);
 
             return result;
         }

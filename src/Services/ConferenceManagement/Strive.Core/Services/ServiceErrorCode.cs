@@ -27,6 +27,9 @@ namespace Strive.Core.Services
         Reactions_InvalidEmoji,
         Reactions_RateLimited,
 
+        // Lobby
+        Lobby_ParticipantNotWaiting,
+
         // Permissions
         Permissions_PermissionKeyNotFound,
         Permissions_InvalidPermissionValueType,

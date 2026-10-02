@@ -25,6 +25,7 @@ using Strive.Core.Services.ConferenceControl.Notifications;
 using Strive.Core.Services.ConferenceControl.Requests;
 using Strive.Core.Services.Equipment.Requests;
 using Strive.Core.Services.HandRaise.Requests;
+using Strive.Core.Services.Lobby.Requests;
 using Strive.Core.Services.Media;
 using Strive.Core.Services.Media.Requests;
 using Strive.Core.Services.Permissions;
@@ -100,6 +101,17 @@ namespace Strive.Hubs.Core
             var metadata = GetMetadata();
             var connectionId = Context.ConnectionId;
 
+            if (await _mediator.Send(new ShouldWaitInLobbyRequest(participant), Context.ConnectionAborted))
+            {
+                _logger.LogDebug("Participant {participant} has to wait in the lobby", participant);
+
+                // notify the client first, a moderator may admit the participant immediately after entering
+                await Clients.Caller.LobbyStatus(new LobbyStatusDto(LobbyStatus.Waiting), Context.ConnectionAborted);
+                await _mediator.Send(new EnterLobbyRequest(participant, connectionId, metadata.DisplayName),
+                    Context.ConnectionAborted);
+                return;
+            }
+
             await _mediator.Send(new JoinConferenceRequest(participant, connectionId, metadata),
                 Context.ConnectionAborted);
 
@@ -154,6 +166,9 @@ namespace Strive.Hubs.Core
 
             await using var @lock = await repo.LockParticipantJoin(participant);
 
+            // the connection may have been waiting in the lobby, then it never joined
+            await _mediator.Send(new LeaveLobbyRequest(participant, connectionId));
+
             if (_connections.TryRemoveParticipant(participant.Id,
                 new ParticipantConnection(participant.ConferenceId, connectionId)))
             {
@@ -187,6 +202,27 @@ namespace Strive.Hubs.Core
             return GetInvoker().Create(new KickParticipantRequest(new Participant(conferenceId, message.ParticipantId)))
                 .ValidateObject(message).RequirePermissions(DefinedPermissions.Conference.CanKickParticipant)
                 .ConferenceMustBeOpen().Send();
+        }
+
+        public Task<SuccessOrError<Unit>> AdmitParticipant(LobbyParticipantDto dto)
+        {
+            var (conferenceId, _) = GetContextParticipant();
+            return GetInvoker().Create(new AdmitParticipantRequest(new Participant(conferenceId, dto.ParticipantId)))
+                .ValidateObject(dto).RequirePermissions(DefinedPermissions.Lobby.CanAdmit).ConferenceMustBeOpen().Send();
+        }
+
+        public Task<SuccessOrError<Unit>> DenyParticipant(LobbyParticipantDto dto)
+        {
+            var (conferenceId, _) = GetContextParticipant();
+            return GetInvoker().Create(new DenyParticipantRequest(new Participant(conferenceId, dto.ParticipantId)))
+                .ValidateObject(dto).RequirePermissions(DefinedPermissions.Lobby.CanAdmit).ConferenceMustBeOpen().Send();
+        }
+
+        public Task<SuccessOrError<Unit>> AdmitAllParticipants()
+        {
+            var (conferenceId, _) = GetContextParticipant();
+            return GetInvoker().Create(new AdmitAllParticipantsRequest(conferenceId))
+                .RequirePermissions(DefinedPermissions.Lobby.CanAdmit).ConferenceMustBeOpen().Send();
         }
 
         public Task<SuccessOrError<Unit>> RaiseHand()

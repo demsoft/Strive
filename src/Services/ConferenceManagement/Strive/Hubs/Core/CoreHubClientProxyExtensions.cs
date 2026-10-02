@@ -32,6 +32,12 @@ namespace Strive.Hubs.Core
             return clientProxy.SendAsync(CoreHubMessages.ChatMessage, message, token);
         }
 
+        public static Task LobbyStatus(this IClientProxy clientProxy, LobbyStatusDto status,
+            CancellationToken token = default)
+        {
+            return clientProxy.SendAsync(CoreHubMessages.OnLobbyStatus, status, token);
+        }
+
         public static Task Reaction(this IClientProxy clientProxy, ReactionDto reaction,
             CancellationToken token = default)
         {
