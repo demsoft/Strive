@@ -4,6 +4,23 @@ services:
   identity-api:
     environment:
       - ASPNETCORE_ENVIRONMENT=${APP_ENVIRONMENT}
+      # Demo: anybody can sign in with a made up name (development, e2e tests). Accounts: real accounts (email and
+      # password, Google). compose.sh switches to Accounts when the file .env.identity exists.
+      - Accounts__Mode=${ACCOUNTS_MODE:-Demo}
+      - Accounts__MongoDb__ConnectionString=mongodb://nosqldata
+      # confirming the email address is off for now (set to true to require it, needs SMTP_HOST in production)
+      - Accounts__RequireEmailConfirmation=${ACCOUNTS_REQUIRE_EMAIL_CONFIRMATION:-false}
+      - Accounts__AllowedEmailDomains=${ACCOUNTS_ALLOWED_EMAIL_DOMAINS:-}
+      - Accounts__Google__ClientId=${GOOGLE_CLIENT_ID:-}
+      - Accounts__Google__ClientSecret=${GOOGLE_CLIENT_SECRET:-}
+      - Accounts__Email__From=${SMTP_FROM:-Strive <no-reply@localhost>}
+      # Brevo API key: mails go through the Brevo API (SMTP_* are then not used); SMTP_FROM must be a validated sender there
+      - Accounts__Email__BrevoApiKey=${BREVO_API_KEY:-}
+      - Accounts__Email__Host=${SMTP_HOST:-}
+      - Accounts__Email__Port=${SMTP_PORT:-587}
+      - Accounts__Email__UseTls=${SMTP_TLS:-true}
+      - Accounts__Email__User=${SMTP_USER:-}
+      - Accounts__Email__Password=${SMTP_PASSWORD:-}
 
   strive:
     environment:
@@ -38,4 +55,8 @@ services:
       - API_CONFERENCE_MANAGEMENT=http://strive/v1/sfu/{conferenceId}?apiKey=${STRIVE_API_KEY}
       - AMQP_CONNECTION_STRING=amqp://rabbitmq
       - API_TOKEN_SECRET=${STRIVE_TOKEN_SECRET}
+      # one udp and tcp port per worker (MEDIASOUP_WEBRTC_SERVER_PORT + worker index) instead of a port per transport; needed when
+      # the ports are forwarded one by one (production on Docker Desktop). Empty: the port range of the build arguments.
+      - MEDIASOUP_WEBRTC_SERVER_PORT=${MEDIASOUP_WEBRTC_SERVER_PORT:-}
+      - MEDIASOUP_NUM_WORKERS=${MEDIASOUP_NUM_WORKERS:-}
       - MEDIASOUP_ANNOUNCED_IP=${ANNOUNCED_IP} # this will not work with firefox if it's localhost. to make it work for firefox, use your local ipv4 here

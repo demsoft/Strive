@@ -100,7 +100,12 @@
     "button": "Weiter"
   },
   "conference": {
+    "sidebar": {
+      "hide": "Räume ausblenden",
+      "show": "Räume anzeigen"
+    },
     "appbar": {
+      "account_menu": "Kontomenü",
       "change_conference_settings": "Konferenzeinstellungen ändern",
       "close_conference": "Konferenz schließen",
       "participants": "Teilnehmer: {{count}}",

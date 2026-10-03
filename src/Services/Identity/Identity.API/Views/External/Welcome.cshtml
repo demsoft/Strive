@@ -1,0 +1,18 @@
+@model Identity.API.Quickstart.Account.WelcomeModel
+
+<div class="auth-card">
+    <h1>Welcome to <span class="gradient-text">Strive</span></h1>
+    <p class="subtitle">Choose the name other participants will see in your meetings. You can use your real name or a nickname.</p>
+
+    <partial name="_ValidationSummary" />
+
+    <form asp-action="Welcome" method="post">
+        <div class="form-group">
+            <label asp-for="DisplayName"></label>
+            <input class="form-control" asp-for="DisplayName" autocomplete="nickname" maxlength="30" autofocus>
+        </div>
+        <div class="actions">
+            <button class="btn btn-primary" type="submit">Continue</button>
+        </div>
+    </form>
+</div>

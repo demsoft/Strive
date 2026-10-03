@@ -34,7 +34,18 @@ async function main() {
    });
 
    const workers = new MediaSoupWorkers();
-   await workers.run(config.mediasoup.numWorkers, config.mediasoup.workerSettings);
+   const firstListenIp = config.webRtcTransport.options.listenIps?.[0] as { ip: string; announcedIp?: string } | undefined;
+   await workers.run(
+      config.mediasoup.numWorkers,
+      config.mediasoup.workerSettings,
+      config.mediasoup.webRtcServerBasePort
+         ? {
+              basePort: config.mediasoup.webRtcServerBasePort,
+              listenIp: firstListenIp?.ip ?? '127.0.0.1',
+              announcedAddress: firstListenIp?.announcedIp,
+           }
+         : undefined,
+   );
 
    const client = new ConferenceManagementClient(config.services.conferenceInfoRequestUrl);
 

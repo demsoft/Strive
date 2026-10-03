@@ -1,0 +1,20 @@
+@model Identity.API.Quickstart.Account.CheckEmailModel
+
+<div class="auth-card">
+    <h1>Check your <span class="gradient-text">inbox</span></h1>
+    <p class="subtitle">
+        If we can use @(string.IsNullOrWhiteSpace(Model.Email) ? "that address" : Model.Email), a confirmation link is on its
+        way. It works for 24 hours.
+    </p>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Email))
+    {
+        <form asp-action="ResendConfirmation" method="post">
+            <input type="hidden" name="email" value="@Model.Email" />
+            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+            <button class="btn btn-secondary btn-block" type="submit">Send it again</button>
+        </form>
+    }
+
+    <p class="hint"><a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Back to sign in</a></p>
+</div>

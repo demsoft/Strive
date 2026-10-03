@@ -106,7 +106,7 @@ export default function ClassConference() {
          <ConferenceLayoutContext.Provider value={context}>
             <div className={classes.root}>
                <AnnouncementOverlay />
-               <ConferenceAppBar chatWidth={chatWidth} />
+               <ConferenceAppBar />
                <div className={classes.conferenceMain}>
                   <ConferenceSidebar />
                   <div className={classes.sceneContainer}>

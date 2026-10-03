@@ -11,11 +11,30 @@ export COMMIT_INFO_REMOTE=$(git config --get remote.origin.url)
 
 # Traefik serves a persistent self-signed certificate for localhost in development. Without it, Traefik generates a
 # new one whenever its container is recreated and browsers reject the old exception ("WebRTC connection error").
-if [ ! -f certs/localhost.crt ] || [ ! -f certs/localhost.key ]; then
-  echo "Creating the development certificate certs/localhost.crt"
+# It also covers localtest.me, a public domain whose names all point to 127.0.0.1: Google refuses http://*.localhost as a
+# redirect address, so sign in with Google is tried on https://localtest.me (see .env.identity.example).
+if [ ! -f certs/localhost.crt ] || [ ! -f certs/localhost.key ] || ! grep -q . certs/localhost.crt ||
+  ! openssl x509 -in certs/localhost.crt -noout -text 2>/dev/null | grep -q "localtest.me"; then
+  echo "Creating the development certificate certs/localhost.crt (the browser has to trust it again)"
   mkdir -p certs
   openssl req -x509 -newkey rsa:2048 -nodes -days 3650 -keyout certs/localhost.key -out certs/localhost.crt \
-    -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost,DNS:*.localhost,IP:127.0.0.1" 2>/dev/null
+    -subj "/CN=localhost" \
+    -addext "subjectAltName=DNS:localhost,DNS:*.localhost,DNS:localtest.me,DNS:*.localtest.me,IP:127.0.0.1" 2>/dev/null
+fi
+
+# Accounts (sign up with email and password, sign in with Google) are on when the file .env.identity exists (never
+# committed, see .env.identity.example). Without it the app keeps the demo sign in. Emails go to a local inbox
+# (Mailpit, http://localhost:8025) unless SMTP_HOST is set.
+if [ -f .env.identity ]; then
+  set -a
+  . ./.env.identity
+  set +a
+  export ACCOUNTS_MODE=Accounts
+  if [ -z "${SMTP_HOST:-}" ]; then
+    export SMTP_HOST=mailpit SMTP_PORT=1025 SMTP_TLS=false
+    set -- --profile mail "$@"
+  fi
+  echo "Accounts: on (sign in at https://${FRONTEND_DNS_OR_IP:-localhost})"
 fi
 
 # Recording is optional. It runs only with `--profile recording`, which also switches the feature on in the server.

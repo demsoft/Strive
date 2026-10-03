@@ -4,28 +4,94 @@
     <h1>Welcome <span class="gradient-text">back</span></h1>
     <p class="subtitle">Sign in to start or join your meetings.</p>
 
+    @if (!string.IsNullOrEmpty(Model.Notice))
+    {
+        <div class="alert alert-success" role="status">@Model.Notice</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-danger" role="alert">@Model.Error</div>
+    }
+
     <partial name="_ValidationSummary" />
+
+    @if (Model.ShowResendConfirmation)
+    {
+        <form asp-controller="Registration" asp-action="ResendConfirmation" method="post" class="resend">
+            <input type="hidden" name="email" value="@Model.Username" />
+            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+            <button class="btn btn-secondary btn-block" type="submit">Send the confirmation email again</button>
+        </form>
+    }
+
+    @if (Model.AccountsMode && Model.GoogleEnabled)
+    {
+        <a class="btn btn-google btn-block" asp-controller="External" asp-action="Challenge" asp-route-returnUrl="@Model.ReturnUrl">
+            <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/>
+                <path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/>
+                <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/>
+            </svg>
+            Continue with Google
+        </a>
+        @if (Model.EnableLocalLogin)
+        {
+            <div class="divider"><span>or</span></div>
+        }
+    }
 
     @if (Model.EnableLocalLogin)
     {
         <form asp-route="Login">
             <input type="hidden" asp-for="ReturnUrl" />
 
-            <div class="form-group">
-                <label asp-for="Username"></label>
-                <input class="form-control" placeholder="Your username" asp-for="Username" autofocus autocomplete="username">
-            </div>
-            <div class="form-group">
-                <label asp-for="Password"></label>
-                <input type="password" class="form-control" placeholder="Your password" asp-for="Password" autocomplete="off">
-            </div>
+            @if (Model.AccountsMode)
+            {
+                <div class="form-group">
+                    <label asp-for="Username">Email</label>
+                    <input class="form-control" type="email" placeholder="you@example.com" asp-for="Username" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label asp-for="Password"></label>
+                    <input type="password" class="form-control" placeholder="Your password" asp-for="Password" autocomplete="current-password">
+                </div>
+            }
+            else
+            {
+                <div class="form-group">
+                    <label asp-for="Username"></label>
+                    <input class="form-control" placeholder="Your username" asp-for="Username" autofocus autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label asp-for="Password"></label>
+                    <input type="password" class="form-control" placeholder="Your password" asp-for="Password" autocomplete="off">
+                </div>
+            }
 
             <div class="actions">
                 <button class="btn btn-primary" name="button" value="login">Sign in</button>
-                <button class="btn btn-secondary" name="button" value="cancel">Cancel</button>
+                <button class="btn btn-secondary" name="button" value="cancel" formnovalidate>Cancel</button>
             </div>
         </form>
 
-        <p class="hint">This is a demo environment: any password is accepted.</p>
+        @if (Model.AccountsMode)
+        {
+            <p class="hint">
+                <a asp-controller="Registration" asp-action="ForgotPassword" asp-route-returnUrl="@Model.ReturnUrl">Forgot your password?</a>
+                &middot;
+                <a asp-controller="Registration" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Create an account</a>
+            </p>
+        }
+        else
+        {
+            <p class="hint">This is a demo environment: any password is accepted.</p>
+        }
+    }
+    else if (Model.AccountsMode)
+    {
+        <p class="hint">
+            <a asp-controller="Registration" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Create an account</a>
+        </p>
     }
 </div>

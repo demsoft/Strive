@@ -1,10 +1,8 @@
-import { useAuth } from 'react-oidc-context';
-import useUser from 'src/features/auth/useUser';
-import { AppBar, Box, Chip, IconButton, Menu, MenuItem, Toolbar, Typography } from '@mui/material';
+import { AppBar, Box, Chip, Divider, IconButton, Toolbar, Tooltip, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import SettingsIcon from '@mui/icons-material/Settings';
-import React, { useRef, useState } from 'react';
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router';
@@ -24,38 +22,21 @@ import InviteLinkButton from 'src/components/InviteLinkButton';
 import LobbyButton from 'src/features/lobby/components/LobbyButton';
 import AppBarLogo from './appbar/AppBarLogo';
 import BreakoutRoomChip from './appbar/BreakoutRoomChip';
+import UserMenu from './appbar/UserMenu';
 import WebRtcStatusChip from './appbar/WebRtcStatusChip';
 
 const useStyles = makeStyles()((theme) => ({
-   root: {
-      flexGrow: 1,
-   },
-   title: {
-      padding: theme.spacing(1, 2),
-      borderRadius: theme.shape.borderRadius,
-   },
-   noPointerEvents: {
-      pointerEvents: 'none',
-   },
-   toolbar: {
-      backgroundColor: 'transparent',
-   },
    chip: {
       backgroundColor: 'rgba(255, 255, 255, 0.08)',
-      padding: theme.spacing(0, 1),
+      fontWeight: 600,
    },
    breakoutRoomChip: {
-      marginRight: theme.spacing(1),
       backgroundColor: theme.palette.primary.dark,
       minWidth: 0,
    },
 }));
 
-type Props = {
-   chatWidth: number;
-};
-
-export default function ConferenceAppBar({ chatWidth }: Props) {
+export default function ConferenceAppBar() {
    const { classes, cx } = useStyles();
    const dispatch = useDispatch();
    const { t } = useTranslation();
@@ -67,25 +48,8 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
    const canCloseConference = usePermission(CONFERENCE_CAN_OPEN_AND_CLOSE);
    const canManageRecordings = usePermission(RECORDING_CAN_MANAGE);
    const [recordingsOpen, setRecordingsOpen] = useState(false);
-   const handleCloseConference = () => dispatch(coreHub.closeConference());
-   const handleOpenSettings = () => dispatch(openSettings());
-
-   const auth = useAuth();
-   const oidcUser = useUser();
-   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-   const handleOpenMenu = () => setIsMenuOpen(true);
-   const handleCloseMenu = () => setIsMenuOpen(false);
-
-   const moreIconButtonRef = useRef<HTMLButtonElement>(null);
    const participants = useSelector(selectParticipantList);
-
    const breakoutRoomState = useSelector((state: RootState) => state.breakoutRooms.synchronized?.active);
-
-   const handleShowPermissions = () => {
-      dispatch(coreHub.fetchPermissions(null));
-      handleCloseMenu();
-   };
 
    const handlePatchConference = () => {
       if (!conferenceId) {
@@ -93,100 +57,70 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
          return;
       }
       dispatch(openDialogToPatchAsync(conferenceId));
-      handleCloseMenu();
    };
 
    return (
       <AppBar position="static">
-         <Toolbar variant="dense" className={classes.toolbar}>
-            <Box
-               sx={{
-                  pr: 2,
-               }}
-            >
-               <AppBarLogo />
-            </Box>
+         <Toolbar variant="dense" sx={{ gap: { xs: 0.5, sm: 1.5 }, minHeight: 56, backgroundColor: 'transparent' }}>
+            <AppBarLogo />
             {conferenceName && !isMobile && (
-               <Typography variant="subtitle1" noWrap sx={{ fontWeight: 600, maxWidth: 280 }} id="conference-name">
-                  {conferenceName}
-               </Typography>
+               <>
+                  <Divider orientation="vertical" flexItem sx={{ my: 1.75 }} />
+                  <Typography
+                     variant="subtitle1"
+                     noWrap
+                     sx={{ fontWeight: 600, minWidth: 0, maxWidth: { sm: 160, md: 240, lg: 340 } }}
+                     id="conference-name"
+                  >
+                     {conferenceName}
+                  </Typography>
+               </>
             )}
-            <Box
-               sx={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  flex: 1,
-                  minWidth: 0,
-               }}
-            >
+
+            {/* what is going on in the conference */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0, ml: { xs: 0.5, sm: 1 } }}>
+               <RecordingIndicator />
                {breakoutRoomState && (
                   <BreakoutRoomChip className={cx(classes.chip, classes.breakoutRoomChip)} state={breakoutRoomState} />
                )}
                <WebRtcStatusChip />
                {participants && !isMobile && (
-                  <Chip
-                     className={classes.chip}
-                     label={t('conference.appbar.participants', { count: participants.length })}
-                     size="small"
-                  />
+                  <Tooltip title={t('conference.appbar.participants', { count: participants.length })}>
+                     <Chip
+                        id="participant-count"
+                        className={classes.chip}
+                        icon={<PeopleAltOutlinedIcon />}
+                        label={participants.length}
+                        size="small"
+                     />
+                  </Tooltip>
                )}
             </Box>
-            <Box
-               sx={{
-                  width: isMobile ? 'auto' : chatWidth - 24 /** padding toolbar */,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-end',
-               }}
-            >
-               {oidcUser && !isMobile && (
-                  <Box
-                     sx={{
-                        mr: 2,
-                     }}
-                  >
-                     <Typography variant="caption" noWrap sx={{ display: { xs: 'none', xl: 'block' } }}>
-                        {t('conference.appbar.signed_in_as')} <b>{oidcUser.profile.name}</b>
-                     </Typography>
-                  </Box>
-               )}
-               <RecordingIndicator />
+
+            {/* what you can do */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0, sm: 0.5 }, flexShrink: 0 }}>
                <RecordButton />
                <LobbyButton />
                <InviteLinkButton />
-               <IconButton aria-label={t('common:settings')} color="inherit" onClick={handleOpenSettings} size="large">
-                  <SettingsIcon />
-               </IconButton>
-               <IconButton
-                  aria-label="more"
-                  color="inherit"
-                  onClick={handleOpenMenu}
-                  ref={moreIconButtonRef}
-                  size="large"
-               >
-                  <MoreVertIcon />
-               </IconButton>
+               {!isMobile && (
+                  <Tooltip title={t('common:settings')}>
+                     <IconButton aria-label={t('common:settings')} color="inherit" onClick={() => dispatch(openSettings())}>
+                        <SettingsOutlinedIcon />
+                     </IconButton>
+                  </Tooltip>
+               )}
+               <UserMenu
+                  showSettings={isMobile}
+                  canManageRecordings={canManageRecordings}
+                  canCloseConference={canCloseConference}
+                  onShowPermissions={() => dispatch(coreHub.fetchPermissions(null))}
+                  onShowRecordings={() => setRecordingsOpen(true)}
+                  onChangeConference={handlePatchConference}
+                  onCloseConference={() => dispatch(coreHub.closeConference())}
+                  onOpenSettings={() => dispatch(openSettings())}
+               />
             </Box>
 
-            <Menu open={isMenuOpen} onClose={handleCloseMenu} anchorEl={moreIconButtonRef.current}>
-               <MenuItem onClick={handleShowPermissions}>{t('conference.appbar.show_my_permissions')}</MenuItem>
-
-               {canManageRecordings && (
-                  <MenuItem
-                     onClick={() => {
-                        setRecordingsOpen(true);
-                        handleCloseMenu();
-                     }}
-                  >
-                     {t('conference.recording.list_title')}
-                  </MenuItem>
-               )}
-               <MenuItem onClick={handlePatchConference}>{t('conference.appbar.change_conference_settings')}</MenuItem>
-               {canCloseConference && (
-                  <MenuItem onClick={handleCloseConference}>{t('conference.appbar.close_conference')}</MenuItem>
-               )}
-               <MenuItem onClick={() => auth.signoutRedirect()}>{t('common:sign_out')}</MenuItem>
-            </Menu>
             <RecordingsDialog open={recordingsOpen} onClose={() => setRecordingsOpen(false)} />
          </Toolbar>
       </AppBar>

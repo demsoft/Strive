@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
-using Identity.API.Quickstart;
+using System.Threading.Tasks;
+using Identity.API.Accounts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.API.Controllers
@@ -7,20 +8,21 @@ namespace Identity.API.Controllers
     [Route("api/v1/[controller]")]
     public class UserController : Controller
     {
-        private readonly IUserProvider _users;
+        private readonly IUserDirectory _users;
 
-        public UserController(IUserProvider userProvider)
+        public UserController(IUserDirectory users)
         {
-            _users = userProvider;
+            _users = users;
         }
 
         [HttpPost("list")]
-        public ActionResult<List<UserInfoDto>> ListUsers([FromBody] string[] ids)
+        public async Task<ActionResult<List<UserInfoDto>>> ListUsers([FromBody] string[] ids)
         {
+            var names = await _users.GetDisplayNamesAsync(ids);
             var result = new List<UserInfoDto>(ids.Length);
             foreach (var id in ids)
             {
-                var username = _users.IdToUsername(id);
+                var username = names[id];
                 result.Add(username == null ? UserInfoDto.CreateNotFound(id) : UserInfoDto.Create(id, username));
             }
 

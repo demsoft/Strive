@@ -25,6 +25,8 @@ services:
   identity-api:
     image: ${DOCKER_REGISTRY-}identityapi
     build: ./Services/Identity/Identity.API
+    depends_on:
+      - nosqldata
 
   sfu:
     image: ${DOCKER_REGISTRY-}sfu

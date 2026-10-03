@@ -3,7 +3,12 @@ import * as os from 'os';
 
 const config: Config = {
    mediasoup: {
-      numWorkers: Object.keys(os.cpus()).length,
+      // each worker is one process (and one cpu core), a small number is enough for the conferences of one server
+      numWorkers: Number(process.env.MEDIASOUP_NUM_WORKERS) || Object.keys(os.cpus()).length,
+      // When set, every worker listens on ONE udp and tcp port for all of its transports (MEDIASOUP_WEBRTC_SERVER_PORT +
+      // the index of the worker) instead of a port per transport from the range below. Needed when the ports are forwarded
+      // one by one (Docker Desktop, NAT), 10000 forwarded ports are not practical.
+      webRtcServerBasePort: Number(process.env.MEDIASOUP_WEBRTC_SERVER_PORT) || undefined,
       workerSettings: {
          logLevel: 'debug',
          logTags: ['info', 'ice', 'dtls', 'rtp', 'srtp', 'rtcp', 'rtx', 'bwe', 'score', 'simulcast', 'svc', 'sctp'],
@@ -60,6 +65,7 @@ export default config;
 type Config = {
    mediasoup: {
       numWorkers: number;
+      webRtcServerBasePort?: number;
       workerSettings: WorkerSettings;
    };
    router: RouterOptions;

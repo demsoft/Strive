@@ -1,8 +1,8 @@
-import { alpha, IconButton, Paper } from '@mui/material';
+import { alpha, IconButton, Paper, Tooltip } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { motion } from 'framer-motion';
+import ViewSidebarOutlinedIcon from '@mui/icons-material/ViewSidebarOutlined';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import RoomsList from 'src/features/rooms/components/RoomsList';
 import SceneManagement from 'src/features/scenes/components/SceneManagement';
@@ -35,23 +35,25 @@ const useStyles = makeStyles()((theme) => ({
       position: 'relative',
       height: '100%',
    },
-   backArrowButton: {
+   toggleButton: {
       position: 'absolute',
       top: 8,
-      right: -34,
+      right: -38,
       zIndex: theme.zIndex.drawer,
       display: 'flex',
       flexDirection: 'column',
    },
+   toggleIconButton: {
+      border: `1px solid ${theme.palette.divider}`,
+      backgroundColor: alpha(theme.palette.background.paper, 0.7),
+      borderRadius: 10,
+      '&:hover': { backgroundColor: theme.palette.background.paper },
+   },
 }));
-
-const arrowVariants = {
-   open: { rotateY: 0, translateX: 0 },
-   closed: { rotateY: 180, translateX: -3 },
-};
 
 export default function ConferenceSidebar() {
    const { classes } = useStyles();
+   const { t } = useTranslation();
 
    const dispatch = useDispatch();
    const open = useSelector((state: RootState) => state.conference.sidebarOpen);
@@ -69,16 +71,20 @@ export default function ConferenceSidebar() {
                </Paper>
             </div>
          )}
-         <div className={classes.backArrowButton}>
-            <IconButton aria-label="toggle room list" size="small" onClick={handleToggle}>
-               <ArrowBackIcon
-                  component={motion.svg}
-                  variants={arrowVariants}
-                  animate={open ? 'open' : 'closed'}
-                  style={{ transformOrigin: 'center', ...({ originX: 0.5, originY: 0.5 } as any) }}
-                  fontSize="small"
-               />
-            </IconButton>
+         <div className={classes.toggleButton}>
+            <Tooltip title={open ? t('conference.sidebar.hide') : t('conference.sidebar.show')} placement="right">
+               <IconButton
+                  id="toggle-sidebar"
+                  aria-label={open ? t('conference.sidebar.hide') : t('conference.sidebar.show')}
+                  aria-pressed={open}
+                  size="small"
+                  className={classes.toggleIconButton}
+                  color={open ? 'primary' : 'default'}
+                  onClick={handleToggle}
+               >
+                  <ViewSidebarOutlinedIcon fontSize="small" />
+               </IconButton>
+            </Tooltip>
          </div>
       </div>
    );
