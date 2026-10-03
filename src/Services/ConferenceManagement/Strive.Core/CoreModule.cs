@@ -6,6 +6,7 @@ using Strive.Core.Services.Chat;
 using Strive.Core.Services.ConferenceControl;
 using Strive.Core.Services.Permissions;
 using Strive.Core.Services.Poll;
+using Strive.Core.Services.Reactions;
 using Strive.Core.Services.Scenes;
 using Strive.Core.Services.Scenes.Providers.TalkingStick;
 using Strive.Core.Services.Synchronization;
@@ -35,6 +36,7 @@ namespace Strive.Core
             builder.RegisterType<TaskDelay>().As<ITaskDelay>().SingleInstance();
             builder.RegisterType<ChatChannelSelector>().As<IChatChannelSelector>();
             builder.RegisterType<ParticipantTypingTimer>().As<IParticipantTypingTimer>().SingleInstance();
+            builder.RegisterType<ReactionRateLimiter>().As<IReactionRateLimiter>().SingleInstance();
             builder.RegisterAssemblyTypes(ThisAssembly).AssignableTo<ISceneProvider>().As<ISceneProvider>()
                 .SingleInstance();
 

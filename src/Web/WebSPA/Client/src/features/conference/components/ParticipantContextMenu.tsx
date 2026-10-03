@@ -5,11 +5,13 @@ import SendIcon from '@mui/icons-material/Send';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import { throttle } from 'lodash';
+import PanToolOutlinedIcon from '@mui/icons-material/PanToolOutlined';
 import { AccountRemove, AccountVoice } from 'mdi-material-ui';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import * as coreHub from 'src/core-hub';
+import { selectIsHandRaised } from 'src/features/hand-raise/selectors';
 import { openPrivateChat, setSelectedChannel } from 'src/features/chat/reducer';
 import { selectPrivateMessageEnabled } from 'src/features/chat/selectors';
 import { createPrivatChatChannel } from 'src/features/chat/utils';
@@ -22,6 +24,7 @@ import usePermission from 'src/hooks/usePermission';
 import useSelectorFactory from 'src/hooks/useSelectorFactory';
 import {
    CONFERENCE_CAN_KICK_PARTICIPANT,
+   HAND_RAISE_CAN_LOWER_OTHERS,
    MEDIA_CAN_CHANGE_PARTICIPANTS_PRODUCER,
    PERMISSIONS_CAN_GIVE_TEMPORARY_PERMISSION,
    PERMISSIONS_CAN_SEE_ANY_PARTICIPANTS_PERMISSIONS,
@@ -128,6 +131,11 @@ const ParticipantContextMenu = React.forwardRef<HTMLElement, Props>(({ participa
       onClose();
    };
 
+   const handleLowerHand = () => {
+      dispatch(coreHub.lowerParticipantsHand({ participantId: participant.id }));
+      onClose();
+   };
+
    const handleSetPresenter = () => {
       dispatch(coreHub.setScene({ type: 'presenter', presenterParticipantId: participant.id }));
       onClose();
@@ -139,6 +147,8 @@ const ParticipantContextMenu = React.forwardRef<HTMLElement, Props>(({ participa
    const canKick = usePermission(CONFERENCE_CAN_KICK_PARTICIPANT);
    const canChangeParticipantProducers = usePermission(MEDIA_CAN_CHANGE_PARTICIPANTS_PRODUCER);
    const canSetScene = usePermission(SCENES_CAN_SET_SCENE);
+   const canLowerHand = usePermission(HAND_RAISE_CAN_LOWER_OTHERS);
+   const isHandRaised = useSelector((state: RootState) => selectIsHandRaised(state, participant.id));
 
    const isPresenter = useSelectorFactory(selectIsParticipantPresenterFactory, (state: RootState, selector) =>
       selector(state, participant.id),
@@ -205,6 +215,14 @@ const ParticipantContextMenu = React.forwardRef<HTMLElement, Props>(({ participa
                   <MicOffRounded fontSize="small" />
                </ListItemIcon>
                {t('conference.participant_context_menu.disable_mic_for_all')}
+            </MenuItem>
+         )}
+         {canLowerHand && isHandRaised && (
+            <MenuItem onClick={handleLowerHand}>
+               <ListItemIcon className={classes.menuIcon}>
+                  <PanToolOutlinedIcon fontSize="small" />
+               </ListItemIcon>
+               {t('conference.participant_context_menu.lower_hand')}
             </MenuItem>
          )}
          {canSetScene && !isPresenter && isInMyRoom && (

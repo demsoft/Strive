@@ -3,9 +3,11 @@ import { makeStyles } from 'tss-react/mui';
 import { Skeleton } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import AnimatedMicIcon from 'src/assets/animated-icons/AnimatedMicIcon';
 import IconHide from 'src/components/IconHide';
+import { selectIsHandRaised } from 'src/features/hand-raise/selectors';
 import { selectParticipantProducers } from 'src/features/media/selectors';
 import useMyParticipantId from 'src/hooks/useMyParticipantId';
 import { RootState } from 'src/store';
@@ -37,7 +39,9 @@ type Props = {
 
 export default function ParticipantItem({ participant }: Props) {
    const { classes } = useStyles();
+   const { t } = useTranslation();
    const producers = useSelector((state: RootState) => selectParticipantProducers(state, participant?.id));
+   const handRaised = useSelector((state: RootState) => selectIsHandRaised(state, participant?.id));
    const myParticipantId = useMyParticipantId();
 
    const theme = useTheme();
@@ -56,7 +60,10 @@ export default function ParticipantItem({ participant }: Props) {
    return (
       <div className={classes.root}>
          <ButtonBase onClick={handleToggle} ref={buttonRef} component={motion.button} className={classes.button}>
-            <Typography variant="subtitle1">{participant ? participant?.displayName : <Skeleton />}</Typography>
+            <Typography variant="subtitle1">
+               {handRaised && <span aria-label={t('conference.hand_raise.raised')}>✋ </span>}
+               {participant ? participant?.displayName : <Skeleton />}
+            </Typography>
             <IconHide hidden={!producers?.mic}>
                <AnimatedMicIcon activated={!producers?.mic?.paused} disabledColor={theme.palette.error.main} />
             </IconHide>

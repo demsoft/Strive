@@ -26,6 +26,7 @@ const defaultEvents: string[] = [
    coreHub.events.onSynchronizedObjectUpdated,
    coreHub.events.onRequestDisconnect,
    coreHub.events.onEquipmentError,
+   coreHub.events.onReaction,
 ];
 
 type Props = RouteComponentProps<ConferenceRouteParams>;

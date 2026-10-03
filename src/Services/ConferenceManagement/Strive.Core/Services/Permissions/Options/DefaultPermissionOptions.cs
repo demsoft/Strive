@@ -20,6 +20,8 @@ namespace Strive.Core.Services.Permissions.Options
                 {
                     DefinedPermissions.Chat.CanSendChatMessage.Configure(true),
                     DefinedPermissions.Chat.CanSendAnonymously.Configure(true),
+                    DefinedPermissions.HandRaise.CanRaise.Configure(true),
+                    DefinedPermissions.Reactions.CanSend.Configure(true),
                     DefinedPermissions.Rooms.CanSwitchRoom.Configure(true),
                     DefinedPermissions.Media.CanShareAudio.Configure(true),
                     DefinedPermissions.Media.CanShareWebcam.Configure(true),
@@ -48,6 +50,7 @@ namespace Strive.Core.Services.Permissions.Options
                     DefinedPermissions.Poll.CanOpenPoll.Configure(true),
                     DefinedPermissions.Poll.CanSeeUnpublishedPollResults.Configure(true),
                     DefinedPermissions.Whiteboard.CanCreate.Configure(true),
+                    DefinedPermissions.HandRaise.CanLowerOthers.Configure(true),
                 }.ToImmutableDictionary()
             },
             // Breakout room permissions

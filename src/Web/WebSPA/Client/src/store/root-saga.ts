@@ -8,6 +8,7 @@ import breakoutRooms from 'src/features/breakout-rooms/sagas';
 import createConference from 'src/features/create-conference/sagas';
 import equipment from 'src/features/equipment/sagas';
 import poll from 'src/features/poll/sagas';
+import reactions from 'src/features/reactions/sagas';
 
 export default function* rootSaga() {
    yield spawn(scenes);
@@ -19,4 +20,5 @@ export default function* rootSaga() {
    yield spawn(createConference);
    yield spawn(equipment);
    yield spawn(poll);
+   yield spawn(reactions);
 }
