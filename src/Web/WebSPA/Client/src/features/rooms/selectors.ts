@@ -3,6 +3,7 @@ import _ from 'lodash';
 import { RootState } from 'src/store';
 import { createArrayEqualSelector } from 'src/utils/reselect';
 import { selectMyParticipantId } from '../auth/selectors';
+import { isRecorderParticipant } from '../recording/recorder';
 import { RoomViewModel } from './types';
 
 export const selectRooms = (state: RootState) => state.rooms.synchronized;
@@ -20,7 +21,8 @@ export const selectParticipantsOfCurrentRoom = createArrayEqualSelector(
       if (!rooms) return [];
 
       return Object.entries(rooms.participants)
-         .filter(([, roomId]) => roomId === room)
+         // the recorder is in the room to receive it, but is neither shown nor counted as a participant of the scene
+         .filter(([participantId, roomId]) => roomId === room && !isRecorderParticipant(participantId))
          .map<string>(([participantId]) => participantId);
    }),
    (x) => x,

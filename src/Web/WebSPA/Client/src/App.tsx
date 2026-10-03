@@ -11,6 +11,7 @@ import RequireAuth from './features/auth/components/RequireAuth';
 import StriveAuthProvider from './features/auth/components/StriveAuthProvider';
 import UserInteractionListener from './features/media/components/UserInteractionListener';
 import theme from './theme';
+import RecordingRoute from './routes/RecordingRoute';
 import SharedRecordingRoute from './routes/SharedRecordingRoute';
 import RedirectToConference from './RedirectToConference';
 import AuthenticatedRoutes from './routes/AuthenticatedRoutes';
@@ -32,6 +33,8 @@ function App() {
          <BrowserRouter>
             <Switch>
                <Route path="/c/:id/as-equipment" exact component={EquipmentRoute} />
+               {/* opened by the recorder service, it joins with its own token */}
+               <Route path="/c/:id/recording" exact component={RecordingRoute} />
                <Route path="/">
                   <StriveAuthProvider>
                      <Switch>

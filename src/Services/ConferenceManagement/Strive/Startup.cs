@@ -82,8 +82,15 @@ namespace Strive
 
             // Authentication
             var authOptions = Configuration.GetRequired<AuthOptions>("Authentication");
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
-                JwtBearerDefaults.AuthenticationScheme, options =>
+            services.AddAuthentication(options =>
+                {
+                    // a policy scheme picks the identity server or the recorder scheme by the issuer of the token
+                    options.DefaultScheme = RecorderAuthentication.SmartScheme;
+                    options.DefaultChallengeScheme = RecorderAuthentication.SmartScheme;
+                })
+                .AddPolicyScheme(RecorderAuthentication.SmartScheme, RecorderAuthentication.SmartScheme,
+                    options => options.ForwardDefaultSelector = RecorderAuthentication.SelectScheme)
+                .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
                 {
                     options.Authority = authOptions.Authority;
                     options.TokenValidationParameters =
@@ -91,6 +98,12 @@ namespace Strive
 
                     options.RequireHttpsMetadata = !authOptions.NoSslRequired;
 
+                    options.AcceptTokenFromQuery();
+                })
+                .AddJwtBearer(RecorderAuthentication.Scheme, options =>
+                {
+                    options.TokenValidationParameters = RecorderAuthentication.CreateValidationParameters(
+                        Configuration["Recording:Recorder:TokenSecret"]);
                     options.AcceptTokenFromQuery();
                 });
             services.AddSingleton<IAuthorizationHandler, UserIsModeratorOfConferenceHandler>();

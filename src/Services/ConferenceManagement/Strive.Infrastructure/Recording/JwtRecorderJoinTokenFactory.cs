@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Strive.Core.Services.Recording;
 using Strive.Core.Services.Recording.Gateways;
 
 namespace Strive.Infrastructure.Recording
@@ -18,7 +19,7 @@ namespace Strive.Infrastructure.Recording
         /// </summary>
         public static string ParticipantId(string recordingId)
         {
-            return "recorder-" + recordingId;
+            return RecorderParticipants.ParticipantId(recordingId);
         }
 
         private readonly RecorderOptions _options;
@@ -42,8 +43,8 @@ namespace Strive.Infrastructure.Recording
             var token = new JwtSecurityToken(RecorderOptions.TokenIssuer, RecorderOptions.TokenAudience, new[]
             {
                 new Claim("sub", ParticipantId(recordingId)),
-                new Claim("name", "Recording"),
-                new Claim(ClaimTypes.Role, RecorderOptions.RoleClaimValue),
+                new Claim("name", RecorderParticipants.DisplayName),
+                new Claim("role", RecorderOptions.RoleClaimValue),
                 new Claim(RecordingIdClaim, recordingId),
                 new Claim(ConferenceIdClaim, conferenceId),
             }, now, now.Add(validFor), credentials);
