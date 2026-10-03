@@ -580,5 +580,18 @@
       "title": "No messages yet",
       "text": "Say hello to everyone 👋"
     }
+  },
+  "pre_join": {
+    "title": "Ready to join?",
+    "joining_as": "Joining as {{name}}",
+    "join_now": "Join now",
+    "hint": "Your camera and microphone only start when you join.",
+    "mic_on": "Microphone on, click to mute",
+    "mic_off": "Microphone off, click to turn on",
+    "webcam_on": "Camera on, click to turn off",
+    "webcam_off": "Camera off, click to turn on",
+    "mic_level": "Speak to test your microphone",
+    "permission_denied": "Your browser blocked the camera or microphone. Allow access in the address bar (or in your browser settings) and try again. You can still join without them.",
+    "device_unavailable": "The selected camera or microphone could not be opened. Choose another device below, or join without it."
   }
 }

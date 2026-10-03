@@ -71,6 +71,7 @@ Cypress.Commands.add("createAndJoinConference", (username) => {
 
   cy.get("button[type=submit]").click();
   cy.get("#join-conference-button").click();
+  cy.get("#pre-join-join-button").click();
 });
 
 Cypress.Commands.add("createAndJoinOpenedConference", (username) => {

@@ -12,7 +12,9 @@ import { AnyInputDevice } from '../types';
 
 const useStyles = makeStyles()({
    control: {
-      minWidth: 400,
+      minWidth: 240,
+      width: '100%',
+      maxWidth: 400,
    },
 });
 

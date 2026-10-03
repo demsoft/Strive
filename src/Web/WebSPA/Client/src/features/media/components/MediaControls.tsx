@@ -2,9 +2,9 @@ import { Dialog, DialogContent, DialogTitle, Fab, Grid, Tooltip } from '@mui/mat
 import { makeStyles } from 'tss-react/mui';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import { motion } from 'framer-motion';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import AnimatedCamIcon from 'src/assets/animated-icons/AnimatedCamIcon';
 import AnimatedMicIcon from 'src/assets/animated-icons/AnimatedMicIcon';
 import AnimatedScreenIcon from 'src/assets/animated-icons/AnimatedScreenIcon';
@@ -23,6 +23,9 @@ import {
    REACTIONS_CAN_SEND,
 } from 'src/permissions';
 import { RootState } from 'src/store';
+import { showMessage } from 'src/store/notifier/actions';
+import useWebRtcStatus from 'src/store/webrtc/hooks/useWebRtcStatus';
+import { formatErrorMessage } from 'src/utils/error-utils';
 import useMicrophone from 'src/store/webrtc/hooks/useMicrophone';
 import useScreen from 'src/store/webrtc/hooks/useScreen';
 import useWebcam from 'src/store/webrtc/hooks/useWebcam';
@@ -124,6 +127,30 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
    const canShareWebcam = usePermission(MEDIA_CAN_SHARE_WEBCAM);
    const canRaiseHand = usePermission(HAND_RAISE_CAN_RAISE);
    const canSendReaction = usePermission(REACTIONS_CAN_SEND);
+
+   // turn on the devices the participant chose on the pre-join screen, once the media connection is ready
+   const dispatch = useDispatch();
+   const webRtcStatus = useWebRtcStatus();
+   const joinWithMic = useSelector((state: RootState) => Boolean(state.settings.obj.conference.joinWithMic));
+   const joinWithWebcam = useSelector((state: RootState) => Boolean(state.settings.obj.conference.joinWithWebcam));
+   const autoEnabled = useRef(false);
+
+   useEffect(() => {
+      if (autoEnabled.current || webRtcStatus !== 'connected') return;
+      autoEnabled.current = true;
+
+      const enable = async (wanted: boolean, allowed: boolean, available: boolean, enableDevice: () => unknown) => {
+         if (!wanted || !allowed || !available) return;
+         try {
+            await enableDevice();
+         } catch (error) {
+            dispatch(showMessage({ type: 'error', message: formatErrorMessage(error) }));
+         }
+      };
+
+      enable(joinWithWebcam, Boolean(canShareWebcam), webcamAvailable, webcamController.enable);
+      enable(joinWithMic, Boolean(canShareAudio), micAvailable, micController.enable);
+   }, [webRtcStatus]);
 
    const [debugDialogOpen, setDebugDialogOpen] = useState(false);
 
