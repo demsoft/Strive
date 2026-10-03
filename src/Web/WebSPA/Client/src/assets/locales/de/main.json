@@ -57,7 +57,10 @@
         "scene_layout_tiles_desc": "Zeige eine Reihe von Kacheln über der Szene an",
         "lobby": "Lobby",
         "lobby_enabled": "Teilnehmer müssen von einem Moderator zugelassen werden",
-        "lobby_description": "Moderatoren treten direkt bei. Alle anderen warten, bis ein Moderator sie zulässt, sobald die Konferenz geöffnet ist."
+        "lobby_description": "Moderatoren treten direkt bei. Alle anderen warten, bis ein Moderator sie zulässt, sobald die Konferenz geöffnet ist.",
+        "recording": "Aufnahme",
+        "recording_enabled": "Moderatoren dürfen diese Konferenz aufnehmen",
+        "recording_description": "Aufgenommen wird nie automatisch: Ein Moderator startet die Aufnahme und alle in der Konferenz werden informiert, solange sie läuft."
       },
       "moderators": {
         "error_user_not_found": "Benutzer mit Id \"{{id}}\" wurde nicht gefunden",
@@ -613,7 +616,10 @@
       "sign_in": "Anmelden",
       "not_found_title": "Aufnahme nicht gefunden",
       "not_found_text": "Der Link ist falsch, die Aufnahme wird noch verarbeitet oder wurde gelöscht.",
-      "load_error": "Die Aufnahme konnte nicht geladen werden. Versuche es später erneut."
+      "load_error": "Die Aufnahme konnte nicht geladen werden. Versuche es später erneut.",
+      "record_short": "Aufnehmen",
+      "stop_short": "Stopp",
+      "start_hint": "Dieses Meeting aufnehmen (alle werden informiert)"
     }
   },
   "pre_join": {

@@ -57,7 +57,10 @@
         "scene_layout_tiles_desc": "Display a row of participant tiles above the scene",
         "lobby": "Lobby",
         "lobby_enabled": "Participants have to be admitted by a moderator",
-        "lobby_description": "Moderators join directly. Everyone else waits until a moderator admits them once the conference is open."
+        "lobby_description": "Moderators join directly. Everyone else waits until a moderator admits them once the conference is open.",
+        "recording": "Recording",
+        "recording_enabled": "Moderators can record this conference",
+        "recording_description": "Recording is never automatic: a moderator starts it, and everyone in the conference is told when it runs."
       },
       "moderators": {
         "error_user_not_found": "User with id \"{{id}}\" not found",
@@ -613,7 +616,10 @@
       "sign_in": "Sign in",
       "not_found_title": "Recording not found",
       "not_found_text": "The link is wrong, the recording is still being processed or it was deleted.",
-      "load_error": "The recording could not be loaded. Try again later."
+      "load_error": "The recording could not be loaded. Try again later.",
+      "record_short": "Record",
+      "stop_short": "Stop",
+      "start_hint": "Record this meeting (everyone is told)"
     }
   },
   "pre_join": {
