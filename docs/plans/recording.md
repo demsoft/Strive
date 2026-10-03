@@ -1,6 +1,6 @@
 # Plan: server-side meeting recording
 
-Status: decided direction, spike pending.
+Status: direction decided, Cloudinary spike done (see below), storage choice to be confirmed.
 
 ## Decisions so far
 
@@ -11,7 +11,27 @@ Status: decided direction, spike pending.
 | Fallback | if Cloudinary cannot take our file sizes, switch the production storage to R2 (config change plus the second adapter) |
 | Sharing | a Strive link `/r/<token>`, not the raw storage URL |
 
-## Step 0: spike (gates everything else)
+## Recording is always opt-in
+
+Nothing is ever recorded automatically. A moderator starts a recording on purpose for one meeting, everyone sees that it
+is running (REC indicator, notice and sound), and the moderator stops it. Conferences can switch the feature off
+completely in their settings, and the permission `recording/canManage` decides who may start and stop.
+
+## Spike result (2026-10-03, real account, Free plan)
+
+- The account reports `video_max_size_bytes = 104857600` (100 MB) in its media limits.
+- A 51 MB video uploaded in chunks fine (43 s from the dev machine); a 164 MB video was rejected with
+  `400 File size too large. Got 125829120. Maximum is 104857600` after the first chunks were already sent. Chunking does
+  not lift the per-file limit.
+- Private (`authenticated`) assets: the plain URL answers 401, a signed URL answers 206 with byte ranges, so playback and
+  seeking work. An expiring download URL (`expires_at`) also works.
+- The 25 GB is a shared credit pool: roughly 1 GB of storage or 1 GB of delivered video costs 1 credit, together with
+  transformations. The account already used 6.7 % of it. Every time a recording is watched it consumes credits.
+
+Conclusion: Cloudinary Free cannot store a normal meeting in one file (about 100 MB is 7-9 minutes at a typical 1.5-2.5
+Mbps). It works only if recordings are cut into parts below 100 MB, or on a paid plan.
+
+## Original step 0 (kept for reference)
 
 Cloudinary documents a 100 MB per video limit on the Free plan, independent of chunking. Before building, with the real
 account:
