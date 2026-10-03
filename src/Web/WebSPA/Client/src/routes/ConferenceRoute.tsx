@@ -1,6 +1,6 @@
 import useUser from 'src/features/auth/useUser';
 import { Link } from '@mui/material';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
@@ -19,6 +19,7 @@ import { WebRtcContext } from 'src/store/webrtc/WebRtcContext';
 import { WebRtcManager } from 'src/store/webrtc/WebRtcManager';
 import { formatErrorMessage } from 'src/utils/error-utils';
 import to from 'src/utils/to';
+import PreJoinView from 'src/features/pre-join/components/PreJoinView';
 import LobbyWaitingView from 'src/features/lobby/components/LobbyWaitingView';
 import { selectLobbyStatus } from 'src/features/lobby/selectors';
 import { ConferenceRouteParams } from './types';
@@ -47,6 +48,9 @@ function ConferenceRoute({
    const { t } = useTranslation();
 
    const oidcUser = useUser();
+   // the conference connection is only created after the pre-join step, so nobody sees a participant who is still
+   // checking their devices
+   const [preJoinDone, setPreJoinDone] = useState(false);
 
    const dispatch = useDispatch();
 
@@ -55,17 +59,23 @@ function ConferenceRoute({
    }, []);
 
    useEffect(() => {
+      if (!preJoinDone) return;
+
       dispatch(coreHub.joinConference(id, defaultEvents, oidcUser.access_token));
       return () => {
          dispatch(close());
       };
-   }, [id, close, dispatch, oidcUser]);
+   }, [id, close, dispatch, oidcUser, preJoinDone]);
 
    useEffect(() => {
       webRtc.beginConnecting();
    }, [webRtc]);
 
    usePageTitle(conferenceState?.name);
+
+   if (!preJoinDone) {
+      return <PreJoinView onJoin={() => setPreJoinDone(true)} />;
+   }
 
    if (error) {
       return (

@@ -21,6 +21,10 @@ export type StriveSettings = {
    };
    conference: {
       playSoundOnOpen?: boolean;
+      /** the microphone is turned on automatically after joining */
+      joinWithMic?: boolean;
+      /** the webcam is turned on automatically after joining */
+      joinWithWebcam?: boolean;
    };
 };
 
@@ -77,6 +81,12 @@ const settingsSlice = createSlice({
       setPlaySoundOnOpen(state, { payload }: PayloadAction<boolean>) {
          state.obj.conference.playSoundOnOpen = payload;
       },
+      setJoinWithMic(state, { payload }: PayloadAction<boolean>) {
+         state.obj.conference.joinWithMic = payload;
+      },
+      setJoinWithWebcam(state, { payload }: PayloadAction<boolean>) {
+         state.obj.conference.joinWithWebcam = payload;
+      },
    },
    extraReducers: {
       [getEquipmentToken.returnAction]: (state, action: PayloadAction<SuccessOrError<string>>) => {
@@ -101,6 +111,8 @@ export const {
    setAudioGain,
    setCurrentDevice,
    setEnableVideoOverlay,
+   setJoinWithMic,
+   setJoinWithWebcam,
    setPlaySoundOnOpen,
 } = settingsSlice.actions;
 

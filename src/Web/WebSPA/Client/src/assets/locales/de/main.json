@@ -580,5 +580,18 @@
       "title": "Noch keine Nachrichten",
       "text": "Sag allen Hallo 👋"
     }
+  },
+  "pre_join": {
+    "title": "Bereit zum Beitreten?",
+    "joining_as": "Du trittst bei als {{name}}",
+    "join_now": "Jetzt beitreten",
+    "hint": "Kamera und Mikrofon starten erst, wenn du beitrittst.",
+    "mic_on": "Mikrofon an, klicken zum Stummschalten",
+    "mic_off": "Mikrofon aus, klicken zum Einschalten",
+    "webcam_on": "Kamera an, klicken zum Ausschalten",
+    "webcam_off": "Kamera aus, klicken zum Einschalten",
+    "mic_level": "Sprich, um dein Mikrofon zu testen",
+    "permission_denied": "Dein Browser hat Kamera oder Mikrofon blockiert. Erlaube den Zugriff in der Adressleiste (oder den Browsereinstellungen) und versuche es erneut. Du kannst auch ohne beitreten.",
+    "device_unavailable": "Die gewählte Kamera oder das Mikrofon konnte nicht geöffnet werden. Wähle unten ein anderes Gerät oder tritt ohne bei."
   }
 }
