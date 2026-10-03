@@ -12,9 +12,10 @@ import { selectIsMyHandRaised } from '../selectors';
 type Props = {
    className?: string;
    variants?: any;
+   size?: 'small' | 'medium' | 'large';
 };
 
-export default function HandRaiseFab({ className, variants }: Props) {
+export default function HandRaiseFab({ className, variants, size }: Props) {
    const { t } = useTranslation();
    const dispatch = useDispatch();
    const raised = useSelector((state: RootState) => selectIsMyHandRaised(state));
@@ -31,6 +32,7 @@ export default function HandRaiseFab({ className, variants }: Props) {
             id="hand-raise-toggle"
             color={raised ? 'primary' : 'default'}
             className={className}
+            size={size}
             onClick={handleClick}
             component={motion.button}
             variants={variants}

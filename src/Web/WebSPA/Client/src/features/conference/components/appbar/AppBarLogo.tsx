@@ -1,5 +1,5 @@
-import { Typography } from '@mui/material';
+import BrandLogo from 'src/components/BrandLogo';
 
 export default function AppBarLogo() {
-   return <Typography variant="h5">Strive</Typography>;
+   return <BrandLogo size={28} />;
 }

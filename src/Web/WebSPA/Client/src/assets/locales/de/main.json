@@ -20,7 +20,16 @@
   },
   "view_main": {
     "welcome_message": "Willkomen bei Strive",
-    "start_new_conference": "Neue Konferenz öffnen"
+    "start_new_conference": "Neue Konferenz öffnen",
+    "headline_1": "Meetings, die sich",
+    "headline_2": "mühelos anfühlen.",
+    "subtitle": "Gestochen scharfes Video, Bildschirmfreigabe, Gruppenräume und eine Lobby, die du kontrollierst. Ohne Download, nur ein Link.",
+    "feature_video": "HD-Video",
+    "feature_screen": "Bildschirmfreigabe",
+    "feature_lobby": "Lobby",
+    "feature_hands": "Handzeichen & Reaktionen",
+    "feature_rooms": "Gruppenräume",
+    "my_conferences": "Deine Konferenzen"
   },
   "dialog_create_conference": {
     "title_mode_create": "Neue Konferenz erstellen",
@@ -67,22 +76,25 @@
   "conference_not_open": {
     "connecting_to_conference": "Verbinde zu Konferenz...",
     "reconnecting_to_conference": "Versuche, erneut zur Konferenz zu verbinden...",
-    "play_sound_on_conference_open": "Einen Ton abspielen, wenn die Konferenz öffnet",
-    "open_conference": "Konferenz öffnen",
+    "play_sound_on_conference_open": "Ton abspielen, wenn das Meeting startet",
+    "open_conference": "Meeting starten",
     "change_conference_settings": "Konferenzeinstellungen ändern",
-    "you_are_moderator": "Sie sind ein Moderator der Konferenz.",
+    "you_are_moderator": "Du bist der Gastgeber. Teile den Link unten und starte das Meeting, wenn alle bereit sind.",
     "conference_scheduled_for": "Die Konferenz ist geplant für den",
     "n_participants_waiting_one": "1 Teilnehmer wartet.",
     "n_participants_waiting_other": "{{count}} Teilnehmer warten.",
-    "waiting_for_moderator_to_join": "Konferenz wurde noch nicht geöffnet. Warte, dass ein Moderator beitritt...",
-    "waiting_for_moderator_to_open": "Konferenz wurde noch nicht geöffnet. Warte auf einen Moderator, der die Konferenz öffnet...",
+    "waiting_for_moderator_to_join": "Der Gastgeber ist noch nicht da. Du wirst eingelassen, sobald das Meeting startet.",
+    "waiting_for_moderator_to_open": "Der Gastgeber ist da und startet das Meeting in Kürze.",
     "moderator_joined": "Moderator ist beigetreten.",
-    "you_dont_need_to_refresh": "Sie müssen diese Seite nicht aktualisieren"
+    "you_dont_need_to_refresh": "Du musst die Seite nicht neu laden, sie aktualisiert sich selbst.",
+    "title_waiting": "Du bist früh dran",
+    "title_ready": "Bereit, wenn du es bist"
   },
   "request_user_interaction": {
-    "title": "Bitte tuen Sie etwas",
-    "request": "Klicken Sie irgendwo hin | Drücken Sie eine Taste | Tippen Sie irgendwo hin",
-    "description": "Wir können aufgrund der Autoplay Policy Ihres Browsers keinen Ton abspielen, bevor Sie nicht mit der Website interagiert haben."
+    "title": "Bereit zum Beitreten?",
+    "request": "Klicke irgendwo, um fortzufahren",
+    "description": "Dein Browser benötigt einen Klick, bevor er den Ton des Meetings abspielen darf.",
+    "button": "Weiter"
   },
   "conference": {
     "appbar": {
@@ -317,10 +329,10 @@
       "lower_hand": "Hand senken"
     },
     "scenes": {
-      "actions": "Aktionen",
+      "actions": "Layout-Optionen",
       "actions_description": "Verfügbare Szenen-Aktionen öffnen",
       "active_speaker": "Aktiver Sprecher",
-      "autonomous": "Autonom",
+      "autonomous": "Automatisch",
       "grid": "Raster",
       "screen_share": "{{name}}",
       "breakout_rooms": {
@@ -553,6 +565,20 @@
       "waiting_count_one": "{{count}} Teilnehmer wartet",
       "waiting_count_other": "{{count}} Teilnehmer warten",
       "someone_waiting": "{{name}} wartet auf Einlass"
+    },
+    "mobile": {
+      "meeting": "Konferenz",
+      "chat": "Chat",
+      "people": "Personen"
+    },
+    "invite": {
+      "copy": "Einladungslink kopieren",
+      "copy_short": "Kopieren",
+      "copied": "Einladungslink kopiert"
+    },
+    "chat_empty": {
+      "title": "Noch keine Nachrichten",
+      "text": "Sag allen Hallo 👋"
     }
   }
 }

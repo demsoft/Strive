@@ -1,11 +1,16 @@
-import { createTheme, CssBaseline, responsiveFontSizes, ThemeProvider } from '@mui/material';
-import { blue, pink } from '@mui/material/colors';
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
+import '@fontsource/inter/800.css';
+import { CssBaseline, ThemeProvider } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import RequireAuth from './features/auth/components/RequireAuth';
 import StriveAuthProvider from './features/auth/components/StriveAuthProvider';
 import UserInteractionListener from './features/media/components/UserInteractionListener';
+import theme from './theme';
 import RedirectToConference from './RedirectToConference';
 import AuthenticatedRoutes from './routes/AuthenticatedRoutes';
 import EquipmentRoute from './routes/EquipmentRoute';
@@ -16,30 +21,6 @@ const useStyles = makeStyles()((theme) => ({
       color: theme.palette.text.primary,
    },
 }));
-
-const theme = responsiveFontSizes(
-   createTheme({
-      palette: {
-         mode: 'dark',
-         primary: {
-            main: blue[500],
-         },
-         secondary: {
-            main: pink[500],
-         },
-         background: {
-            default: 'rgb(20, 20, 22)',
-            paper: '#303030',
-         },
-      },
-      components: {
-         // keep the MUI v4 default (standard) instead of the outlined variant introduced in v5
-         MuiTextField: { defaultProps: { variant: 'standard' } },
-         MuiSelect: { defaultProps: { variant: 'standard' } },
-         MuiFormControl: { defaultProps: { variant: 'standard' } },
-      },
-   }),
-);
 
 function App() {
    return (

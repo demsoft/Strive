@@ -12,6 +12,8 @@ type Props = {
    control: UseMediaState;
    pauseOnToggle?: boolean;
    translationKey: string;
+   /** show the button in the error color while the device is off (microphone, webcam) */
+   warnWhenOff?: boolean;
 
    Icon: React.ComponentType<AnimatedIconProps>;
    [x: string]: any;
@@ -22,6 +24,7 @@ export default function MediaFab({
    pauseOnToggle,
    control: { enable, disable, pause, resume, enabled, paused },
    translationKey,
+   warnWhenOff,
    ...fabProps
 }: Props) {
    const dispatch = useDispatch();
@@ -71,11 +74,16 @@ export default function MediaFab({
             id={`media-controls-${translationKey}`}
             color={enabled ? 'primary' : 'default'}
             onClick={handleClick}
+            sx={
+               warnWhenOff && (!enabled || paused)
+                  ? { backgroundColor: 'error.main', '&:hover': { backgroundColor: 'error.dark' } }
+                  : undefined
+            }
             {...fabProps}
          >
             <Icon
                activated={enabled && !paused}
-               color={enabled ? theme.palette.primary.contrastText : theme.palette.background.default}
+               color={theme.palette.common.white}
                width={24}
                height={24}
             />

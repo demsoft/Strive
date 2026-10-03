@@ -91,6 +91,15 @@ export default function ChatMessageList({ messages, participantId, participantCo
                ) : (
                   Array.from({ length: 8 }).map((_, i) => <ChatMessage key={i} participantColors={participantColors} />)
                )
+            ) : messages.length === 0 ? (
+               <Box sx={{ m: 'auto', p: 3, textAlign: 'center' }} id="chat-empty">
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                     {t('conference.chat_empty.title')}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                     {t('conference.chat_empty.text')}
+                  </Typography>
+               </Box>
             ) : (
                _([...messages])
                   .reverse()

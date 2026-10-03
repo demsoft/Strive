@@ -20,7 +20,16 @@
   },
   "view_main": {
     "welcome_message": "Welcome to Strive",
-    "start_new_conference": "Start new conference"
+    "start_new_conference": "Start new conference",
+    "headline_1": "Meetings that feel",
+    "headline_2": "effortless.",
+    "subtitle": "Crystal-clear video, screen sharing, breakout rooms and a lobby you control. No downloads, just a link.",
+    "feature_video": "HD video",
+    "feature_screen": "Screen sharing",
+    "feature_lobby": "Lobby",
+    "feature_hands": "Hand raise & reactions",
+    "feature_rooms": "Breakout rooms",
+    "my_conferences": "Your conferences"
   },
   "dialog_create_conference": {
     "title_mode_create": "Create a new conference",
@@ -67,22 +76,25 @@
   "conference_not_open": {
     "connecting_to_conference": "Connecting to conference...",
     "reconnecting_to_conference": "Reconnecting to conference...",
-    "play_sound_on_conference_open": "Play a sound when the conference opens",
-    "open_conference": "Open conference",
+    "play_sound_on_conference_open": "Play a sound when the meeting starts",
+    "open_conference": "Start meeting",
     "change_conference_settings": "Change conference settings",
-    "you_are_moderator": "You are a moderator of this conference.",
+    "you_are_moderator": "You're the host. Share the link below, then start the meeting when everyone is ready.",
     "conference_scheduled_for": "The conference is scheduled for the",
     "n_participants_waiting_one": "1 participant is waiting.",
     "n_participants_waiting_other": "{{count}} participants are waiting.",
-    "waiting_for_moderator_to_join": "Conference is not yet open. Waiting for moderator to join...",
-    "waiting_for_moderator_to_open": "Conference is not yet open. Waiting for moderator to open this conference...",
+    "waiting_for_moderator_to_join": "The host hasn't arrived yet. You'll be let in as soon as the meeting starts.",
+    "waiting_for_moderator_to_open": "The host is here and will start the meeting shortly.",
     "moderator_joined": "Moderator joined.",
-    "you_dont_need_to_refresh": "You don't need to refresh this page"
+    "you_dont_need_to_refresh": "No need to refresh, this page updates by itself.",
+    "title_waiting": "You're early",
+    "title_ready": "Ready when you are"
   },
   "request_user_interaction": {
-    "title": "Please do something",
-    "request": "Click anywhere | Press any key | Tap anywhere",
-    "description": "We cannot play audio until you have interacted with the website due to your browser's autoplay policy."
+    "title": "Ready to join?",
+    "request": "Click anywhere to continue",
+    "description": "Your browser needs one click before it can play sound from the meeting.",
+    "button": "Continue"
   },
   "conference": {
     "appbar": {
@@ -179,11 +191,11 @@
       "test": "Test"
     },
     "scenes": {
-      "actions": "Actions",
+      "actions": "Layout options",
       "actions_description": "Open available scene actions",
       "active_speaker": "Active Speaker",
-      "autonomous": "Autonomous",
-      "autonomous_description": "Automatically select the current scene. You can change the behavior in conference settings.",
+      "autonomous": "Automatic",
+      "autonomous_description": "Let Strive choose the best layout automatically. You can change how in the conference settings.",
       "talking_stick": "Talking Stick",
       "talking_stick_modes": {
         "queue": "Queue",
@@ -553,6 +565,20 @@
       "waiting_count_one": "{{count}} participant is waiting",
       "waiting_count_other": "{{count}} participants are waiting",
       "someone_waiting": "{{name}} is waiting to join"
+    },
+    "mobile": {
+      "meeting": "Meeting",
+      "chat": "Chat",
+      "people": "People"
+    },
+    "invite": {
+      "copy": "Copy invite link",
+      "copy_short": "Copy",
+      "copied": "Invite link copied"
+    },
+    "chat_empty": {
+      "title": "No messages yet",
+      "text": "Say hello to everyone 👋"
     }
   }
 }
