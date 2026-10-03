@@ -1,0 +1,102 @@
+import {
+   Button,
+   Dialog,
+   DialogActions,
+   DialogContent,
+   DialogContentText,
+   DialogTitle,
+   IconButton,
+   Tooltip,
+} from '@mui/material';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import StopIcon from '@mui/icons-material/Stop';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
+import * as coreHub from 'src/core-hub';
+import useIsMobile from 'src/hooks/useIsMobile';
+import usePermission from 'src/hooks/usePermission';
+import { RECORDING_CAN_MANAGE } from 'src/permissions';
+import { selectActiveRecording, selectIsRecordingAvailable } from '../selectors';
+
+/**
+ * Starts and stops the recording. Recording is always a deliberate choice: it asks for confirmation and tells the
+ * moderator that everybody will be notified.
+ */
+export default function RecordButton() {
+   const { t } = useTranslation();
+   const dispatch = useDispatch();
+
+   const isMobile = useIsMobile();
+   const canManage = usePermission(RECORDING_CAN_MANAGE);
+   const available = useSelector(selectIsRecordingAvailable);
+   const active = useSelector(selectActiveRecording);
+   const [confirmOpen, setConfirmOpen] = useState(false);
+
+   if (!canManage || !available) return null;
+
+   const isRecording = Boolean(active);
+   const finalizing = active?.status === 'finalizing';
+
+   const handleClick = () => {
+      if (isRecording) dispatch(coreHub.stopRecording());
+      else setConfirmOpen(true);
+   };
+
+   const handleConfirm = () => {
+      setConfirmOpen(false);
+      dispatch(coreHub.startRecording());
+   };
+
+   const label = isRecording ? t('conference.recording.stop') : t('conference.recording.start');
+
+   return (
+      <>
+         {isMobile ? (
+            <Tooltip title={label}>
+               <span>
+                  <IconButton
+                     id="recording-toggle"
+                     aria-label={label}
+                     onClick={handleClick}
+                     disabled={finalizing}
+                     size="large"
+                  >
+                     {isRecording ? <StopIcon color="error" /> : <FiberManualRecordIcon color="error" />}
+                  </IconButton>
+               </span>
+            </Tooltip>
+         ) : (
+            <Tooltip title={isRecording ? '' : t('conference.recording.start_hint')}>
+               <span>
+                  <Button
+                     id="recording-toggle"
+                     color="error"
+                     variant={isRecording ? 'contained' : 'outlined'}
+                     size="small"
+                     aria-label={label}
+                     onClick={handleClick}
+                     disabled={finalizing}
+                     startIcon={isRecording ? <StopIcon /> : <FiberManualRecordIcon />}
+                     sx={{ mr: 1, borderRadius: 10, whiteSpace: 'nowrap' }}
+                  >
+                     {isRecording ? t('conference.recording.stop_short') : t('conference.recording.record_short')}
+                  </Button>
+               </span>
+            </Tooltip>
+         )}
+         <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} id="recording-confirm">
+            <DialogTitle>{t('conference.recording.confirm_title')}</DialogTitle>
+            <DialogContent>
+               <DialogContentText>{t('conference.recording.confirm_text')}</DialogContentText>
+            </DialogContent>
+            <DialogActions>
+               <Button onClick={() => setConfirmOpen(false)}>{t('common:cancel')}</Button>
+               <Button variant="contained" onClick={handleConfirm} id="recording-confirm-start">
+                  {t('conference.recording.confirm_start')}
+               </Button>
+            </DialogActions>
+         </Dialog>
+      </>
+   );
+}

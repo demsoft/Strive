@@ -46,3 +46,31 @@ services:
       - "//var/run/docker.sock:/var/run/docker.sock:ro"
       - "./traefik.dev.yml:/traefik.yml:ro"
       - "./certs:/certs:ro"
+
+  # Development: the recorder runs in the network of the docker host. Its browser must reach the media server under the
+  # address the SFU announces (ANNOUNCED_IP, 127.0.0.1 here) and the web app under https://localhost.
+  recorder:
+    network_mode: host
+    environment:
+      - PORT=3100
+      - STRIVE_API_URL=http://127.0.0.1:5080
+      # the recorder shares the network of the docker host, the local storage is published there
+      - STORAGE_ENDPOINT=${RECORDING_STORAGE_DEV_ENDPOINT:-${RECORDING_STORAGE_ENDPOINT:-}}
+      - IGNORE_HTTPS_ERRORS=true
+      # reach the host for requests of the browser to the app, the api and the media server
+      - HOST_RESOLVER_RULES=MAP *.localhost 127.0.0.1, MAP localhost 127.0.0.1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  strive:
+    ports:
+      # development only: the recorder reports to the API here, production uses the docker network
+      - "127.0.0.1:5080:80"
+    environment:
+      - Recording__Recorder__BaseUrl=http://host.docker.internal:3100
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  storage:
+    ports:
+      - "127.0.0.1:9100:9000"

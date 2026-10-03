@@ -10,7 +10,7 @@ namespace Strive.Infrastructure.Data
 
         public Dictionary<string, string> CollectionNames { get; set; } = new()
         {
-            {"Conference", "Conference"}, {"ConferenceLink", "ConferenceLink"},
+            {"Conference", "Conference"}, {"ConferenceLink", "ConferenceLink"}, {"ConferenceRecording", "Recording"},
         };
     }
 }

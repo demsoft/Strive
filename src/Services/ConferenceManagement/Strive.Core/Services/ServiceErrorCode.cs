@@ -30,6 +30,13 @@ namespace Strive.Core.Services
         // Lobby
         Lobby_ParticipantNotWaiting,
 
+        // Recording
+        Recording_NotEnabled,
+        Recording_AlreadyRecording,
+        Recording_NotRecording,
+        Recording_StartFailed,
+        Recording_NotFound,
+
         // Permissions
         Permissions_PermissionKeyNotFound,
         Permissions_InvalidPermissionValueType,

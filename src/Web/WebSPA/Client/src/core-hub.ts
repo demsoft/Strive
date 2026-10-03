@@ -51,6 +51,9 @@ export const sendEquipmentCommand = createHubFn<SendEquipmentCommandDto>('SendEq
 
 export const changeProducerSource = createHubFn<ChangeProducerSourceRequest>('ChangeParticipantProducer');
 
+export const startRecording = createHubFn('StartRecording');
+export const stopRecording = createHubFn('StopRecording');
+
 export const admitParticipant = createHubFn<LobbyParticipantDto>('AdmitParticipant');
 export const denyParticipant = createHubFn<LobbyParticipantDto>('DenyParticipant');
 export const admitAllParticipants = createHubFn('AdmitAllParticipants');

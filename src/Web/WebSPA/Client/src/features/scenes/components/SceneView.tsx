@@ -48,7 +48,12 @@ const getSceneAutoHideControls: (scene: Scene, participantId: string) => boolean
    return presenter.getAutoHideMediaControls(scene, participantId);
 };
 
-export default function SceneView() {
+type Props = {
+   /** no media controls, used by the recording view */
+   hideControls?: boolean;
+};
+
+export default function SceneView({ hideControls }: Props) {
    const { classes } = useStyles();
    const [contentRef, dimensions] = useThrottledResizeObserver(100);
 
@@ -121,7 +126,13 @@ export default function SceneView() {
                ) : null}
             </LayoutGroup>
             <ReactionOverlay />
-            <MediaControls className={classes.mediaControls} show={showControls} leftActionsRef={mediaLeftActionsRef} />
+            {!hideControls && (
+               <MediaControls
+                  className={classes.mediaControls}
+                  show={showControls}
+                  leftActionsRef={mediaLeftActionsRef}
+               />
+            )}
          </div>
       </MediaControlsContext.Provider>
    );

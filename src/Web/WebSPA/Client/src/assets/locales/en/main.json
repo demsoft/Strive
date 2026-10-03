@@ -57,7 +57,10 @@
         "scene_layout_tiles_desc": "Display a row of participant tiles above the scene",
         "lobby": "Lobby",
         "lobby_enabled": "Participants have to be admitted by a moderator",
-        "lobby_description": "Moderators join directly. Everyone else waits until a moderator admits them once the conference is open."
+        "lobby_description": "Moderators join directly. Everyone else waits until a moderator admits them once the conference is open.",
+        "recording": "Recording",
+        "recording_enabled": "Moderators can record this conference",
+        "recording_description": "Recording is never automatic: a moderator starts it, and everyone in the conference is told when it runs."
       },
       "moderators": {
         "error_user_not_found": "User with id \"{{id}}\" not found",
@@ -579,6 +582,44 @@
     "chat_empty": {
       "title": "No messages yet",
       "text": "Say hello to everyone 👋"
+    },
+    "recording": {
+      "rec": "REC",
+      "starting": "Starting recording…",
+      "saving": "Saving recording…",
+      "start": "Start recording",
+      "stop": "Stop recording",
+      "confirm_title": "Record this meeting?",
+      "confirm_text": "Everyone in the meeting will be told that it is being recorded. The recording contains video, audio and shared screens and is stored for 30 days. You can share or delete it afterwards.",
+      "confirm_start": "Start recording",
+      "started_notice": "This meeting is now being recorded",
+      "stopped_notice": "Recording stopped, it will be available shortly",
+      "in_progress_notice": "This meeting is being recorded",
+      "list_title": "Recordings",
+      "list_empty": "No recordings yet. Start one with the record button.",
+      "list_error": "The recordings could not be loaded.",
+      "copy_link": "Copy link",
+      "link_copied": "Recording link copied",
+      "watch": "Watch",
+      "more": "More",
+      "make_public": "Allow anyone with the link",
+      "make_private": "Only signed-in users",
+      "delete_confirm": "Delete this recording permanently?",
+      "visibility_anyone": "Anyone with the link",
+      "visibility_signed_in": "Signed-in users",
+      "deleted_on": "deleted on {{date}}",
+      "status_failed": "Failed",
+      "status_processing": "Processing",
+      "untitled": "Recorded meeting",
+      "login_required_title": "Sign in to watch",
+      "login_required_text": "This recording is only available to signed-in users.",
+      "sign_in": "Sign in",
+      "not_found_title": "Recording not found",
+      "not_found_text": "The link is wrong, the recording is still being processed or it was deleted.",
+      "load_error": "The recording could not be loaded. Try again later.",
+      "record_short": "Record",
+      "stop_short": "Stop",
+      "start_hint": "Record this meeting (everyone is told)"
     }
   },
   "pre_join": {

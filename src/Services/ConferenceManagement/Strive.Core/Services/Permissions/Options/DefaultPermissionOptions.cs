@@ -52,6 +52,7 @@ namespace Strive.Core.Services.Permissions.Options
                     DefinedPermissions.Whiteboard.CanCreate.Configure(true),
                     DefinedPermissions.HandRaise.CanLowerOthers.Configure(true),
                     DefinedPermissions.Lobby.CanAdmit.Configure(true),
+                    DefinedPermissions.Recording.CanManage.Configure(true),
                 }.ToImmutableDictionary()
             },
             // Breakout room permissions

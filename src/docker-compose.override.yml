@@ -18,6 +18,19 @@ services:
       - Turn__Urls__0=turn:${TURN_HOST}:3478?transport=udp
       - Turn__Urls__1=turn:${TURN_HOST}:3478?transport=tcp
       - Turn__Secret=${TURN_SECRET}
+      # Recording is off unless compose.sh is called with `--profile recording`
+      - Recording__Enabled=${RECORDING_ENABLED:-false}
+      - Recording__RetentionDays=${RECORDING_RETENTION_DAYS:-30}
+      - Recording__Storage__ServiceUrl=${RECORDING_STORAGE_ENDPOINT:-}
+      - Recording__Storage__PublicServiceUrl=${RECORDING_STORAGE_PUBLIC_URL:-}
+      - Recording__Storage__ForcePathStyle=${RECORDING_STORAGE_FORCE_PATH_STYLE:-false}
+      - Recording__Storage__Region=${RECORDING_STORAGE_REGION:-auto}
+      - Recording__Storage__Bucket=${RECORDING_STORAGE_BUCKET:-strive-recordings}
+      - Recording__Storage__AccessKeyId=${RECORDING_STORAGE_ACCESS_KEY_ID:-}
+      - Recording__Storage__SecretAccessKey=${RECORDING_STORAGE_SECRET_ACCESS_KEY:-}
+      - Recording__Recorder__BaseUrl=http://recorder:3000
+      - Recording__Recorder__SharedSecret=${RECORDER_SHARED_SECRET}
+      - Recording__Recorder__TokenSecret=${RECORDER_TOKEN_SECRET}
 
   sfu:
     environment:

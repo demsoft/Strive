@@ -335,3 +335,8 @@ acme.json
 is-signing-key*
 # development certificate (created by compose.sh)
 src/certs/
+
+# local secrets (storage credentials etc.), never commit
+.env
+.env.*
+!.env.example

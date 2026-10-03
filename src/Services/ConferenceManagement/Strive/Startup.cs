@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -35,6 +36,10 @@ using Strive.Core;
 using Strive.Core.Domain.Entities;
 using Strive.Core.Services.Media;
 using Strive.Extensions;
+using Strive.Core.Services.Recording;
+using Strive.Core.Services.Recording.Gateways;
+using Strive.Infrastructure.Recording;
+using Strive.Recording;
 using Strive.Hubs.Core;
 using Strive.Hubs.Equipment;
 using Strive.Infrastructure;
@@ -77,8 +82,15 @@ namespace Strive
 
             // Authentication
             var authOptions = Configuration.GetRequired<AuthOptions>("Authentication");
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
-                JwtBearerDefaults.AuthenticationScheme, options =>
+            services.AddAuthentication(options =>
+                {
+                    // a policy scheme picks the identity server or the recorder scheme by the issuer of the token
+                    options.DefaultScheme = RecorderAuthentication.SmartScheme;
+                    options.DefaultChallengeScheme = RecorderAuthentication.SmartScheme;
+                })
+                .AddPolicyScheme(RecorderAuthentication.SmartScheme, RecorderAuthentication.SmartScheme,
+                    options => options.ForwardDefaultSelector = RecorderAuthentication.SelectScheme)
+                .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
                 {
                     options.Authority = authOptions.Authority;
                     options.TokenValidationParameters =
@@ -86,6 +98,12 @@ namespace Strive
 
                     options.RequireHttpsMetadata = !authOptions.NoSslRequired;
 
+                    options.AcceptTokenFromQuery();
+                })
+                .AddJwtBearer(RecorderAuthentication.Scheme, options =>
+                {
+                    options.TokenValidationParameters = RecorderAuthentication.CreateValidationParameters(
+                        Configuration["Recording:Recorder:TokenSecret"]);
                     options.AcceptTokenFromQuery();
                 });
             services.AddSingleton<IAuthorizationHandler, UserIsModeratorOfConferenceHandler>();
@@ -111,6 +129,17 @@ namespace Strive
             services.Configure<TurnOptions>(Configuration.GetSection("Turn"));
             services.AddSingleton(TimeProvider.System);
             services.AddSingleton<ITurnCredentialFactory, TurnCredentialFactory>();
+
+            // Recording
+            services.Configure<RecordingOptions>(Configuration.GetSection("Recording"));
+            services.Configure<RecordingStorageOptions>(Configuration.GetSection("Recording:Storage"));
+            services.Configure<RecorderOptions>(Configuration.GetSection("Recording:Recorder"));
+            // TryAdd: the integration tests register fakes first
+            services.TryAddSingleton<IRecordingStorage, S3RecordingStorage>();
+            services.AddSingleton<IRecorderJoinTokenFactory, JwtRecorderJoinTokenFactory>();
+            services.AddHttpClient<HttpRecorderClient>(client => client.Timeout = TimeSpan.FromSeconds(15));
+            services.TryAddTransient<IRecorderClient>(sp => sp.GetRequiredService<HttpRecorderClient>());
+            services.AddHostedService<RecordingMaintenanceService>();
 
             // SignalR
             // Since .NET 7, hub and API parameters are bound from DI if the container can resolve their type. Autofac

@@ -54,3 +54,13 @@ services:
       - "traefik.http.services.sfu.loadbalancer.server.port=3000"
       - "traefik.http.routers.sfu.middlewares=cors@docker"
       - "traefik.http.routers.sfu.tls=true"
+
+  # the local recording storage (profile local-storage) is served over https like the other services, browsers refuse to
+  # play plain http media on an https page
+  storage:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.storage.rule=Host(`storage.${SITE_HOST}`)"
+      - "traefik.http.routers.storage.entrypoints=websecure"
+      - "traefik.http.routers.storage.tls=true"
+      - "traefik.http.services.storage.loadbalancer.server.port=9000"

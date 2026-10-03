@@ -1,6 +1,8 @@
-using System;using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Strive.Infrastructure.Extensions;
+using Strive.Infrastructure.Recording;
 
 namespace Strive.Hubs.Core
 {
@@ -10,6 +12,14 @@ namespace Strive.Hubs.Core
     /// </summary>
     public class JoinedParticipantHubFilter : IHubFilter
     {
+        /// <summary>
+        ///     What the recording view needs to receive the conference
+        /// </summary>
+        private static readonly HashSet<string> RecorderMethods = new()
+        {
+            nameof(CoreHub.FetchSfuConnectionInfo), nameof(CoreHub.FetchPermissions),
+        };
+
         private readonly ICoreHubConnections _connections;
 
         public JoinedParticipantHubFilter(ICoreHubConnections connections)
@@ -28,6 +38,11 @@ namespace Strive.Hubs.Core
             if (participantId == null || !_connections.TryGetParticipant(participantId, out var connection) ||
                 connection.ConnectionId != invocationContext.Context.ConnectionId)
                 throw new HubException("The connection has not joined the conference.");
+
+            // the recorder only receives, whatever it calls
+            if (invocationContext.Context.User?.IsInRole(RecorderOptions.RoleClaimValue) == true &&
+                !RecorderMethods.Contains(invocationContext.HubMethodName))
+                throw new HubException("A recorder cannot call this method.");
 
             return next(invocationContext);
         }

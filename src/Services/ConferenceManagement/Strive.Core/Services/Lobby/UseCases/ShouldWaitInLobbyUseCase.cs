@@ -6,6 +6,7 @@ using Strive.Core.Services.ConferenceControl.Gateways;
 using Strive.Core.Services.ConferenceManagement.Requests;
 using Strive.Core.Services.Lobby.Gateways;
 using Strive.Core.Services.Lobby.Requests;
+using Strive.Core.Services.Recording;
 
 namespace Strive.Core.Services.Lobby.UseCases
 {
@@ -26,6 +27,9 @@ namespace Strive.Core.Services.Lobby.UseCases
         public async Task<bool> Handle(ShouldWaitInLobbyRequest request, CancellationToken cancellationToken)
         {
             var participant = request.Participant;
+
+            // the recorder is started by a moderator, nobody has to admit it
+            if (RecorderParticipants.IsRecorder(participant.Id)) return false;
 
             var conference = await _mediator.Send(new FindConferenceByIdRequest(participant.ConferenceId),
                 cancellationToken);

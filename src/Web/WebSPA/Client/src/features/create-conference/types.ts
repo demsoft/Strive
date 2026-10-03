@@ -34,6 +34,7 @@ export type ConferenceConfiguration = {
    chat: ChatOptions;
    scenes: SceneOptions;
    lobby: LobbyOptions;
+   recording: { isEnabled: boolean };
 };
 
 export type LobbyOptions = {

@@ -1,0 +1,4 @@
+recording.mp4
+*.png
+node_modules
+package*.json
