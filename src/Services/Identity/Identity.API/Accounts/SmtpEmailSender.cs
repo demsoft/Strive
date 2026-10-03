@@ -15,10 +15,6 @@ namespace Identity.API.Accounts
         public SmtpEmailSender(IOptions<AccountsOptions> options)
         {
             _options = options.Value.Email;
-            if (string.IsNullOrWhiteSpace(_options.Host))
-                throw new InvalidOperationException(
-                    "Accounts:Email:Host is not configured. Accounts need an SMTP server to send the confirmation and " +
-                    "password reset emails (in development ./compose.sh starts a local inbox).");
         }
 
         public async Task SendAsync(EmailMessage message)

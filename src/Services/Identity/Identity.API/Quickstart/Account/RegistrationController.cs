@@ -49,6 +49,10 @@ namespace Identity.API.Quickstart.Account
                 return View(model);
             }
 
+            // no confirmation needed: the account is ready
+            if (outcome.User != null)
+                return await CompleteSignInAsync(outcome.User.Id, outcome.User.DisplayName!, outcome.User.Email, returnUrl);
+
             return RedirectToAction(nameof(CheckEmail), new {email = model.Email?.Trim(), returnUrl});
         }
 

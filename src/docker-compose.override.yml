@@ -8,6 +8,8 @@ services:
       # password, Google). compose.sh switches to Accounts when the file .env.identity exists.
       - Accounts__Mode=${ACCOUNTS_MODE:-Demo}
       - Accounts__MongoDb__ConnectionString=mongodb://nosqldata
+      # confirming the email address is off for now (set to true to require it, needs SMTP_HOST in production)
+      - Accounts__RequireEmailConfirmation=${ACCOUNTS_REQUIRE_EMAIL_CONFIRMATION:-false}
       - Accounts__AllowedEmailDomains=${ACCOUNTS_ALLOWED_EMAIL_DOMAINS:-}
       - Accounts__Google__ClientId=${GOOGLE_CLIENT_ID:-}
       - Accounts__Google__ClientSecret=${GOOGLE_CLIENT_SECRET:-}

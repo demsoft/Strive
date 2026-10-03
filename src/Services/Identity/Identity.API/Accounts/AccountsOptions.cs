@@ -25,7 +25,13 @@ namespace Identity.API.Accounts
         /// </summary>
         public string AllowedEmailDomains { get; set; } = string.Empty;
 
-        public int PasswordMinLength { get; set; } = 10;
+        public int PasswordMinLength { get; set; } = 8;
+
+        /// <summary>
+        ///     Whether a new password account must confirm its email address before it can sign in. When off, the
+        ///     account can sign in at once (the address is still marked as unconfirmed).
+        /// </summary>
+        public bool RequireEmailConfirmation { get; set; } = true;
         public int MaxFailedAttempts { get; set; } = 5;
         public TimeSpan LockoutDuration { get; set; } = TimeSpan.FromMinutes(15);
         public TimeSpan ConfirmationTokenLifetime { get; set; } = TimeSpan.FromHours(24);

@@ -115,6 +115,32 @@ namespace Identity.API.Tests
             Assert.True((await Register(Create())).Accepted);
         }
 
+        [Fact]
+        public async Task Without_required_confirmation_the_new_user_can_sign_in_at_once()
+        {
+            _options.RequireEmailConfirmation = false;
+            var service = Create();
+
+            var outcome = await Register(service);
+
+            Assert.True(outcome.Accepted);
+            Assert.NotNull(outcome.User);
+            Assert.Empty(_email.Sent);
+            Assert.Equal(SignInStatus.Succeeded, (await service.PasswordSignInAsync("ann@example.com", Password)).Status);
+            // the address was not verified, a later Google sign in must not keep the password
+            var google = await service.ExternalSignInAsync("Google", "g-5", "ann@example.com", true, "Ann");
+            Assert.Null(google.User!.PasswordHash);
+        }
+
+        [Fact]
+        public void Passwords_need_eight_characters_by_default()
+        {
+            var service = Create();
+
+            Assert.NotEmpty(service.ValidatePassword("1234567", null));
+            Assert.Empty(service.ValidatePassword("12345678", null));
+        }
+
         // ---- confirmation
 
         [Fact]

@@ -122,16 +122,12 @@ namespace Identity.API
                 return;
             }
 
-            // fail at the start, not at the first registration
-            if (string.IsNullOrWhiteSpace(options.Email.Host))
-                throw new InvalidOperationException(
-                    "Accounts:Email:Host is not configured. Accounts need an SMTP server for the confirmation and " +
-                    "password reset emails (in development ./compose.sh starts a local inbox).");
-
             services.AddSingleton<MongoUserRepository>();
             services.AddSingleton<IUserRepository>(sp => sp.GetRequiredService<MongoUserRepository>());
             services.AddSingleton<IUserDirectory, AccountsUserDirectory>();
-            services.AddSingleton<IEmailSender, SmtpEmailSender>();
+            // without an SMTP server nothing is sent (the mails are only logged), password reset does not work then
+            if (string.IsNullOrWhiteSpace(options.Email.Host)) services.AddSingleton<IEmailSender, LoggingEmailSender>();
+            else services.AddSingleton<IEmailSender, SmtpEmailSender>();
             services.AddSingleton<AccountService>();
             services.AddHostedService<AccountsStartup>();
 

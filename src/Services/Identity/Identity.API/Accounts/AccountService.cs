@@ -24,7 +24,8 @@ namespace Identity.API.Accounts
 
     public record SignInOutcome(SignInStatus Status, StriveUser? User = null);
 
-    public record RegisterOutcome(bool Accepted, IReadOnlyList<string> Errors)
+    /// <param name="User">The new user when no email confirmation is required, so that they can be signed in.</param>
+    public record RegisterOutcome(bool Accepted, IReadOnlyList<string> Errors, StriveUser? User = null)
     {
         public static RegisterOutcome Ok => new(true, Array.Empty<string>());
         public static RegisterOutcome Fail(params string[] errors) => new(false, errors);
@@ -97,7 +98,14 @@ namespace Identity.API.Accounts
 
             if (await _users.TryInsertAsync(user))
             {
+                if (!_options.RequireEmailConfirmation) return new RegisterOutcome(true, Array.Empty<string>(), user);
+
                 await SendConfirmationAsync(user, confirmUrl);
+            }
+            else if (!_options.RequireEmailConfirmation)
+            {
+                // nothing is mailed to the owner, so the visitor has to be told
+                return RegisterOutcome.Fail("An account with this email address exists already. Sign in instead.");
             }
             else
             {
@@ -168,7 +176,7 @@ namespace Identity.API.Accounts
             user.LockoutEnd = null;
             await _users.UpdateAsync(user);
 
-            return user.EmailConfirmed
+            return user.EmailConfirmed || !_options.RequireEmailConfirmation
                 ? new SignInOutcome(SignInStatus.Succeeded, user)
                 : new SignInOutcome(SignInStatus.EmailNotConfirmed, user);
         }

@@ -99,7 +99,8 @@ address is `https://identity.<your domain>/signin-google`.
 | `ACCOUNTS_MODE` / `Accounts__Mode` | `identity-api` | `Demo` (default) or `Accounts`; `compose.sh` sets `Accounts` with `.env.identity` |
 | `ACCOUNTS_ALLOWED_EMAIL_DOMAINS` | `.env.identity` | comma separated email domains that may create an account, empty for everybody. It applies to registration and the first Google sign in; people who have an account stay in |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | `.env.identity` | Google sign in |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_TLS`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | `.env.identity` / `.env` | the mail server; required in production (the identity service does not start without it in accounts mode) |
+| `ACCOUNTS_REQUIRE_EMAIL_CONFIRMATION` | `.env.identity` | `false` (current default in compose): new accounts sign in at once; `true`: they must confirm their email address first |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_TLS`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | `.env.identity` / `.env` | the mail server (confirmation and password reset). Without it nothing is sent, only logged, so password reset does not work |
 
 ### Things to know
 
@@ -107,7 +108,8 @@ address is `https://identity.<your domain>/signin-google`.
   password registration for that address is taken over (its password is removed), so nobody can claim an address they do not own.
 - Wrong passwords lock an account for 15 minutes after 5 attempts; sign in, registration and reset pages are rate limited per
   IP address. Confirmation links work for 24 hours, reset links for one hour, both only once.
-- Registration, "forgot password" and "resend" answer the same way whether the email address has an account or not.
+- Passwords need at least 8 characters.
+- With email confirmation on, registration, "forgot password" and "resend" answer the same way whether the email address has an account or not.
 - The session cookies and anti-forgery keys are stored in MongoDB, so sign ins survive restarts and several instances.
 
 ## Recording (optional)

@@ -48,9 +48,12 @@ namespace Identity.API.Tests
     {
         private readonly string _mongo;
         private readonly bool _accounts;
+        private readonly bool _requireConfirmation;
 
-        public AccountsFactory(string mongo, bool accounts = true, string? allowedDomain = null)
+        public AccountsFactory(string mongo, bool accounts = true, string? allowedDomain = null,
+            bool requireConfirmation = true)
         {
+            _requireConfirmation = requireConfirmation;
             _mongo = mongo;
             _accounts = accounts;
             AllowedDomain = allowedDomain;
@@ -70,6 +73,7 @@ namespace Identity.API.Tests
                 ["Accounts:MongoDb:ConnectionString"] = _mongo,
                 ["Accounts:MongoDb:DatabaseName"] = "flow" + Guid.NewGuid().ToString("N"),
                 ["Accounts:Email:Host"] = "smtp.test",
+                ["Accounts:RequireEmailConfirmation"] = _requireConfirmation ? "true" : "false",
                 ["Accounts:Google:ClientId"] = "fake-id",
                 ["Accounts:Google:ClientSecret"] = "fake-secret",
             };
@@ -114,9 +118,10 @@ namespace Identity.API.Tests
             foreach (var d in _disposables) d.Dispose();
         }
 
-        private (AccountsFactory factory, HttpClient browser) Start(bool accounts = true, string? allowedDomain = null)
+        private (AccountsFactory factory, HttpClient browser) Start(bool accounts = true, string? allowedDomain = null,
+            bool requireConfirmation = true)
         {
-            var factory = new AccountsFactory(_mongo.Runner.ConnectionString, accounts, allowedDomain);
+            var factory = new AccountsFactory(_mongo.Runner.ConnectionString, accounts, allowedDomain, requireConfirmation);
             var browser = factory.CreateBrowser();
             _disposables.Add(factory);
             _disposables.Add(browser);
@@ -229,7 +234,7 @@ namespace Identity.API.Tests
                 new Dictionary<string, string> {["Email"] = "dan@example.com", ["DisplayName"] = "Dan", ["Password"] = "short"});
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.Contains("at least 10 characters", await response.Content.ReadAsStringAsync());
+            Assert.Contains("at least 8 characters", await response.Content.ReadAsStringAsync());
         }
 
         [Fact]
@@ -266,6 +271,24 @@ namespace Identity.API.Tests
                 new Dictionary<string, string> {["Email"] = "x@example.com", ["DisplayName"] = "X", ["Password"] = Password}));
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Without_email_confirmation_registering_signs_the_person_in_and_sends_no_mail()
+        {
+            var (factory, browser) = Start(requireConfirmation: false);
+
+            var response = await PostAsync(browser, "/Registration/Register", "/Registration/Register",
+                new Dictionary<string, string> {["Email"] = "fay@example.com", ["DisplayName"] = "Fay", ["Password"] = "12345678"});
+
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            Assert.True(HasSessionCookie(response));
+            Assert.Empty(factory.Email.Sent);
+            Assert.True(HasSessionCookie(await LoginAsync(browser, "fay@example.com", "12345678")));
+
+            var again = await PostAsync(browser, "/Registration/Register", "/Registration/Register",
+                new Dictionary<string, string> {["Email"] = "fay@example.com", ["DisplayName"] = "Fay", ["Password"] = "12345678"});
+            Assert.Contains("exists already", await again.Content.ReadAsStringAsync());
         }
 
         // ---- Google
