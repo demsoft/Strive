@@ -4,6 +4,19 @@ services:
   identity-api:
     environment:
       - ASPNETCORE_ENVIRONMENT=${APP_ENVIRONMENT}
+      # Demo: anybody can sign in with a made up name (development, e2e tests). Accounts: real accounts (email and
+      # password, Google). compose.sh switches to Accounts when the file .env.identity exists.
+      - Accounts__Mode=${ACCOUNTS_MODE:-Demo}
+      - Accounts__MongoDb__ConnectionString=mongodb://nosqldata
+      - Accounts__AllowedEmailDomains=${ACCOUNTS_ALLOWED_EMAIL_DOMAINS:-}
+      - Accounts__Google__ClientId=${GOOGLE_CLIENT_ID:-}
+      - Accounts__Google__ClientSecret=${GOOGLE_CLIENT_SECRET:-}
+      - Accounts__Email__From=${SMTP_FROM:-Strive <no-reply@localhost>}
+      - Accounts__Email__Host=${SMTP_HOST:-}
+      - Accounts__Email__Port=${SMTP_PORT:-587}
+      - Accounts__Email__UseTls=${SMTP_TLS:-true}
+      - Accounts__Email__User=${SMTP_USER:-}
+      - Accounts__Email__Password=${SMTP_PASSWORD:-}
 
   strive:
     environment:

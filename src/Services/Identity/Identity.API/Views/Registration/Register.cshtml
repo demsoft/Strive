@@ -1,0 +1,33 @@
+@model Identity.API.Quickstart.Account.RegisterModel
+
+<div class="auth-card">
+    <h1>Create your <span class="gradient-text">account</span></h1>
+    <p class="subtitle">Meet with anyone, from any device.</p>
+
+    <partial name="_ValidationSummary" />
+
+    <form asp-action="Register" method="post">
+        <input type="hidden" asp-for="ReturnUrl" />
+
+        <div class="form-group">
+            <label asp-for="Email"></label>
+            <input class="form-control" type="email" asp-for="Email" placeholder="you@example.com" autocomplete="email" autofocus>
+        </div>
+        <div class="form-group">
+            <label asp-for="DisplayName"></label>
+            <input class="form-control" asp-for="DisplayName" placeholder="How others will see you" autocomplete="nickname" maxlength="30">
+        </div>
+        <div class="form-group">
+            <label asp-for="Password"></label>
+            <input class="form-control" type="password" asp-for="Password" placeholder="At least 10 characters" autocomplete="new-password">
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" type="submit">Create account</button>
+        </div>
+    </form>
+
+    <p class="hint">
+        Already have an account? <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Sign in</a>
+    </p>
+</div>

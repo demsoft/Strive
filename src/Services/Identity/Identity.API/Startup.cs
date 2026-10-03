@@ -2,7 +2,18 @@
 // See LICENSE in the project root for license information.
 
 
+using System;
+using System.Threading;
+using System.Threading.RateLimiting;
+using System.Threading.Tasks;
+using Duende.IdentityServer;
+using Identity.API.Accounts;
 using Identity.API.Quickstart;
+using Identity.API.Quickstart.Account;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -13,6 +24,21 @@ using Microsoft.Extensions.Hosting;
 
 namespace Identity.API
 {
+    /// <summary>Creates the indexes of the user store.</summary>
+    public class AccountsStartup : IHostedService
+    {
+        private readonly MongoUserRepository _users;
+
+        public AccountsStartup(MongoUserRepository users)
+        {
+            _users = users;
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken) => _users.EnsureIndexesAsync();
+
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
     public class Startup
     {
         public Startup(IWebHostEnvironment environment, IConfiguration configuration)
@@ -46,6 +72,7 @@ namespace Identity.API
             });
 
             services.AddSingleton<IUserProvider, DemoUserProvider>();
+            ConfigureAccounts(services);
 
             // in-memory, code config
             builder.AddInMemoryIdentityResources(Config.IdentityResources);
@@ -63,8 +90,66 @@ namespace Identity.API
                 options.KnownProxies.Clear();
             });
 
+            services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                // sign in, registration and password reset: enough for a person, too little for guessing
+                options.AddPolicy("account", context => RateLimitPartition.GetFixedWindowLimiter(
+                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 20, Window = TimeSpan.FromMinutes(1), QueueLimit = 0,
+                    }));
+            });
+
             services.AddCors(x =>
                 x.AddDefaultPolicy(builder => builder.WithOrigins(spaHost).AllowAnyMethod().AllowAnyHeader()));
+        }
+
+        /// <summary>
+        ///     Demo mode needs nothing. Accounts mode adds the user store (MongoDB), the emails, Google and persistent
+        ///     data protection keys.
+        /// </summary>
+        private void ConfigureAccounts(IServiceCollection services)
+        {
+            var section = Configuration.GetSection(AccountsOptions.Section);
+            services.Configure<AccountsOptions>(section);
+            var options = section.Get<AccountsOptions>() ?? new AccountsOptions();
+
+            if (!options.IsAccountsMode)
+            {
+                services.AddSingleton<IUserDirectory, DemoUserDirectory>();
+                return;
+            }
+
+            // fail at the start, not at the first registration
+            if (string.IsNullOrWhiteSpace(options.Email.Host))
+                throw new InvalidOperationException(
+                    "Accounts:Email:Host is not configured. Accounts need an SMTP server for the confirmation and " +
+                    "password reset emails (in development ./compose.sh starts a local inbox).");
+
+            services.AddSingleton<MongoUserRepository>();
+            services.AddSingleton<IUserRepository>(sp => sp.GetRequiredService<MongoUserRepository>());
+            services.AddSingleton<IUserDirectory, AccountsUserDirectory>();
+            services.AddSingleton<IEmailSender, SmtpEmailSender>();
+            services.AddSingleton<AccountService>();
+            services.AddHostedService<AccountsStartup>();
+
+            // cookies, anti-forgery tokens and the Google sign in state must survive restarts
+            services.AddDataProtection().SetApplicationName("strive-identity");
+            services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(sp =>
+                new ConfigureOptions<KeyManagementOptions>(keys =>
+                    keys.XmlRepository = new MongoXmlRepository(sp.GetRequiredService<MongoUserRepository>().Database)));
+
+            if (options.Google.IsConfigured)
+                services.AddAuthentication().AddGoogle(ExternalController.GoogleProvider, google =>
+                {
+                    google.ClientId = options.Google.ClientId!;
+                    google.ClientSecret = options.Google.ClientSecret!;
+                    google.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                    // Google tells whether it checked the address, without it nobody may be linked by email
+                    google.ClaimActions.MapJsonKey("email_verified", "email_verified");
+                });
         }
 
         public void Configure(IApplicationBuilder app)
@@ -83,6 +168,7 @@ namespace Identity.API
             app.UseStaticFiles();
 
             app.UseRouting();
+            app.UseRateLimiter();
             app.UseIdentityServer();
             app.UseAuthorization();
             app.UseEndpoints(endpoints => { endpoints.MapDefaultControllerRoute(); });

@@ -58,7 +58,7 @@ services:
       - STORAGE_ENDPOINT=${RECORDING_STORAGE_DEV_ENDPOINT:-${RECORDING_STORAGE_ENDPOINT:-}}
       - IGNORE_HTTPS_ERRORS=true
       # reach the host for requests of the browser to the app, the api and the media server
-      - HOST_RESOLVER_RULES=MAP *.localhost 127.0.0.1, MAP localhost 127.0.0.1
+      - HOST_RESOLVER_RULES=MAP *.localhost 127.0.0.1, MAP localhost 127.0.0.1, MAP *.localtest.me 127.0.0.1, MAP localtest.me 127.0.0.1
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -74,3 +74,11 @@ services:
   storage:
     ports:
       - "127.0.0.1:9100:9000"
+
+  # Development inbox for the emails of the accounts (confirm email, reset password). Started by compose.sh when
+  # accounts are on and no SMTP server is configured. Open http://localhost:8025 to read the mails.
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "127.0.0.1:8025:8025"
+    profiles: ["mail"]

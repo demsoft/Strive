@@ -117,3 +117,14 @@ a:hover { text-decoration: underline; }
   .page { padding: 16px; }
   .auth-card { padding: 28px 20px; border-radius: 22px; }
 }
+
+/* accounts */
+.alert-success { background: rgba(52, 211, 153, 0.12); border: 1px solid rgba(52, 211, 153, 0.35); color: #a7f3d0; }
+
+.btn-google { background: #fff; color: #1f1f1f; gap: 12px; border-color: #dadce0; }
+.btn-google:hover { background: #f3f4f6; }
+
+.divider { display: flex; align-items: center; gap: 14px; margin: 22px 0; color: var(--text-muted); font-size: 0.8rem; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
+form.resend { margin-bottom: 20px; }

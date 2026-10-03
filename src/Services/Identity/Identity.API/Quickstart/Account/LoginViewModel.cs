@@ -8,5 +8,16 @@ namespace Identity.API.Quickstart.Account
     {
         public bool AllowRememberLogin { get; set; } = true;
         public bool EnableLocalLogin { get; set; } = true;
+
+        /// <summary>Real accounts (email, password, registration) instead of the demo sign in.</summary>
+        public bool AccountsMode { get; set; }
+
+        public bool GoogleEnabled { get; set; }
+        public bool ShowResendConfirmation { get; set; }
+
+        /// <summary>A message from another page of the flow (a confirmation, a changed password).</summary>
+        public string Notice { get; set; }
+
+        public string Error { get; set; }
     }
 }

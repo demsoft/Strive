@@ -57,6 +57,59 @@ echo "username: $TURN_USER"; echo "password: $TURN_PASSWORD"
 A candidate of type `relay` in the result means that coturn, the secret and the firewall are set up correctly. Also join a
 conference from a network that only allows TCP/443 or temporarily block UDP in your browser to see relayed media.
 
+## Accounts: sign up and sign in (optional)
+
+By default the app runs in **demo mode**: anybody can sign in with a made up name and any password (this is what
+development and the Cypress tests use). With **accounts** people create an account with an email address and a password, or
+continue with Google. They confirm their email address, can reset a forgotten password and choose the name other
+participants see (a Google account only offers its name as the default).
+
+Accounts are stored in the MongoDB of the stack (database `strive-identity`). Conferences of demo identities are not carried
+over: accounts get new ids, so a switch to accounts starts fresh.
+
+### Development
+
+```bash
+cd src
+cp .env.identity.example .env.identity      # git ignores it, never commit it
+./compose.sh --profile recording up -d --build
+```
+
+`compose.sh` turns accounts on when `.env.identity` exists. The app then runs on **https://localtest.me**: Google does not
+accept `*.localhost` as a redirect address, and `localtest.me` (with all subdomains) points to `127.0.0.1` without a hosts
+entry. The development certificate is created again for it the first time (trust it once in the browser). Emails go to a local
+inbox, [Mailpit](http://localhost:8025), unless you set `SMTP_HOST`.
+
+### Sign in with Google
+
+1. [Google Cloud console](https://console.cloud.google.com/apis/credentials) -> create a project, configure the OAuth consent
+   screen (External, scopes `openid`, `email`, `profile`; add yourself as a test user while it is in *Testing*).
+2. Credentials -> *Create credentials* -> *OAuth client ID* -> *Web application*:
+   - Authorized JavaScript origins: `https://localtest.me`
+   - Authorized redirect URIs: `https://identity.localtest.me/signin-google`
+3. Put the client id and secret into `.env.identity` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) and run `compose.sh up -d`.
+
+The "Continue with Google" button only shows when both values are set. In production use your own domain: the redirect
+address is `https://identity.<your domain>/signin-google`.
+
+### Settings
+
+| Setting | Where | Meaning |
+| --- | --- | --- |
+| `ACCOUNTS_MODE` / `Accounts__Mode` | `identity-api` | `Demo` (default) or `Accounts`; `compose.sh` sets `Accounts` with `.env.identity` |
+| `ACCOUNTS_ALLOWED_EMAIL_DOMAINS` | `.env.identity` | comma separated email domains that may create an account, empty for everybody. It applies to registration and the first Google sign in; people who have an account stay in |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | `.env.identity` | Google sign in |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_TLS`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | `.env.identity` / `.env` | the mail server; required in production (the identity service does not start without it in accounts mode) |
+
+### Things to know
+
+- A Google account is linked to the account with the same email address when Google has verified it. An unconfirmed
+  password registration for that address is taken over (its password is removed), so nobody can claim an address they do not own.
+- Wrong passwords lock an account for 15 minutes after 5 attempts; sign in, registration and reset pages are rate limited per
+  IP address. Confirmation links work for 24 hours, reset links for one hour, both only once.
+- Registration, "forgot password" and "resend" answer the same way whether the email address has an account or not.
+- The session cookies and anti-forgery keys are stored in MongoDB, so sign ins survive restarts and several instances.
+
 ## Recording (optional)
 
 A moderator can record a conference. Recording is never automatic: it is started with the record button (after a

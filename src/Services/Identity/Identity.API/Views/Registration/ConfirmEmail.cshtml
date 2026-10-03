@@ -1,0 +1,12 @@
+@model Identity.API.Quickstart.Account.ConfirmEmailModel
+
+<div class="auth-card">
+    <h1>Confirm your <span class="gradient-text">email</span></h1>
+    <p class="subtitle">One more click and your account is ready.</p>
+
+    <form asp-action="ConfirmEmail" method="post">
+        <input type="hidden" asp-for="Token" />
+        <input type="hidden" asp-for="ReturnUrl" />
+        <button class="btn btn-primary btn-block" type="submit">Confirm email address</button>
+    </form>
+</div>
