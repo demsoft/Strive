@@ -19,7 +19,6 @@ const useStyles = makeStyles()((theme) => ({
       border: `1px solid ${theme.palette.error.main}`,
       color: theme.palette.error.light,
       fontWeight: 700,
-      marginRight: theme.spacing(1),
    },
    dot: {
       color: `${theme.palette.error.main} !important`,

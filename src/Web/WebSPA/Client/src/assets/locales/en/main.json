@@ -100,7 +100,12 @@
     "button": "Continue"
   },
   "conference": {
+    "sidebar": {
+      "hide": "Hide rooms",
+      "show": "Show rooms"
+    },
     "appbar": {
+      "account_menu": "Account menu",
       "signed_in_as": "Signed in as",
       "show_my_permissions": "Show my Permissions",
       "change_conference_settings": "Change Conference Settings",
