@@ -145,7 +145,7 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
                         mr: 2,
                      }}
                   >
-                     <Typography variant="caption">
+                     <Typography variant="caption" noWrap sx={{ display: { xs: 'none', xl: 'block' } }}>
                         {t('conference.appbar.signed_in_as')} <b>{oidcUser.profile.name}</b>
                      </Typography>
                   </Box>

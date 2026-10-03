@@ -12,6 +12,7 @@ namespace Strive.Infrastructure.Recording
     public class S3RecordingStorage : IRecordingStorage, IDisposable
     {
         private readonly Lazy<AmazonS3Client> _lazyClient;
+        private readonly Lazy<AmazonS3Client> _lazyPublicClient;
         private readonly string _bucket;
 
         private AmazonS3Client _client => _lazyClient.Value;
@@ -21,23 +22,33 @@ namespace Strive.Infrastructure.Recording
             var value = options.Value;
             _bucket = value.Bucket;
 
-            // created on first use, the storage is not configured if recording is switched off
-            _lazyClient = new Lazy<AmazonS3Client>(() =>
+            AmazonS3Client CreateClient(string? serviceUrl)
             {
                 var config = new AmazonS3Config
                 {
-                    ServiceURL = value.ServiceUrl,
+                    ServiceURL = serviceUrl,
                     AuthenticationRegion = value.Region,
                     ForcePathStyle = value.ForcePathStyle,
                 };
 
                 return new AmazonS3Client(value.AccessKeyId, value.SecretAccessKey, config);
-            });
+            }
+
+            // created on first use, the storage is not configured if recording is switched off
+            _lazyClient = new Lazy<AmazonS3Client>(() => CreateClient(value.ServiceUrl));
+
+            // playback links are opened by browsers, which may reach the storage under another address than the server
+            // does (the local storage of the development setup: http://storage:9000 in the docker network,
+            // http://localhost:9000 for the browser)
+            _lazyPublicClient = string.IsNullOrEmpty(value.PublicServiceUrl) ||
+                                value.PublicServiceUrl == value.ServiceUrl
+                ? _lazyClient
+                : new Lazy<AmazonS3Client>(() => CreateClient(value.PublicServiceUrl));
         }
 
         public Uri GetPlaybackUrl(string storageKey, TimeSpan validFor)
         {
-            var url = _client.GetPreSignedURL(new GetPreSignedUrlRequest
+            var url = _lazyPublicClient.Value.GetPreSignedURL(new GetPreSignedUrlRequest
             {
                 BucketName = _bucket,
                 Key = storageKey,
@@ -74,6 +85,7 @@ namespace Strive.Infrastructure.Recording
         public void Dispose()
         {
             if (_lazyClient.IsValueCreated) _client.Dispose();
+            if (_lazyPublicClient != _lazyClient && _lazyPublicClient.IsValueCreated) _lazyPublicClient.Value.Dispose();
         }
     }
 }

@@ -43,6 +43,60 @@ services:
       - identity-api
       - coturn
 
+  # Recording is optional: the recorder only starts with `--profile recording`. Recordings are stored in Cloudflare R2
+  # (or another S3-compatible store); without R2 credentials compose.sh uses a local storage, see installation.md.
+  # Only used when no R2 credentials are configured (profile `local-storage`, started by compose.sh): a small
+  # S3-compatible gateway on top of a plain folder, so that recording can be tried without a cloud account.
+  storage:
+    image: ghcr.io/versity/versitygw:latest
+    command:
+      - --access=${LOCAL_STORAGE_ACCESS_KEY:-strive}
+      - --secret=${LOCAL_STORAGE_SECRET_KEY:-strive-dev-storage-secret}
+      - --port=:9000
+      - posix
+      - /data
+    volumes:
+      - storage-data:/data
+    depends_on:
+      storage-setup:
+        condition: service_completed_successfully
+    profiles: ["local-storage"]
+
+  # a bucket is a folder in the root of the gateway
+  storage-setup:
+    image: busybox:1.37
+    command: ["mkdir", "-p", "/data/${RECORDING_STORAGE_BUCKET:-strive-recordings}"]
+    volumes:
+      - storage-data:/data
+    restart: "no"
+    profiles: ["local-storage"]
+
+  recorder:
+    image: ${DOCKER_REGISTRY-}recorder
+    build: ./Services/Recorder
+    shm_size: 1gb
+    environment:
+      - RECORDER_SHARED_SECRET=${RECORDER_SHARED_SECRET}
+      - STRIVE_API_URL=http://strive
+      - WEB_URL=https://${FRONTEND_DNS_OR_IP}
+      - STORAGE_ENDPOINT=${RECORDING_STORAGE_ENDPOINT:-}
+      - STORAGE_BUCKET=${RECORDING_STORAGE_BUCKET:-}
+      - STORAGE_FORCE_PATH_STYLE=${RECORDING_STORAGE_FORCE_PATH_STYLE:-false}
+      - STORAGE_REGION=${RECORDING_STORAGE_REGION:-auto}
+      - STORAGE_ACCESS_KEY_ID=${RECORDING_STORAGE_ACCESS_KEY_ID:-}
+      - STORAGE_SECRET_ACCESS_KEY=${RECORDING_STORAGE_SECRET_ACCESS_KEY:-}
+      - MAX_CONCURRENT_RECORDINGS=${RECORDER_MAX_CONCURRENT:-2}
+    volumes:
+      - recordings-data:/data/recordings
+    depends_on:
+      strive:
+        condition: service_started
+      storage:
+        condition: service_started
+        required: false
+    restart: unless-stopped
+    profiles: ["recording"]
+
   webspa:
     image: ${DOCKER_REGISTRY-}webspa
     build:
@@ -55,3 +109,7 @@ services:
       - identity-api
       - sfu
       - strive
+
+volumes:
+  recordings-data:
+  storage-data:

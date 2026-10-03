@@ -23,7 +23,8 @@ export const HAND_RAISES = 'handRaises';
 export const LOBBY = 'lobby';
 export const RECORDING = 'recording';
 
-export type RecordingStatus = 'Starting' | 'Recording' | 'Finalizing' | 'Ready' | 'Failed';
+/** the server serializes enums in camel case */
+export type RecordingStatus = 'starting' | 'recording' | 'finalizing' | 'ready' | 'failed';
 
 export type SynchronizedRecording = {
    active: { recordingId: string; status: RecordingStatus; startedAt: string; startedBy: string } | null;

@@ -37,7 +37,13 @@ export default function RecordingRoute({
    },
 }: Props) {
    const dispatch = useDispatch();
-   const credentials = useMemo(() => parseRecorderToken(location.hash), [location.hash]);
+   // read once: the token is removed from the address right after, nothing may show or log it
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   const credentials = useMemo(() => parseRecorderToken(location.hash), []);
+
+   useEffect(() => {
+      if (credentials) window.history.replaceState(null, '', window.location.pathname);
+   }, [credentials]);
    const webRtc = useRef(new WebRtcManager({ sendMedia: false, receiveMedia: true })).current;
 
    const error = useSelector((state: RootState) => state.conference.connectionError);

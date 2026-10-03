@@ -92,9 +92,9 @@ export default function RecordingsDialog({ open, onClose }: Props) {
 
    const statusChip = (recording: RecordingDto) => {
       switch (recording.status) {
-         case 'Ready':
+         case 'ready':
             return null;
-         case 'Failed':
+         case 'failed':
             return <Chip size="small" color="error" label={t('conference.recording.status_failed')} />;
          default:
             return <Chip size="small" color="primary" label={t('conference.recording.status_processing')} />;
@@ -123,7 +123,7 @@ export default function RecordingsDialog({ open, onClose }: Props) {
                      divider
                      className="recording-list-item"
                      secondaryAction={
-                        recording.status === 'Ready' ? (
+                        recording.status === 'ready' ? (
                            <>
                               <Tooltip title={t('conference.recording.copy_link')}>
                                  <IconButton aria-label={t('conference.recording.copy_link')} onClick={() => copyLink(recording)}>
@@ -146,7 +146,7 @@ export default function RecordingsDialog({ open, onClose }: Props) {
                                  <MoreVertIcon fontSize="small" />
                               </IconButton>
                            </>
-                        ) : recording.status === 'Failed' ? (
+                        ) : recording.status === 'failed' ? (
                            <IconButton aria-label={t('common:delete')} onClick={() => remove(recording)}>
                               <DeleteOutlinedIcon fontSize="small" />
                            </IconButton>
@@ -163,12 +163,12 @@ export default function RecordingsDialog({ open, onClose }: Props) {
                         secondary={[
                            recording.durationSeconds != null ? formatDuration(recording.durationSeconds) : null,
                            recording.sizeBytes != null ? formatSize(recording.sizeBytes) : null,
-                           recording.status === 'Ready'
-                              ? recording.visibility === 'AnyoneWithLink'
+                           recording.status === 'ready'
+                              ? recording.visibility === 'anyoneWithLink'
                                  ? t('conference.recording.visibility_anyone')
                                  : t('conference.recording.visibility_signed_in')
                               : null,
-                           recording.status === 'Ready'
+                           recording.status === 'ready'
                               ? t('conference.recording.deleted_on', {
                                    date: DateTime.fromISO(recording.expiresAt).toLocaleString(DateTime.DATE_MED),
                                 })
@@ -181,12 +181,12 @@ export default function RecordingsDialog({ open, onClose }: Props) {
                ))}
             </List>
             <Menu open={Boolean(menu)} anchorEl={menu?.anchor} onClose={() => setMenu(null)}>
-               {menu?.recording.visibility === 'SignedIn' ? (
-                  <MenuItem onClick={() => changeVisibility(menu.recording, 'AnyoneWithLink')}>
+               {menu?.recording.visibility === 'signedIn' ? (
+                  <MenuItem onClick={() => changeVisibility(menu.recording, 'anyoneWithLink')}>
                      {t('conference.recording.make_public')}
                   </MenuItem>
                ) : (
-                  <MenuItem onClick={() => changeVisibility(menu!.recording, 'SignedIn')}>
+                  <MenuItem onClick={() => changeVisibility(menu!.recording, 'signedIn')}>
                      {t('conference.recording.make_private')}
                   </MenuItem>
                )}

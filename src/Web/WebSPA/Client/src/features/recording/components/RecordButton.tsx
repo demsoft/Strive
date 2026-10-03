@@ -34,7 +34,7 @@ export default function RecordButton() {
    if (!canManage || !available) return null;
 
    const isRecording = Boolean(active);
-   const finalizing = active?.status === 'Finalizing';
+   const finalizing = active?.status === 'finalizing';
 
    const handleClick = () => {
       if (isRecording) dispatch(coreHub.stopRecording());

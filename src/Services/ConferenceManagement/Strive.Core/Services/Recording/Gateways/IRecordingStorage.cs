@@ -6,7 +6,7 @@ namespace Strive.Core.Services.Recording.Gateways
 {
     /// <summary>
     ///     The place where finished recordings are stored. The recorder uploads the file itself, the server only hands out
-    ///     links and deletes files. Implementations: S3 compatible stores (Cloudflare R2, MinIO, AWS S3).
+    ///     links and deletes files. Implementation: S3 compatible stores (Cloudflare R2, AWS S3).
     /// </summary>
     public interface IRecordingStorage
     {

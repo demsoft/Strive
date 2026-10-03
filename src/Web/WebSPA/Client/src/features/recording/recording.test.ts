@@ -14,7 +14,7 @@ vi.mock('i18next', () => ({ default: { t: (key: string) => key } }));
 const stateEvent = onEventOccurred(events.onSynchronizeObjectState);
 const updatedEvent = onEventOccurred(events.onSynchronizedObjectUpdated);
 
-const active = { recordingId: 'r1', status: 'Recording', startedAt: '2024-01-01T10:00:00Z', startedBy: 'mod' };
+const active = { recordingId: 'r1', status: 'recording', startedAt: '2024-01-01T10:00:00Z', startedBy: 'mod' };
 
 const toRoot = (recording: ReturnType<typeof reducer>, isRecordingEnabled = true) =>
    ({ recording, conference: { conferenceState: { isRecordingEnabled } } }) as unknown as RootState;
@@ -90,7 +90,7 @@ describe('announcements', () => {
    test('a recording that starts and stops is announced, repeated state is not', async () => {
       expect(await announce('recording', null)).toEqual([]);
       expect(await announce('recording', active)).toEqual(['conference.recording.started_notice']);
-      expect(await announce('recording', { ...active, status: 'Finalizing' })).toEqual([]);
+      expect(await announce('recording', { ...active, status: 'finalizing' })).toEqual([]);
       expect(await announce('recording', null)).toEqual(['conference.recording.stopped_notice']);
    });
 

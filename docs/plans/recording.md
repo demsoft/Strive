@@ -1,6 +1,19 @@
 # Plan: server-side meeting recording
 
-Status: direction decided, Cloudinary spike done (see below), storage choice to be confirmed.
+Status: implemented (see "As built"). Storage: Cloudflare R2 with a local S3-compatible fallback for development.
+
+## As built
+
+- Backend: `Strive.Core/Services/Recording` (entity with a unique index for one active recording per conference,
+  start/stop, recorder reports, retention, share links), recorder identity (separate auth scheme, no permissions, receive
+  only), S3 storage in `Strive.Infrastructure/Recording`.
+- Recorder: `src/Services/Recorder` (Node, Xvfb + PulseAudio + Chromium in app mode + ffmpeg, fragmented MP4 on disk, made
+  seekable and uploaded as a multipart upload, recovery after a crash).
+- Frontend: REC indicator, start/stop with confirmation, recordings list, share page `/r/:token`, recording view
+  `/c/:id/recording`.
+- Storage: Cloudflare R2 (verified with the real bucket); without `.env.recording` compose.sh starts a local S3 gateway.
+- Findings while building it: Chromium ignores `--app=about:blank` (use a real page), the first version put the browser
+  window and the join token into the video, audio needs wall clock timestamps to stay in step with the video.
 
 ## Decisions so far
 

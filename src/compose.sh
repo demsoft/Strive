@@ -18,6 +18,53 @@ if [ ! -f certs/localhost.crt ] || [ ! -f certs/localhost.key ]; then
     -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost,DNS:*.localhost,IP:127.0.0.1" 2>/dev/null
 fi
 
+# Recording is optional. It runs only with `--profile recording`, which also switches the feature on in the server.
+# Recordings are stored in Cloudflare R2 when the file .env.recording (never committed) defines
+#   R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY and R2_BUCKET.
+# Without that file a small local S3-compatible storage is started instead (profile local-storage), so that recording
+# can be tried without a cloud account. Set RECORDING_STORAGE=local to use it even if the R2 credentials exist.
+case " $* " in
+  *" --profile recording "*)
+    export RECORDING_ENABLED=true
+
+    use_r2=false
+    if [ -f .env.recording ] && [ "${RECORDING_STORAGE:-}" != "local" ]; then
+      set -a
+      . ./.env.recording
+      set +a
+      for variable in R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET; do
+        if [ -z "$(eval echo \"\${$variable:-}\")" ]; then
+          echo ".env.recording does not define $variable" >&2
+          exit 1
+        fi
+      done
+      use_r2=true
+    fi
+
+    if [ "$use_r2" = true ]; then
+      export RECORDING_STORAGE_ENDPOINT="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+      export RECORDING_STORAGE_BUCKET="$R2_BUCKET"
+      export RECORDING_STORAGE_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID"
+      export RECORDING_STORAGE_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY"
+      echo "Recording storage: Cloudflare R2 (bucket $R2_BUCKET)"
+    else
+      export RECORDING_STORAGE_ENDPOINT="http://storage:9000"
+      # the recorder (development: on the docker host) reaches it directly, browsers through the reverse proxy (https)
+      export RECORDING_STORAGE_DEV_ENDPOINT="http://127.0.0.1:9100"
+      site_host=$(grep '^SITE_HOST=' .env | cut -d= -f2)
+      export RECORDING_STORAGE_PUBLIC_URL="https://storage.${site_host:-localhost}"
+      export RECORDING_STORAGE_BUCKET="${RECORDING_STORAGE_BUCKET:-strive-recordings}"
+      export RECORDING_STORAGE_ACCESS_KEY_ID="${LOCAL_STORAGE_ACCESS_KEY:-strive}"
+      export RECORDING_STORAGE_SECRET_ACCESS_KEY="${LOCAL_STORAGE_SECRET_KEY:-strive-dev-storage-secret}"
+      export RECORDING_STORAGE_FORCE_PATH_STYLE=true
+      # the region the local gateway signs for (R2 uses "auto")
+      export RECORDING_STORAGE_REGION=us-east-1
+      set -- --profile local-storage "$@"
+      echo "Recording storage: local S3-compatible storage"
+    fi
+    ;;
+esac
+
 echo "GITREF=$GITREF"
 echo "GITCOMMIT=$GITCOMMIT"
 echo "GITTIMESTAMP=$GITTIMESTAMP"

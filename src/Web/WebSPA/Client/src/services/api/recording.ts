@@ -1,8 +1,10 @@
 import Axios from 'axios';
 import appSettings from 'src/config';
 
-export type RecordingStatus = 'Starting' | 'Recording' | 'Finalizing' | 'Ready' | 'Failed';
-export type RecordingVisibility = 'SignedIn' | 'AnyoneWithLink';
+export type { RecordingStatus } from 'src/store/signal/synchronization/synchronized-object-ids';
+import { RecordingStatus } from 'src/store/signal/synchronization/synchronized-object-ids';
+
+export type RecordingVisibility = 'signedIn' | 'anyoneWithLink';
 
 export type RecordingDto = {
    recordingId: string;

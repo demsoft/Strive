@@ -1,14 +1,19 @@
 namespace Strive.Infrastructure.Recording
 {
     /// <summary>
-    ///     Settings of the S3 compatible storage (section "Recording:Storage"): Cloudflare R2, MinIO, AWS S3, ...
+    ///     Settings of the S3 compatible storage (section "Recording:Storage"): Cloudflare R2, AWS S3, a local gateway for development, ...
     /// </summary>
     public class RecordingStorageOptions
     {
         /// <summary>
-        ///     The endpoint, e.g. https://&lt;account id&gt;.r2.cloudflarestorage.com or http://minio:9000
+        ///     The endpoint, e.g. https://&lt;account id&gt;.r2.cloudflarestorage.com
         /// </summary>
         public string? ServiceUrl { get; set; }
+
+        /// <summary>
+        ///     The address browsers use to play recordings, if it differs from <see cref="ServiceUrl" />
+        /// </summary>
+        public string? PublicServiceUrl { get; set; }
 
         public string Bucket { get; set; } = "strive-recordings";
 
@@ -22,7 +27,7 @@ namespace Strive.Infrastructure.Recording
         public string Region { get; set; } = "auto";
 
         /// <summary>
-        ///     Required by MinIO
+        ///     Required by the local storage of the development setup, R2 and AWS S3 use virtual hosted style addressing
         /// </summary>
         public bool ForcePathStyle { get; set; }
     }

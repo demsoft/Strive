@@ -10,6 +10,8 @@ const useStyles = makeStyles()({
       height: '100vh',
       overflow: 'hidden',
       position: 'relative',
+      // nothing to click in a recording: hide the buttons the tiles show on hover
+      '& .MuiIconButton-root': { display: 'none' },
    },
 });
 

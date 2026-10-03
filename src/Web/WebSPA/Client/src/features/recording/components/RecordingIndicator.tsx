@@ -43,9 +43,9 @@ export default function RecordingIndicator() {
    if (!active) return null;
 
    const label =
-      active.status === 'Finalizing'
+      active.status === 'finalizing'
          ? t('conference.recording.saving')
-         : active.status === 'Starting'
+         : active.status === 'starting'
            ? t('conference.recording.starting')
            : `${t('conference.recording.rec')} ${formatDuration((now - new Date(active.startedAt).getTime()) / 1000)}`;
 

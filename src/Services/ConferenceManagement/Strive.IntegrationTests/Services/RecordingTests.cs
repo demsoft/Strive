@@ -323,6 +323,34 @@ namespace Strive.IntegrationTests.Services
         }
 
         [Fact]
+        public async Task WireFormat_EnumsAreCamelCase_AsTheWebAppExpects()
+        {
+            // the web app compares these strings, a different spelling silently breaks the REC indicator and the list
+            var (recording, _, conferenceId) = await RecordUntilReady(RecordingVisibility.AnyoneWithLink);
+
+            var json = await CreateClient(Moderator).GetStringAsync($"/v1/conference/{conferenceId}/recordings");
+
+            Assert.Contains("\"status\":\"ready\"", json);
+            Assert.Contains("\"visibility\":\"anyoneWithLink\"", json);
+            Assert.Contains($"\"shareToken\":\"{recording.ShareToken}\"", json);
+        }
+
+        [Fact]
+        public async Task WireFormat_SynchronizedRecording_UsesCamelCaseStatus()
+        {
+            var (moderator, conference) = await ConnectToOpenedConference();
+            AssertSuccess(await Start(moderator));
+
+            var raw = await moderator.SyncObjects.WaitForSyncObj<SynchronizedRecording>(SynchronizedRecording.SyncObjId);
+
+            // serialized like the server sends it to the web app
+            var json = JsonConvert.SerializeObject(raw, JsonConfig.Default);
+            Assert.Contains("\"status\":\"starting\"", json);
+            Assert.Contains("\"active\":{", json);
+            Assert.NotNull(conference);
+        }
+
+        [Fact]
         public async Task GetRecordings_NotModerator_ReturnForbidden()
         {
             var (_, conference) = await ConnectToOpenedConference();
