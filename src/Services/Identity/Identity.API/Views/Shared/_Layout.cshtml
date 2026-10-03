@@ -4,24 +4,24 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0b0d17" />
 
-    <title>Duende IdentityServer</title>
-    
+    <title>Strive</title>
+
     <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
     <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico" />
-    
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
 <body>
-    <partial name="_Nav" />
-   
-    <div class="container body-container">
-        @RenderBody()
-    </div>
+    <div class="page">
+        <partial name="_Nav" />
 
-    <script src="~/lib/jquery/dist/jquery.slim.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+        <main class="page-body">
+            @RenderBody()
+        </main>
+    </div>
 
     @RenderSection("scripts", required: false)
 </body>

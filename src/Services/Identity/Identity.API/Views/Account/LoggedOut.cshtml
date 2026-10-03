@@ -1,22 +1,17 @@
 @model Identity.API.Quickstart.Account.LoggedOutViewModel
 
-@{ 
+@{
     // set this so the layout rendering sees an anonymous user
     ViewData["signed-out"] = true;
 }
 
-<div class="logged-out-page">
-    <h1>
-        Logout
-        <small>You are now logged out</small>
-    </h1>
+<div class="auth-card logged-out-page">
+    <h1>You're <span class="gradient-text">signed out</span></h1>
+    <p class="subtitle">Thanks for stopping by. See you at the next meeting.</p>
 
     @if (Model.PostLogoutRedirectUri != null)
     {
-        <div>
-            Click <a class="PostLogoutRedirectUri" href="@Model.PostLogoutRedirectUri">here</a> to return to the
-            <span>@Model.ClientName</span> application.
-        </div>
+        <a class="btn btn-primary btn-block PostLogoutRedirectUri" href="@Model.PostLogoutRedirectUri">Return to @Model.ClientName</a>
     }
 
     @if (Model.SignOutIframeUrl != null)
