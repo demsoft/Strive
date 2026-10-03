@@ -12,6 +12,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Serilog;
 using Serilog.Events;
+using Strive.Core.Services.Recording.Gateways;
 using Strive.IntegrationTests._Helpers;
 using Xunit.Abstractions;
 
@@ -63,6 +64,13 @@ namespace Strive.IntegrationTests
 
             builder.ConfigureServices(services =>
             {
+                // no recorder service and no storage in the tests. These run before the registrations of the
+                // application, which only add their implementations if nothing is registered yet.
+                services.AddSingleton<FakeRecorderClient>();
+                services.AddSingleton<IRecorderClient>(sp => sp.GetRequiredService<FakeRecorderClient>());
+                services.AddSingleton<FakeRecordingStorage>();
+                services.AddSingleton<IRecordingStorage>(sp => sp.GetRequiredService<FakeRecordingStorage>());
+
                 services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
                 {
                     var config = new OpenIdConnectConfiguration {Issuer = JwtTokens.Issuer};

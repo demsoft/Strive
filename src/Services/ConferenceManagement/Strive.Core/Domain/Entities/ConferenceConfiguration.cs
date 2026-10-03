@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Strive.Core.Services.Chat;
 using Strive.Core.Services.Lobby;
+using Strive.Core.Services.Recording;
 using Strive.Core.Services.Scenes;
 
 namespace Strive.Core.Domain.Entities
@@ -44,5 +45,10 @@ namespace Strive.Core.Domain.Entities
         ///     Lobby options
         /// </summary>
         public LobbyOptions Lobby { get; init; } = new();
+
+        /// <summary>
+        ///     Recording options
+        /// </summary>
+        public ConferenceRecordingOptions Recording { get; init; } = new();
     }
 }

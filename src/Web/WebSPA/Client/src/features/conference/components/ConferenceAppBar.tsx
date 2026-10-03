@@ -13,10 +13,13 @@ import { openDialogToPatchAsync } from 'src/features/create-conference/reducer';
 import { openSettings } from 'src/features/settings/reducer';
 import useIsMobile from 'src/hooks/useIsMobile';
 import usePermission from 'src/hooks/usePermission';
-import { CONFERENCE_CAN_OPEN_AND_CLOSE } from 'src/permissions';
+import { CONFERENCE_CAN_OPEN_AND_CLOSE, RECORDING_CAN_MANAGE } from 'src/permissions';
 import { ConferenceRouteParams } from 'src/routes/types';
 import { RootState } from 'src/store';
 import { selectParticipantList } from '../selectors';
+import RecordButton from 'src/features/recording/components/RecordButton';
+import RecordingIndicator from 'src/features/recording/components/RecordingIndicator';
+import RecordingsDialog from 'src/features/recording/components/RecordingsDialog';
 import InviteLinkButton from 'src/components/InviteLinkButton';
 import LobbyButton from 'src/features/lobby/components/LobbyButton';
 import AppBarLogo from './appbar/AppBarLogo';
@@ -62,6 +65,8 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
    const { id: conferenceId } = useParams<ConferenceRouteParams>();
 
    const canCloseConference = usePermission(CONFERENCE_CAN_OPEN_AND_CLOSE);
+   const canManageRecordings = usePermission(RECORDING_CAN_MANAGE);
+   const [recordingsOpen, setRecordingsOpen] = useState(false);
    const handleCloseConference = () => dispatch(coreHub.closeConference());
    const handleOpenSettings = () => dispatch(openSettings());
 
@@ -145,6 +150,8 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
                      </Typography>
                   </Box>
                )}
+               <RecordingIndicator />
+               <RecordButton />
                <LobbyButton />
                <InviteLinkButton />
                <IconButton aria-label={t('common:settings')} color="inherit" onClick={handleOpenSettings} size="large">
@@ -164,12 +171,23 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
             <Menu open={isMenuOpen} onClose={handleCloseMenu} anchorEl={moreIconButtonRef.current}>
                <MenuItem onClick={handleShowPermissions}>{t('conference.appbar.show_my_permissions')}</MenuItem>
 
+               {canManageRecordings && (
+                  <MenuItem
+                     onClick={() => {
+                        setRecordingsOpen(true);
+                        handleCloseMenu();
+                     }}
+                  >
+                     {t('conference.recording.list_title')}
+                  </MenuItem>
+               )}
                <MenuItem onClick={handlePatchConference}>{t('conference.appbar.change_conference_settings')}</MenuItem>
                {canCloseConference && (
                   <MenuItem onClick={handleCloseConference}>{t('conference.appbar.close_conference')}</MenuItem>
                )}
                <MenuItem onClick={() => auth.signoutRedirect()}>{t('common:sign_out')}</MenuItem>
             </Menu>
+            <RecordingsDialog open={recordingsOpen} onClose={() => setRecordingsOpen(false)} />
          </Toolbar>
       </AppBar>
    );

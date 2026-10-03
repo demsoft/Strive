@@ -21,6 +21,13 @@ export const POLL_ANSWERS = 'poll_answers';
 export const WHITEBOARDS = 'whiteboards';
 export const HAND_RAISES = 'handRaises';
 export const LOBBY = 'lobby';
+export const RECORDING = 'recording';
+
+export type RecordingStatus = 'Starting' | 'Recording' | 'Finalizing' | 'Ready' | 'Failed';
+
+export type SynchronizedRecording = {
+   active: { recordingId: string; status: RecordingStatus; startedAt: string; startedBy: string } | null;
+};
 
 export type SynchronizedLobby = {
    participants: { [participantId: string]: { displayName: string; since: string } };
@@ -43,6 +50,7 @@ export type SynchronizedConferenceInfo = {
    isPrivateChatEnabled: boolean;
    sceneOptions: SceneOptions;
    isLobbyEnabled: boolean;
+   isRecordingEnabled: boolean;
 };
 
 export type SynchronizedParticipantsPermissions = {

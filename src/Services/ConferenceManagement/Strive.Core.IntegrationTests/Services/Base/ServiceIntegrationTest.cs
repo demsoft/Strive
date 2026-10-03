@@ -16,6 +16,8 @@ using Strive.Core.Services.ConferenceControl.Notifications;
 using Strive.Core.Services.ConferenceControl.Requests;
 using Strive.Core.Services.ConferenceManagement.Gateways;
 using Strive.Core.Services.ConferenceManagement.UseCases;
+using Strive.Core.Services.Recording;
+using Strive.Core.Services.Recording.Gateways;
 using Strive.Core.Services.Synchronization;
 using Strive.Infrastructure;
 using Strive.Infrastructure.KeyValue;
@@ -61,6 +63,12 @@ namespace Strive.Core.IntegrationTests.Services.Base
             builder.RegisterInstance(new OptionsWrapper<KeyValueDatabaseOptions>(new KeyValueDatabaseOptions()))
                 .AsImplementedInterfaces();
             builder.RegisterType<InMemoryKeyValueDatabase>().AsImplementedInterfaces();
+
+            // recording is switched off by default
+            builder.RegisterInstance(new OptionsWrapper<RecordingOptions>(new RecordingOptions()))
+                .As<IOptions<RecordingOptions>>();
+            // recordings live in MongoDB, nothing is recorded in these tests
+            builder.RegisterInstance(Mock.Of<IRecordingRepo>()).As<IRecordingRepo>();
 
             var loggerFactory = _testOutputHelper.CreateLoggerFactory();
             builder.RegisterInstance(loggerFactory).As<ILoggerFactory>();

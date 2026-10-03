@@ -33,6 +33,7 @@ using Strive.Core.Services.Permissions.Requests;
 using Strive.Core.Services.Permissions.Responses;
 using Strive.Core.Services.Poll.Requests;
 using Strive.Core.Services.Reactions.Requests;
+using Strive.Core.Services.Recording.Requests;
 using Strive.Core.Services.Rooms;
 using Strive.Core.Services.Rooms.Requests;
 using Strive.Core.Services.Scenes;
@@ -202,6 +203,19 @@ namespace Strive.Hubs.Core
             return GetInvoker().Create(new KickParticipantRequest(new Participant(conferenceId, message.ParticipantId)))
                 .ValidateObject(message).RequirePermissions(DefinedPermissions.Conference.CanKickParticipant)
                 .ConferenceMustBeOpen().Send();
+        }
+
+        public Task<SuccessOrError<Unit>> StartRecording()
+        {
+            return GetInvoker().Create(new StartRecordingRequest(GetContextParticipant()))
+                .RequirePermissions(DefinedPermissions.Recording.CanManage).ConferenceMustBeOpen().Send();
+        }
+
+        public Task<SuccessOrError<Unit>> StopRecording()
+        {
+            var (conferenceId, _) = GetContextParticipant();
+            return GetInvoker().Create(new StopRecordingRequest(conferenceId))
+                .RequirePermissions(DefinedPermissions.Recording.CanManage).Send();
         }
 
         public Task<SuccessOrError<Unit>> AdmitParticipant(LobbyParticipantDto dto)

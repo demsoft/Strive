@@ -11,6 +11,7 @@ import RequireAuth from './features/auth/components/RequireAuth';
 import StriveAuthProvider from './features/auth/components/StriveAuthProvider';
 import UserInteractionListener from './features/media/components/UserInteractionListener';
 import theme from './theme';
+import SharedRecordingRoute from './routes/SharedRecordingRoute';
 import RedirectToConference from './RedirectToConference';
 import AuthenticatedRoutes from './routes/AuthenticatedRoutes';
 import EquipmentRoute from './routes/EquipmentRoute';
@@ -36,6 +37,8 @@ function App() {
                      <Switch>
                         {/* the silent renew iframe, the provider processes the callback */}
                         <Route path="/authentication/silent_callback" render={() => null} />
+                        {/* viewable without signing in if the recording is shared with everybody */}
+                        <Route path="/r/:token" component={SharedRecordingRoute} />
                         <Route>
                            <RequireAuth>
                               <AuthenticatedRoutes />

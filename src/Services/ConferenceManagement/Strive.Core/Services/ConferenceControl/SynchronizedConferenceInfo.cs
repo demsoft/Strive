@@ -7,7 +7,7 @@ namespace Strive.Core.Services.ConferenceControl
 {
     public record SynchronizedConferenceInfo(bool IsOpen, IImmutableList<string> Moderators,
         DateTimeOffset? ScheduledDate, string? Name, bool IsPrivateChatEnabled, SceneOptions SceneOptions,
-        bool IsLobbyEnabled)
+        bool IsLobbyEnabled, bool IsRecordingEnabled)
     {
         public static SynchronizedObjectId SyncObjId { get; } = new(SynchronizedObjectIds.CONFERENCE);
     }

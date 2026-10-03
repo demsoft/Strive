@@ -35,6 +35,11 @@ namespace Strive.Core.Services.Permissions
             public static readonly PermissionDescriptor<bool> CanAdmit = new("lobby/canAdmit");
         }
 
+        public static class Recording
+        {
+            public static readonly PermissionDescriptor<bool> CanManage = new("recording/canManage");
+        }
+
         public static class Reactions
         {
             public static readonly PermissionDescriptor<bool> CanSend = new("reactions/canSend");
