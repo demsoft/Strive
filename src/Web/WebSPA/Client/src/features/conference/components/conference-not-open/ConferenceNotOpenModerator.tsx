@@ -1,7 +1,6 @@
-import { Button, ButtonGroup, Typography } from '@mui/material';
-import { makeStyles } from 'tss-react/mui';
+import { Button, IconButton, Tooltip, Typography } from '@mui/material';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { DateTime } from 'luxon';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -14,39 +13,14 @@ import { ConferenceRouteParams } from 'src/routes/types';
 import { SynchronizedConferenceInfo } from 'src/store/signal/synchronization/synchronized-object-ids';
 import { selectParticipantList } from '../../selectors';
 import ConferenceNotOpenLayout from './ConferenceNotOpenLayout';
-
-const useStyles = makeStyles()((theme) => ({
-   topContent: {
-      flex: 1,
-      display: 'flex',
-      marginBottom: theme.spacing(2),
-      flexDirection: 'column',
-      alignItems: 'center',
-   },
-   bottomContent: {
-      flex: 1,
-      marginTop: theme.spacing(2),
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-   },
-   scheduledForContainer: {
-      flex: 1,
-      display: 'flex',
-      alignItems: 'center',
-   },
-   scheduledDateText: {
-      color: theme.palette.text.primary,
-   },
-   fill: { flex: 1 },
-}));
+import ConferenceNotOpenStatus from './ConferenceNotOpenStatus';
 
 type Props = {
    conferenceInfo: SynchronizedConferenceInfo;
 };
 
+/** Shown to moderators: they decide when the conference starts. */
 export default function ConferenceNotOpenModerator({ conferenceInfo }: Props) {
-   const { classes } = useStyles();
    const dispatch = useDispatch();
    const { t } = useTranslation();
    const { id: conferenceId } = useParams<ConferenceRouteParams>();
@@ -61,40 +35,38 @@ export default function ConferenceNotOpenModerator({ conferenceInfo }: Props) {
 
    return (
       <ConferenceNotOpenLayout>
-         <div className={classes.topContent}>
-            <div className={classes.scheduledForContainer}>
-               {conferenceInfo.scheduledDate && (
-                  <Typography color="textSecondary">
-                     {t('conference_not_open.conference_scheduled_for') + ' '}
-                     <span className={classes.scheduledDateText}>
-                        {DateTime.fromISO(conferenceInfo.scheduledDate).toLocaleString(DateTime.DATETIME_FULL)}
-                     </span>
-                  </Typography>
-               )}
-            </div>
-            <Typography gutterBottom>{t('conference_not_open.you_are_moderator')}</Typography>
-         </div>
-         <ButtonGroup variant="contained" color="primary">
-            <Button onClick={handleOpenConference} disabled={!canOpen} id="moderator-open-conference-button">
+         <ConferenceNotOpenStatus
+            name={conferenceInfo.name}
+            scheduledDate={conferenceInfo.scheduledDate}
+            title={t('conference_not_open.title_ready')}
+            description={t('conference_not_open.you_are_moderator')}
+         />
+         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 28 }}>
+            <Button
+               variant="contained"
+               size="large"
+               startIcon={<PlayArrowIcon />}
+               onClick={handleOpenConference}
+               disabled={!canOpen}
+               id="moderator-open-conference-button"
+            >
                {t('conference_not_open.open_conference')}
             </Button>
-            <Button
-               onClick={handlePatchConference}
-               aria-label={t('conference_not_open.change_conference_settings')}
-               id="moderator-change-conference-settings-button"
-            >
-               <SettingsIcon />
-            </Button>
-         </ButtonGroup>
-
-         <div className={classes.bottomContent}>
-            {participants.length > 1 && (
-               <Typography color="textSecondary" variant="caption" align="center" gutterBottom>
-                  {t('conference_not_open.n_participants_waiting', { count: participants.length - 1 })}
-               </Typography>
-            )}
-            <div className={classes.fill} />
+            <Tooltip title={t('conference_not_open.change_conference_settings')}>
+               <IconButton
+                  onClick={handlePatchConference}
+                  aria-label={t('conference_not_open.change_conference_settings')}
+                  id="moderator-change-conference-settings-button"
+               >
+                  <SettingsIcon />
+               </IconButton>
+            </Tooltip>
          </div>
+         {participants.length > 1 && (
+            <Typography color="textSecondary" variant="body2" sx={{ mt: 2 }}>
+               {t('conference_not_open.n_participants_waiting', { count: participants.length - 1 })}
+            </Typography>
+         )}
       </ConferenceNotOpenLayout>
    );
 }

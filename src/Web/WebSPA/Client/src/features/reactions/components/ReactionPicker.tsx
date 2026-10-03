@@ -23,9 +23,10 @@ const useStyles = makeStyles()((theme) => ({
 type Props = {
    className?: string;
    variants?: any;
+   size?: 'small' | 'medium' | 'large';
 };
 
-export default function ReactionPicker({ className, variants }: Props) {
+export default function ReactionPicker({ className, variants, size }: Props) {
    const { classes } = useStyles();
    const { t } = useTranslation();
    const dispatch = useDispatch();
@@ -44,6 +45,7 @@ export default function ReactionPicker({ className, variants }: Props) {
                ref={anchorRef}
                color="default"
                className={className}
+            size={size}
                onClick={() => setOpen((x) => !x)}
                component={motion.button}
                variants={variants}

@@ -30,6 +30,11 @@ namespace Strive.Core.Services.Permissions
             public static readonly PermissionDescriptor<bool> CanLowerOthers = new("handRaise/canLowerOthers");
         }
 
+        public static class Lobby
+        {
+            public static readonly PermissionDescriptor<bool> CanAdmit = new("lobby/canAdmit");
+        }
+
         public static class Reactions
         {
             public static readonly PermissionDescriptor<bool> CanSend = new("reactions/canSend");

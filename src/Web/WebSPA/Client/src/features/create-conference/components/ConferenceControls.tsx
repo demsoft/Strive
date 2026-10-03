@@ -1,4 +1,4 @@
-import { Fab } from '@mui/material';
+import { Button } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import AddIcon from '@mui/icons-material/Add';
 import React from 'react';
@@ -25,10 +25,17 @@ function ConferenceControls() {
 
    return (
       <>
-         <Fab color="secondary" variant="extended" onClick={handleCreateConference} id="create-conference-button">
-            <AddIcon className={classes.extendedIcon} />
+         <Button
+            color="primary"
+            variant="contained"
+            size="large"
+            onClick={handleCreateConference}
+            id="create-conference-button"
+            startIcon={<AddIcon />}
+            sx={{ boxShadow: '0 12px 32px rgba(124, 92, 255, 0.45)', borderRadius: 4 }}
+         >
             {t('view_main.start_new_conference')}
-         </Fab>
+         </Button>
 
          <CreateConferenceDialog />
       </>

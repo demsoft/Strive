@@ -19,7 +19,7 @@ import SendMessageForm from './SendMessageForm';
 
 const useStyles = makeStyles()((theme) => ({
    chat: {
-      backgroundColor: theme.palette.mode === 'dark' ? 'rgb(32, 32, 34)' : 'red',
+      backgroundColor: theme.palette.background.paper,
       flex: 1,
       minHeight: 0,
       height: '100%',

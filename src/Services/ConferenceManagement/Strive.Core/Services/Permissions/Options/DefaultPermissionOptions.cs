@@ -51,6 +51,7 @@ namespace Strive.Core.Services.Permissions.Options
                     DefinedPermissions.Poll.CanSeeUnpublishedPollResults.Configure(true),
                     DefinedPermissions.Whiteboard.CanCreate.Configure(true),
                     DefinedPermissions.HandRaise.CanLowerOthers.Configure(true),
+                    DefinedPermissions.Lobby.CanAdmit.Configure(true),
                 }.ToImmutableDictionary()
             },
             // Breakout room permissions

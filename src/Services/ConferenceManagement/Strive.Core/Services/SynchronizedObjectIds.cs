@@ -13,6 +13,7 @@ namespace Strive.Core.Services
         public const string POLL_RESULT = "poll_result";
         public const string POLL_ANSWERS = "poll_answers";
         public const string HAND_RAISES = "handRaises";
+        public const string LOBBY = "lobby";
 
         // individual
         public const string MEDIA = "media";

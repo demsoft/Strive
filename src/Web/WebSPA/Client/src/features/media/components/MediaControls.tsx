@@ -10,6 +10,7 @@ import AnimatedMicIcon from 'src/assets/animated-icons/AnimatedMicIcon';
 import AnimatedScreenIcon from 'src/assets/animated-icons/AnimatedScreenIcon';
 import Debug from 'src/features/conference/components/troubleshoot/Troubleshooting';
 import { selectIsDeviceAvailableFactory } from 'src/features/settings/selectors';
+import useIsMobile from 'src/hooks/useIsMobile';
 import usePermission from 'src/hooks/usePermission';
 import useSelectorFactory from 'src/hooks/useSelectorFactory';
 import HandRaiseFab from 'src/features/hand-raise/components/HandRaiseFab';
@@ -32,22 +33,28 @@ const useStyles = makeStyles()((theme) => ({
    root: {
       display: 'flex',
       flexDirection: 'row',
-      backgroundImage: 'linear-gradient(to bottom, rgba(6, 6, 7, 0), rgba(6, 6, 7, 0.7), rgba(6, 6, 7, 1))',
-      paddingBottom: 16,
-      padding: theme.spacing(0, 2, 1),
+      backgroundImage: 'linear-gradient(to bottom, rgba(11, 13, 23, 0), rgba(11, 13, 23, 0.75), rgba(11, 13, 23, 1))',
+      padding: theme.spacing(3, 2, 2),
+      alignItems: 'center',
+      [theme.breakpoints.down('md')]: {
+         padding: theme.spacing(2, 1, 1),
+      },
    },
    leftActions: {
       flex: 1,
       display: 'flex',
       flexDirection: 'row',
+      [theme.breakpoints.down('md')]: { flex: '0 0 auto' },
    },
    rightActions: {
       flex: 1,
       display: 'flex',
       flexDirection: 'row-reverse',
+      [theme.breakpoints.down('md')]: { flex: '0 0 auto' },
    },
    fab: {
       margin: theme.spacing(0, 1),
+      [theme.breakpoints.down('md')]: { margin: theme.spacing(0, 0.5) },
    },
    dialog: {
       backgroundColor: theme.palette.background.default,
@@ -55,6 +62,8 @@ const useStyles = makeStyles()((theme) => ({
    controlsContainer: {
       display: 'flex',
       flexDirection: 'row',
+      justifyContent: 'center',
+      flex: 1,
    },
 }));
 
@@ -84,6 +93,8 @@ const item = {
 export default function MediaControls({ className, show, leftActionsRef }: Props) {
    const { classes, cx } = useStyles();
    const { t } = useTranslation();
+   const isMobile = useIsMobile();
+   const fabSize = isMobile ? 'medium' : 'large';
 
    const gain = useSelector((state: RootState) => state.settings.obj.mic.audioGain);
 
@@ -132,6 +143,7 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
                <MediaFab
                   translationKey="screen"
                   className={classes.fab}
+                  size={fabSize}
                   Icon={AnimatedScreenIcon}
                   control={screenController}
                   component={motion.button}
@@ -142,7 +154,9 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
                <MediaFab
                   disabled={!webcamAvailable}
                   translationKey="webcam"
+                  warnWhenOff
                   className={classes.fab}
+                  size={fabSize}
                   Icon={AnimatedCamIcon}
                   control={webcamController}
                   component={motion.button}
@@ -153,7 +167,9 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
                <MediaFab
                   disabled={!micAvailable}
                   translationKey="mic"
+                  warnWhenOff
                   className={classes.fab}
+                  size={fabSize}
                   Icon={AnimatedMicIcon}
                   control={micController}
                   pauseOnToggle
@@ -161,8 +177,8 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
                   variants={item}
                />
             )}
-            {canRaiseHand && <HandRaiseFab className={classes.fab} variants={item} />}
-            {canSendReaction && <ReactionPicker className={classes.fab} variants={item} />}
+            {canRaiseHand && <HandRaiseFab className={classes.fab} size={fabSize} variants={item} />}
+            {canSendReaction && <ReactionPicker className={classes.fab} size={fabSize} variants={item} />}
          </div>
          <div className={classes.rightActions}>
             <Tooltip title={t('conference.troubleshooting.title')} arrow>
@@ -170,6 +186,7 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
                   id="media-controls-troubleshooting"
                   color="default"
                   className={classes.fab}
+                  size={fabSize}
                   onClick={handleOpenDebugDialog}
                   component={motion.button}
                   variants={item}

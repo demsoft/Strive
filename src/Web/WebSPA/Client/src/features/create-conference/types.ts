@@ -33,6 +33,11 @@ export type ConferenceConfiguration = {
 
    chat: ChatOptions;
    scenes: SceneOptions;
+   lobby: LobbyOptions;
+};
+
+export type LobbyOptions = {
+   isEnabled: boolean;
 };
 
 export type ConferencePermissions = { [key in PermissionType]?: Permissions };

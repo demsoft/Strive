@@ -56,3 +56,6 @@ export const selectSelectedChannel = (state: RootState) => state.chat.selectedCh
 export const selectShowChat = (state: RootState) => selectChannelIds(state).length > 0;
 
 export const selectPrivateMessageEnabled = (state: RootState) => state.conference.conferenceState?.isPrivateChatEnabled;
+
+export const selectHasNewMessages = (state: RootState) =>
+   Object.values(state.chat.channels ?? {}).some((channel) => channel.viewModel?.newMessages);

@@ -36,6 +36,16 @@ export type LowerParticipantsHandDto = {
    participantId: string;
 };
 
+export type LobbyParticipantDto = {
+   participantId: string;
+};
+
+export type LobbyStatus = 'waiting' | 'admitted' | 'denied';
+
+export type LobbyStatusDto = {
+   status: LobbyStatus;
+};
+
 export type SendReactionDto = {
    emoji: string;
 };

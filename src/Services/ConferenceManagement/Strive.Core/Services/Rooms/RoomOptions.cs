@@ -4,6 +4,6 @@ namespace Strive.Core.Services.Rooms
     {
         public const string DEFAULT_ROOM_ID = "default";
 
-        public string DefaultRoomName { get; set; } = "master";
+        public string DefaultRoomName { get; set; } = "Main room";
     }
 }

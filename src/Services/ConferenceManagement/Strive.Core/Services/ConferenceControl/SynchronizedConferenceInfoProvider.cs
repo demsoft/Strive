@@ -32,7 +32,7 @@ namespace Strive.Core.Services.ConferenceControl
             var isOpen = await _openConferenceRepository.IsOpen(conferenceId);
             return new SynchronizedConferenceInfo(isOpen, conference.Configuration.Moderators.ToImmutableList(),
                 nextDate, conference.Configuration.Name, conference.Configuration.Chat.IsPrivateChatEnabled,
-                conference.Configuration.Scenes);
+                conference.Configuration.Scenes, conference.Configuration.Lobby.IsEnabled);
         }
     }
 }

@@ -11,11 +11,14 @@ import { useParams } from 'react-router';
 import * as coreHub from 'src/core-hub';
 import { openDialogToPatchAsync } from 'src/features/create-conference/reducer';
 import { openSettings } from 'src/features/settings/reducer';
+import useIsMobile from 'src/hooks/useIsMobile';
 import usePermission from 'src/hooks/usePermission';
 import { CONFERENCE_CAN_OPEN_AND_CLOSE } from 'src/permissions';
 import { ConferenceRouteParams } from 'src/routes/types';
 import { RootState } from 'src/store';
 import { selectParticipantList } from '../selectors';
+import InviteLinkButton from 'src/components/InviteLinkButton';
+import LobbyButton from 'src/features/lobby/components/LobbyButton';
 import AppBarLogo from './appbar/AppBarLogo';
 import BreakoutRoomChip from './appbar/BreakoutRoomChip';
 import WebRtcStatusChip from './appbar/WebRtcStatusChip';
@@ -32,10 +35,10 @@ const useStyles = makeStyles()((theme) => ({
       pointerEvents: 'none',
    },
    toolbar: {
-      backgroundColor: 'rgb(35, 35, 37)',
+      backgroundColor: 'transparent',
    },
    chip: {
-      backgroundColor: 'rgb(55, 55, 57)',
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
       padding: theme.spacing(0, 1),
    },
    breakoutRoomChip: {
@@ -54,6 +57,8 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
    const dispatch = useDispatch();
    const { t } = useTranslation();
 
+   const isMobile = useIsMobile();
+   const conferenceName = useSelector((state: RootState) => state.conference.conferenceState?.name);
    const { id: conferenceId } = useParams<ConferenceRouteParams>();
 
    const canCloseConference = usePermission(CONFERENCE_CAN_OPEN_AND_CLOSE);
@@ -96,6 +101,11 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
             >
                <AppBarLogo />
             </Box>
+            {conferenceName && !isMobile && (
+               <Typography variant="subtitle1" noWrap sx={{ fontWeight: 600, maxWidth: 280 }} id="conference-name">
+                  {conferenceName}
+               </Typography>
+            )}
             <Box
                sx={{
                   display: 'flex',
@@ -108,7 +118,7 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
                   <BreakoutRoomChip className={cx(classes.chip, classes.breakoutRoomChip)} state={breakoutRoomState} />
                )}
                <WebRtcStatusChip />
-               {participants && (
+               {participants && !isMobile && (
                   <Chip
                      className={classes.chip}
                      label={t('conference.appbar.participants', { count: participants.length })}
@@ -118,13 +128,13 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
             </Box>
             <Box
                sx={{
-                  width: chatWidth - 24 /** padding toolbar */,
+                  width: isMobile ? 'auto' : chatWidth - 24 /** padding toolbar */,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'flex-end',
                }}
             >
-               {oidcUser && (
+               {oidcUser && !isMobile && (
                   <Box
                      sx={{
                         mr: 2,
@@ -135,6 +145,8 @@ export default function ConferenceAppBar({ chatWidth }: Props) {
                      </Typography>
                   </Box>
                )}
+               <LobbyButton />
+               <InviteLinkButton />
                <IconButton aria-label={t('common:settings')} color="inherit" onClick={handleOpenSettings} size="large">
                   <SettingsIcon />
                </IconButton>
