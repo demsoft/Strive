@@ -14,6 +14,8 @@ services:
       - Accounts__Google__ClientId=${GOOGLE_CLIENT_ID:-}
       - Accounts__Google__ClientSecret=${GOOGLE_CLIENT_SECRET:-}
       - Accounts__Email__From=${SMTP_FROM:-Strive <no-reply@localhost>}
+      # Brevo API key: mails go through the Brevo API (SMTP_* are then not used); SMTP_FROM must be a validated sender there
+      - Accounts__Email__BrevoApiKey=${BREVO_API_KEY:-}
       - Accounts__Email__Host=${SMTP_HOST:-}
       - Accounts__Email__Port=${SMTP_PORT:-587}
       - Accounts__Email__UseTls=${SMTP_TLS:-true}

@@ -78,6 +78,12 @@ namespace Identity.API.Accounts
         /// <summary>The sender of all emails, for example "Strive &lt;no-reply@example.com&gt;".</summary>
         public string From { get; set; } = "Strive <no-reply@localhost>";
 
+        /// <summary>
+        ///     Brevo (brevo.com) transactional API key. When set, mails are sent through the Brevo HTTP API (the sender
+        ///     in From must be a validated sender or domain in Brevo) and the SMTP settings are not used.
+        /// </summary>
+        public string? BrevoApiKey { get; set; }
+
         public string? Host { get; set; }
         public int Port { get; set; } = 587;
 

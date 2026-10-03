@@ -32,7 +32,8 @@ block UDP still connect through the TCP media port.
 - [ ] IIS modules (once, they do not change sites that do not use them; the install can restart IIS for a few seconds):
   - URL Rewrite: https://www.iis.net/downloads/microsoft/url-rewrite
   - Application Request Routing 3.0: https://www.iis.net/downloads/microsoft/application-request-routing
-- [ ] A Brevo account: SMTP key (Brevo → SMTP & API) and `goserp.co.uk` verified as a sender domain (SPF/DKIM records).
+- [ ] A Brevo account: an API key (Brevo → SMTP & API → API keys) and the sender you will use (`SMTP_FROM`) validated in Brevo
+      (a single sender address, or a verified domain with SPF/DKIM records).
 - [ ] Google Cloud console → your OAuth client, add:
   - Authorized JavaScript origin: `https://meet.goserp.co.uk`
   - Authorized redirect URI: `https://identity.goserp.co.uk/signin-google`
@@ -49,7 +50,7 @@ git checkout feature/accounts          # until it is merged into develop
 
 cd deploy\windows
 .\New-ProductionEnv.ps1 -Domain goserp.co.uk -PublicIp 173.208.144.83
-notepad ..\..\src\.env.production        # fill in GOOGLE_*, SMTP_USER, SMTP_PASSWORD (and RECORDING_* for recording)
+notepad ..\..\src\.env.production        # fill in GOOGLE_*, BREVO_API_KEY, SMTP_FROM (and RECORDING_* for recording)
 
 .\Setup-Firewall.ps1                     # administrator
 .\strive.ps1 up                          # builds the images (10-20 minutes the first time) and starts

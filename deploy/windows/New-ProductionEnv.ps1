@@ -48,4 +48,4 @@ $lines = Get-Content (Join-Path $src '.env.production.example') | ForEach-Object
 # UTF-8 without BOM: docker compose does not like a byte order mark in the first variable name
 [IO.File]::WriteAllLines($target, $lines, (New-Object Text.UTF8Encoding $false))
 Write-Host "Created $target"
-Write-Host "Now fill in: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SMTP_USER, SMTP_PASSWORD (and the RECORDING_* values to use recording)."
+Write-Host "Now fill in: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, BREVO_API_KEY, SMTP_FROM (and the RECORDING_* values to use recording)."

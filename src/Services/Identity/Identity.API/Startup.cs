@@ -126,7 +126,13 @@ namespace Identity.API
             services.AddSingleton<IUserRepository>(sp => sp.GetRequiredService<MongoUserRepository>());
             services.AddSingleton<IUserDirectory, AccountsUserDirectory>();
             // without an SMTP server nothing is sent (the mails are only logged), password reset does not work then
-            if (string.IsNullOrWhiteSpace(options.Email.Host)) services.AddSingleton<IEmailSender, LoggingEmailSender>();
+            if (!string.IsNullOrWhiteSpace(options.Email.BrevoApiKey))
+                services.AddHttpClient<IEmailSender, BrevoEmailSender>()
+                    // the sender lives as long as the service: renew the connections now and then (dns changes)
+                    .ConfigurePrimaryHttpMessageHandler(() =>
+                        new System.Net.Http.SocketsHttpHandler {PooledConnectionLifetime = TimeSpan.FromMinutes(5)});
+            else if (string.IsNullOrWhiteSpace(options.Email.Host))
+                services.AddSingleton<IEmailSender, LoggingEmailSender>();
             else services.AddSingleton<IEmailSender, SmtpEmailSender>();
             services.AddSingleton<AccountService>();
             services.AddHostedService<AccountsStartup>();

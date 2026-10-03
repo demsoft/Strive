@@ -100,6 +100,7 @@ address is `https://identity.<your domain>/signin-google`.
 | `ACCOUNTS_ALLOWED_EMAIL_DOMAINS` | `.env.identity` | comma separated email domains that may create an account, empty for everybody. It applies to registration and the first Google sign in; people who have an account stay in |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | `.env.identity` | Google sign in |
 | `ACCOUNTS_REQUIRE_EMAIL_CONFIRMATION` | `.env.identity` | `false` (current default in compose): new accounts sign in at once; `true`: they must confirm their email address first |
+| `BREVO_API_KEY` | `.env.identity` / `.env.production` | send the mails through the Brevo API instead of SMTP; `SMTP_FROM` must be a sender validated in Brevo, and the IP address of the server must be allowed in Brevo (Security → Authorised IPs) |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_TLS`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | `.env.identity` / `.env` | the mail server (confirmation and password reset). Without it nothing is sent, only logged, so password reset does not work |
 
 ### Things to know
