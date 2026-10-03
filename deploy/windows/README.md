@@ -113,6 +113,7 @@ Docker Desktop normally starts when a user logs in. On a server that restarts by
 
 | Symptom | Likely cause |
 | --- | --- |
+| After sign in the browser lands on `identity.…/authentication/callback` (404) | ARR rewrites redirect headers: run `.\Setup-Iis.ps1` again (sets `reverseRewriteHostInResponseHeaders` to False) |
 | Page loads, "Authentication failed" | `identity.` hostname not reachable from the browser, or Google redirect URI missing |
 | Sign in works, call shows no remote video | media ports blocked (provider or Windows firewall); check `chrome://webrtc-internals` |
 | Works on Wi-Fi, not on mobile data | UDP blocked by the mobile network; TCP media port 4000x must be reachable too |

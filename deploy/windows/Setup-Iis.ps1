@@ -39,6 +39,9 @@ $storeName = if ($cert.PSParentPath -like '*WebHosting*') { 'WebHosting' } else 
 Set-WebConfigurationProperty -PSPath 'MACHINE/WEBROOT/APPHOST' -Filter 'system.webServer/proxy' -Name 'enabled' -Value 'True'
 Set-WebConfigurationProperty -PSPath 'MACHINE/WEBROOT/APPHOST' -Filter 'system.webServer/proxy' -Name 'timeout' -Value '01:00:00'
 Set-WebConfigurationProperty -PSPath 'MACHINE/WEBROOT/APPHOST' -Filter 'system.webServer/proxy' -Name 'preserveHostHeader' -Value 'True'
+# Do not let ARR rewrite the Location headers of the answers: the sign in redirects the browser to
+# https://meet.<domain>/authentication/callback and ARR would change that host to the one of the request (identity.<domain>).
+Set-WebConfigurationProperty -PSPath 'MACHINE/WEBROOT/APPHOST' -Filter 'system.webServer/proxy' -Name 'reverseRewriteHostInResponseHeaders' -Value 'False'
 
 # the site
 $root = 'C:\inetpub\strive-proxy'
