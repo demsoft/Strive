@@ -147,6 +147,14 @@
       "menu": "Server overview"
   },
   "conference": {
+    "leave": {
+          "button": "Leave meeting",
+          "title": "Leave the meeting?",
+          "text": "You can join again with the link whenever you like.",
+          "text_moderator": "You can leave and the meeting continues, or end it for everybody.",
+          "confirm": "Leave",
+          "end_for_everyone": "End for everyone"
+    },
     "watch_together": {
           "title": "Watch together",
           "stop": "Stop the video",

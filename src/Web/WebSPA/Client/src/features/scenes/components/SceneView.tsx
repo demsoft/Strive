@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import ReactionOverlay from 'src/features/reactions/components/ReactionOverlay';
 import MediaControls from 'src/features/media/components/MediaControls';
 import MediaControlsContext, { MediaControlsContextType } from 'src/features/media/media-controls-context';
+import useIsMobile from 'src/hooks/useIsMobile';
 import useMyParticipantId from 'src/hooks/useMyParticipantId';
 import useThrottledResizeObserver from 'src/hooks/useThrottledResizeObserver';
 import WatchTogetherView from 'src/features/watch-together/components/WatchTogetherView';
@@ -66,6 +67,8 @@ export default function SceneView({ hideControls }: Props) {
    const autoHideControls = useRef<boolean>(false);
    const mediaLeftActionsRef = useRef<HTMLDivElement>(null);
    const participantId = useMyParticipantId();
+   // a phone has no mouse that could bring the controls back: there they stay
+   const isMobile = useIsMobile();
 
    const delayHideControlsFactory = () =>
       _.debounce(() => {
@@ -103,8 +106,8 @@ export default function SceneView({ hideControls }: Props) {
             undefined,
          ) ?? false;
 
-      handleSetAutoHideControls(autoHide);
-   }, [sceneStack]);
+      handleSetAutoHideControls(autoHide && !isMobile);
+   }, [sceneStack, isMobile]);
 
    const mediaControlsContextValue = useMemo<MediaControlsContextType>(
       () => ({
@@ -122,7 +125,7 @@ export default function SceneView({ hideControls }: Props) {
 
    return (
       <MediaControlsContext.Provider value={mediaControlsContextValue}>
-         <div className={classes.root} ref={contentRef} onMouseMove={handleMouseMove} id="scene-view">
+         <div className={classes.root} ref={contentRef} onMouseMove={handleMouseMove} onPointerDown={handleMouseMove} id="scene-view">
             <LayoutGroup>
                {dimensions && watchTogether ? (
                   // a video that everybody watches together takes the place of the scene until it is stopped

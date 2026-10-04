@@ -69,6 +69,7 @@ function ConferenceRoute({
 
    useEffect(() => {
       webRtc.beginConnecting();
+      return () => webRtc.close();
    }, [webRtc]);
 
    usePageTitle(conferenceState?.name);
