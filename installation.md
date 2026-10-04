@@ -90,7 +90,7 @@ inbox, [Mailpit](http://localhost:8025), unless you set `SMTP_HOST`.
 3. Put the client id and secret into `.env.identity` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) and run `compose.sh up -d`.
 
 The "Continue with Google" button only shows when both values are set. In production use your own domain: the redirect
-address is `https://identity.<your domain>/signin-google`.
+address is `https://<app host>/account/signin-google` (the sign in pages are served under `/account` of the address of the app, see deploy/windows/README.md).
 
 ### Settings
 
