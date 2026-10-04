@@ -336,6 +336,42 @@ namespace Strive.IntegrationTests.Services
         }
 
         [Fact]
+        public async Task MyRecordings_ListsWhatIStarted_AlsoWhenTheConferenceIsClosed()
+        {
+            // arrange: a recording that is ready, then the meeting is closed
+            var (recording, moderator, conferenceId) = await RecordUntilReady();
+            AssertSuccess(await moderator.Hub.InvokeAsync<SuccessOrError<MediatR.Unit>>(nameof(CoreHub.CloseConference)));
+
+            // act
+            var mine = await Read<MyRecordingDto[]>(await CreateClient(Moderator).GetAsync("/v1/recordings/mine"));
+
+            // assert
+            var found = Assert.Single(mine, x => x.RecordingId == recording.RecordingId);
+            Assert.Equal(conferenceId, found.ConferenceId);
+            Assert.Equal(RecordingStatus.Ready, found.Status);
+            Assert.Equal(recording.ShareToken, found.ShareToken);
+        }
+
+        [Fact]
+        public async Task MyRecordings_OtherPeopleSeeNothingOfIt()
+        {
+            await RecordUntilReady();
+            var stranger = Factory.CreateUser("stranger", false);
+
+            var mine = await Read<MyRecordingDto[]>(await CreateClient(stranger).GetAsync("/v1/recordings/mine"));
+
+            Assert.Empty(mine);
+        }
+
+        [Fact]
+        public async Task MyRecordings_NoSignIn_IsUnauthorized()
+        {
+            var response = await CreateClient().GetAsync("/v1/recordings/mine");
+
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+
+        [Fact]
         public async Task WireFormat_SynchronizedRecording_UsesCamelCaseStatus()
         {
             var (moderator, conference) = await ConnectToOpenedConference();

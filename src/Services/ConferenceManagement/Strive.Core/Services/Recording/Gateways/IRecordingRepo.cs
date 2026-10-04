@@ -19,6 +19,9 @@ namespace Strive.Core.Services.Recording.Gateways
 
         Task<IReadOnlyList<ConferenceRecording>> FindOfConference(string conferenceId);
 
+        /// <summary>The recordings that a participant started, newest first (at most the given number)</summary>
+        Task<IReadOnlyList<ConferenceRecording>> FindStartedBy(string participantId, int limit);
+
         Task<IReadOnlyList<ConferenceRecording>> FindExpired(DateTimeOffset now);
 
         /// <summary>

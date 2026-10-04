@@ -10,13 +10,14 @@ import {
 } from '@mui/material';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import StopIcon from '@mui/icons-material/Stop';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import * as coreHub from 'src/core-hub';
 import useIsMobile from 'src/hooks/useIsMobile';
 import usePermission from 'src/hooks/usePermission';
 import { RECORDING_CAN_MANAGE } from 'src/permissions';
+import { openRecordings } from '../reducer';
 import { selectActiveRecording, selectIsRecordingAvailable } from '../selectors';
 
 /**
@@ -32,6 +33,14 @@ export default function RecordButton() {
    const available = useSelector(selectIsRecordingAvailable);
    const active = useSelector(selectActiveRecording);
    const [confirmOpen, setConfirmOpen] = useState(false);
+
+   // a recording was finished (saved or failed): show the link now, not only when somebody opens the list
+   const previousRecordingId = useRef<string | null>(active?.recordingId ?? null);
+   useEffect(() => {
+      const current = active?.recordingId ?? null;
+      if (previousRecordingId.current && !current && canManage) dispatch(openRecordings({ justFinished: true }));
+      previousRecordingId.current = current;
+   }, [active?.recordingId]);
 
    if (!canManage || !available) return null;
 

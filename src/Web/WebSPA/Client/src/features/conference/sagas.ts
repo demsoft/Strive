@@ -2,6 +2,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { put, select, takeEvery } from 'redux-saga/effects';
 import * as coreHub from 'src/core-hub';
 import { closeConference, openConference } from 'src/core-hub';
+import { SuccessOrError } from 'src/communication-types';
 import { EquipmentErrorDto, RequestDisconnectDto, SyncStatePayload } from 'src/core-hub.types';
 import { kickedError, newSessionConnectedError } from 'src/errors';
 import { showMessage } from 'src/store/notifier/actions';
@@ -40,9 +41,21 @@ function* onSyncConferenceInitialized({ payload: { value } }: PayloadAction<Sync
    }
 }
 
+/**
+ * Closing the conference disconnects everybody, also the person that closes it: the answer of the server cannot arrive
+ * any more ("Invocation canceled due to the underlying connection being closed"). That is the expected end, not an error.
+ */
+export function* onCloseConferenceResult(action: PayloadAction<SuccessOrError>) {
+   if (action.payload.success || isConnectionClosedError(action.payload.error)) return;
+
+   yield put(showMessage({ type: 'error', message: formatErrorMessage(action.payload.error) }));
+}
+
+export const isConnectionClosedError = (error?: { code?: string }) => error?.code === 'UI/Signal_Error';
+
 export default function* mySaga() {
    yield showErrorOn(openConference.returnAction);
-   yield showErrorOn(closeConference.returnAction);
+   yield takeEvery(closeConference.returnAction, onCloseConferenceResult);
    yield showLoadingHubAction(coreHub.fetchPermissions, 'Fetch permissions...');
 
    yield takeEvery(onEventOccurred(coreHub.events.onRequestDisconnect), onRequestDisconnect);

@@ -18,6 +18,12 @@ namespace Strive.Models.Response
         }
     }
 
+    /// <summary>A recording in the list of the person that started it, with the conference it belongs to</summary>
+    public record MyRecordingDto(string RecordingId, string ConferenceId, string? ConferenceName,
+        RecordingStatus Status, DateTimeOffset StartedAt, DateTimeOffset? EndedAt, double? DurationSeconds,
+        long? SizeBytes, RecordingVisibility Visibility, string ShareToken, DateTimeOffset ExpiresAt,
+        string? FailureReason);
+
     /// <summary>
     ///     What the share page needs to play a recording
     /// </summary>
