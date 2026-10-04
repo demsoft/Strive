@@ -100,6 +100,19 @@
     "button": "Weiter"
   },
   "conference": {
+    "watch_together": {
+          "title": "Gemeinsam ansehen",
+          "stop": "Video beenden",
+          "description": "Füge den Link zu einem YouTube-Video ein. Alle in der Konferenz sehen es gleichzeitig, und du steuerst es für alle: Wiedergabe, Pause, Springen und Geschwindigkeit.",
+          "link": "YouTube-Link",
+          "start": "Starten",
+          "click_to_play": "Klicken, um das Video abzuspielen",
+          "mute": "Stumm",
+          "unmute": "Ton an",
+          "volume": "Lautstärke",
+          "error": "Dieses Video kann hier nicht abgespielt werden. Der Besitzer erlaubt es möglicherweise nicht auf anderen Webseiten.",
+          "error_youtube": "YouTube ist nicht erreichbar."
+    },
     "sidebar": {
       "hide": "Räume ausblenden",
       "show": "Räume anzeigen"

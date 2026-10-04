@@ -22,12 +22,31 @@ export const WHITEBOARDS = 'whiteboards';
 export const HAND_RAISES = 'handRaises';
 export const LOBBY = 'lobby';
 export const RECORDING = 'recording';
+export const WATCH_TOGETHER = 'watchTogether';
 
 /** the server serializes enums in camel case */
 export type RecordingStatus = 'starting' | 'recording' | 'finalizing' | 'ready' | 'failed';
 
 export type SynchronizedRecording = {
    active: { recordingId: string; status: RecordingStatus; startedAt: string; startedBy: string } | null;
+};
+
+/** a video that everybody watches together; the server serializes enums in camel case */
+export type WatchTogetherSession = {
+   provider: 'youtube';
+   videoId: string;
+   startedBy: string;
+   startedAt: string;
+   state: 'playing' | 'paused';
+   /** position of the video at updatedAt, in seconds */
+   positionSeconds: number;
+   rate: number;
+   /** server time of the last play, pause, seek or speed change (iso) */
+   updatedAt: string;
+};
+
+export type SynchronizedWatchTogether = {
+   session: WatchTogetherSession | null;
 };
 
 export type SynchronizedLobby = {

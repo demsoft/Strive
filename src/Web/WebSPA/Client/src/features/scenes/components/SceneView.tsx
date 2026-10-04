@@ -8,6 +8,8 @@ import MediaControls from 'src/features/media/components/MediaControls';
 import MediaControlsContext, { MediaControlsContextType } from 'src/features/media/media-controls-context';
 import useMyParticipantId from 'src/hooks/useMyParticipantId';
 import useThrottledResizeObserver from 'src/hooks/useThrottledResizeObserver';
+import WatchTogetherView from 'src/features/watch-together/components/WatchTogetherView';
+import { selectWatchTogetherSession } from 'src/features/watch-together/selectors';
 import presenters from '../scene-presenter-registry';
 import { selectSceneStack } from '../selectors';
 import { Scene } from '../types';
@@ -58,6 +60,7 @@ export default function SceneView({ hideControls }: Props) {
    const [contentRef, dimensions] = useThrottledResizeObserver(100);
 
    const sceneStack = useSelector(selectSceneStack);
+   const watchTogether = useSelector(selectWatchTogetherSession);
 
    const [showControls, setShowControls] = useState(true);
    const autoHideControls = useRef<boolean>(false);
@@ -121,7 +124,15 @@ export default function SceneView({ hideControls }: Props) {
       <MediaControlsContext.Provider value={mediaControlsContextValue}>
          <div className={classes.root} ref={contentRef} onMouseMove={handleMouseMove} id="scene-view">
             <LayoutGroup>
-               {dimensions && sceneStack ? (
+               {dimensions && watchTogether ? (
+                  // a video that everybody watches together takes the place of the scene until it is stopped
+                  <WatchTogetherView
+                     className={classes.currentScene}
+                     session={watchTogether}
+                     width={dimensions.width}
+                     height={dimensions.height}
+                  />
+               ) : dimensions && sceneStack ? (
                   <SceneSelector className={classes.currentScene} dimensions={dimensions} sceneStack={sceneStack} />
                ) : null}
             </LayoutGroup>

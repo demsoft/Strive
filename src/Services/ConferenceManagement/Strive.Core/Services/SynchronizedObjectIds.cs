@@ -15,6 +15,7 @@ namespace Strive.Core.Services
         public const string HAND_RAISES = "handRaises";
         public const string LOBBY = "lobby";
         public const string RECORDING = "recording";
+        public const string WATCH_TOGETHER = "watchTogether";
 
         // individual
         public const string MEDIA = "media";

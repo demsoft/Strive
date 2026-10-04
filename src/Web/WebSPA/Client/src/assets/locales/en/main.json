@@ -100,6 +100,19 @@
     "button": "Continue"
   },
   "conference": {
+    "watch_together": {
+          "title": "Watch together",
+          "stop": "Stop the video",
+          "description": "Paste the link of a YouTube video. Everybody in the conference watches it at the same time, and you control it for everybody: play, pause, jump and speed.",
+          "link": "YouTube link",
+          "start": "Start",
+          "click_to_play": "Click to play the video",
+          "mute": "Mute",
+          "unmute": "Unmute",
+          "volume": "Volume",
+          "error": "This video cannot be played here. The owner may not allow it to be shown on other websites.",
+          "error_youtube": "YouTube could not be reached."
+    },
     "sidebar": {
       "hide": "Hide rooms",
       "show": "Show rooms"

@@ -21,6 +21,9 @@ export const CHAT_CAN_SEND_ANNOUNCEMENT: BoolPermission = { key: 'chat/canSendAn
 export const HAND_RAISE_CAN_RAISE: BoolPermission = { key: 'handRaise/canRaise', type: 'bool' };
 export const HAND_RAISE_CAN_LOWER_OTHERS: BoolPermission = { key: 'handRaise/canLowerOthers', type: 'bool' };
 
+// Watch together
+export const WATCH_TOGETHER_CAN_CONTROL: BoolPermission = { key: 'watchTogether/canControl', type: 'bool' };
+
 // Recording
 export const RECORDING_CAN_MANAGE: BoolPermission = { key: 'recording/canManage', type: 'bool' };
 

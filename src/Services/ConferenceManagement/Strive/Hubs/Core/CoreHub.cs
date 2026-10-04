@@ -25,6 +25,7 @@ using Strive.Core.Services.ConferenceControl.Notifications;
 using Strive.Core.Services.ConferenceControl.Requests;
 using Strive.Core.Services.Equipment.Requests;
 using Strive.Core.Services.HandRaise.Requests;
+using Strive.Core.Services.WatchTogether.Requests;
 using Strive.Core.Services.Lobby.Requests;
 using Strive.Core.Services.Media;
 using Strive.Core.Services.Media.Requests;
@@ -246,6 +247,29 @@ namespace Strive.Hubs.Core
             var (conferenceId, _) = GetContextParticipant();
             return GetInvoker().Create(new StopRecordingRequest(conferenceId))
                 .RequirePermissions(DefinedPermissions.Recording.CanManage).Send();
+        }
+
+        public Task<SuccessOrError<Unit>> StartWatchTogether(StartWatchTogetherDto dto)
+        {
+            return GetInvoker().Create(new StartWatchTogetherRequest(GetContextParticipant(), dto.Url))
+                .ValidateObject(dto).RequirePermissions(DefinedPermissions.WatchTogether.CanControl)
+                .ConferenceMustBeOpen().Send();
+        }
+
+        public Task<SuccessOrError<Unit>> ControlWatchTogether(ControlWatchTogetherDto dto)
+        {
+            var (conferenceId, _) = GetContextParticipant();
+            return GetInvoker()
+                .Create(new ControlWatchTogetherRequest(conferenceId, dto.Action, dto.PositionSeconds, dto.Rate))
+                .ValidateObject(dto).RequirePermissions(DefinedPermissions.WatchTogether.CanControl)
+                .ConferenceMustBeOpen().Send();
+        }
+
+        public Task<SuccessOrError<Unit>> StopWatchTogether()
+        {
+            var (conferenceId, _) = GetContextParticipant();
+            return GetInvoker().Create(new StopWatchTogetherRequest(conferenceId))
+                .RequirePermissions(DefinedPermissions.WatchTogether.CanControl).Send();
         }
 
         public Task<SuccessOrError<Unit>> AdmitParticipant(LobbyParticipantDto dto)

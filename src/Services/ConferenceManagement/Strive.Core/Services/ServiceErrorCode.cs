@@ -37,6 +37,11 @@ namespace Strive.Core.Services
         Recording_StartFailed,
         Recording_NotFound,
 
+        // Watch together
+        WatchTogether_InvalidVideoUrl,
+        WatchTogether_NothingPlaying,
+        WatchTogether_InvalidControl,
+
         // Permissions
         Permissions_PermissionKeyNotFound,
         Permissions_InvalidPermissionValueType,

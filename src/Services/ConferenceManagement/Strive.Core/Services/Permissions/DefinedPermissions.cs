@@ -30,6 +30,12 @@ namespace Strive.Core.Services.Permissions
             public static readonly PermissionDescriptor<bool> CanLowerOthers = new("handRaise/canLowerOthers");
         }
 
+        public static class WatchTogether
+        {
+            /// <summary>Start, stop and control (play, pause, seek, speed) the video that everybody watches</summary>
+            public static readonly PermissionDescriptor<bool> CanControl = new("watchTogether/canControl");
+        }
+
         public static class Lobby
         {
             public static readonly PermissionDescriptor<bool> CanAdmit = new("lobby/canAdmit");

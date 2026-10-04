@@ -51,6 +51,14 @@ export const sendEquipmentCommand = createHubFn<SendEquipmentCommandDto>('SendEq
 
 export const changeProducerSource = createHubFn<ChangeProducerSourceRequest>('ChangeParticipantProducer');
 
+export const startWatchTogether = createHubFn<{ url: string }>('StartWatchTogether');
+export const controlWatchTogether = createHubFn<{
+   action: 'play' | 'pause' | 'seek' | 'setRate';
+   positionSeconds?: number;
+   rate?: number;
+}>('ControlWatchTogether');
+export const stopWatchTogether = createHubFn('StopWatchTogether');
+
 export const startRecording = createHubFn('StartRecording');
 export const stopRecording = createHubFn('StopRecording');
 
