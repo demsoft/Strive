@@ -16,6 +16,7 @@ import { ConferenceRouteParams } from 'src/routes/types';
 import { RootState } from 'src/store';
 import { selectParticipantList } from '../selectors';
 import RecordButton from 'src/features/recording/components/RecordButton';
+import WatchTogetherButton from 'src/features/watch-together/components/WatchTogetherButton';
 import RecordingIndicator from 'src/features/recording/components/RecordingIndicator';
 import RecordingsDialog from 'src/features/recording/components/RecordingsDialog';
 import InviteLinkButton from 'src/components/InviteLinkButton';
@@ -100,6 +101,7 @@ export default function ConferenceAppBar() {
             {/* what you can do */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0, sm: 0.5 }, flexShrink: 0 }}>
                <RecordButton />
+               <WatchTogetherButton />
                <LobbyButton />
                <InviteLinkButton />
                {!isMobile && (
