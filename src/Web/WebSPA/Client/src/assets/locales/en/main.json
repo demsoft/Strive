@@ -266,6 +266,7 @@
       "update_description": "Here you can update the current state of the breakout rooms."
     },
     "media": {
+      "screen_no_audio_hint": "Tip: to share the sound of a video, choose a browser tab and tick “Also share tab audio”. The sound of a whole screen can only be shared on Windows.",
       "controls": {
         "mic": {
           "active": "Microphone is active",

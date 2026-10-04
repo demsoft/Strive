@@ -7,7 +7,7 @@ import { ProducerSource } from '../types';
 import { LoopbackManager } from './loopback-manager';
 import Room from './room';
 
-const DEFAULT_ROOM_SOURCES: ProducerSource[] = ['mic', 'webcam', 'screen'];
+const DEFAULT_ROOM_SOURCES: ProducerSource[] = ['mic', 'webcam', 'screen', 'screen-audio'];
 
 /**
  * The room manager opens and closes media rooms and moves participant to the correct room

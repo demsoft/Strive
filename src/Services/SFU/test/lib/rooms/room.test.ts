@@ -1,7 +1,7 @@
 import Connection from '../../../src/lib/connection';
 import * as mediasoupMixer from '../../../src/lib/media-soup/mediasoup-mixer';
 import { Participant } from '../../../src/lib/participant';
-import { MEDIA_CAN_SHARE_AUDIO, MEDIA_CAN_SHARE_WEBCAM, Permission } from '../../../src/lib/permissions';
+import { MEDIA_CAN_SHARE_AUDIO, MEDIA_CAN_SHARE_SCREEN, MEDIA_CAN_SHARE_WEBCAM, Permission } from '../../../src/lib/permissions';
 import Room from '../../../src/lib/rooms/room';
 import { ConferenceRepository } from '../../../src/lib/synchronization/conference-repository';
 import { ConferenceInfo, ProducerLink } from '../../../src/lib/types';
@@ -384,3 +384,38 @@ test('leave() | has producer but not activated | dont remove producer', async ()
 //    const room = new Room('123', undefined as any, undefined as any, conferenceRepo as any, '123', ['mic']);
 //    expect(room.getIsParticipantJoined('123')).toEqual(false);
 // });
+
+test('join() | screen audio without the screen permission | dont add producer to mixer', async () => {
+   const conferenceRepo = createConferenceRepoMock(emptyConference);
+   const mixer = createMediasoupMixerMock();
+
+   const room = new Room(roomId, undefined as any, undefined as any, conferenceRepo, conferenceId, ['screen-audio']);
+   const participant: Participant = {
+      connections: [],
+      participantId: '1',
+      producers: { 'screen-audio': createProducer('7') },
+      receiveConnection: undefined,
+   };
+
+   await room.join(participant);
+
+   expect(mixer.addProducer.mock.calls.length).toEqual(0);
+});
+
+test('join() | screen audio with the screen permission | add producer to mixer', async () => {
+   const conferenceRepo = createConferenceRepoMock(conferenceWithPermissions('1', MEDIA_CAN_SHARE_SCREEN));
+   const mixer = createMediasoupMixerMock();
+
+   const room = new Room(roomId, undefined as any, undefined as any, conferenceRepo, conferenceId, ['screen-audio']);
+   const participant: Participant = {
+      connections: [],
+      participantId: '1',
+      producers: { 'screen-audio': createProducer('7') },
+      receiveConnection: undefined,
+   };
+
+   await room.join(participant);
+
+   expect(mixer.addProducer.mock.calls.length).toEqual(1);
+   expect(mixer.addProducer.mock.calls[0][0].producer).toEqual(participant.producers['screen-audio']?.producer);
+});

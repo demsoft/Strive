@@ -111,8 +111,8 @@ export default function ConferenceAppBar() {
                )}
                <UserMenu
                   showSettings={isMobile}
-                  canManageRecordings={canManageRecordings}
-                  canCloseConference={canCloseConference}
+                  canManageRecordings={Boolean(canManageRecordings)}
+                  canCloseConference={Boolean(canCloseConference)}
                   onShowPermissions={() => dispatch(coreHub.fetchPermissions(null))}
                   onShowRecordings={() => setRecordingsOpen(true)}
                   onChangeConference={handlePatchConference}

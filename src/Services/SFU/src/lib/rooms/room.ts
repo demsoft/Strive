@@ -18,6 +18,8 @@ const producerPermission: { [key in ProducerSource]?: Permission<boolean> } = {
    mic: MEDIA_CAN_SHARE_AUDIO,
    webcam: MEDIA_CAN_SHARE_WEBCAM,
    screen: MEDIA_CAN_SHARE_SCREEN,
+   /** the sound of a screen share is allowed with the screen share */
+   'screen-audio': MEDIA_CAN_SHARE_SCREEN,
    /** no permissions required to loopback device */
 };
 
