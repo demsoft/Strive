@@ -15,7 +15,10 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Identity.API.Accounts;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Identity.API.Quickstart.Account
 {
@@ -28,11 +31,10 @@ namespace Identity.API.Quickstart.Account
     /// </summary>
     [SecurityHeaders]
     [AllowAnonymous]
-    public class AccountController : Controller
+    public class AccountController : SignInControllerBase
     {
+        private readonly AccountService _accounts;
         private readonly IClientStore _clientStore;
-        private readonly IEventService _events;
-        private readonly IIdentityServerInteractionService _interaction;
         private readonly IAuthenticationSchemeProvider _schemeProvider;
         private readonly IUserProvider _users;
 
@@ -41,16 +43,18 @@ namespace Identity.API.Quickstart.Account
             IClientStore clientStore,
             IAuthenticationSchemeProvider schemeProvider,
             IEventService events,
-            IUserProvider users)
+            IUserProvider users,
+            IOptions<AccountsOptions> options,
+            // only registered in accounts mode
+            AccountService accounts = null) : base(interaction, events, options)
         {
+            _accounts = accounts;
             // if the TestUserStore is not in DI, then we'll just use the global users collection
             // this is where you would plug in your own custom identity management library (e.g. ASP.NET Identity)
             _users = users;
 
-            _interaction = interaction;
             _clientStore = clientStore;
             _schemeProvider = schemeProvider;
-            _events = events;
         }
 
         /// <summary>
@@ -70,10 +74,11 @@ namespace Identity.API.Quickstart.Account
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [EnableRateLimiting("account")]
         public async Task<IActionResult> Login(LoginInputModel model, string button)
         {
             // check if we are in the context of an authorization request
-            var context = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl);
+            var context = await Interaction.GetAuthorizationContextAsync(model.ReturnUrl);
 
             // the user clicked the "cancel" button
             if (button != "login")
@@ -83,7 +88,7 @@ namespace Identity.API.Quickstart.Account
                     // if the user cancels, send a result back into IdentityServer as if they 
                     // denied the consent (even if this client does not require consent).
                     // this will send back an access denied OIDC error response to the client.
-                    await _interaction.DenyAuthorizationAsync(context, AuthorizationError.AccessDenied);
+                    await Interaction.DenyAuthorizationAsync(context, AuthorizationError.AccessDenied);
 
                     // we can trust model.ReturnUrl since GetAuthorizationContextAsync returned non-null
                     if (context.IsNativeClient())
@@ -100,54 +105,46 @@ namespace Identity.API.Quickstart.Account
 
             if (ModelState.IsValid)
             {
-                // validate username/password against in-memory store
-                if (_users.ValidateCredentials(model.Username, model.Password))
+                if (Options.IsAccountsMode)
+                {
+                    var outcome = await _accounts.PasswordSignInAsync(model.Username, model.Password);
+                    switch (outcome.Status)
+                    {
+                        case SignInStatus.Succeeded:
+                            return await CompleteSignInAsync(outcome.User!.Id, outcome.User.DisplayName ?? outcome.User.Email,
+                                outcome.User.Email, model.ReturnUrl, model.RememberLogin);
+                        case SignInStatus.LockedOut:
+                            await Events.RaiseAsync(new UserLoginFailureEvent(model.Username, "locked out",
+                                clientId: context?.Client.ClientId));
+                            ModelState.AddModelError(string.Empty,
+                                "Too many failed attempts. Try again in a few minutes or reset your password.");
+                            break;
+                        case SignInStatus.EmailNotConfirmed:
+                            ModelState.AddModelError(string.Empty,
+                                "Please confirm your email address first. We sent you a link when you signed up.");
+                            var unconfirmed = await BuildLoginViewModelAsync(model);
+                            unconfirmed.ShowResendConfirmation = true;
+                            return View(unconfirmed);
+                        default:
+                            await Events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid credentials",
+                                clientId: context?.Client.ClientId));
+                            ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
+                            break;
+                    }
+                }
+                // validate username/password against the demo store
+                else if (_users.ValidateCredentials(model.Username, model.Password))
                 {
                     var user = _users.FindByUsername(model.Username);
-                    await _events.RaiseAsync(new UserLoginSuccessEvent(user.Username, user.SubjectId, user.Username,
-                        clientId: context?.Client.ClientId));
-
-                    // only set explicit expiration here if user chooses "remember me". 
-                    // otherwise we rely upon expiration configured in cookie middleware.
-                    AuthenticationProperties props = null;
-                    if (AccountOptions.AllowRememberLogin && model.RememberLogin)
-                        props = new AuthenticationProperties
-                        {
-                            IsPersistent = true,
-                            ExpiresUtc = DateTimeOffset.UtcNow.Add(AccountOptions.RememberMeLoginDuration)
-                        };
-                    ;
-
-                    // issue authentication cookie with subject ID and username
-                    var isuser = new IdentityServerUser(user.SubjectId)
-                    {
-                        DisplayName = user.Username
-                    };
-
-                    await HttpContext.SignInAsync(isuser, props);
-
-                    if (context != null)
-                    {
-                        if (context.IsNativeClient())
-                            // The client is native, so this change in how to
-                            // return the response is for better UX for the end user.
-                            return this.LoadingPage("Redirect", model.ReturnUrl);
-
-                        // we can trust model.ReturnUrl since GetAuthorizationContextAsync returned non-null
-                        return Redirect(model.ReturnUrl);
-                    }
-
-                    // request for a local page
-                    if (Url.IsLocalUrl(model.ReturnUrl))
-                        return Redirect(model.ReturnUrl);
-                    if (string.IsNullOrEmpty(model.ReturnUrl))
-                        return Redirect("~/");
-                    throw new Exception("invalid return URL");
+                    return await CompleteSignInAsync(user.SubjectId, user.Username, user.Username, model.ReturnUrl,
+                        model.RememberLogin);
                 }
-
-                await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid credentials",
-                    clientId: context?.Client.ClientId));
-                ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
+                else
+                {
+                    await Events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid credentials",
+                        clientId: context?.Client.ClientId));
+                    ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
+                }
             }
 
             // something went wrong, show form with error
@@ -189,7 +186,7 @@ namespace Identity.API.Quickstart.Account
                 await HttpContext.SignOutAsync();
 
                 // raise the logout event
-                await _events.RaiseAsync(new UserLogoutSuccessEvent(User.GetSubjectId(), User.GetDisplayName()));
+                await Events.RaiseAsync(new UserLogoutSuccessEvent(User.GetSubjectId(), User.GetDisplayName()));
             }
 
             // check if we need to trigger sign-out at an upstream identity provider
@@ -219,7 +216,7 @@ namespace Identity.API.Quickstart.Account
         /*****************************************/
         private async Task<LoginViewModel> BuildLoginViewModelAsync(string returnUrl)
         {
-            var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
+            var context = await Interaction.GetAuthorizationContextAsync(returnUrl);
             if (context?.IdP != null && await _schemeProvider.GetSchemeAsync(context.IdP) != null)
             {
                 var local = context.IdP == IdentityServerConstants.LocalIdentityProvider;
@@ -229,7 +226,9 @@ namespace Identity.API.Quickstart.Account
                 {
                     EnableLocalLogin = local,
                     ReturnUrl = returnUrl,
-                    Username = context?.LoginHint
+                    Username = context?.LoginHint,
+                    AccountsMode = Options.IsAccountsMode,
+                    GoogleEnabled = local == false && Options.Google.IsConfigured,
                 };
 
                 return vm;
@@ -247,7 +246,11 @@ namespace Identity.API.Quickstart.Account
                 AllowRememberLogin = AccountOptions.AllowRememberLogin,
                 EnableLocalLogin = allowLocal && AccountOptions.AllowLocalLogin,
                 ReturnUrl = returnUrl,
-                Username = context?.LoginHint
+                Username = context?.LoginHint,
+                AccountsMode = Options.IsAccountsMode,
+                GoogleEnabled = Options.IsAccountsMode && Options.Google.IsConfigured,
+                Notice = TempData["Notice"] as string,
+                Error = TempData["Error"] as string,
             };
         }
 
@@ -270,7 +273,7 @@ namespace Identity.API.Quickstart.Account
                 return vm;
             }
 
-            var context = await _interaction.GetLogoutContextAsync(logoutId);
+            var context = await Interaction.GetLogoutContextAsync(logoutId);
             if (context?.ShowSignoutPrompt == false)
             {
                 // it's safe to automatically sign-out
@@ -286,7 +289,7 @@ namespace Identity.API.Quickstart.Account
         private async Task<LoggedOutViewModel> BuildLoggedOutViewModelAsync(string logoutId)
         {
             // get context information (client name, post logout redirect URI and iframe for federated signout)
-            var logout = await _interaction.GetLogoutContextAsync(logoutId);
+            var logout = await Interaction.GetLogoutContextAsync(logoutId);
 
             var vm = new LoggedOutViewModel
             {
@@ -311,7 +314,7 @@ namespace Identity.API.Quickstart.Account
                             // if there's no current logout context, we need to create one
                             // this captures necessary info from the current logged in user
                             // before we signout and redirect away to the external IdP for signout
-                            vm.LogoutId = await _interaction.CreateLogoutContextAsync();
+                            vm.LogoutId = await Interaction.CreateLogoutContextAsync();
 
                         vm.ExternalAuthenticationScheme = idp;
                     }

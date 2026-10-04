@@ -1,6 +1,11 @@
 # Plan: user accounts (register, sign in, password reset)
 
-Status: planned, last feature on the current roadmap.
+Status: implemented (branch `feature/accounts`). Decided with the owner: Google sign in and email/password together, development on
+`localtest.me`, optional email domain allow list (`Accounts:AllowedEmailDomains`), no migration of demo identities, display name
+chosen by the person at the first sign in (Google only suggests it). The sections below are the original plan; see
+`installation.md` ("Accounts") for how it works and is configured. Differences: tokens are random single use values whose hash is
+stored in MongoDB (no data protection tokens), the user store is a small repository on the driver instead of an ASP.NET Core
+Identity store, Google sign in is in scope.
 
 ## Where we are
 

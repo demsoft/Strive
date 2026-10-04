@@ -25,5 +25,15 @@ export default async function conferenceFactory(
    const mediasoupRouter = await assignedWorker.createRouter(routerOptions);
 
    const messenger = new RabbitPub(rabbit);
-   return new Conference(mediasoupRouter, id, messenger, repository, webrtcOptions, maxIncomingBitrate);
+
+   // with a WebRtcServer the transports share the port(s) of the worker instead of listening on their own
+   const webRtcServer = workers.getWebRtcServer(assignedWorker);
+   let options = webrtcOptions;
+   if (webRtcServer) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { listenIps, listenInfos, listenIp, port, portRange, ...shared } = webrtcOptions as any;
+      options = { ...shared, webRtcServer };
+   }
+
+   return new Conference(mediasoupRouter, id, messenger, repository, options, maxIncomingBitrate);
 }

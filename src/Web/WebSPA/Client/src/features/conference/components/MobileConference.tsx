@@ -104,7 +104,7 @@ export default function MobileConference() {
          <ConferenceLayoutContext.Provider value={context}>
             <div className={classes.root} id="mobile-conference">
                <AnnouncementOverlay />
-               <ConferenceAppBar chatWidth={0} />
+               <ConferenceAppBar />
                <div className={classes.main} ref={contentRef}>
                   <div className={classes.scene}>
                      <div ref={sceneBarContainer} />

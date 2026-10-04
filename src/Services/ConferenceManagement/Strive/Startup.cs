@@ -286,7 +286,15 @@ namespace Strive
             services.AddMediatR(config =>
                 config.RegisterServicesFromAssemblies(typeof(Startup).Assembly, typeof(CoreModule).Assembly));
 
-            if (Environment.IsDevelopment())
+            // The web app is served from another host than the API. Behind a reverse proxy that does not add the
+            // CORS headers (IIS), the API does it itself: Cors:AllowedOrigins = origins separated by commas.
+            var allowedOrigins = Configuration["Cors:AllowedOrigins"]?
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (allowedOrigins is {Length: > 0})
+                services.AddCors(options => options.AddPolicy("Configured",
+                    builder => builder.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader()
+                        .AllowCredentials()));
+            else if (Environment.IsDevelopment())
                 services.AddCors(options =>
                 {
                     options.AddPolicy("AllowAll",
@@ -328,7 +336,8 @@ namespace Strive
             else
                 app.UseHsts();
 
-            if (env.IsDevelopment()) app.UseCors("AllowAll");
+            if (!string.IsNullOrWhiteSpace(Configuration["Cors:AllowedOrigins"])) app.UseCors("Configured");
+            else if (env.IsDevelopment()) app.UseCors("AllowAll");
 
             // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger();

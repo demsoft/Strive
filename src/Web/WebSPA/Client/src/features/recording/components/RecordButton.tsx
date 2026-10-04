@@ -78,7 +78,7 @@ export default function RecordButton() {
                      onClick={handleClick}
                      disabled={finalizing}
                      startIcon={isRecording ? <StopIcon /> : <FiberManualRecordIcon />}
-                     sx={{ mr: 1, borderRadius: 10, whiteSpace: 'nowrap' }}
+                     sx={{ borderRadius: 10, whiteSpace: 'nowrap', mr: 0.5 }}
                   >
                      {isRecording ? t('conference.recording.stop_short') : t('conference.recording.record_short')}
                   </Button>

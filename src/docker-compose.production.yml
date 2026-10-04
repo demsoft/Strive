@@ -1,0 +1,79 @@
+# Production on a single Windows server with Docker Desktop (WSL2), see deploy/windows/README.md.
+#
+# Used together with docker-compose.yml and docker-compose.override.yml (not with the traefik, dev or prod files):
+#   docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.production.yml up -d
+# deploy/windows/strive.ps1 does that.
+#
+# The web side is published on 127.0.0.1 only: IIS owns ports 80 and 443 (it also serves other sites), terminates TLS with
+# the wildcard certificate and forwards the hostnames of Strive to these ports. The media is NOT forwarded by IIS: the
+# media server publishes its few ports directly (UDP and TCP).
+version: "3.4"
+
+services:
+  identity-api:
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5001:80"
+    environment:
+      - IdentityServer__SpaClientHost=https://${FRONTEND_DNS_OR_IP}
+      - IdentityServer__Issuer=https://identity.${SITE_HOST}
+
+  strive:
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5002:80"
+    environment:
+      - SFU__UrlTemplate=https://sfu.${SITE_HOST}/{0}
+      - Authentication__NoSslRequired=true
+      - Authentication__Issuer=https://identity.${SITE_HOST}
+      # the web app is on another host, IIS does not add CORS headers
+      - Cors__AllowedOrigins=https://${FRONTEND_DNS_OR_IP}
+      # TURN is not part of the first release (a relay behind Docker Desktop does not see the client addresses). Without
+      # the secret the server hands no TURN servers to the browsers.
+      - Turn__Secret=
+
+  webspa:
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5003:80"
+    environment:
+      - App__IdentityUrl=https://identity.${SITE_HOST}
+      - App__FrontendUrl=https://${FRONTEND_DNS_OR_IP}
+      - App__ConferenceUrl=https://api.${SITE_HOST}/
+      - App__SignalrHubUrl=https://api.${SITE_HOST}/signalr
+      - App__EquipmentSignalrHubUrl=https://api.${SITE_HOST}/equipment-signalr
+
+  sfu:
+    restart: unless-stopped
+    build:
+      args:
+        - MEDIASOUP_MIN_PORT=${MEDIASOUP_MIN_PORT}
+        - MEDIASOUP_MAX_PORT=${MEDIASOUP_MAX_PORT}
+    ports:
+      # signaling (websocket) goes through IIS
+      - "127.0.0.1:5004:3000"
+      # media: one UDP and one TCP port per worker (MEDIASOUP_WEBRTC_SERVER_PORT + index), straight from the internet
+      - "${MEDIASOUP_MIN_PORT}-${MEDIASOUP_MAX_PORT}:${MEDIASOUP_MIN_PORT}-${MEDIASOUP_MAX_PORT}/udp"
+      - "${MEDIASOUP_MIN_PORT}-${MEDIASOUP_MAX_PORT}:${MEDIASOUP_MIN_PORT}-${MEDIASOUP_MAX_PORT}/tcp"
+    environment:
+      - MEDIASOUP_WEBRTC_SERVER_PORT=${MEDIASOUP_MIN_PORT}
+      - MEDIASOUP_LISTEN_IP=0.0.0.0
+      - DEBUG=
+
+  coturn:
+    restart: unless-stopped
+
+  nosqldata:
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+
+  rabbitmq:
+    restart: unless-stopped
+
+  recorder:
+    environment:
+      - WEB_URL=https://${FRONTEND_DNS_OR_IP}
+
+volumes:
+  mongo-data:

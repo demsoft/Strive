@@ -12,9 +12,11 @@ type JwtProperties = { sub: string; conference: string; connection: string };
 type RequestInfo = { participantId: string; conferenceId: string; connectionId: string };
 
 export default function configureEndpoints(app: Express, conferenceManager: ConferenceManager): void {
+   // CORS first: the preflight request of the browser (OPTIONS) has no token and must be answered before the token is
+   // checked, otherwise the browser never sends the real request (a proxy in front may not add CORS headers).
+   app.use(cors());
    app.use(express.json());
    app.use(expressjwt({ algorithms: ['HS256'], secret: config.services.tokenSecret }));
-   app.use(cors());
 
    const conferenceMatchMiddleware: RequestHandler = (req, res, next) => {
       const conferenceId: string = req.params.conferenceId;

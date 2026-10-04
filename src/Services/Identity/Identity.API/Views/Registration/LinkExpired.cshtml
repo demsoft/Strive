@@ -1,0 +1,17 @@
+@model Identity.API.Quickstart.Account.LinkExpiredModel
+
+<div class="auth-card">
+    <h1>This link <span class="gradient-text">does not work</span></h1>
+    <p class="subtitle">It was used already or it has expired.</p>
+
+    @if (Model.Resend)
+    {
+        <p class="hint">Sign in with your email and password and we will send a new confirmation link.</p>
+    }
+    else
+    {
+        <a class="btn btn-primary btn-block" asp-action="ForgotPassword" asp-route-returnUrl="@Model.ReturnUrl">Ask for a new link</a>
+    }
+
+    <p class="hint"><a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Back to sign in</a></p>
+</div>
