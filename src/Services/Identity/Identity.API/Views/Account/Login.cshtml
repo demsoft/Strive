@@ -1,5 +1,9 @@
 @model Identity.API.Quickstart.Account.LoginViewModel
 
+<div class="auth-split">
+    <partial name="_Features" />
+
+
 <div class="auth-card login-page">
     <h1>Welcome <span class="gradient-text">back</span></h1>
     <p class="subtitle">Sign in to start or join your meetings.</p>
@@ -94,4 +98,5 @@
             <a asp-controller="Registration" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Create an account</a>
         </p>
     }
+</div>
 </div>

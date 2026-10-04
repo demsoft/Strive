@@ -1,3 +1,4 @@
+@inject Identity.API.AppUrls App
 @model Identity.API.Quickstart.Home.ErrorViewModel
 
 @{
@@ -15,7 +16,7 @@
         <div class="alert alert-danger">@errorDescription</div>
     }
 
-    <a class="btn btn-secondary btn-block" href="~/">Back to Strive</a>
+    <a class="btn btn-secondary btn-block" href="@App.Home">Back to Strive</a>
 
     @if (request_id != null)
     {

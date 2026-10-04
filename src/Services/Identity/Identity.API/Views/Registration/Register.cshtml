@@ -1,6 +1,10 @@
 @model Identity.API.Quickstart.Account.RegisterModel
 @inject Microsoft.Extensions.Options.IOptions<Identity.API.Accounts.AccountsOptions> Opts
 
+<div class="auth-split">
+    <partial name="_Features" />
+
+
 <div class="auth-card">
     <h1>Create your <span class="gradient-text">account</span></h1>
     <p class="subtitle">Meet with anyone, from any device.</p>
@@ -31,4 +35,5 @@
     <p class="hint">
         Already have an account? <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Sign in</a>
     </p>
+</div>
 </div>
