@@ -140,6 +140,7 @@ namespace Strive.IntegrationTests.Controllers
             Assert.Contains("recorder", services);
             Assert.Contains("mongodb", services);
             Assert.Equal(0, json.GetProperty("conferences").GetProperty("open").GetInt32());
+            Assert.Equal(90, json.GetProperty("thresholds").GetProperty("workerCpuCriticalPercent").GetDouble());
         }
 
         [Fact]

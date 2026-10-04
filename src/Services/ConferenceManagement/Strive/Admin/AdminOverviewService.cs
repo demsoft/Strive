@@ -75,7 +75,7 @@ namespace Strive.Admin
 
             return new AdminOverview(_timeProvider.GetUtcNow(), status, alerts, capacity,
                 new ConferencesInfo(list.Count, totalParticipants, list), sfu?.Value, services,
-                accounts?.Value is {Available: true} ? accounts.Value : null, recorder?.Value);
+                accounts?.Value is {Available: true} ? accounts.Value : null, recorder?.Value, _options.Thresholds);
         }
 
         private static void AddSource<T>(List<ServiceStatus> services, string name, Fetched<T>? fetched)

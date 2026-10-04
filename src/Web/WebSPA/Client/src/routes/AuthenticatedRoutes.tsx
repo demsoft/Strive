@@ -4,6 +4,7 @@ import React, { useLayoutEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Route, Switch } from 'react-router-dom';
 import { setParticipantId } from 'src/features/auth/reducer';
+import AdminRoute from './AdminRoute';
 import ConferenceRoute from './ConferenceRoute';
 import MainRoute from './MainRoute';
 
@@ -22,6 +23,7 @@ export default function AuthenticatedRoutes() {
    return (
       <Switch>
          <Route exact path="/" component={MainRoute} />
+         <Route path="/admin" component={AdminRoute} />
          <Route path="/c/:id" component={ConferenceRoute} />
       </Switch>
    );

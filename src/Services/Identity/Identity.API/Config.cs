@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Security.Claims;
+using Duende.IdentityModel;
 using Duende.IdentityServer;
 using Duende.IdentityServer.Models;
 
@@ -16,7 +17,7 @@ namespace Identity.API
             {
                 new IdentityResources.OpenId(),
                 new IdentityResources.Profile(),
-                new IdentityResource {Name = "user.info", UserClaims = {ClaimTypes.Role, ClaimTypes.Name}},
+                new IdentityResource {Name = "user.info", UserClaims = {ClaimTypes.Role, ClaimTypes.Name, JwtClaimTypes.Role}},
             };
 
         public static Client BuildSpaClient(string host)

@@ -25,7 +25,7 @@ namespace Strive.Admin
 
     public record AdminOverview(DateTimeOffset GeneratedAt, string Status, IReadOnlyList<AdminAlert> Alerts,
         CapacityInfo Capacity, ConferencesInfo Conferences, SfuStats? Sfu, IReadOnlyList<ServiceStatus> Services,
-        AccountStats? Accounts, RecorderStats? Recorder);
+        AccountStats? Accounts, RecorderStats? Recorder, AdminThresholds Thresholds);
 
     /// <summary>What the media server reports</summary>
     public class SfuStats
