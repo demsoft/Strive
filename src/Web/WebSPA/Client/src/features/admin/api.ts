@@ -96,14 +96,15 @@ export type AdminSample = {
    alerts: number;
 };
 
+/** The address of the API, whether the configured url ends with a slash or not. */
+export const adminUrl = (path: string) => `${appSettings.conferenceUrl.replace(/\/+$/, '')}/v1/admin/${path}`;
+
 export async function fetchOverview(): Promise<AdminOverview> {
-   const response = await Axios.get<AdminOverview>(`${appSettings.conferenceUrl}v1/admin/overview`);
+   const response = await Axios.get<AdminOverview>(adminUrl('overview'));
    return response.data;
 }
 
 export async function fetchHistory(hours: number): Promise<AdminSample[]> {
-   const response = await Axios.get<{ samples: AdminSample[] }>(`${appSettings.conferenceUrl}v1/admin/history`, {
-      params: { hours },
-   });
+   const response = await Axios.get<{ samples: AdminSample[] }>(adminUrl('history'), { params: { hours } });
    return response.data.samples;
 }
