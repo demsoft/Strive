@@ -72,6 +72,13 @@ export class WebRtcManager extends TypedEmitter<WebRtcManagerEvents> {
       }
    }
 
+   /** The conference is left: close the connection to the media server. */
+   public close(): void {
+      this._current?.close();
+      this._current = undefined;
+      this.onCurrentChanged();
+   }
+
    private async onDisconnected() {
       this._current?.close();
       this._current = undefined;

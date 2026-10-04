@@ -147,6 +147,14 @@
       "menu": "Serverübersicht"
   },
   "conference": {
+    "leave": {
+          "button": "Meeting verlassen",
+          "title": "Das Meeting verlassen?",
+          "text": "Du kannst jederzeit über den Link wieder beitreten.",
+          "text_moderator": "Du kannst gehen und das Meeting läuft weiter, oder es für alle beenden.",
+          "confirm": "Verlassen",
+          "end_for_everyone": "Für alle beenden"
+    },
     "watch_together": {
           "title": "Gemeinsam ansehen",
           "stop": "Video beenden",

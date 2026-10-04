@@ -30,6 +30,7 @@ import useMicrophone from 'src/store/webrtc/hooks/useMicrophone';
 import useScreen from 'src/store/webrtc/hooks/useScreen';
 import useWebcam from 'src/store/webrtc/hooks/useWebcam';
 import useDeviceManagement from '../useDeviceManagement';
+import LeaveConferenceButton from 'src/features/conference/components/LeaveConferenceButton';
 import MediaFab from './MediaFab';
 
 const useStyles = makeStyles()((theme) => ({
@@ -206,6 +207,7 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
             )}
             {canRaiseHand && <HandRaiseFab className={classes.fab} size={fabSize} variants={item} />}
             {canSendReaction && <ReactionPicker className={classes.fab} size={fabSize} variants={item} />}
+            <LeaveConferenceButton className={classes.fab} size={fabSize} />
          </div>
          <div className={classes.rightActions}>
             <Tooltip title={t('conference.troubleshooting.title')} arrow>
