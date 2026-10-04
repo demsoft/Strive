@@ -6,6 +6,7 @@ import ConferenceManager, { ConferenceManagerOptions } from './lib/conference/co
 import { ConferenceManagementClient } from './lib/synchronization/conference-management-client';
 import RabbitMqConn from './rabbitmq/rabbit-mq-conn';
 import MediaSoupWorkers from './media-soup-workers';
+import { collectSfuStats } from './admin-stats';
 import Logger from './utils/logger';
 import { sleep } from './utils/promise-utils';
 
@@ -58,7 +59,10 @@ async function main() {
    const conferenceManager = new ConferenceManager(rabbitConn, workers, client, conferenceManagerOptions);
 
    const app = express();
-   configureEndpoints(app, conferenceManager);
+   configureEndpoints(app, conferenceManager, {
+      apiKey: process.env.ADMIN_API_KEY,
+      getStats: () => collectSfuStats(workers, conferenceManager),
+   });
 
    lightship.registerShutdownHandler(async () => {
       if (process.env.SERVER_ENVIRONMENT !== 'Development') {

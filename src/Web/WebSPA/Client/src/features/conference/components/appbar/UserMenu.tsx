@@ -11,6 +11,7 @@ import {
    Typography,
 } from '@mui/material';
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
+import MonitorHeartOutlinedIcon from '@mui/icons-material/MonitorHeartOutlined';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
@@ -19,6 +20,7 @@ import VideoLibraryOutlinedIcon from '@mui/icons-material/VideoLibraryOutlined';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'react-oidc-context';
+import { Link as RouterLink } from 'react-router-dom';
 import useUser from 'src/features/auth/useUser';
 import { brand } from 'src/theme';
 
@@ -58,6 +60,8 @@ export default function UserMenu(props: Props) {
    };
 
    const name = user.profile.name;
+   const roles = ([] as unknown[]).concat(user.profile.role ?? []);
+   const isServerAdmin = roles.includes('serveradmin');
 
    return (
       <>
@@ -126,6 +130,14 @@ export default function UserMenu(props: Props) {
                      <PowerSettingsNewIcon fontSize="small" />
                   </ListItemIcon>
                   <ListItemText>{t('conference.appbar.close_conference')}</ListItemText>
+               </MenuItem>
+            )}
+            {isServerAdmin && (
+               <MenuItem component={RouterLink} to="/admin" onClick={close} id="admin-overview-link">
+                  <ListItemIcon>
+                     <MonitorHeartOutlinedIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>{t('admin.menu')}</ListItemText>
                </MenuItem>
             )}
             <Divider />

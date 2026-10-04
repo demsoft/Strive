@@ -11,6 +11,7 @@ namespace Strive.Infrastructure.Data
         public Dictionary<string, string> CollectionNames { get; set; } = new()
         {
             {"Conference", "Conference"}, {"ConferenceLink", "ConferenceLink"}, {"ConferenceRecording", "Recording"},
+            {"AdminSample", "AdminMetrics"},
         };
     }
 }

@@ -18,6 +18,9 @@ namespace Identity.API
                 context.Subject.Claims.First(x => x.Type == JwtClaimTypes.Name),
             };
 
+            // roles that were set at sign in (server administrators)
+            claims.AddRange(context.Subject.Claims.Where(x => x.Type == JwtClaimTypes.Role));
+
             context.IssuedClaims.AddRange(claims);
 
             return Task.CompletedTask;

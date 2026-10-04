@@ -5,9 +5,12 @@ import { buildWebRtcServerOptions } from './webrtc-server-options';
 
 const logger = new Logger();
 
+export type WorkerLoad = { index: number; pid: number; cpuPercent: number; memoryKb: number };
+
 export default class MediaSoupWorkers {
    private workers: Worker[] = [];
    private webRtcServers = new Map<Worker, WebRtcServer>();
+   private lastUsage = new Map<Worker, { cpuMs: number; at: number }>();
    private nextWorkerId = 0;
 
    /**
@@ -48,6 +51,26 @@ export default class MediaSoupWorkers {
       }
 
       logger.info('Mediasoup workers started (min_port: %d, max_port: %d)', settings.rtcMinPort, settings.rtcMaxPort);
+   }
+
+   /**
+    * The load of every worker: cpu time since the previous call in percent of one core (a worker is one process and uses
+    * at most one core), plus the memory. The first call after the start has no previous call and returns 0.
+    */
+   async getLoad(now: number = Date.now()): Promise<WorkerLoad[]> {
+      const result: WorkerLoad[] = [];
+      for (const [index, worker] of this.workers.entries()) {
+         const usage = await worker.getResourceUsage();
+         const cpuMs = usage.ru_utime / 1000 + usage.ru_stime / 1000; // microseconds -> ms
+         const previous = this.lastUsage.get(worker);
+         this.lastUsage.set(worker, { cpuMs, at: now });
+
+         const elapsedMs = previous ? now - previous.at : 0;
+         const cpuPercent = previous && elapsedMs > 0 ? Math.min(100, ((cpuMs - previous.cpuMs) / elapsedMs) * 100) : 0;
+         result.push({ index, pid: worker.pid, cpuPercent: Math.max(0, cpuPercent), memoryKb: usage.ru_maxrss });
+      }
+
+      return result;
    }
 
    getNextWorker(): Worker {

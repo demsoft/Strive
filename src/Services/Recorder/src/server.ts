@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
+import { statfs } from 'node:fs/promises';
 import Fastify, { FastifyInstance } from 'fastify';
 import { Config } from './config';
 import { RecorderManager } from './manager';
@@ -14,8 +15,17 @@ function secretsEqual(provided: string | undefined, expected: string): boolean {
    return a.length === b.length && timingSafeEqual(a, b);
 }
 
+async function defaultReadDisk(path: string) {
+   const info = await statfs(path);
+   return { freeBytes: info.bavail * info.bsize, totalBytes: info.blocks * info.bsize };
+}
+
 /** The API the Strive server uses to start and stop recordings. Every call needs the shared secret. */
-export function buildServer(config: Pick<Config, 'sharedSecret'>, manager: RecorderManager): FastifyInstance {
+export function buildServer(
+   config: Pick<Config, 'sharedSecret'> & Partial<Pick<Config, 'workDir' | 'maxConcurrentRecordings'>>,
+   manager: RecorderManager,
+   readDisk: (path: string) => Promise<{ freeBytes: number; totalBytes: number }> = defaultReadDisk,
+): FastifyInstance {
    const app = Fastify({ logger: false, bodyLimit: 64 * 1024 });
 
    app.get('/health', async () => ({ status: 'ok', active: manager.activeCount }));
@@ -26,6 +36,18 @@ export function buildServer(config: Pick<Config, 'sharedSecret'>, manager: Recor
       if (!secretsEqual(request.headers[SECRET_HEADER] as string | undefined, config.sharedSecret)) {
          return reply.code(401).send({ error: 'unauthorized' });
       }
+   });
+
+   // what the admin overview of the Strive server shows: is there room for another recording?
+   app.get('/stats', async () => {
+      let disk: { freeBytes: number; totalBytes: number } | null = null;
+      try {
+         if (config.workDir) disk = await readDisk(config.workDir);
+      } catch {
+         // the disk numbers are optional
+      }
+
+      return { active: manager.activeCount, maxConcurrent: config.maxConcurrentRecordings ?? null, disk };
    });
 
    app.post<{ Body: StartCommand }>('/recordings', async (request, reply) => {

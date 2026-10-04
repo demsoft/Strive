@@ -78,6 +78,18 @@ namespace Identity.API.Tests
             lock (_lock) return Task.FromResult(_logins.TryAdd(ExternalLogin.BuildId(provider, key), userId));
         }
 
+        public Task<AccountStats> GetStatsAsync(int days, DateTimeOffset now)
+        {
+            lock (_lock)
+            {
+                var since = now.UtcDateTime.Date.AddDays(-(days - 1));
+                var signups = Enumerable.Range(0, days).Select(i => since.AddDays(i)).Select(d =>
+                    new SignupsPerDay(d.ToString("yyyy-MM-dd"), _users.Values.Count(u => u.CreatedAt.UtcDateTime.Date == d))).ToList();
+                return Task.FromResult(new AccountStats(_users.Count, _users.Values.Count(x => x.EmailConfirmed),
+                    _users.Values.Count(x => x.PasswordHash != null), _logins.Count, signups, now));
+            }
+        }
+
         public Task SaveTokenAsync(UserToken token)
         {
             lock (_lock) _tokens[token.Id] = token;

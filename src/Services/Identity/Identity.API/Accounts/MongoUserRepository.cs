@@ -122,6 +122,24 @@ namespace Identity.API.Accounts
             }
         }
 
+        public async Task<AccountStats> GetStatsAsync(int days, DateTimeOffset now)
+        {
+            var since = now.UtcDateTime.Date.AddDays(-(days - 1));
+
+            var total = (int) await _users.CountDocumentsAsync(FilterDefinition<StriveUser>.Empty);
+            var confirmed = (int) await _users.CountDocumentsAsync(x => x.EmailConfirmed);
+            var withPassword = (int) await _users.CountDocumentsAsync(x => x.PasswordHash != null);
+            var withGoogle = (int) await _logins.CountDocumentsAsync(FilterDefinition<ExternalLogin>.Empty);
+
+            var recent = await _users.Find(x => x.CreatedAt >= since).Project(x => x.CreatedAt).ToListAsync();
+            var perDay = recent.GroupBy(x => x.UtcDateTime.Date).ToDictionary(x => x.Key, x => x.Count());
+            var signups = Enumerable.Range(0, days).Select(i => since.AddDays(i))
+                .Select(d => new SignupsPerDay(d.ToString("yyyy-MM-dd"), perDay.GetValueOrDefault(d)))
+                .ToList();
+
+            return new AccountStats(total, confirmed, withPassword, withGoogle, signups, now);
+        }
+
         public async Task SaveTokenAsync(UserToken token)
         {
             await _tokens.InsertOneAsync(token);

@@ -7,6 +7,9 @@ services:
       # Demo: anybody can sign in with a made up name (development, e2e tests). Accounts: real accounts (email and
       # password, Google). compose.sh switches to Accounts when the file .env.identity exists.
       - Accounts__Mode=${ACCOUNTS_MODE:-Demo}
+      # people with these email addresses are server administrators (admin overview), after their next sign in
+      - Accounts__AdminEmails=${ACCOUNTS_ADMIN_EMAILS:-}
+      - Accounts__AdminApiKey=${STRIVE_API_KEY}
       - Accounts__MongoDb__ConnectionString=mongodb://nosqldata
       # confirming the email address is off for now (set to true to require it, needs SMTP_HOST in production)
       - Accounts__RequireEmailConfirmation=${ACCOUNTS_REQUIRE_EMAIL_CONFIRMATION:-false}
@@ -35,6 +38,10 @@ services:
       - Turn__Urls__0=turn:${TURN_HOST}:3478?transport=udp
       - Turn__Urls__1=turn:${TURN_HOST}:3478?transport=tcp
       - Turn__Secret=${TURN_SECRET}
+      # the admin overview reads the numbers of the other services
+      - Admin__SfuUrl=http://sfu:3000
+      - Admin__IdentityUrl=http://identity-api
+      - Admin__ApiKey=${STRIVE_API_KEY}
       # Recording is off unless compose.sh is called with `--profile recording`
       - Recording__Enabled=${RECORDING_ENABLED:-false}
       - Recording__RetentionDays=${RECORDING_RETENTION_DAYS:-30}
@@ -59,4 +66,5 @@ services:
       # the ports are forwarded one by one (production on Docker Desktop). Empty: the port range of the build arguments.
       - MEDIASOUP_WEBRTC_SERVER_PORT=${MEDIASOUP_WEBRTC_SERVER_PORT:-}
       - MEDIASOUP_NUM_WORKERS=${MEDIASOUP_NUM_WORKERS:-}
+      - ADMIN_API_KEY=${STRIVE_API_KEY}
       - MEDIASOUP_ANNOUNCED_IP=${ANNOUNCED_IP} # this will not work with firefox if it's localhost. to make it work for firefox, use your local ipv4 here

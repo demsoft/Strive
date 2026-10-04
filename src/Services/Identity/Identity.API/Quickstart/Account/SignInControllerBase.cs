@@ -1,6 +1,8 @@
 #nullable enable
 using System;
 using System.Threading.Tasks;
+using System.Security.Claims;
+using Duende.IdentityModel;
 using Duende.IdentityServer;
 using Duende.IdentityServer.Events;
 using Duende.IdentityServer.Extensions;
@@ -32,6 +34,14 @@ namespace Identity.API.Quickstart.Account
         protected async Task<IActionResult> CompleteSignInAsync(string subjectId, string displayName, string loginName,
             string? returnUrl, bool rememberLogin = false)
         {
+            return await CompleteSignInAsync(subjectId, displayName, loginName, returnUrl, rememberLogin,
+                Options.IsAdmin(loginName));
+        }
+
+        /// <param name="isAdmin">The sign in carries the role of a server administrator</param>
+        protected async Task<IActionResult> CompleteSignInAsync(string subjectId, string displayName, string loginName,
+            string? returnUrl, bool rememberLogin, bool isAdmin)
+        {
             var context = await Interaction.GetAuthorizationContextAsync(returnUrl);
             await Events.RaiseAsync(new UserLoginSuccessEvent(loginName, subjectId, displayName,
                 clientId: context?.Client.ClientId));
@@ -44,7 +54,10 @@ namespace Identity.API.Quickstart.Account
                     IsPersistent = true, ExpiresUtc = DateTimeOffset.UtcNow.Add(AccountOptions.RememberMeLoginDuration),
                 };
 
-            await HttpContext.SignInAsync(new IdentityServerUser(subjectId) {DisplayName = displayName}, props);
+            var user = new IdentityServerUser(subjectId) {DisplayName = displayName};
+            if (isAdmin) user.AdditionalClaims.Add(new Claim(JwtClaimTypes.Role, AccountsOptions.AdminRole));
+
+            await HttpContext.SignInAsync(user, props);
 
             if (context != null)
             {

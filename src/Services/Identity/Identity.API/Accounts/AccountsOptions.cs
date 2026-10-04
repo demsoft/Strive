@@ -25,6 +25,25 @@ namespace Identity.API.Accounts
         /// </summary>
         public string AllowedEmailDomains { get; set; } = string.Empty;
 
+        /// <summary>
+        ///     Email addresses of the people that are server administrators (separated by commas): their sign in carries
+        ///     the role "serveradmin", which opens the admin overview. Takes effect at the next sign in.
+        /// </summary>
+        public string AdminEmails { get; set; } = string.Empty;
+
+        /// <summary>The shared key with which the API reads the account statistics (header X-Api-Key). Empty: off.</summary>
+        public string? AdminApiKey { get; set; }
+
+        public const string AdminRole = "serveradmin";
+
+        public bool IsAdmin(string? email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return false;
+
+            return AdminEmails.Split(new[] {',', ';', ' '}, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Any(x => string.Equals(x, email.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+
         public int PasswordMinLength { get; set; } = 8;
 
         /// <summary>
