@@ -1,4 +1,5 @@
 import { useAuth } from 'react-oidc-context';
+import { Link as RouterLink } from 'react-router-dom';
 import { Box, Button, Chip, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import GroupsIcon from '@mui/icons-material/Groups';
@@ -124,9 +125,14 @@ export default function MainRoute() {
       <div className={classes.root}>
          <header className={classes.header}>
             <BrandLogo size={34} />
-            <Button color="inherit" onClick={() => auth.signoutRedirect()}>
-               {t('common:sign_out')}
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+               <Button color="inherit" component={RouterLink} to="/recordings" id="my-recordings-link">
+                  {t('conference.recording.my_link')}
+               </Button>
+               <Button color="inherit" onClick={() => auth.signoutRedirect()}>
+                  {t('common:sign_out')}
+               </Button>
+            </Box>
          </header>
 
          <main className={classes.main}>

@@ -34,6 +34,14 @@ export async function fetchRecordings(conferenceId: string): Promise<RecordingDt
    return response.data;
 }
 
+/** A recording in the list of the person that started it (also of conferences that are closed). */
+export type MyRecordingDto = RecordingDto & { conferenceId: string; conferenceName: string | null };
+
+export async function fetchMyRecordings(): Promise<MyRecordingDto[]> {
+   const response = await Axios.get<MyRecordingDto[]>(`${appSettings.conferenceUrl.replace(/\/+$/, '')}/v1/recordings/mine`);
+   return response.data;
+}
+
 export async function setVisibility(recordingId: string, visibility: RecordingVisibility): Promise<void> {
    await Axios.patch(`${appSettings.conferenceUrl}/v1/recordings/${recordingId}/visibility`, { visibility });
 }

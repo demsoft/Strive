@@ -31,17 +31,19 @@ import * as api from 'src/services/api/recording';
 import { RecordingDto, RecordingVisibility } from 'src/services/api/recording';
 import { showMessage } from 'src/store/notifier/actions';
 import { formatDuration, formatSize } from '../format';
-import { selectActiveRecording } from '../selectors';
+import { closeRecordings } from '../reducer';
+import { selectActiveRecording, selectRecordingJustFinished, selectRecordingsListOpen } from '../selectors';
 
-type Props = {
-   open: boolean;
-   onClose: () => void;
-};
-
-/** The recordings of this conference, for moderators: share, change who can watch, delete. */
-export default function RecordingsDialog({ open, onClose }: Props) {
+/**
+ * The recordings of this conference, for moderators: share, change who can watch, delete. It opens by itself when a
+ * recording has just been finished, with the link of the new recording on top.
+ */
+export default function RecordingsDialog() {
    const { t } = useTranslation();
    const dispatch = useDispatch();
+   const open = useSelector(selectRecordingsListOpen);
+   const justFinished = useSelector(selectRecordingJustFinished);
+   const onClose = () => dispatch(closeRecordings());
    const { id: conferenceId } = useParams<ConferenceRouteParams>();
    const active = useSelector(selectActiveRecording);
 
@@ -105,6 +107,30 @@ export default function RecordingsDialog({ open, onClose }: Props) {
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" id="recordings-dialog">
          <DialogTitle>{t('conference.recording.list_title')}</DialogTitle>
          <DialogContent>
+            {justFinished && recordings?.[0] && recordings[0].status === 'ready' && (
+               <Alert
+                  severity="success"
+                  id="recording-ready-banner"
+                  sx={{ mb: 2 }}
+                  action={
+                     <Button color="inherit" size="small" id="recording-ready-copy" onClick={() => copyLink(recordings[0])}>
+                        {t('conference.recording.copy_link')}
+                     </Button>
+                  }
+               >
+                  {t('conference.recording.ready_banner')}
+               </Alert>
+            )}
+            {justFinished && recordings?.[0] && recordings[0].status === 'failed' && (
+               <Alert severity="error" sx={{ mb: 2 }}>
+                  {t('conference.recording.failed_banner')}
+               </Alert>
+            )}
+            {justFinished && recordings?.[0] && !['ready', 'failed'].includes(recordings[0].status) && (
+               <Alert severity="info" sx={{ mb: 2 }}>
+                  {t('conference.recording.processing_banner')}
+               </Alert>
+            )}
             {error && <Alert severity="error">{t('conference.recording.list_error')}</Alert>}
             {!error && recordings === null && (
                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>

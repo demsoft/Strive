@@ -96,6 +96,12 @@ namespace Strive.Infrastructure.Data.Repos
                 .SortByDescending(x => x.StartedAt).ToListAsync();
         }
 
+        public async Task<IReadOnlyList<ConferenceRecording>> FindStartedBy(string participantId, int limit)
+        {
+            return await Collection.Find(x => x.StartedBy == participantId)
+                .SortByDescending(x => x.StartedAt).Limit(limit).ToListAsync();
+        }
+
         public async Task<IReadOnlyList<ConferenceRecording>> FindExpired(DateTimeOffset now)
         {
             // an unfinished recording is never deleted while its recorder may still upload

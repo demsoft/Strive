@@ -7,6 +7,7 @@ import { setParticipantId } from 'src/features/auth/reducer';
 import AdminRoute from './AdminRoute';
 import ConferenceRoute from './ConferenceRoute';
 import MainRoute from './MainRoute';
+import MyRecordingsRoute from './MyRecordingsRoute';
 
 export default function AuthenticatedRoutes() {
    const oidcUser = useUser();
@@ -24,6 +25,7 @@ export default function AuthenticatedRoutes() {
       <Switch>
          <Route exact path="/" component={MainRoute} />
          <Route path="/admin" component={AdminRoute} />
+         <Route path="/recordings" component={MyRecordingsRoute} />
          <Route path="/c/:id" component={ConferenceRoute} />
       </Switch>
    );

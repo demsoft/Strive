@@ -2,7 +2,7 @@ import { AppBar, Box, Chip, Divider, IconButton, Toolbar, Tooltip, Typography } 
 import { makeStyles } from 'tss-react/mui';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router';
@@ -19,6 +19,7 @@ import RecordButton from 'src/features/recording/components/RecordButton';
 import WatchTogetherButton from 'src/features/watch-together/components/WatchTogetherButton';
 import RecordingIndicator from 'src/features/recording/components/RecordingIndicator';
 import RecordingsDialog from 'src/features/recording/components/RecordingsDialog';
+import { openRecordings } from 'src/features/recording/reducer';
 import InviteLinkButton from 'src/components/InviteLinkButton';
 import LobbyButton from 'src/features/lobby/components/LobbyButton';
 import AppBarLogo from './appbar/AppBarLogo';
@@ -48,7 +49,6 @@ export default function ConferenceAppBar() {
 
    const canCloseConference = usePermission(CONFERENCE_CAN_OPEN_AND_CLOSE);
    const canManageRecordings = usePermission(RECORDING_CAN_MANAGE);
-   const [recordingsOpen, setRecordingsOpen] = useState(false);
    const participants = useSelector(selectParticipantList);
    const breakoutRoomState = useSelector((state: RootState) => state.breakoutRooms.synchronized?.active);
 
@@ -116,14 +116,14 @@ export default function ConferenceAppBar() {
                   canManageRecordings={Boolean(canManageRecordings)}
                   canCloseConference={Boolean(canCloseConference)}
                   onShowPermissions={() => dispatch(coreHub.fetchPermissions(null))}
-                  onShowRecordings={() => setRecordingsOpen(true)}
+                  onShowRecordings={() => dispatch(openRecordings())}
                   onChangeConference={handlePatchConference}
                   onCloseConference={() => dispatch(coreHub.closeConference())}
                   onOpenSettings={() => dispatch(openSettings())}
                />
             </Box>
 
-            <RecordingsDialog open={recordingsOpen} onClose={() => setRecordingsOpen(false)} />
+            <RecordingsDialog />
          </Toolbar>
       </AppBar>
    );

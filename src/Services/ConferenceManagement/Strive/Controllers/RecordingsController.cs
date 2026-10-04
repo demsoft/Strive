@@ -65,6 +65,28 @@ namespace Strive.Controllers
             return recordings.Select(RecordingDto.From).ToArray();
         }
 
+        // GET v1/recordings/mine
+        /// <summary>
+        ///     The recordings that the signed in person started, also of conferences that are closed: the link of a
+        ///     recording must not be lost with the meeting
+        /// </summary>
+        [HttpGet("v1/recordings/mine")]
+        public async Task<ActionResult<MyRecordingDto[]>> GetMyRecordings()
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return Forbid();
+
+            var recordings = await _recordings.FindStartedBy(userId, 100);
+            var names = new System.Collections.Generic.Dictionary<string, string?>();
+            foreach (var conferenceId in recordings.Select(x => x.ConferenceId).Distinct())
+                names[conferenceId] = (await _conferences.FindById(conferenceId))?.Configuration.Name;
+
+            Response.Headers.CacheControl = "no-store";
+            return recordings.Select(x => new MyRecordingDto(x.RecordingId, x.ConferenceId, names[x.ConferenceId],
+                x.Status, x.StartedAt, x.EndedAt, x.DurationSeconds, x.SizeBytes, x.Visibility, x.ShareToken,
+                x.ExpiresAt, x.FailureReason)).ToArray();
+        }
+
         // PATCH v1/recordings/{recordingId}/visibility
         [HttpPatch("v1/recordings/{recordingId}/visibility")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
