@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Security.Claims;
 using System.Collections.Generic;
 using System.Text;
 using Autofac;
@@ -107,6 +109,7 @@ namespace Strive
                     options.AcceptTokenFromQuery();
                 });
             services.AddSingleton<IAuthorizationHandler, UserIsModeratorOfConferenceHandler>();
+            ConfigureAdmin(services);
 
             var sfuOptions = Configuration.GetRequired<SfuOptions>("SFU");
             var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(sfuOptions.TokenSecret ??
@@ -327,6 +330,27 @@ namespace Strive
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        /// <summary>The overview for server administrators (role "serveradmin" in the token of the identity service).</summary>
+        private void ConfigureAdmin(IServiceCollection services)
+        {
+            services.Configure<Admin.AdminOptions>(Configuration.GetSection(Admin.AdminOptions.Section));
+            services.AddAuthorization(options => options.AddPolicy(Admin.AdminOptions.Policy, policy =>
+                policy.RequireAuthenticatedUser().RequireAssertion(context => context.User.Claims.Any(x =>
+                    (x.Type == "role" || x.Type == ClaimTypes.Role) && x.Value == Admin.AdminOptions.ServerAdminRole))));
+
+            services.AddSingleton<Admin.ActiveConferenceTracker>();
+
+            // TryAdd: the tests bring their own sources and history
+            services.AddHttpClient<Admin.HttpAdminSourceClient>();
+            services.TryAddTransient<Admin.IAdminSourceClient>(sp => sp.GetRequiredService<Admin.HttpAdminSourceClient>());
+            services.AddSingleton<Admin.AdminOverviewService>();
+            services.AddSingleton<Admin.MongoAdminMetricsStore>();
+            services.TryAddSingleton<Admin.IAdminMetricsStore>(sp => sp.GetRequiredService<Admin.MongoAdminMetricsStore>());
+            services.AddSingleton<Infrastructure.Data.IMongoIndexBuilder>(sp =>
+                sp.GetRequiredService<Admin.MongoAdminMetricsStore>());
+            services.AddHostedService<Admin.AdminMetricsSampler>();
+        }
+
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseForwardedHeaders();

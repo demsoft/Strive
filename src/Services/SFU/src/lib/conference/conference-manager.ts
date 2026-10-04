@@ -41,6 +41,14 @@ export default class ConferenceManager {
       return localConference;
    }
 
+   /** the conferences of this server with their numbers, for the admin overview */
+   public getConferenceStats(): { conferenceId: string; participants: number; connections: number; producers: number; consumers: number }[] {
+      return Array.from(this.conferences.entries()).map(([conferenceId, conference]) => ({
+         conferenceId,
+         ...conference.getStats(),
+      }));
+   }
+
    public hasConference(id: string): boolean {
       return this.conferences.has(id);
    }

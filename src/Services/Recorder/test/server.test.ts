@@ -83,3 +83,39 @@ describe('server', () => {
       expect(manager.stop).not.toHaveBeenCalled();
    });
 });
+
+describe('stats', () => {
+   const disk = { freeBytes: 40, totalBytes: 100 };
+
+   test('need the secret', async () => {
+      const { app } = create();
+
+      const response = await app.inject({ method: 'GET', url: '/stats' });
+
+      expect(response.statusCode).toBe(401);
+   });
+
+   test('tell the load and the disk', async () => {
+      const manager = { activeCount: 2 } as unknown as RecorderManager;
+      const app = buildServer({ sharedSecret: secret, workDir: '/data', maxConcurrentRecordings: 3 }, manager, async (path) => {
+         expect(path).toBe('/data');
+         return disk;
+      });
+
+      const response = await app.inject({ method: 'GET', url: '/stats', headers });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({ active: 2, maxConcurrent: 3, disk });
+   });
+
+   test('work without disk numbers', async () => {
+      const manager = { activeCount: 0 } as unknown as RecorderManager;
+      const app = buildServer({ sharedSecret: secret, workDir: '/missing' }, manager, async () => {
+         throw new Error('no such directory');
+      });
+
+      const response = await app.inject({ method: 'GET', url: '/stats', headers });
+
+      expect(response.json()).toEqual({ active: 0, maxConcurrent: null, disk: null });
+   });
+});

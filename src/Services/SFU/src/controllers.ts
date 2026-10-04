@@ -5,16 +5,43 @@ import Logger from './utils/logger';
 import { expressjwt, Request as JwtRequest } from 'express-jwt';
 import config from './config';
 import cors from 'cors';
+import { timingSafeEqual } from 'crypto';
 
 const logger = new Logger('Controllers');
+
+/** comparison that takes the same time wherever the values differ */
+function safeEqual(a: string, b: string): boolean {
+   const bufferA = Buffer.from(a);
+   const bufferB = Buffer.from(b);
+   return bufferA.length === bufferB.length && timingSafeEqual(bufferA, bufferB);
+}
 
 type JwtProperties = { sub: string; conference: string; connection: string };
 type RequestInfo = { participantId: string; conferenceId: string; connectionId: string };
 
-export default function configureEndpoints(app: Express, conferenceManager: ConferenceManager): void {
+export type AdminStatsProvider = () => Promise<unknown>;
+
+export default function configureEndpoints(
+   app: Express,
+   conferenceManager: ConferenceManager,
+   admin?: { apiKey: string | undefined; getStats: AdminStatsProvider },
+): void {
    // CORS first: the preflight request of the browser (OPTIONS) has no token and must be answered before the token is
    // checked, otherwise the browser never sends the real request (a proxy in front may not add CORS headers).
    app.use(cors());
+   // The numbers for the admin overview of the API: not a conference token but the shared api key of the services
+   if (admin?.apiKey) {
+      app.get('/admin/stats', async (req, res) => {
+         const provided = req.header('x-api-key') ?? '';
+         if (!safeEqual(provided, admin.apiKey!)) {
+            res.status(401).json({ error: 'invalid api key' });
+            return;
+         }
+
+         res.json(await admin.getStats());
+      });
+   }
+
    app.use(express.json());
    app.use(expressjwt({ algorithms: ['HS256'], secret: config.services.tokenSecret }));
 

@@ -25,6 +25,8 @@ import { StreamInfoRepo } from './stream-info-repo';
 
 const logger = new Logger('Conference');
 
+export type ConferenceStats = { participants: number; connections: number; producers: number; consumers: number };
+
 export class Conference {
    private connections: Map<string, Connection> = new Map();
    private roomManager: RoomManager;
@@ -43,6 +45,18 @@ export class Conference {
    ) {
       this.roomManager = new RoomManager(conferenceId, messenger, router, repo);
       this.streamInfoRepo = new StreamInfoRepo(messenger, conferenceId);
+   }
+
+   /** numbers for the admin overview */
+   public getStats(): ConferenceStats {
+      let producers = 0;
+      let consumers = 0;
+      for (const connection of this.connections.values()) {
+         producers += connection.producers.size;
+         consumers += connection.consumers.size;
+      }
+
+      return { participants: this.participants.size, connections: this.connections.size, producers, consumers };
    }
 
    get routerCapabilities(): RtpCapabilities {

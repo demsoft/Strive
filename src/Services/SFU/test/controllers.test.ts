@@ -44,3 +44,50 @@ describe('controllers', () => {
       expect(response.status).toBe(401);
    });
 });
+
+describe('admin stats', () => {
+   let server: Server;
+   let baseUrl: string;
+   const stats = { totals: { participants: 3 } };
+
+   beforeAll(async () => {
+      const app = express();
+      configureEndpoints(app, {} as unknown as ConferenceManager, { apiKey: 'secret-key', getStats: async () => stats });
+      await new Promise<void>((resolve) => {
+         server = app.listen(0, () => resolve());
+      });
+      baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+   });
+
+   afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
+
+   it('returns the stats for the api key', async () => {
+      const response = await fetch(`${baseUrl}/admin/stats`, { headers: { 'x-api-key': 'secret-key' } });
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual(stats);
+   });
+
+   it.each([[undefined], ['wrong'], ['secret-ke'], ['secret-keyx']])('refuses the api key %s', async (key) => {
+      const headers: Record<string, string> = key === undefined ? {} : { 'x-api-key': key };
+
+      const response = await fetch(`${baseUrl}/admin/stats`, { headers });
+
+      expect(response.status).toBe(401);
+   });
+
+   it('does not exist without an api key', async () => {
+      const app = express();
+      configureEndpoints(app, {} as unknown as ConferenceManager, { apiKey: undefined, getStats: async () => stats });
+      const local = await new Promise<Server>((resolve) => {
+         const s = app.listen(0, () => resolve(s));
+      });
+      const url = `http://127.0.0.1:${(local.address() as AddressInfo).port}`;
+
+      // falls through to the token check of the other endpoints
+      const response = await fetch(`${url}/admin/stats`, { headers: { 'x-api-key': 'anything' } });
+      await new Promise<void>((resolve) => local.close(() => resolve()));
+
+      expect(response.status).toBe(401);
+   });
+});
