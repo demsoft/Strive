@@ -46,7 +46,20 @@ Set-WebConfigurationProperty -PSPath 'MACHINE/WEBROOT/APPHOST' -Filter 'system.w
 # the site
 $root = 'C:\inetpub\strive-proxy'
 New-Item -ItemType Directory -Force -Path $root | Out-Null
-$rules = ($hosts.GetEnumerator() | ForEach-Object {
+# the sign in pages live under /account of the address of the app: this rule must come before the rule of the app
+$appHost = $vars.FRONTEND_DNS_OR_IP
+$accountRule = @"
+        <rule name="$appHost /account" stopProcessing="true">
+          <match url="^account(/.*)?$" />
+          <conditions><add input="{HTTP_HOST}" pattern="^$([regex]::Escape($appHost))$" /></conditions>
+          <serverVariables>
+            <set name="HTTP_X_FORWARDED_PROTO" value="https" />
+          </serverVariables>
+          <action type="Rewrite" url="http://127.0.0.1:5001/{R:0}" />
+        </rule>
+"@
+
+$hostRules = ($hosts.GetEnumerator() | ForEach-Object {
    $pattern = '^' + [regex]::Escape($_.Key) + '$'
    @"
         <rule name="$($_.Key)" stopProcessing="true">
@@ -59,6 +72,7 @@ $rules = ($hosts.GetEnumerator() | ForEach-Object {
         </rule>
 "@
 }) -join "`r`n"
+$rules = $accountRule + "`r`n" + $hostRules
 
 @"
 <?xml version="1.0" encoding="utf-8"?>

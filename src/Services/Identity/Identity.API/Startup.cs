@@ -71,6 +71,7 @@ namespace Identity.API
                 options.EmitStaticAudienceClaim = true;
             });
 
+            services.AddSingleton<AppUrls>();
             services.AddSingleton<IUserProvider, DemoUserProvider>();
             ConfigureAccounts(services);
 
@@ -157,6 +158,12 @@ namespace Identity.API
         public void Configure(IApplicationBuilder app)
         {
             app.UseForwardedHeaders();
+
+            // In production the pages of the sign in live under /account of the address of the app (meet.<domain>/account),
+            // so that people never see another domain. Requests that arrive without the prefix (internal calls of the
+            // other services) work as before.
+            var pathBase = Configuration["IdentityServer:PathBase"];
+            if (!string.IsNullOrWhiteSpace(pathBase)) app.UsePathBase("/" + pathBase.Trim('/'));
 
             if (Environment.IsDevelopment()) app.UseDeveloperExceptionPage();
 

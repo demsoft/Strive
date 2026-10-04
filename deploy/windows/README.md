@@ -14,7 +14,8 @@ browser ──https──► IIS :443 (wildcard certificate) ──► 127.0.0.1
 | --- | --- | --- |
 | `meet.goserp.co.uk` | the web app | container `webspa`, 127.0.0.1:5003 |
 | `api.goserp.co.uk` | conference API and SignalR | `strive`, 127.0.0.1:5002 |
-| `identity.goserp.co.uk` | sign in, Google, accounts | `identity-api`, 127.0.0.1:5001 |
+| `meet.goserp.co.uk/account` | sign in, sign up, Google, accounts (people never see another domain) | `identity-api`, 127.0.0.1:5001 |
+| `identity.goserp.co.uk` | hidden fallback address of the same service, not shown to anybody | `identity-api`, 127.0.0.1:5001 |
 | `sfu.goserp.co.uk` | media server signaling (websocket) | `sfu`, 127.0.0.1:5004 |
 
 The media does not go through IIS: the media server publishes **UDP and TCP 40000-40003** (one port per worker) on the public
@@ -36,7 +37,7 @@ block UDP still connect through the TCP media port.
       (a single sender address, or a verified domain with SPF/DKIM records).
 - [ ] Google Cloud console → your OAuth client, add:
   - Authorized JavaScript origin: `https://meet.goserp.co.uk`
-  - Authorized redirect URI: `https://identity.goserp.co.uk/signin-google`
+  - Authorized redirect URI: `https://meet.goserp.co.uk/account/signin-google` (you can keep the old `https://identity.goserp.co.uk/signin-google` next to it)
   - OAuth consent screen → *Publish app* (status "In production"), otherwise only the listed test users can sign in.
 
 ## 2. Install
@@ -63,7 +64,7 @@ everybody out.
 
 ## 3. Check it
 
-1. https://identity.goserp.co.uk/.well-known/openid-configuration shows JSON with `"issuer":"https://identity.goserp.co.uk"`.
+1. https://meet.goserp.co.uk/account/.well-known/openid-configuration shows JSON with `"issuer":"https://meet.goserp.co.uk/account"`.
 2. https://meet.goserp.co.uk redirects to the sign in page → create an account, or "Continue with Google".
 3. Start a conference and join it from a second device on **another network** (a phone on mobile data). Camera and
    microphone must work in both directions.
@@ -114,7 +115,7 @@ Docker Desktop normally starts when a user logs in. On a server that restarts by
 | Symptom | Likely cause |
 | --- | --- |
 | After sign in the browser lands on `identity.…/authentication/callback` (404) | ARR rewrites redirect headers: run `.\Setup-Iis.ps1` again (sets `reverseRewriteHostInResponseHeaders` to False) |
-| Page loads, "Authentication failed" | `identity.` hostname not reachable from the browser, or Google redirect URI missing |
+| Page loads, "Authentication failed" | `meet.goserp.co.uk/account/…` does not reach the identity service (run `.\Setup-Iis.ps1` again, it adds that rule), or the Google redirect URI is missing |
 | Sign in works, call shows no remote video | media ports blocked (provider or Windows firewall); check `chrome://webrtc-internals` |
 | Works on Wi-Fi, not on mobile data | UDP blocked by the mobile network; TCP media port 4000x must be reachable too |
 | WebSocket errors on `api.`/`sfu.` | WebSocket feature missing in IIS (`Install-WindowsFeature Web-WebSockets`) or ARR proxy not enabled |

@@ -11,6 +11,7 @@ using Identity.API.Accounts;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Identity.API.Quickstart.Account
@@ -70,13 +71,16 @@ namespace Identity.API.Quickstart.Account
 
             // request for a local page
             if (Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl!);
-            if (string.IsNullOrEmpty(returnUrl)) return Redirect("~/");
+            if (string.IsNullOrEmpty(returnUrl)) return Redirect(AppHome);
             throw new Exception("invalid return URL");
         }
 
         /// <summary>Only return urls that IdentityServer or this site made are followed.</summary>
         protected bool IsValidReturnUrl(string? returnUrl) =>
             !string.IsNullOrEmpty(returnUrl) && (Interaction.IsValidReturnUrl(returnUrl) || Url.IsLocalUrl(returnUrl));
+
+        /// <summary>The web app (not the root of this service, which is under /account)</summary>
+        protected string AppHome => HttpContext.RequestServices.GetRequiredService<AppUrls>().Home;
 
         protected string AbsoluteUrl(string action, string controller, object? values = null) =>
             Url.Action(action, controller, values, Request.Scheme)!;

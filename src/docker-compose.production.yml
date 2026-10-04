@@ -16,7 +16,9 @@ services:
       - "127.0.0.1:5001:80"
     environment:
       - IdentityServer__SpaClientHost=https://${FRONTEND_DNS_OR_IP}
-      - IdentityServer__Issuer=https://identity.${SITE_HOST}
+      # the pages of the sign in are served under /account of the address of the app: people only ever see meet.<domain>
+      - IdentityServer__PathBase=/account
+      - IdentityServer__Issuer=https://${FRONTEND_DNS_OR_IP}/account
 
   strive:
     restart: unless-stopped
@@ -25,7 +27,7 @@ services:
     environment:
       - SFU__UrlTemplate=https://sfu.${SITE_HOST}/{0}
       - Authentication__NoSslRequired=true
-      - Authentication__Issuer=https://identity.${SITE_HOST}
+      - Authentication__Issuer=https://${FRONTEND_DNS_OR_IP}/account
       # the web app is on another host, IIS does not add CORS headers
       - Cors__AllowedOrigins=https://${FRONTEND_DNS_OR_IP}
       # TURN is not part of the first release (a relay behind Docker Desktop does not see the client addresses). Without
@@ -37,7 +39,7 @@ services:
     ports:
       - "127.0.0.1:5003:80"
     environment:
-      - App__IdentityUrl=https://identity.${SITE_HOST}
+      - App__IdentityUrl=https://${FRONTEND_DNS_OR_IP}/account
       - App__FrontendUrl=https://${FRONTEND_DNS_OR_IP}
       - App__ConferenceUrl=https://api.${SITE_HOST}/
       - App__SignalrHubUrl=https://api.${SITE_HOST}/signalr
