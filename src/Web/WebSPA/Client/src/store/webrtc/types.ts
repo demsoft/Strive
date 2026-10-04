@@ -32,7 +32,8 @@ export type ChangeProducerSourceRequest = {
 };
 
 export type ProducerDevice = 'mic' | 'webcam' | 'screen';
-export type ProducerSource = ProducerDevice | 'loopback-mic' | 'loopback-webcam' | 'loopback-screen';
+/** 'screen-audio' is the sound of a screen share, a producer of its own that follows 'screen' */
+export type ProducerSource = ProducerDevice | 'screen-audio' | 'loopback-mic' | 'loopback-webcam' | 'loopback-screen';
 
 export const ProducerDevices: ProducerDevice[] = ['mic', 'webcam', 'screen'];
 

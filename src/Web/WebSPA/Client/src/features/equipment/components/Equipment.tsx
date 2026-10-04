@@ -66,6 +66,7 @@ export default function Equipment() {
       mic,
       webcam,
       screen,
+      ['screen-audio']: screen,
       ['loopback-mic']: loopbackMic,
       ['loopback-webcam']: loopbackWebcam,
       ['loopback-screen']: screen,

@@ -29,6 +29,8 @@ export const producerSources = [
    'mic',
    'webcam',
    'screen',
+   /** the sound of the shared screen (a tab or the system), a track of its own next to the microphone */
+   'screen-audio',
    'loopback-mic',
    'loopback-webcam',
    'loopback-screen',

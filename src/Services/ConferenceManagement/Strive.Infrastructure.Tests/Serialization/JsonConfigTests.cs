@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Strive.Core.Services.Media.Dtos;
 using Strive.Infrastructure.Serialization;
 using Xunit;
 
@@ -34,6 +35,18 @@ namespace Strive.Infrastructure.Tests.Serialization
             // assert
             Assert.NotNull(token.Property("testProp1"));
             Assert.NotNull(token.Property("testProp2"));
+        }
+
+        [Theory]
+        [InlineData(ProducerSource.Mic, "mic")]
+        [InlineData(ProducerSource.Screen, "screen")]
+        [InlineData(ProducerSource.ScreenAudio, "screen-audio")]
+        [InlineData(ProducerSource.LoopbackScreen, "loopback-screen")]
+        public void Serialize_ProducerSource_SameNameAsInTheMediaServerAndTheBrowser(ProducerSource source, string name)
+        {
+            // the names are shared with the SFU (producerSources) and the web app (ProducerSource)
+            Assert.Equal(name, ((JValue) Serialize(source)).Value);
+            Assert.Equal(source, JsonSerializer.Create(JsonConfig.Default).Deserialize<ProducerSource>(new JsonTextReader(new System.IO.StringReader($"\"{name}\""))));
         }
 
         private static JToken Serialize(object obj)

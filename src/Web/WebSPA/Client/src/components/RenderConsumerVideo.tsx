@@ -71,6 +71,7 @@ const getProducerDevice: (source: ProducerSource) => ProducerDevice = (source) =
       case 'loopback-webcam':
          return 'webcam';
       case 'loopback-screen':
+      case 'screen-audio':
          return 'screen';
    }
 };

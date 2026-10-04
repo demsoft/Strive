@@ -188,6 +188,7 @@
       }
     },
     "media": {
+      "screen_no_audio_hint": "Tipp: Um den Ton eines Videos zu teilen, wähle einen Browser-Tab und aktiviere „Tab-Audio auch teilen“. Der Ton eines ganzen Bildschirms lässt sich nur unter Windows teilen.",
       "controls": {
         "mic": {
           "active": "Mikrofon ist aktiv",

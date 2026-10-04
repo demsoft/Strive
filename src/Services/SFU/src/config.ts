@@ -47,7 +47,8 @@ const config: Config = {
          enableTcp: true,
          preferUdp: true,
       },
-      maxIncomingBitrate: 1500000,
+      // per sending transport: webcam, microphone and screen together. A screen with moving pictures needs more than slides.
+      maxIncomingBitrate: Number(process.env.MEDIASOUP_MAX_INCOMING_BITRATE) || 4000000,
    },
    http: {
       port: Number(process.env.HTTP_PORT) || 3000,

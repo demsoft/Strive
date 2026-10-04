@@ -64,6 +64,41 @@ function ParticipantAudio({
    return <audio ref={audioElem} autoPlay playsInline controls={false} />;
 }
 
+/**
+ * The sound of the screen that a participant shares (a video, music). It is played next to the voice of the
+ * participant, and muted together with the participant.
+ */
+function ParticipantScreenAudio({ participantId }: { participantId: string }) {
+   const consumer = useConsumer(participantId, 'screen-audio');
+   const audioOptions =
+      useSelector((state: RootState) => state.media.participantAudio[participantId]) ?? DEFAULT_PARTICIPANT_AUDIO;
+
+   const audioElem = useRef<HTMLAudioElement>(null);
+
+   useEffect(() => {
+      const elem = audioElem.current;
+      if (!consumer || !elem) return;
+
+      elem.srcObject = new MediaStream([consumer.track]);
+      elem.play().catch(() => {
+         // the browser may wait for a click, the conference asks for it when it starts
+      });
+
+      return () => {
+         elem.srcObject = null;
+      };
+   }, [audioElem.current, consumer]);
+
+   useEffect(() => {
+      if (audioElem.current) {
+         audioElem.current.volume = audioOptions.volume;
+         audioElem.current.muted = audioOptions.muted;
+      }
+   }, [audioOptions.volume, audioOptions.muted, audioElem.current]);
+
+   return <audio ref={audioElem} data-screen-audio={participantId} autoPlay playsInline controls={false} />;
+}
+
 type Props = {
    children?: React.ReactNode;
 };
@@ -84,6 +119,9 @@ export default function ParticipantMicManager({ children }: Props) {
 
    return (
       <Context.Provider value={audioManager.current}>
+         {participants.map((x) => (
+            <ParticipantScreenAudio key={`screen-audio-${x}`} participantId={x} />
+         ))}
          {participants.map((x) => (
             <ParticipantAudio
                key={x}
