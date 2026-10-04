@@ -17,7 +17,10 @@ COPY src ./src
 RUN yarn build && yarn install --frozen-lockfile --production --ignore-scripts && yarn cache clean
 
 COPY docker-entrypoint.sh ./
-RUN chmod +x docker-entrypoint.sh \
+# Windows checkouts of git can turn the line endings of the script into CRLF; Linux then cannot start it
+# ("exec ./docker-entrypoint.sh: no such file or directory"), so the carriage returns are removed here
+RUN sed -i 's/\r$//' docker-entrypoint.sh \
+    && chmod +x docker-entrypoint.sh \
     && mkdir -p /data/recordings \
     && chown -R pwuser:pwuser /data /app
 
