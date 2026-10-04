@@ -1,8 +1,10 @@
 using System.Collections.Immutable;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using MediatR;
 using Strive.Core.Services.ConferenceControl.Gateways;
 using Strive.Core.Services.ConferenceManagement.Requests;
+using Strive.Core.Services.Recording;
 using Strive.Core.Services.Synchronization;
 
 namespace Strive.Core.Services.ConferenceControl
@@ -13,9 +15,12 @@ namespace Strive.Core.Services.ConferenceControl
         private readonly IConferenceScheduler _scheduler;
         private readonly IOpenConferenceRepository _openConferenceRepository;
 
+        private readonly RecordingOptions _recordingOptions;
+
         public SynchronizedConferenceInfoProvider(IMediator mediator, IConferenceScheduler scheduler,
-            IOpenConferenceRepository openConferenceRepository)
+            IOpenConferenceRepository openConferenceRepository, IOptions<RecordingOptions> recordingOptions)
         {
+            _recordingOptions = recordingOptions.Value;
             _mediator = mediator;
             _scheduler = scheduler;
             _openConferenceRepository = openConferenceRepository;
@@ -32,7 +37,8 @@ namespace Strive.Core.Services.ConferenceControl
             var isOpen = await _openConferenceRepository.IsOpen(conferenceId);
             return new SynchronizedConferenceInfo(isOpen, conference.Configuration.Moderators.ToImmutableList(),
                 nextDate, conference.Configuration.Name, conference.Configuration.Chat.IsPrivateChatEnabled,
-                conference.Configuration.Scenes, conference.Configuration.Lobby.IsEnabled);
+                conference.Configuration.Scenes, conference.Configuration.Lobby.IsEnabled,
+                _recordingOptions.Enabled && conference.Configuration.Recording.IsEnabled);
         }
     }
 }

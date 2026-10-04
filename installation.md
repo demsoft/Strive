@@ -56,3 +56,61 @@ echo "username: $TURN_USER"; echo "password: $TURN_PASSWORD"
 
 A candidate of type `relay` in the result means that coturn, the secret and the firewall are set up correctly. Also join a
 conference from a network that only allows TCP/443 or temporarily block UDP in your browser to see relayed media.
+
+## Recording (optional)
+
+A moderator can record a conference. Recording is never automatic: it is started with the record button (after a
+confirmation), everybody in the conference sees a REC indicator and gets a notice, and a conference can switch it off in its
+settings (`recording.isEnabled`). The recording is stored for 30 days and shared with a link (`/r/<token>`) that needs a
+sign in by default; a moderator can open it to everybody with the link or delete it.
+
+It needs two things next to the normal services: the **recorder** (a headless browser plus ffmpeg, see
+[src/Services/Recorder](src/Services/Recorder/README.md)) and an **S3-compatible storage** for the files.
+
+### Start it
+
+```bash
+cd src
+./compose.sh --profile recording up -d --build      # use --profile recording with down, logs etc. as well
+```
+
+Without the profile nothing of this runs and recording is hidden in the app.
+
+### Storage: Cloudflare R2
+
+1. Create an R2 bucket (e.g. `strive-recordings`, private) and an API token with *Object Read & Write* for that bucket.
+2. Put the values into the file `src/.env.recording` (git ignores it, never commit it):
+
+   ```
+   R2_ACCOUNT_ID=...
+   R2_ACCESS_KEY_ID=...
+   R2_SECRET_ACCESS_KEY=...
+   R2_BUCKET=strive-recordings
+   ```
+
+`compose.sh` uses R2 when this file exists. Without it a small local S3-compatible storage (`storage`, profile
+`local-storage`) is started instead, which is fine to try recording on a development machine. Set `RECORDING_STORAGE=local`
+to use it even if the R2 file exists. Any other S3-compatible store (AWS S3, ...) works by setting
+`Recording__Storage__ServiceUrl`, `Bucket`, `AccessKeyId` and `SecretAccessKey` on the `strive` service and the matching
+`STORAGE_*` variables on the `recorder` (see the recorder README).
+
+The server deletes recordings after `Recording__RetentionDays` (default 30). The R2 token does not need permission to
+manage bucket settings; if you want an additional safety net, add a lifecycle rule in the Cloudflare dashboard.
+
+### Settings
+
+| Setting | Where | Meaning |
+| --- | --- | --- |
+| `RECORDER_SHARED_SECRET`, `RECORDER_TOKEN_SECRET` | `.env` | secrets between server and recorder (>= 16 and >= 32 characters), change them in production |
+| `Recording__Enabled` | `strive` service | the feature switch (set by `--profile recording`) |
+| `Recording__RetentionDays`, `Recording__MaxDurationMinutes` | `strive` service | 30 days, 240 minutes |
+| `MAX_CONCURRENT_RECORDINGS`, `VIDEO_*` | `recorder` service | capacity (about 1-2 CPU cores per recording) and quality (1280x720, 25 fps) |
+
+### Things to know
+
+- Only the main room is recorded.
+- The recorder joins as a participant called "Recording" that can only receive; it is visible in the participant list.
+- Every recording needs roughly 1-2 CPU cores and about 0.5-1.5 GB per hour of storage at the default quality.
+- In development the recorder runs in the network of the docker host (see `docker-compose.dev.yml`), because its browser has
+  to reach the media server on the announced address (`ANNOUNCED_IP`, `127.0.0.1`). In production, set `ANNOUNCED_IP`
+  and the host names to real addresses and the recorder can use the docker network.

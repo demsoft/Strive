@@ -21,6 +21,14 @@ export const POLL_ANSWERS = 'poll_answers';
 export const WHITEBOARDS = 'whiteboards';
 export const HAND_RAISES = 'handRaises';
 export const LOBBY = 'lobby';
+export const RECORDING = 'recording';
+
+/** the server serializes enums in camel case */
+export type RecordingStatus = 'starting' | 'recording' | 'finalizing' | 'ready' | 'failed';
+
+export type SynchronizedRecording = {
+   active: { recordingId: string; status: RecordingStatus; startedAt: string; startedBy: string } | null;
+};
 
 export type SynchronizedLobby = {
    participants: { [participantId: string]: { displayName: string; since: string } };
@@ -43,6 +51,7 @@ export type SynchronizedConferenceInfo = {
    isPrivateChatEnabled: boolean;
    sceneOptions: SceneOptions;
    isLobbyEnabled: boolean;
+   isRecordingEnabled: boolean;
 };
 
 export type SynchronizedParticipantsPermissions = {

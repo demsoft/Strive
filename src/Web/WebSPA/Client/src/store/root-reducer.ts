@@ -13,6 +13,7 @@ import lobby from '../features/lobby/reducer';
 import media from '../features/media/reducer';
 import poll from '../features/poll/reducer';
 import reactions from '../features/reactions/reducer';
+import recording from '../features/recording/reducer';
 import rooms from '../features/rooms/reducer';
 import scenes from '../features/scenes/reducer';
 import settings from '../features/settings/reducer';
@@ -42,6 +43,7 @@ const rootReducer = combineReducers({
    whiteboard,
    handRaise,
    lobby,
+   recording,
    reactions,
 });
 

@@ -275,6 +275,28 @@ export default function TabCommon({
             </Typography>
          </Grid>
          <Grid className={classes.sectionGrid} size={12}>
+            <Typography variant="h6">{t('dialog_create_conference.tabs.common.recording')}</Typography>
+            <FormControlLabel
+               control={
+                  <Controller
+                     render={({ field: { onChange, value } }) => (
+                        <Checkbox
+                           id="recording-enabled"
+                           onChange={(e) => onChange(e.target.checked)}
+                           checked={value ?? true}
+                        />
+                     )}
+                     control={control}
+                     name="configuration.recording.isEnabled"
+                  />
+               }
+               label={t('dialog_create_conference.tabs.common.recording_enabled')}
+            />
+            <Typography variant="caption" color="textSecondary" component="div">
+               {t('dialog_create_conference.tabs.common.recording_description')}
+            </Typography>
+         </Grid>
+         <Grid className={classes.sectionGrid} size={12}>
             <Typography variant="h6" gutterBottom>
                {t('glossary:scene_other')}
             </Typography>

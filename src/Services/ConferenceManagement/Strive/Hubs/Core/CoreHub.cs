@@ -33,6 +33,9 @@ using Strive.Core.Services.Permissions.Requests;
 using Strive.Core.Services.Permissions.Responses;
 using Strive.Core.Services.Poll.Requests;
 using Strive.Core.Services.Reactions.Requests;
+using Strive.Core.Services.Recording;
+using Strive.Core.Services.Recording.Requests;
+using Strive.Infrastructure.Recording;
 using Strive.Core.Services.Rooms;
 using Strive.Core.Services.Rooms.Requests;
 using Strive.Core.Services.Scenes;
@@ -101,6 +104,8 @@ namespace Strive.Hubs.Core
             var metadata = GetMetadata();
             var connectionId = Context.ConnectionId;
 
+            await EnsureRecorderMayJoin(participant);
+
             if (await _mediator.Send(new ShouldWaitInLobbyRequest(participant), Context.ConnectionAborted))
             {
                 _logger.LogDebug("Participant {participant} has to wait in the lobby", participant);
@@ -117,6 +122,32 @@ namespace Strive.Hubs.Core
 
             _connections.SetParticipant(participant.Id,
                 new ParticipantConnection(participant.ConferenceId, Context.ConnectionId));
+        }
+
+        /// <summary>
+        ///     A recorder may only join the conference and the recording its token was created for, and only while that
+        ///     recording runs.
+        /// </summary>
+        private async Task EnsureRecorderMayJoin(Participant participant)
+        {
+            var user = GetHttpContext().User;
+            var isRecorder = user.IsInRole(RecorderOptions.RoleClaimValue);
+
+            // nobody else may use the reserved ids of recorders
+            if (!isRecorder)
+            {
+                if (RecorderParticipants.IsRecorder(participant.Id))
+                    throw RecordingError.NotRecording.ToException();
+                return;
+            }
+
+            var recordingId = user.FindFirst(JwtRecorderJoinTokenFactory.RecordingIdClaim)?.Value;
+            var conferenceId = user.FindFirst(JwtRecorderJoinTokenFactory.ConferenceIdClaim)?.Value;
+
+            if (recordingId == null || conferenceId != participant.ConferenceId ||
+                !await _mediator.Send(new CheckRecorderMayJoinRequest(participant, recordingId),
+                    Context.ConnectionAborted))
+                throw RecordingError.NotRecording.ToException();
         }
 
         private Participant GetContextParticipant()
@@ -202,6 +233,19 @@ namespace Strive.Hubs.Core
             return GetInvoker().Create(new KickParticipantRequest(new Participant(conferenceId, message.ParticipantId)))
                 .ValidateObject(message).RequirePermissions(DefinedPermissions.Conference.CanKickParticipant)
                 .ConferenceMustBeOpen().Send();
+        }
+
+        public Task<SuccessOrError<Unit>> StartRecording()
+        {
+            return GetInvoker().Create(new StartRecordingRequest(GetContextParticipant()))
+                .RequirePermissions(DefinedPermissions.Recording.CanManage).ConferenceMustBeOpen().Send();
+        }
+
+        public Task<SuccessOrError<Unit>> StopRecording()
+        {
+            var (conferenceId, _) = GetContextParticipant();
+            return GetInvoker().Create(new StopRecordingRequest(conferenceId))
+                .RequirePermissions(DefinedPermissions.Recording.CanManage).Send();
         }
 
         public Task<SuccessOrError<Unit>> AdmitParticipant(LobbyParticipantDto dto)

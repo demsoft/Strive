@@ -57,7 +57,10 @@
         "scene_layout_tiles_desc": "Zeige eine Reihe von Kacheln über der Szene an",
         "lobby": "Lobby",
         "lobby_enabled": "Teilnehmer müssen von einem Moderator zugelassen werden",
-        "lobby_description": "Moderatoren treten direkt bei. Alle anderen warten, bis ein Moderator sie zulässt, sobald die Konferenz geöffnet ist."
+        "lobby_description": "Moderatoren treten direkt bei. Alle anderen warten, bis ein Moderator sie zulässt, sobald die Konferenz geöffnet ist.",
+        "recording": "Aufnahme",
+        "recording_enabled": "Moderatoren dürfen diese Konferenz aufnehmen",
+        "recording_description": "Aufgenommen wird nie automatisch: Ein Moderator startet die Aufnahme und alle in der Konferenz werden informiert, solange sie läuft."
       },
       "moderators": {
         "error_user_not_found": "Benutzer mit Id \"{{id}}\" wurde nicht gefunden",
@@ -579,6 +582,44 @@
     "chat_empty": {
       "title": "Noch keine Nachrichten",
       "text": "Sag allen Hallo 👋"
+    },
+    "recording": {
+      "rec": "REC",
+      "starting": "Aufnahme startet…",
+      "saving": "Aufnahme wird gespeichert…",
+      "start": "Aufnahme starten",
+      "stop": "Aufnahme beenden",
+      "confirm_title": "Dieses Meeting aufnehmen?",
+      "confirm_text": "Alle im Meeting werden informiert, dass aufgenommen wird. Die Aufnahme enthält Video, Ton und geteilte Bildschirme und wird 30 Tage gespeichert. Du kannst sie danach teilen oder löschen.",
+      "confirm_start": "Aufnahme starten",
+      "started_notice": "Dieses Meeting wird jetzt aufgenommen",
+      "stopped_notice": "Aufnahme beendet, sie ist gleich verfügbar",
+      "in_progress_notice": "Dieses Meeting wird aufgenommen",
+      "list_title": "Aufnahmen",
+      "list_empty": "Noch keine Aufnahmen. Starte eine mit dem Aufnahme-Button.",
+      "list_error": "Die Aufnahmen konnten nicht geladen werden.",
+      "copy_link": "Link kopieren",
+      "link_copied": "Aufnahme-Link kopiert",
+      "watch": "Ansehen",
+      "more": "Mehr",
+      "make_public": "Jeder mit dem Link",
+      "make_private": "Nur angemeldete Nutzer",
+      "delete_confirm": "Diese Aufnahme endgültig löschen?",
+      "visibility_anyone": "Jeder mit dem Link",
+      "visibility_signed_in": "Angemeldete Nutzer",
+      "deleted_on": "gelöscht am {{date}}",
+      "status_failed": "Fehlgeschlagen",
+      "status_processing": "Wird verarbeitet",
+      "untitled": "Aufgezeichnetes Meeting",
+      "login_required_title": "Zum Ansehen anmelden",
+      "login_required_text": "Diese Aufnahme ist nur für angemeldete Nutzer verfügbar.",
+      "sign_in": "Anmelden",
+      "not_found_title": "Aufnahme nicht gefunden",
+      "not_found_text": "Der Link ist falsch, die Aufnahme wird noch verarbeitet oder wurde gelöscht.",
+      "load_error": "Die Aufnahme konnte nicht geladen werden. Versuche es später erneut.",
+      "record_short": "Aufnehmen",
+      "stop_short": "Stopp",
+      "start_hint": "Dieses Meeting aufnehmen (alle werden informiert)"
     }
   },
   "pre_join": {
