@@ -42,8 +42,9 @@ export default function AudioSettingsTest() {
    const consumer = useConsumer(myId, 'loopback-mic');
 
    const gain = useSelector((state: RootState) => state.settings.obj.mic.audioGain);
+   const musicMode = useSelector((state: RootState) => Boolean(state.settings.obj.mic.musicMode));
 
-   const localMic = useMicrophone(gain, true);
+   const localMic = useMicrophone(gain, true, musicMode);
    const audioDevice = useSelector((state: RootState) => state.settings.obj.mic.device);
    const micController = useDeviceManagement('loopback-mic', localMic, audioDevice);
 

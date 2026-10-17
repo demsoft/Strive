@@ -1,7 +1,26 @@
+import { ProducerOptions } from 'mediasoup-client/lib/types';
 import { useEffect, useRef } from 'react';
 import useMedia, { UseMediaState } from './useMedia';
 
-export default function useMicrophone(gain?: number, loopback = false): UseMediaState {
+/**
+ * Music mode: the processing meant for speech (echo cancellation, noise suppression, automatic gain) would damage an
+ * instrument and make the volume pump, so it is switched off. Stereo from the sound card, no discontinuous
+ * transmission, a higher bitrate, short packets to keep the delay low.
+ */
+export const MUSIC_AUDIO_CONSTRAINTS: MediaTrackConstraints = {
+   echoCancellation: false,
+   noiseSuppression: false,
+   autoGainControl: false,
+   channelCount: 2,
+   sampleRate: 48000,
+};
+
+export const MUSIC_MIC_OPTIONS: Partial<ProducerOptions> = {
+   codecOptions: { opusStereo: true, opusFec: true, opusDtx: false, opusMaxPlaybackRate: 48000, opusPtime: 10 },
+   encodings: [{ maxBitrate: 192000 }],
+};
+
+export default function useMicrophone(gain?: number, loopback = false, musicMode = false): UseMediaState {
    const audioGainNode = useRef<GainNode | null>(null);
 
    useEffect(() => {
@@ -11,7 +30,7 @@ export default function useMicrophone(gain?: number, loopback = false): UseMedia
    }, [gain]);
 
    const getMic = async (deviceId?: string) => {
-      const audioContext = new AudioContext();
+      const audioContext = new AudioContext(musicMode ? { latencyHint: 'interactive' } : undefined);
       // Safari on the iPhone creates the context suspended: nothing would come out of it, the microphone would be silent.
       // It has to be woken up while the tap of the person is still being handled, so before anything is awaited.
       audioContext.resume().catch(() => undefined);
@@ -19,7 +38,9 @@ export default function useMicrophone(gain?: number, loopback = false): UseMedia
 
       let stream: MediaStream;
       try {
-         stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId } });
+         stream = await navigator.mediaDevices.getUserMedia({
+            audio: musicMode ? { ...MUSIC_AUDIO_CONSTRAINTS, deviceId } : { deviceId },
+         });
       } catch (error) {
          audioContext.close().catch(() => undefined);
          throw error;
@@ -49,5 +70,5 @@ export default function useMicrophone(gain?: number, loopback = false): UseMedia
       return track;
    };
 
-   return useMedia(loopback ? 'loopback-mic' : 'mic', getMic);
+   return useMedia(loopback ? 'loopback-mic' : 'mic', getMic, musicMode ? MUSIC_MIC_OPTIONS : undefined);
 }

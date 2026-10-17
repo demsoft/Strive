@@ -102,7 +102,8 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
 
    const gain = useSelector((state: RootState) => state.settings.obj.mic.audioGain);
 
-   const localMic = useMicrophone(gain);
+   const musicMode = useSelector((state: RootState) => Boolean(state.settings.obj.mic.musicMode));
+   const localMic = useMicrophone(gain, false, musicMode);
    const audioDevice = useSelector((state: RootState) => state.settings.obj.mic.device);
    const micController = useDeviceManagement('mic', localMic, audioDevice);
    const micAvailable = useSelectorFactory(selectIsDeviceAvailableFactory, (state: RootState, selector) =>
