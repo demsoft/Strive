@@ -115,3 +115,13 @@ test('when the microphone is refused the audio context is closed again', async (
 
    expect(contexts[0].close).toHaveBeenCalled();
 });
+
+test('music mode asks for raw stereo without echo cancellation, noise suppression or automatic gain', async () => {
+   const { MUSIC_AUDIO_CONSTRAINTS } = await import('./useMicrophone');
+   expect(MUSIC_AUDIO_CONSTRAINTS).toMatchObject({
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
+      channelCount: 2,
+   });
+});

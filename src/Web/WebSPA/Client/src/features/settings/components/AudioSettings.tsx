@@ -1,4 +1,4 @@
-import { Box, Slider, Typography } from '@mui/material';
+import { Alert, Box, FormControlLabel, Slider, Switch, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +7,7 @@ import ErrorWrapper from 'src/components/ErrorWrapper';
 import useSelectorFactory from 'src/hooks/useSelectorFactory';
 import { RootState } from 'src/store';
 import useWebRtcStatus from 'src/store/webrtc/hooks/useWebRtcStatus';
-import { setAudioGain, setCurrentDevice } from '../reducer';
+import { setAudioGain, setCurrentDevice, setMusicMode } from '../reducer';
 import { selectAvailableInputDevicesFactory } from '../selectors';
 import AudioSettingsTest from './AudioSettingsTest';
 import DeviceSelector from './DeviceSelector';
@@ -35,6 +35,7 @@ export default function AudioSettings() {
    const { t } = useTranslation();
    const audioGain = useSelector((state: RootState) => state.settings.obj.mic.audioGain);
    const audioDevice = useSelector((state: RootState) => state.settings.obj.mic.device);
+   const musicMode = useSelector((state: RootState) => Boolean(state.settings.obj.mic.musicMode));
    const dispatch = useDispatch();
 
    const handleChangeGain = (_: Event, value: number | number[]) => {
@@ -55,6 +56,20 @@ export default function AudioSettings() {
             selectedDevice={audioDevice}
             onChange={(device) => dispatch(setCurrentDevice({ device, source: 'mic' }))}
          />
+         <Box sx={{ mt: 3 }}>
+            <FormControlLabel
+               control={<Switch checked={musicMode} onChange={(_, checked) => dispatch(setMusicMode(checked))} />}
+               label={t('conference.settings.audio.music_mode')}
+            />
+            <Typography variant="body2" color="text.secondary">
+               {t('conference.settings.audio.music_mode_description')}
+            </Typography>
+            {musicMode && (
+               <Alert severity="info" sx={{ mt: 1 }}>
+                  {t('conference.settings.audio.music_mode_hint')}
+               </Alert>
+            )}
+         </Box>
          <Box
             sx={{
                mt: 4,

@@ -9,6 +9,8 @@ export type StriveSettings = {
    mic: {
       device?: AnyInputDevice;
       audioGain: number;
+      /** raw stereo sound for instruments: no echo cancellation, noise suppression or automatic gain */
+      musicMode?: boolean;
    };
    webcam: {
       device?: AnyInputDevice;
@@ -69,6 +71,9 @@ const settingsSlice = createSlice({
       setAudioGain(state, { payload }: PayloadAction<number>) {
          state.obj.mic.audioGain = payload;
       },
+      setMusicMode(state, { payload }: PayloadAction<boolean>) {
+         state.obj.mic.musicMode = payload;
+      },
       setCurrentDevice(
          state,
          { payload: { source, device } }: PayloadAction<{ source: ProducerDevice; device: AnyInputDevice | undefined }>,
@@ -113,6 +118,7 @@ export const {
    setEnableVideoOverlay,
    setJoinWithMic,
    setJoinWithWebcam,
+   setMusicMode,
    setPlaySoundOnOpen,
 } = settingsSlice.actions;
 

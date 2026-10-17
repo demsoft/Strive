@@ -227,6 +227,9 @@
       "audio": {
         "title": "Audio",
         "gain": "Gain",
+        "music_mode": "Music mode",
+        "music_mode_description": "Raw stereo sound for instruments and singing: echo cancellation, noise suppression and automatic volume are switched off and the quality is higher. Turn your microphone off and on again after changing it.",
+        "music_mode_hint": "Wear headphones in music mode, otherwise the sound of the speakers goes back into the microphone as an echo.",
         "test_description": "We will loopback your current audio input and show the results here. This way, you can check what other participants actually receive.",
         "audio_input_level": "Your microphone input level",
         "repeat_audio_description": "Click the button below and say something. Click it again and we will replay what you just said.",
