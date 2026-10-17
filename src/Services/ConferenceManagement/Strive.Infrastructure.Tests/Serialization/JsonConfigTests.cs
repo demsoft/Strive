@@ -41,6 +41,7 @@ namespace Strive.Infrastructure.Tests.Serialization
         [InlineData(ProducerSource.Mic, "mic")]
         [InlineData(ProducerSource.Screen, "screen")]
         [InlineData(ProducerSource.ScreenAudio, "screen-audio")]
+        [InlineData(ProducerSource.Instrument, "instrument")]
         [InlineData(ProducerSource.LoopbackScreen, "loopback-screen")]
         public void Serialize_ProducerSource_SameNameAsInTheMediaServerAndTheBrowser(ProducerSource source, string name)
         {

@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import AnimatedCamIcon from 'src/assets/animated-icons/AnimatedCamIcon';
 import AnimatedMicIcon from 'src/assets/animated-icons/AnimatedMicIcon';
 import AnimatedScreenIcon from 'src/assets/animated-icons/AnimatedScreenIcon';
+import InstrumentIcon from 'src/assets/animated-icons/InstrumentIcon';
 import Debug from 'src/features/conference/components/troubleshoot/Troubleshooting';
 import { selectIsDeviceAvailableFactory } from 'src/features/settings/selectors';
 import useIsMobile from 'src/hooks/useIsMobile';
@@ -26,6 +27,7 @@ import { RootState } from 'src/store';
 import { showMessage } from 'src/store/notifier/actions';
 import useWebRtcStatus from 'src/store/webrtc/hooks/useWebRtcStatus';
 import { formatErrorMessage } from 'src/utils/error-utils';
+import useInstrument from 'src/store/webrtc/hooks/useInstrument';
 import useMicrophone from 'src/store/webrtc/hooks/useMicrophone';
 import useScreen from 'src/store/webrtc/hooks/useScreen';
 import useWebcam from 'src/store/webrtc/hooks/useWebcam';
@@ -106,6 +108,12 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
    const localMic = useMicrophone(gain, false, musicMode);
    const audioDevice = useSelector((state: RootState) => state.settings.obj.mic.device);
    const micController = useDeviceManagement('mic', localMic, audioDevice);
+
+   const instrumentDeviceId = useSelector((state: RootState) => state.settings.obj.mic.instrumentDeviceId);
+   const instrument = useInstrument();
+   useEffect(() => {
+      instrument.switchDevice(instrumentDeviceId);
+   }, [instrumentDeviceId, instrument.connected]);
    const micAvailable = useSelectorFactory(selectIsDeviceAvailableFactory, (state: RootState, selector) =>
       selector(state, 'mic'),
    );
@@ -188,6 +196,18 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
                   size={fabSize}
                   Icon={AnimatedCamIcon}
                   control={webcamController}
+                  component={motion.button}
+                  variants={item}
+               />
+            )}
+            {canShareAudio && musicMode && micAvailable && (
+               <MediaFab
+                  disabled={!instrumentDeviceId}
+                  translationKey="instrument"
+                  className={classes.fab}
+                  size={fabSize}
+                  Icon={InstrumentIcon}
+                  control={instrument}
                   component={motion.button}
                   variants={item}
                />

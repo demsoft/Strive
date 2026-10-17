@@ -7,6 +7,7 @@ import { fetchDevices } from '../../settings/thunks';
 import { getDeviceName } from '../ua-utils';
 import AvailableEquipmentTable from './AvailableEquipmentTable';
 import * as equipmentHub from 'src/equipment-hub';
+import useInstrument from 'src/store/webrtc/hooks/useInstrument';
 import useMicrophone from 'src/store/webrtc/hooks/useMicrophone';
 import { ProducerSource } from 'src/store/webrtc/types';
 import { UseMediaState } from 'src/store/webrtc/hooks/useMedia';
@@ -61,12 +62,14 @@ export default function Equipment() {
    const loopbackWebcam = useWebcam(true);
 
    const screen = useScreen();
+   const instrument = useInstrument();
 
    const controllers: { [src in ProducerSource]: UseMediaState } = {
       mic,
       webcam,
       screen,
       ['screen-audio']: screen,
+      instrument,
       ['loopback-mic']: loopbackMic,
       ['loopback-webcam']: loopbackWebcam,
       ['loopback-screen']: screen,

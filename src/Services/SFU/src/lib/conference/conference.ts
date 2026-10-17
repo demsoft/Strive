@@ -397,6 +397,7 @@ export class Conference {
       if (source === 'mic' && kind === 'audio') return true;
       if (source === 'screen' && kind === 'video') return true;
       if (source === 'screen-audio' && kind === 'audio') return true;
+      if (source === 'instrument' && kind === 'audio') return true;
       if (source === 'webcam' && kind === 'video') return true;
 
       if (source === 'loopback-mic' && kind === 'audio') return true;

@@ -230,6 +230,9 @@
         "music_mode": "Music mode",
         "music_mode_description": "Raw stereo sound for instruments and singing: echo cancellation, noise suppression and automatic volume are switched off and the quality is higher. Turn your microphone off and on again after changing it.",
         "music_mode_hint": "Wear headphones in music mode, otherwise the sound of the speakers goes back into the microphone as an echo.",
+        "instrument_input": "Instrument input",
+        "instrument_input_description": "A second input, for example your piano or bass on the sound card. It is sent as a track of its own next to your voice. Then use the piano button in the bottom bar.",
+        "instrument_none": "None",
         "test_description": "We will loopback your current audio input and show the results here. This way, you can check what other participants actually receive.",
         "audio_input_level": "Your microphone input level",
         "repeat_audio_description": "Click the button below and say something. Click it again and we will replay what you just said.",
@@ -339,6 +342,7 @@
     "media": {
       "screen_no_audio_hint": "Tip: to share the sound of a video, choose a browser tab and tick “Also share tab audio”. The sound of a whole screen can only be shared on Windows.",
       "controls": {
+        "instrument": { "active": "Instrument is on", "disabled": "Instrument is off (choose the input in Settings → Audio first)", "paused": "Instrument is paused", "label_enable": "Turn on instrument", "label_disable": "Turn off instrument" },
         "mic": {
           "active": "Microphone is active",
           "disabled": "Microphone is disabled",

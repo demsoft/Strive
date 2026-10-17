@@ -258,6 +258,7 @@
     "media": {
       "screen_no_audio_hint": "Tipp: Um den Ton eines Videos zu teilen, wähle einen Browser-Tab und aktiviere „Tab-Audio auch teilen“. Der Ton eines ganzen Bildschirms lässt sich nur unter Windows teilen.",
       "controls": {
+        "instrument": { "active": "Instrument ist an", "disabled": "Instrument ist aus (wähle zuerst den Eingang unter Einstellungen → Audio)", "paused": "Instrument pausiert", "label_enable": "Instrument einschalten", "label_disable": "Instrument ausschalten" },
         "mic": {
           "active": "Mikrofon ist aktiv",
           "disabled": "Mikrofon ist deaktiviert",
@@ -463,6 +464,9 @@
         "music_mode": "Musikmodus",
         "music_mode_description": "Unverarbeiteter Stereoton für Instrumente und Gesang: Echounterdrückung, Rauschunterdrückung und automatische Lautstärke sind aus, die Qualität ist höher. Schalte nach der Änderung das Mikrofon aus und wieder ein.",
         "music_mode_hint": "Trage im Musikmodus Kopfhörer, sonst gelangt der Ton der Lautsprecher als Echo zurück ins Mikrofon.",
+        "instrument_input": "Instrumenteneingang",
+        "instrument_input_description": "Ein zweiter Eingang, zum Beispiel Klavier oder Bass an der Soundkarte. Er wird als eigene Spur neben deiner Stimme gesendet. Nutze dann den Klavier-Knopf unten.",
+        "instrument_none": "Keiner",
         "permission_denied": "Erlaubnis verweigert: Bitte erlauben Sie die Verwendung des Mikrofons in Ihrem Browser",
         "repeat_audio_description": "Klicken Sie auf die Schaltfläche unten und sagen Sie etwas. Klicken Sie erneut darauf und wir geben wieder, was Sie gerade gesagt haben.",
         "repeat_idle": "Ich will mich selbst hören",
