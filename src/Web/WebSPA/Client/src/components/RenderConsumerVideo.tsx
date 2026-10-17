@@ -62,10 +62,11 @@ const computePrefferredLayerForDevice = (height: number, scalabilityMode: Scalab
 
 const getProducerDevice: (source: ProducerSource) => ProducerDevice = (source) => {
    switch (source) {
-      case 'mic':
       case 'webcam':
       case 'screen':
          return source;
+      case 'mic':
+      case 'instrument':
       case 'loopback-mic':
          return 'mic';
       case 'loopback-webcam':

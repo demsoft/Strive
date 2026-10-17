@@ -31,6 +31,8 @@ export const producerSources = [
    'screen',
    /** the sound of the shared screen (a tab or the system), a track of its own next to the microphone */
    'screen-audio',
+   /** a second audio input of a musician (an instrument through a sound card), a track of its own next to the microphone */
+   'instrument',
    'loopback-mic',
    'loopback-webcam',
    'loopback-screen',

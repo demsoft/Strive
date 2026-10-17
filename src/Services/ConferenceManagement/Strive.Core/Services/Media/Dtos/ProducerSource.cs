@@ -1,4 +1,4 @@
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
 namespace Strive.Core.Services.Media.Dtos
 {
@@ -10,6 +10,9 @@ namespace Strive.Core.Services.Media.Dtos
 
         /// <summary>The sound of the shared screen (a tab or the system), next to the microphone</summary>
         [EnumMember(Value = "screen-audio")] ScreenAudio,
+
+        /// <summary>A second audio input of a musician (an instrument through a sound card), next to the microphone</summary>
+        [EnumMember(Value = "instrument")] Instrument,
 
         [EnumMember(Value = "loopback-mic")] LoopbackMic,
 

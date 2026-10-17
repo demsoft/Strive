@@ -65,11 +65,17 @@ function ParticipantAudio({
 }
 
 /**
- * The sound of the screen that a participant shares (a video, music). It is played next to the voice of the
+ * The sound of the screen that a participant shares (a video, music), or the second input of a musician (an instrument). It is played next to the voice of the
  * participant, and muted together with the participant.
  */
-function ParticipantScreenAudio({ participantId }: { participantId: string }) {
-   const consumer = useConsumer(participantId, 'screen-audio');
+function ParticipantExtraAudio({
+   participantId,
+   source,
+}: {
+   participantId: string;
+   source: 'screen-audio' | 'instrument';
+}) {
+   const consumer = useConsumer(participantId, source);
    const audioOptions =
       useSelector((state: RootState) => state.media.participantAudio[participantId]) ?? DEFAULT_PARTICIPANT_AUDIO;
 
@@ -96,7 +102,7 @@ function ParticipantScreenAudio({ participantId }: { participantId: string }) {
       }
    }, [audioOptions.volume, audioOptions.muted, audioElem.current]);
 
-   return <audio ref={audioElem} data-screen-audio={participantId} autoPlay playsInline controls={false} />;
+   return <audio ref={audioElem} data-extra-audio={`${source}-${participantId}`} autoPlay playsInline controls={false} />;
 }
 
 type Props = {
@@ -120,7 +126,10 @@ export default function ParticipantMicManager({ children }: Props) {
    return (
       <Context.Provider value={audioManager.current}>
          {participants.map((x) => (
-            <ParticipantScreenAudio key={`screen-audio-${x}`} participantId={x} />
+            <ParticipantExtraAudio key={`screen-audio-${x}`} participantId={x} source="screen-audio" />
+         ))}
+         {participants.map((x) => (
+            <ParticipantExtraAudio key={`instrument-${x}`} participantId={x} source="instrument" />
          ))}
          {participants.map((x) => (
             <ParticipantAudio

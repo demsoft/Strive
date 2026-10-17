@@ -419,3 +419,38 @@ test('join() | screen audio with the screen permission | add producer to mixer',
    expect(mixer.addProducer.mock.calls.length).toEqual(1);
    expect(mixer.addProducer.mock.calls[0][0].producer).toEqual(participant.producers['screen-audio']?.producer);
 });
+
+test('join() | instrument without the audio permission | dont add producer to mixer', async () => {
+   const conferenceRepo = createConferenceRepoMock(emptyConference);
+   const mixer = createMediasoupMixerMock();
+
+   const room = new Room(roomId, undefined as any, undefined as any, conferenceRepo, conferenceId, ['instrument']);
+   const participant: Participant = {
+      connections: [],
+      participantId: '1',
+      producers: { instrument: createProducer('8') },
+      receiveConnection: undefined,
+   };
+
+   await room.join(participant);
+
+   expect(mixer.addProducer.mock.calls.length).toEqual(0);
+});
+
+test('join() | instrument with the audio permission | add producer to mixer', async () => {
+   const conferenceRepo = createConferenceRepoMock(conferenceWithPermissions('1', MEDIA_CAN_SHARE_AUDIO));
+   const mixer = createMediasoupMixerMock();
+
+   const room = new Room(roomId, undefined as any, undefined as any, conferenceRepo, conferenceId, ['instrument']);
+   const participant: Participant = {
+      connections: [],
+      participantId: '1',
+      producers: { instrument: createProducer('8') },
+      receiveConnection: undefined,
+   };
+
+   await room.join(participant);
+
+   expect(mixer.addProducer.mock.calls.length).toEqual(1);
+   expect(mixer.addProducer.mock.calls[0][0].producer).toEqual(participant.producers.instrument?.producer);
+});

@@ -1,4 +1,4 @@
-import { Alert, Box, FormControlLabel, Slider, Switch, Typography } from '@mui/material';
+import { Alert, Box, FormControlLabel, MenuItem, Slider, Switch, TextField, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +7,7 @@ import ErrorWrapper from 'src/components/ErrorWrapper';
 import useSelectorFactory from 'src/hooks/useSelectorFactory';
 import { RootState } from 'src/store';
 import useWebRtcStatus from 'src/store/webrtc/hooks/useWebRtcStatus';
-import { setAudioGain, setCurrentDevice, setMusicMode } from '../reducer';
+import { setAudioGain, setCurrentDevice, setInstrumentDeviceId, setMusicMode } from '../reducer';
 import { selectAvailableInputDevicesFactory } from '../selectors';
 import AudioSettingsTest from './AudioSettingsTest';
 import DeviceSelector from './DeviceSelector';
@@ -36,6 +36,7 @@ export default function AudioSettings() {
    const audioGain = useSelector((state: RootState) => state.settings.obj.mic.audioGain);
    const audioDevice = useSelector((state: RootState) => state.settings.obj.mic.device);
    const musicMode = useSelector((state: RootState) => Boolean(state.settings.obj.mic.musicMode));
+   const instrumentDeviceId = useSelector((state: RootState) => state.settings.obj.mic.instrumentDeviceId);
    const dispatch = useDispatch();
 
    const handleChangeGain = (_: Event, value: number | number[]) => {
@@ -68,6 +69,28 @@ export default function AudioSettings() {
                <Alert severity="info" sx={{ mt: 1 }}>
                   {t('conference.settings.audio.music_mode_hint')}
                </Alert>
+            )}
+            {musicMode && (
+               <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  sx={{ mt: 2, maxWidth: 400 }}
+                  label={t('conference.settings.audio.instrument_input')}
+                  helperText={t('conference.settings.audio.instrument_input_description')}
+                  value={instrumentDeviceId ?? ''}
+                  onChange={(e) => dispatch(setInstrumentDeviceId(e.target.value || undefined))}
+               >
+                  <MenuItem value="">{t('conference.settings.audio.instrument_none')}</MenuItem>
+                  {audioDevices
+                     .filter((x) => x.type === 'local')
+                     .flatMap((x) => x.devices)
+                     .map((x) => (
+                        <MenuItem key={x.device.deviceId} value={x.device.deviceId}>
+                           {x.label ?? x.device.deviceId}
+                        </MenuItem>
+                     ))}
+               </TextField>
             )}
          </Box>
          <Box

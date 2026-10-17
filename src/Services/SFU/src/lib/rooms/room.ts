@@ -20,6 +20,8 @@ const producerPermission: { [key in ProducerSource]?: Permission<boolean> } = {
    screen: MEDIA_CAN_SHARE_SCREEN,
    /** the sound of a screen share is allowed with the screen share */
    'screen-audio': MEDIA_CAN_SHARE_SCREEN,
+   /** a second audio input follows the permission to share audio */
+   instrument: MEDIA_CAN_SHARE_AUDIO,
    /** no permissions required to loopback device */
 };
 
