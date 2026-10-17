@@ -25,6 +25,7 @@ using Strive.Core.Services.ConferenceControl.Notifications;
 using Strive.Core.Services.ConferenceControl.Requests;
 using Strive.Core.Services.Equipment.Requests;
 using Strive.Core.Services.HandRaise.Requests;
+using Strive.Core.Services.LessonMode.Requests;
 using Strive.Core.Services.WatchTogether.Requests;
 using Strive.Core.Services.Lobby.Requests;
 using Strive.Core.Services.Media;
@@ -270,6 +271,13 @@ namespace Strive.Hubs.Core
             var (conferenceId, _) = GetContextParticipant();
             return GetInvoker().Create(new StopWatchTogetherRequest(conferenceId))
                 .RequirePermissions(DefinedPermissions.WatchTogether.CanControl).Send();
+        }
+
+        public Task<SuccessOrError<Unit>> SetLessonMode(SetLessonModeDto dto)
+        {
+            var (conferenceId, _) = GetContextParticipant();
+            return GetInvoker().Create(new SetLessonModeRequest(conferenceId, dto.Active))
+                .RequirePermissions(DefinedPermissions.LessonMode.CanControl).ConferenceMustBeOpen().Send();
         }
 
         public Task<SuccessOrError<Unit>> AdmitParticipant(LobbyParticipantDto dto)

@@ -23,6 +23,7 @@ export const HAND_RAISES = 'handRaises';
 export const LOBBY = 'lobby';
 export const RECORDING = 'recording';
 export const WATCH_TOGETHER = 'watchTogether';
+export const LESSON_MODE = 'lessonMode';
 
 /** the server serializes enums in camel case */
 export type RecordingStatus = 'starting' | 'recording' | 'finalizing' | 'ready' | 'failed';
@@ -47,6 +48,11 @@ export type WatchTogetherSession = {
 
 export type SynchronizedWatchTogether = {
    session: WatchTogetherSession | null;
+};
+
+/** while active only the moderators (the teachers) and the participants allowed to speak can be heard */
+export type SynchronizedLessonMode = {
+   active: boolean;
 };
 
 export type SynchronizedLobby = {

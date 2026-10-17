@@ -155,6 +155,7 @@
       "confirm": "Verlassen",
       "end_for_everyone": "Für alle beenden"
     },
+    "lesson_mode": {"title": "Unterrichtsmodus", "turn_on": "Unterrichtsmodus: nur ich bin zu hören", "turn_off": "Unterrichtsmodus beenden", "description": "Alle anderen sind stummgeschaltet, bis du jemandem das Sprechen erlaubst (im Menü des Teilnehmers)", "active_info": "Unterrichtsmodus ist an: nur der Lehrer ist zu hören. Melde dich, um sprechen zu dürfen."},
     "watch_together": {
       "title": "Gemeinsam ansehen",
       "stop": "Video beenden",
