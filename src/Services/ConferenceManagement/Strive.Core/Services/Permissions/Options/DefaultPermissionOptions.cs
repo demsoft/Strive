@@ -54,6 +54,7 @@ namespace Strive.Core.Services.Permissions.Options
                     DefinedPermissions.Lobby.CanAdmit.Configure(true),
                     DefinedPermissions.Recording.CanManage.Configure(true),
                     DefinedPermissions.WatchTogether.CanControl.Configure(true),
+                    DefinedPermissions.LessonMode.CanControl.Configure(true),
                 }.ToImmutableDictionary()
             },
             // Breakout room permissions

@@ -155,6 +155,7 @@
       "confirm": "Leave",
       "end_for_everyone": "End for everyone"
     },
+    "lesson_mode": {"title": "Lesson mode", "turn_on": "Lesson mode: only I can be heard", "turn_off": "End lesson mode", "description": "Everybody else is muted until you allow somebody to speak (in the menu of the participant)", "active_info": "Lesson mode is on: only the teacher can be heard. Raise your hand to be allowed to speak."},
     "watch_together": {
       "title": "Watch together",
       "stop": "Stop the video",
