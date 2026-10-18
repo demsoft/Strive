@@ -14,6 +14,7 @@ import media from '../features/media/reducer';
 import poll from '../features/poll/reducer';
 import reactions from '../features/reactions/reducer';
 import recording from '../features/recording/reducer';
+import latency from '../features/latency/reducer';
 import metronome from '../features/metronome/reducer';
 import lessonMode from '../features/lesson-mode/reducer';
 import watchTogether from '../features/watch-together/reducer';
@@ -50,6 +51,7 @@ const rootReducer = combineReducers({
    watchTogether,
    lessonMode,
    metronome,
+   latency,
    reactions,
 });
 

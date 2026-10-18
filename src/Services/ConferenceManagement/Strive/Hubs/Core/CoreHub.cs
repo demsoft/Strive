@@ -25,6 +25,8 @@ using Strive.Core.Services.ConferenceControl.Notifications;
 using Strive.Core.Services.ConferenceControl.Requests;
 using Strive.Core.Services.Equipment.Requests;
 using Strive.Core.Services.HandRaise.Requests;
+using Strive.Core.Services.Latency;
+using Strive.Core.Services.Latency.Requests;
 using Strive.Core.Services.LessonMode.Requests;
 using Strive.Core.Services.Metronome.Requests;
 using Strive.Core.Services.WatchTogether.Requests;
@@ -279,6 +281,15 @@ namespace Strive.Hubs.Core
             var (conferenceId, _) = GetContextParticipant();
             return GetInvoker().Create(new StopWatchTogetherRequest(conferenceId))
                 .RequirePermissions(DefinedPermissions.WatchTogether.CanControl).Send();
+        }
+
+        /// <summary>A participant tells how good their connection is, to estimate the delay between musicians</summary>
+        public Task<SuccessOrError<Unit>> ReportLatency(ReportLatencyDto dto)
+        {
+            return GetInvoker()
+                .Create(new ReportLatencyRequest(GetContextParticipant(),
+                    new LatencyReport(dto.RttMs, dto.JitterBufferMs, dto.OutputMs)))
+                .ConferenceMustBeOpen().Send();
         }
 
         public Task<SuccessOrError<Unit>> StartMetronome(StartMetronomeDto dto)
