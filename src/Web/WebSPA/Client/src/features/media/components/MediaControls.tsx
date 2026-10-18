@@ -110,7 +110,8 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
    const micController = useDeviceManagement('mic', localMic, audioDevice);
 
    const instrumentDeviceId = useSelector((state: RootState) => state.settings.obj.mic.instrumentDeviceId);
-   const instrument = useInstrument();
+   const monitorInstrument = useSelector((state: RootState) => Boolean(state.settings.obj.mic.monitorInstrument));
+   const instrument = useInstrument(monitorInstrument);
    useEffect(() => {
       instrument.switchDevice(instrumentDeviceId);
    }, [instrumentDeviceId, instrument.connected]);
