@@ -42,6 +42,9 @@ namespace Strive.Core.Services
         WatchTogether_NothingPlaying,
         WatchTogether_InvalidControl,
 
+        // Metronome
+        Metronome_InvalidTempo,
+
         // Permissions
         Permissions_PermissionKeyNotFound,
         Permissions_InvalidPermissionValueType,

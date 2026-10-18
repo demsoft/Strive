@@ -157,6 +157,7 @@
       "confirm": "Verlassen",
       "end_for_everyone": "Für alle beenden"
     },
+    "metronome": {"title": "Metronom", "running": "Metronom: {{bpm}} BPM", "start": "Klick starten", "change": "Tempo ändern", "stop": "Stopp", "beats": "Schläge", "slower": "Langsamer", "faster": "Schneller", "mute": "Klick stummschalten", "unmute": "Klick einschalten", "volume": "Lautstärke des Klicks", "local_hint": "Alle hören den Klick im selben Moment. Die Lautstärke gilt nur für deinen Computer."},
     "lesson_mode": {"title": "Unterrichtsmodus", "turn_on": "Unterrichtsmodus: nur ich bin zu hören", "turn_off": "Unterrichtsmodus beenden", "description": "Alle anderen sind stummgeschaltet, bis du jemandem das Sprechen erlaubst (im Menü des Teilnehmers)", "active_info": "Unterrichtsmodus ist an: nur der Lehrer ist zu hören. Melde dich, um sprechen zu dürfen."},
     "watch_together": {
       "title": "Gemeinsam ansehen",

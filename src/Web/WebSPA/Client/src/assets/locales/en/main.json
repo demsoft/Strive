@@ -157,6 +157,7 @@
       "confirm": "Leave",
       "end_for_everyone": "End for everyone"
     },
+    "metronome": {"title": "Metronome", "running": "Metronome: {{bpm}} BPM", "start": "Start the click", "change": "Change the tempo", "stop": "Stop", "beats": "Beats", "slower": "Slower", "faster": "Faster", "mute": "Mute the click", "unmute": "Turn the click on", "volume": "Volume of the click", "local_hint": "Everybody hears the click at the same moment. The volume is only for your computer."},
     "lesson_mode": {"title": "Lesson mode", "turn_on": "Lesson mode: only I can be heard", "turn_off": "End lesson mode", "description": "Everybody else is muted until you allow somebody to speak (in the menu of the participant)", "active_info": "Lesson mode is on: only the teacher can be heard. Raise your hand to be allowed to speak."},
     "watch_together": {
       "title": "Watch together",

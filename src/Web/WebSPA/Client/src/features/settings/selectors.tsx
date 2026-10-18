@@ -50,6 +50,11 @@ export const selectIsDeviceAvailableFactory = () => {
    });
 };
 
+export const DEFAULT_METRONOME_VOLUME = 0.7;
+export const selectMetronomeVolume = (state: RootState) =>
+   state.settings.obj.conference.metronomeVolume ?? DEFAULT_METRONOME_VOLUME;
+export const selectMetronomeMuted = (state: RootState) => Boolean(state.settings.obj.conference.metronomeMuted);
+
 export const selectEnableVideoOverlay = (state: RootState) => state.settings.obj.diagnostics.enableVideoOverlay;
 
 export type DeviceGroup = EquipmentDeviceGroup | LocalDeviceGroup;

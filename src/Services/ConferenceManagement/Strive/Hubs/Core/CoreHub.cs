@@ -26,6 +26,7 @@ using Strive.Core.Services.ConferenceControl.Requests;
 using Strive.Core.Services.Equipment.Requests;
 using Strive.Core.Services.HandRaise.Requests;
 using Strive.Core.Services.LessonMode.Requests;
+using Strive.Core.Services.Metronome.Requests;
 using Strive.Core.Services.WatchTogether.Requests;
 using Strive.Core.Services.Lobby.Requests;
 using Strive.Core.Services.Media;
@@ -278,6 +279,20 @@ namespace Strive.Hubs.Core
             var (conferenceId, _) = GetContextParticipant();
             return GetInvoker().Create(new StopWatchTogetherRequest(conferenceId))
                 .RequirePermissions(DefinedPermissions.WatchTogether.CanControl).Send();
+        }
+
+        public Task<SuccessOrError<Unit>> StartMetronome(StartMetronomeDto dto)
+        {
+            return GetInvoker().Create(new StartMetronomeRequest(GetContextParticipant(), dto.Bpm, dto.BeatsPerBar))
+                .ValidateObject(dto).RequirePermissions(DefinedPermissions.Metronome.CanControl)
+                .ConferenceMustBeOpen().Send();
+        }
+
+        public Task<SuccessOrError<Unit>> StopMetronome()
+        {
+            var (conferenceId, _) = GetContextParticipant();
+            return GetInvoker().Create(new StopMetronomeRequest(conferenceId))
+                .RequirePermissions(DefinedPermissions.Metronome.CanControl).Send();
         }
 
         public Task<SuccessOrError<Unit>> SetLessonMode(SetLessonModeDto dto)
