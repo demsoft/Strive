@@ -7,7 +7,7 @@ import ErrorWrapper from 'src/components/ErrorWrapper';
 import useSelectorFactory from 'src/hooks/useSelectorFactory';
 import { RootState } from 'src/store';
 import useWebRtcStatus from 'src/store/webrtc/hooks/useWebRtcStatus';
-import { setAudioGain, setCurrentDevice, setInstrumentDeviceId, setMusicMode } from '../reducer';
+import { setAudioGain, setCurrentDevice, setInstrumentDeviceId, setMonitorInstrument, setMusicMode } from '../reducer';
 import { selectAvailableInputDevicesFactory } from '../selectors';
 import AudioSettingsTest from './AudioSettingsTest';
 import DeviceSelector from './DeviceSelector';
@@ -37,6 +37,7 @@ export default function AudioSettings() {
    const audioGain = useSelector((state: RootState) => state.settings.obj.mic.audioGain);
    const audioDevice = useSelector((state: RootState) => state.settings.obj.mic.device);
    const musicMode = useSelector((state: RootState) => Boolean(state.settings.obj.mic.musicMode));
+   const monitorInstrument = useSelector((state: RootState) => Boolean(state.settings.obj.mic.monitorInstrument));
    const instrumentDeviceId = useSelector((state: RootState) => state.settings.obj.mic.instrumentDeviceId);
    const dispatch = useDispatch();
 
@@ -94,6 +95,22 @@ export default function AudioSettings() {
                </TextField>
             )}
             {musicMode && instrumentDeviceId && <InstrumentLevelMeter deviceId={instrumentDeviceId} />}
+            {musicMode && (
+               <Box sx={{ mt: 1 }}>
+                  <FormControlLabel
+                     control={
+                        <Switch
+                           checked={monitorInstrument}
+                           onChange={(_, checked) => dispatch(setMonitorInstrument(checked))}
+                        />
+                     }
+                     label={t('conference.settings.audio.instrument_monitor')}
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                     {t('conference.settings.audio.instrument_monitor_description')}
+                  </Typography>
+               </Box>
+            )}
          </Box>
          <Box
             sx={{

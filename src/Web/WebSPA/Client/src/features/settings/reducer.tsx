@@ -13,6 +13,8 @@ export type StriveSettings = {
       musicMode?: boolean;
       /** a second sound card input (piano, bass) sent as a track of its own next to the microphone */
       instrumentDeviceId?: string;
+      /** the instrument is also played in the headphones of the musician himself, straight from the sound card */
+      monitorInstrument?: boolean;
    };
    webcam: {
       device?: AnyInputDevice;
@@ -76,6 +78,9 @@ const settingsSlice = createSlice({
       setInstrumentDeviceId(state, { payload }: PayloadAction<string | undefined>) {
          state.obj.mic.instrumentDeviceId = payload;
       },
+      setMonitorInstrument(state, { payload }: PayloadAction<boolean>) {
+         state.obj.mic.monitorInstrument = payload;
+      },
       setMusicMode(state, { payload }: PayloadAction<boolean>) {
          state.obj.mic.musicMode = payload;
       },
@@ -124,6 +129,7 @@ export const {
    setJoinWithMic,
    setInstrumentDeviceId,
    setJoinWithWebcam,
+   setMonitorInstrument,
    setMusicMode,
    setPlaySoundOnOpen,
 } = settingsSlice.actions;

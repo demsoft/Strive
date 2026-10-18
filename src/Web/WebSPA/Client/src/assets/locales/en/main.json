@@ -234,6 +234,8 @@
         "instrument_input": "Instrument input",
         "instrument_input_description": "A second input, for example your piano or bass on the sound card. It is sent as a track of its own next to your voice. Then use the piano button in the bottom bar.",
         "instrument_none": "None",
+        "instrument_monitor": "Hear my instrument in my headphones",
+        "instrument_monitor_description": "Plays your instrument to you straight from the sound card, without the delay of the call. Use it only with headphones (with speakers it feeds back), and not if your sound card already monitors directly, or you will hear it twice.",
         "instrument_meter_silent": "The input gives no signal. Play something, check the cable and the gain knob of the sound card.",
         "instrument_meter_ok": "Signal is arriving ({{channels}} channel(s)). Remember to press the piano button in the bottom bar to send it.",
         "instrument_meter_failed": "This input cannot be opened. Choose another one, or allow the microphone in the browser.",

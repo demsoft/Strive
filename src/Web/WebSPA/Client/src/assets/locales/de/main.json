@@ -468,6 +468,8 @@
         "instrument_input": "Instrumenteneingang",
         "instrument_input_description": "Ein zweiter Eingang, zum Beispiel Klavier oder Bass an der Soundkarte. Er wird als eigene Spur neben deiner Stimme gesendet. Nutze dann den Klavier-Knopf unten.",
         "instrument_none": "Keiner",
+        "instrument_monitor": "Mein Instrument im Kopfhörer hören",
+        "instrument_monitor_description": "Spielt dir dein Instrument direkt von der Soundkarte vor, ohne die Verzögerung des Gesprächs. Nur mit Kopfhörern nutzen (mit Lautsprechern gibt es Rückkopplung) und nicht, wenn deine Soundkarte schon direkt abhört, sonst hörst du es doppelt.",
         "instrument_meter_silent": "Der Eingang liefert kein Signal. Spiele etwas und prüfe Kabel und Gain-Regler der Soundkarte.",
         "instrument_meter_ok": "Signal kommt an ({{channels}} Kanal/Kanäle). Drücke zum Senden den Klavier-Knopf unten.",
         "instrument_meter_failed": "Dieser Eingang lässt sich nicht öffnen. Wähle einen anderen oder erlaube das Mikrofon im Browser.",
