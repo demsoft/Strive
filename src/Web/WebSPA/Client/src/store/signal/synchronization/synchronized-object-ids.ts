@@ -27,9 +27,17 @@ export const LESSON_MODE = 'lessonMode';
 
 /** the server serializes enums in camel case */
 export type RecordingStatus = 'starting' | 'recording' | 'finalizing' | 'ready' | 'failed';
+export type RecordingKind = 'meeting' | 'rehearsal';
 
 export type SynchronizedRecording = {
-   active: { recordingId: string; status: RecordingStatus; startedAt: string; startedBy: string } | null;
+   active: {
+      recordingId: string;
+      status: RecordingStatus;
+      startedAt: string;
+      startedBy: string;
+      /** a rehearsal is sound only, with a track for every voice and instrument */
+      kind?: RecordingKind;
+   } | null;
 };
 
 /** a video that everybody watches together; the server serializes enums in camel case */

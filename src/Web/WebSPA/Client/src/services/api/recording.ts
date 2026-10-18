@@ -2,7 +2,7 @@ import Axios from 'axios';
 import appSettings from 'src/config';
 
 export type { RecordingStatus } from 'src/store/signal/synchronization/synchronized-object-ids';
-import { RecordingStatus } from 'src/store/signal/synchronization/synchronized-object-ids';
+import { RecordingKind, RecordingStatus } from 'src/store/signal/synchronization/synchronized-object-ids';
 
 export type RecordingVisibility = 'signedIn' | 'anyoneWithLink';
 
@@ -17,6 +17,10 @@ export type RecordingDto = {
    shareToken: string;
    expiresAt: string;
    failureReason?: string | null;
+   /** missing in answers of servers from before the rehearsals: a meeting */
+   kind?: RecordingKind;
+   /** a rehearsal has a download with the separate tracks */
+   hasTracks?: boolean;
 };
 
 export type SharedRecordingDto = {
@@ -25,6 +29,10 @@ export type SharedRecordingDto = {
    durationSeconds?: number | null;
    url: string;
    urlExpiresAt: string;
+   kind?: RecordingKind;
+   /** link to the archive with the separate tracks (rehearsals) */
+   tracksUrl?: string | null;
+   tracksSizeBytes?: number | null;
 };
 
 export async function fetchRecordings(conferenceId: string): Promise<RecordingDto[]> {

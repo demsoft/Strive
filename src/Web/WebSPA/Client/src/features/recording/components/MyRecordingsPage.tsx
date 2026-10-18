@@ -133,6 +133,9 @@ export default function MyRecordingsPage() {
                         primary={
                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                               <b>{recording.conferenceName || recording.conferenceId}</b>
+                              {recording.kind === 'rehearsal' && (
+                                 <Chip size="small" variant="outlined" label={t('conference.recording.kind_rehearsal')} />
+                              )}
                               {recording.status === 'failed' && (
                                  <Chip size="small" color="error" label={t('conference.recording.status_failed')} />
                               )}

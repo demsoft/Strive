@@ -674,6 +674,12 @@
     },
     "recording": {
       "rec": "REC",
+      "rec_rehearsal": "PROBE",
+      "kind_rehearsal": "Probe",
+      "rehearsal_text": "Die Probenaufnahme ist für Musik: nur Ton, in hoher Qualität, und jede Stimme und jedes Instrument wird zusätzlich als eigene Spur gespeichert, damit du sie danach mischen kannst.",
+      "confirm_start_rehearsal": "Probe aufnehmen (Ton und Spuren)",
+      "download_tracks": "Spuren herunterladen (ZIP)",
+      "tracks_hint": "Eine verlustfreie Datei pro Stimme und Instrument, alle beginnen im selben Moment, sodass du sie gemeinsam in deine Musiksoftware laden kannst.",
       "starting": "Aufnahme startet…",
       "saving": "Aufnahme wird gespeichert…",
       "start": "Aufnahme starten",
