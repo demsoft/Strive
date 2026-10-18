@@ -32,6 +32,8 @@
     "my_conferences": "Your conferences"
   },
   "dialog_create_conference": {
+    "loading_failed": "The form could not be loaded.",
+    "retry": "Try again",
     "title_mode_create": "Create a new conference",
     "title_mode_patch": "Change conference settings",
     "unnamed_conference": "Unnamed conference",

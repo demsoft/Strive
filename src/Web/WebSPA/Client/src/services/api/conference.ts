@@ -3,18 +3,25 @@ import { Operation } from 'fast-json-patch';
 import appSettings from 'src/config';
 import { ConferenceData, CreateConferenceResponse } from 'src/features/create-conference/types';
 
+/** loading a form must not stay empty for ever when the server does not answer */
+const REQUEST_TIMEOUT_MS = 20000;
+
 export async function create(dto: ConferenceData): Promise<CreateConferenceResponse> {
    const response = await Axios.post<CreateConferenceResponse>(`${appSettings.conferenceUrl}/v1/conference`, dto);
    return response.data;
 }
 
 export async function getDefault(): Promise<ConferenceData> {
-   const response = await Axios.get<ConferenceData>(`${appSettings.conferenceUrl}/v1/conference/default-data`);
+   const response = await Axios.get<ConferenceData>(`${appSettings.conferenceUrl}/v1/conference/default-data`, {
+      timeout: REQUEST_TIMEOUT_MS,
+   });
    return response.data;
 }
 
 export async function get(conferenceId: string): Promise<ConferenceData> {
-   const response = await Axios.get<ConferenceData>(`${appSettings.conferenceUrl}/v1/conference/${conferenceId}`);
+   const response = await Axios.get<ConferenceData>(`${appSettings.conferenceUrl}/v1/conference/${conferenceId}`, {
+      timeout: REQUEST_TIMEOUT_MS,
+   });
    return response.data;
 }
 
