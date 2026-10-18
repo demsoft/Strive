@@ -16,6 +16,7 @@ import { ConferenceRouteParams } from 'src/routes/types';
 import { RootState } from 'src/store';
 import { selectParticipantList } from '../selectors';
 import RecordButton from 'src/features/recording/components/RecordButton';
+import MetronomeButton from 'src/features/metronome/components/MetronomeButton';
 import LessonModeButton from 'src/features/lesson-mode/components/LessonModeButton';
 import WatchTogetherButton from 'src/features/watch-together/components/WatchTogetherButton';
 import RecordingIndicator from 'src/features/recording/components/RecordingIndicator';
@@ -104,6 +105,7 @@ export default function ConferenceAppBar() {
                <RecordButton />
                <WatchTogetherButton />
                <LessonModeButton />
+               <MetronomeButton />
                <LobbyButton />
                <InviteLinkButton />
                {!isMobile && (

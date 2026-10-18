@@ -17,6 +17,7 @@ namespace Strive.Core.Services
         public const string RECORDING = "recording";
         public const string WATCH_TOGETHER = "watchTogether";
         public const string LESSON_MODE = "lessonMode";
+        public const string METRONOME = "metronome";
 
         // individual
         public const string MEDIA = "media";

@@ -24,6 +24,7 @@ export const LOBBY = 'lobby';
 export const RECORDING = 'recording';
 export const WATCH_TOGETHER = 'watchTogether';
 export const LESSON_MODE = 'lessonMode';
+export const METRONOME = 'metronome';
 
 /** the server serializes enums in camel case */
 export type RecordingStatus = 'starting' | 'recording' | 'finalizing' | 'ready' | 'failed';
@@ -56,6 +57,11 @@ export type WatchTogetherSession = {
 
 export type SynchronizedWatchTogether = {
    session: WatchTogetherSession | null;
+};
+
+/** the click that everybody hears at the same time; the server serializes the time as iso text */
+export type SynchronizedMetronome = {
+   session: { bpm: number; beatsPerBar: number; startedBy: string; firstBeatAt: string } | null;
 };
 
 /** while active only the moderators (the teachers) and the participants allowed to speak can be heard */

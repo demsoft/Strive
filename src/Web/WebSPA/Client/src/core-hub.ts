@@ -59,6 +59,9 @@ export const controlWatchTogether = createHubFn<{
 }>('ControlWatchTogether');
 export const stopWatchTogether = createHubFn('StopWatchTogether');
 
+export const startMetronome = createHubFn<{ bpm: number; beatsPerBar: number }>('StartMetronome');
+export const stopMetronome = createHubFn('StopMetronome');
+
 export const setLessonMode = createHubFn<{ active: boolean }>('SetLessonMode');
 
 export const startRecording = createHubFn('StartRecording');

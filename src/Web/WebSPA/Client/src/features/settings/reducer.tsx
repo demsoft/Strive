@@ -31,6 +31,10 @@ export type StriveSettings = {
       joinWithMic?: boolean;
       /** the webcam is turned on automatically after joining */
       joinWithWebcam?: boolean;
+      /** volume of the click of the metronome on this computer, 0 to 1 (default 0.7) */
+      metronomeVolume?: number;
+      /** the click is not played on this computer (the others still hear it) */
+      metronomeMuted?: boolean;
    };
 };
 
@@ -99,6 +103,12 @@ const settingsSlice = createSlice({
       setJoinWithMic(state, { payload }: PayloadAction<boolean>) {
          state.obj.conference.joinWithMic = payload;
       },
+      setMetronomeVolume(state, { payload }: PayloadAction<number>) {
+         state.obj.conference.metronomeVolume = payload;
+      },
+      setMetronomeMuted(state, { payload }: PayloadAction<boolean>) {
+         state.obj.conference.metronomeMuted = payload;
+      },
       setJoinWithWebcam(state, { payload }: PayloadAction<boolean>) {
          state.obj.conference.joinWithWebcam = payload;
       },
@@ -129,6 +139,8 @@ export const {
    setJoinWithMic,
    setInstrumentDeviceId,
    setJoinWithWebcam,
+   setMetronomeMuted,
+   setMetronomeVolume,
    setMonitorInstrument,
    setMusicMode,
    setPlaySoundOnOpen,

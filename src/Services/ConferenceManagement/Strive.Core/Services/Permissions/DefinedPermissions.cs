@@ -36,6 +36,12 @@ namespace Strive.Core.Services.Permissions
             public static readonly PermissionDescriptor<bool> CanControl = new("watchTogether/canControl");
         }
 
+        public static class Metronome
+        {
+            /// <summary>Start, change and stop the click that everybody hears</summary>
+            public static readonly PermissionDescriptor<bool> CanControl = new("metronome/canControl");
+        }
+
         public static class LessonMode
         {
             /// <summary>Turn the lesson mode on and off: only the moderators can be heard while it is on</summary>
