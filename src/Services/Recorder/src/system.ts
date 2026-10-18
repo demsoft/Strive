@@ -6,6 +6,7 @@ import { dirname, join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { Browser, chromium, Page } from 'playwright-core';
 import { Logger } from './logger';
+import { STEM_CAPTURE_SCRIPT, StemStart } from './stems';
 
 export type RunningProcess = {
    /** resolves with the exit code when the process ends */
@@ -21,7 +22,16 @@ export type BrowserHandle = {
    waitUntilReady(timeoutMs: number): Promise<void>;
    /** resolves when the page crashed or was closed */
    closed: Promise<void>;
+   /** ends the pieces of the tracks that are still recorded and waits until their data is handed over */
+   flushStems(): Promise<void>;
    close(): Promise<void>;
+};
+
+/** Receives the separate tracks that the page records (rehearsals). */
+export type StemSink = {
+   start(info: StemStart): Promise<number>;
+   chunk(id: number, base64: string): Promise<void>;
+   end(id: number, endedAtMs: number): Promise<void>;
 };
 
 export type BrowserOptions = {
@@ -36,6 +46,8 @@ export type BrowserOptions = {
    debugPort: number;
    /** where a screenshot of the page is saved if it does not become ready */
    diagnosticsFile?: string;
+   /** record every voice and instrument of the conference as a track of its own (rehearsals) */
+   stems?: StemSink;
 };
 
 /** Everything the recording session needs from the operating system, so that it can be tested without it. */
@@ -180,6 +192,13 @@ export function createSystem(log: Logger): SystemOps {
             browser = await connectWithRetry(`http://127.0.0.1:${options.debugPort}`, chromeExited);
             const context = browser.contexts()[0];
             page = context.pages()[0] ?? (await context.waitForEvent('page'));
+            if (options.stems) {
+               const stems = options.stems;
+               await page.exposeFunction('__striveStemStart', (info: StemStart) => stems.start(info));
+               await page.exposeFunction('__striveStemChunk', (id: number, base64: string) => stems.chunk(id, base64));
+               await page.exposeFunction('__striveStemEnd', (id: number, endedAtMs: number) => stems.end(id, endedAtMs));
+               await page.addInitScript(STEM_CAPTURE_SCRIPT);
+            }
             await page.goto(options.url, { waitUntil: 'domcontentloaded' });
          } catch (error) {
             await cleanup();
@@ -233,6 +252,12 @@ export function createSystem(log: Logger): SystemOps {
                } catch (error) {
                   throw new Error(`${String(error).split('\n')[0]} - ${await describePage()}`);
                }
+            },
+            flushStems: async () => {
+               if (!options.stems) return;
+               await page
+                  .evaluate(() => (window as unknown as { __striveStemFlush?: () => Promise<void> }).__striveStemFlush?.())
+                  .catch(() => undefined);
             },
             close: async () => {
                await browser.close().catch(() => undefined);

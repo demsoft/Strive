@@ -199,3 +199,105 @@ describe('RecordingSession', () => {
       expect(files).toContain('done');
    });
 });
+
+describe('RecordingSession (rehearsal)', () => {
+   beforeEach(() => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }));
+   afterEach(() => vi.useRealTimers());
+
+   async function settle<T>(promise: Promise<T>, stepMs = 1000): Promise<T> {
+      let done = false;
+      promise.then(
+         () => (done = true),
+         () => (done = true),
+      );
+      while (!done) {
+         await vi.advanceTimersByTimeAsync(stepMs);
+         await new Promise((resolve) => setImmediate(resolve));
+      }
+      return promise;
+   }
+
+   const rehearsal = {
+      kind: 'rehearsal' as const,
+      storageKey: 'recordings/conf1/rec1.m4a',
+      tracksStorageKey: 'recordings/conf1/rec1-tracks.zip',
+   };
+
+   /** the page records a voice for a moment */
+   async function recordPiece(system: FakeSystem) {
+      const stems = system.launched[0].stems!;
+      const id = await stems.start({ participantId: 'p1', source: 'mic', name: 'Ada', startedAtMs: Date.now() + 1000 });
+      await stems.chunk(id, Buffer.alloc(5000).toString('base64'));
+      await stems.end(id, Date.now() + 5000);
+   }
+
+   test('records sound only and collects the tracks', async () => {
+      const system = new FakeSystem();
+      const { session, config } = await create({ system, cmd: rehearsal });
+
+      await settle(session.start());
+
+      expect(system.launched[0].stems).toBeDefined();
+      // the capture is the audio file, there is no screen capture
+      expect(await exists(join(config.workDir, 'rec1', 'out.m4a'))).toBe(true);
+      expect(await exists(join(config.workDir, 'rec1', 'out.mp4'))).toBe(false);
+   });
+
+   test('a meeting collects no tracks', async () => {
+      const system = new FakeSystem();
+      const { session } = await create({ system });
+
+      await settle(session.start());
+
+      expect(system.launched[0].stems).toBeUndefined();
+   });
+
+   test('stop stores the mix and the archive of the tracks and reports both', async () => {
+      const system = new FakeSystem();
+      const { session, uploader, reporter, config } = await create({ system, cmd: rehearsal });
+      await settle(session.start());
+      await recordPiece(system);
+
+      await settle(session.stop('requested'));
+
+      expect(system.stemsFlushed).toBe(true);
+      expect(uploader.uploads).toEqual([
+         { file: join(config.workDir, 'rec1', 'final.m4a'), key: 'recordings/conf1/rec1.m4a' },
+         { file: join(config.workDir, 'rec1', 'tracks.zip'), key: 'recordings/conf1/rec1-tracks.zip' },
+      ]);
+      expect(reporter.reports.at(-1)?.report).toEqual({
+         event: 'finished',
+         storageKey: 'recordings/conf1/rec1.m4a',
+         sizeBytes: 123456,
+         durationSeconds: 61.25,
+         tracksStorageKey: 'recordings/conf1/rec1-tracks.zip',
+         tracksSizeBytes: 123456,
+      });
+      expect(await exists(join(config.workDir, 'rec1'))).toBe(false);
+   });
+
+   test('when the tracks cannot be packed the mix is still stored and reported', async () => {
+      const system = new FakeSystem();
+      system.failZip = true;
+      const { session, uploader, reporter } = await create({ system, cmd: rehearsal });
+      await settle(session.start());
+      await recordPiece(system);
+
+      await settle(session.stop('requested'));
+
+      expect(uploader.uploads.map((x) => x.key)).toEqual(['recordings/conf1/rec1.m4a']);
+      const report = reporter.reports.at(-1)!.report;
+      expect(report.event).toBe('finished');
+      expect(report.tracksStorageKey).toBeUndefined();
+   });
+
+   test('nobody played anything: only the mix', async () => {
+      const system = new FakeSystem();
+      const { session, uploader } = await create({ system, cmd: rehearsal });
+      await settle(session.start());
+
+      await settle(session.stop('requested'));
+
+      expect(uploader.uploads.map((x) => x.key)).toEqual(['recordings/conf1/rec1.m4a']);
+   });
+});

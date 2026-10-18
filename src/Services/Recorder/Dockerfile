@@ -1,9 +1,10 @@
 # The Playwright image ships Chromium with all system libraries, its version matches the playwright-core dependency.
 FROM mcr.microsoft.com/playwright:v1.63.0-noble
 
-# Xvfb: a virtual screen per recording, PulseAudio: a virtual sound card per recording, ffmpeg: captures both
+# Xvfb: a virtual screen per recording, PulseAudio: a virtual sound card per recording, ffmpeg: captures both,
+# zip: packs the separate tracks of a rehearsal
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg xvfb pulseaudio pulseaudio-utils \
+    && apt-get install -y --no-install-recommends ffmpeg xvfb pulseaudio pulseaudio-utils zip \
     && rm -rf /var/lib/apt/lists/* \
     && npm install -g yarn@1.22.22 --force
 

@@ -1,9 +1,10 @@
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Config } from './config';
-import { buildRecordArgs } from './ffmpeg';
-import { finalizeRecording, OUT_FILE, RecordingMeta, writeMeta } from './finalize';
+import { buildAudioRecordArgs, buildRecordArgs } from './ffmpeg';
+import { AUDIO_OUT_FILE, finalizeRecording, OUT_FILE, RecordingMeta, writeMeta } from './finalize';
 import { Logger } from './logger';
+import { StemCollector } from './stems';
 import { BrowserHandle, RunningProcess, SystemOps } from './system';
 import { Reporter, StartCommand, Uploader } from './types';
 
@@ -33,6 +34,8 @@ export class RecordingSession {
    private ffmpeg?: RunningProcess;
    private maxDurationTimer?: ReturnType<typeof setTimeout>;
    private stopping?: Promise<void>;
+   private meta: RecordingMeta;
+   private stems?: StemCollector;
 
    readonly dir: string;
 
@@ -43,6 +46,19 @@ export class RecordingSession {
       private readonly deps: SessionDeps,
    ) {
       this.dir = join(deps.config.workDir, command.recordingId);
+      this.meta = {
+         recordingId: command.recordingId,
+         conferenceId: command.conferenceId,
+         storageKey: command.storageKey,
+         startedAt: '',
+         kind: command.kind ?? 'meeting',
+         tracksStorageKey: command.tracksStorageKey ?? null,
+      };
+   }
+
+   /** a rehearsal is sound only, with a track for everybody; a meeting is a video */
+   private get rehearsal() {
+      return this.meta.kind === 'rehearsal';
    }
 
    private get display() {
@@ -59,12 +75,9 @@ export class RecordingSession {
       const { command } = this;
 
       try {
-         await writeMeta(this.dir, {
-            recordingId: command.recordingId,
-            conferenceId: command.conferenceId,
-            storageKey: command.storageKey,
-            startedAt: new Date().toISOString(),
-         });
+         this.meta.startedAt = new Date().toISOString();
+         await writeMeta(this.dir, this.meta);
+         if (this.rehearsal) this.stems = new StemCollector(this.dir, log);
 
          this.xvfb = await system.startXvfb(this.display, config.video.width, config.video.height);
          this.removeSink = await system.createSink(this.sinkName);
@@ -81,6 +94,7 @@ export class RecordingSession {
             debugPort: 9300 + this.displayNumber,
             hostResolverRules: config.hostResolverRules,
             diagnosticsFile: join(config.workDir, 'diagnostics', `${command.recordingId}.png`),
+            stems: this.stems,
          });
          await this.browser.waitUntilReady(READY_TIMEOUT_MS);
          // one more moment for the scene to settle, so that the video does not start with a loading screen
@@ -88,14 +102,23 @@ export class RecordingSession {
 
          this.ffmpeg = system.spawn(
             'ffmpeg',
-            buildRecordArgs({
-               display: this.display,
-               sink: this.sinkName,
-               outFile: join(this.dir, OUT_FILE),
-               ...config.video,
-               maxSeconds: command.maxDurationMinutes * 60,
-            }),
+            this.rehearsal
+               ? buildAudioRecordArgs({
+                    sink: this.sinkName,
+                    outFile: join(this.dir, AUDIO_OUT_FILE),
+                    maxSeconds: command.maxDurationMinutes * 60,
+                 })
+               : buildRecordArgs({
+                    display: this.display,
+                    sink: this.sinkName,
+                    outFile: join(this.dir, OUT_FILE),
+                    ...config.video,
+                    maxSeconds: command.maxDurationMinutes * 60,
+                 }),
          );
+         // time zero of the separate tracks is the start of the mix
+         this.meta.captureStartedAtMs = Date.now();
+         await writeMeta(this.dir, this.meta);
 
          const early = await Promise.race([this.ffmpeg.exited, sleep(FFMPEG_STARTUP_CHECK_MS).then(() => 'running')]);
          if (early !== 'running') throw new Error('ffmpeg stopped right after it started');
@@ -143,6 +166,9 @@ export class RecordingSession {
 
       if (this.maxDurationTimer) clearTimeout(this.maxDurationTimer);
 
+      // the pieces of the tracks that are recorded right now must end before the browser goes away
+      await this.browser?.flushStems().catch(() => undefined);
+
       if (this.ffmpeg) {
          // "q" lets ffmpeg write the end of the file properly
          this.ffmpeg.quit();
@@ -159,15 +185,8 @@ export class RecordingSession {
 
       await this.releaseResources();
 
-      const meta: RecordingMeta = {
-         recordingId: command.recordingId,
-         conferenceId: command.conferenceId,
-         storageKey: command.storageKey,
-         startedAt: '',
-      };
-
       try {
-         await finalizeRecording(this.dir, meta, this.deps);
+         await finalizeRecording(this.dir, this.meta, this.deps);
       } catch (error) {
          log.error('Finalizing the recording failed', { recordingId: command.recordingId, error: String(error) });
          await this.deps.reporter.report(command.recordingId, {

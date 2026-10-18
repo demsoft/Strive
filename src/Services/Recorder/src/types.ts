@@ -5,6 +5,10 @@ export type StartCommand = {
    joinToken: string;
    storageKey: string;
    maxDurationMinutes: number;
+   /** a meeting is recorded as a video; a rehearsal as sound only, with a track for everybody (default: meeting) */
+   kind?: 'meeting' | 'rehearsal';
+   /** where the archive with the tracks is stored (rehearsals) */
+   tracksStorageKey?: string | null;
 };
 
 /** What the recorder reports back (RecorderReport on the server, enums in camel case). */
@@ -13,6 +17,8 @@ export type Report = {
    storageKey?: string;
    sizeBytes?: number;
    durationSeconds?: number;
+   tracksStorageKey?: string;
+   tracksSizeBytes?: number;
    reason?: string;
 };
 

@@ -5,6 +5,8 @@ using System.Text;
 using System.Web;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Strive.Core.Services.Recording;
+using Strive.Core.Services.Recording.Gateways;
 using Strive.Infrastructure.Recording;
 using Xunit;
 
@@ -33,6 +35,34 @@ namespace Strive.Infrastructure.Tests.Recording
 
             Assert.Equal(contentType, headers.ContentType);
             Assert.Equal(disposition, headers.ContentDisposition);
+        }
+
+        private class CapturingHandler : System.Net.Http.HttpMessageHandler
+        {
+            public string? Body { get; private set; }
+
+            protected override async System.Threading.Tasks.Task<System.Net.Http.HttpResponseMessage> SendAsync(
+                System.Net.Http.HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
+            {
+                Body = await request.Content!.ReadAsStringAsync(cancellationToken);
+                return new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.Accepted);
+            }
+        }
+
+        [Fact]
+        public async System.Threading.Tasks.Task Start_Rehearsal_RecorderGetsTheKindAsText()
+        {
+            var handler = new CapturingHandler();
+            var client = new HttpRecorderClient(new System.Net.Http.HttpClient(handler),
+                Options.Create(new RecorderOptions {BaseUrl = "http://recorder:3000", SharedSecret = Secret}));
+
+            await client.Start(new RecorderStartCommand("rec1", "conf1", "token", "recordings/conf1/rec1.m4a", 60,
+                RecordingKind.Rehearsal, "recordings/conf1/rec1-tracks.zip"));
+
+            // the recorder is a Node service: it expects "rehearsal", not the number of the enum
+            Assert.Contains("\"kind\":\"rehearsal\"", handler.Body);
+            Assert.Contains("\"tracksStorageKey\":\"recordings/conf1/rec1-tracks.zip\"", handler.Body);
+            Assert.Contains("\"maxDurationMinutes\":60", handler.Body);
         }
 
         private static JwtRecorderJoinTokenFactory CreateFactory(string? secret = Secret)

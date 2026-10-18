@@ -52,6 +52,33 @@ describe('validateCommand', () => {
    });
 });
 
+describe('validateCommand (rehearsal)', () => {
+   const rehearsal = {
+      kind: 'rehearsal' as const,
+      storageKey: 'recordings/conf1/rec1.m4a',
+      tracksStorageKey: 'recordings/conf1/rec1-tracks.zip',
+   };
+
+   test('accepts a rehearsal with its archive', () => expect(validateCommand(command(rehearsal))).toBeNull());
+
+   test.each([
+      [{ storageKey: 'recordings/conf1/rec1.mp4' }, 'storageKey'],
+      [{ tracksStorageKey: undefined }, 'tracksStorageKey'],
+      [{ tracksStorageKey: 'recordings/conf1/../x-tracks.zip' }, 'tracksStorageKey'],
+      [{ tracksStorageKey: 'recordings/conf1/rec1.zip' }, 'tracksStorageKey'],
+   ])('rejects %j', (overrides, field) => {
+      expect(validateCommand(command({ ...rehearsal, ...overrides }))).toContain(field);
+   });
+
+   test('a meeting must not have an audio file', () => {
+      expect(validateCommand(command({ storageKey: 'recordings/conf1/rec1.m4a' }))).toContain('storageKey');
+   });
+
+   test('an unknown kind is rejected', () => {
+      expect(validateCommand(command({ kind: 'concert' as never }))).toContain('kind');
+   });
+});
+
 describe('RecorderManager', () => {
    test('start accepts the recording and starts the session in the background', async () => {
       const { manager, sessions } = await create();

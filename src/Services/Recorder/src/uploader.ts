@@ -30,7 +30,7 @@ export class S3Uploader implements Uploader {
             Bucket: this.config.bucket,
             Key: storageKey,
             Body: createReadStream(file),
-            ContentType: 'video/mp4',
+            ContentType: storageKey.endsWith('.zip') ? 'application/zip' : storageKey.endsWith('.m4a') ? 'audio/mp4' : 'video/mp4',
          },
          // parts of equal size are required by R2, the last one may be smaller
          partSize: 16 * 1024 * 1024,
