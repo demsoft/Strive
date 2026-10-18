@@ -11,6 +11,7 @@ import { setAudioGain, setCurrentDevice, setInstrumentDeviceId, setMusicMode } f
 import { selectAvailableInputDevicesFactory } from '../selectors';
 import AudioSettingsTest from './AudioSettingsTest';
 import DeviceSelector from './DeviceSelector';
+import InstrumentLevelMeter from './InstrumentLevelMeter';
 
 const useStyles = makeStyles()((theme) => ({
    root: {
@@ -92,6 +93,7 @@ export default function AudioSettings() {
                      ))}
                </TextField>
             )}
+            {musicMode && instrumentDeviceId && <InstrumentLevelMeter deviceId={instrumentDeviceId} />}
          </Box>
          <Box
             sx={{
