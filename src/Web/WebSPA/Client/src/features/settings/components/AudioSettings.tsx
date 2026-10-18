@@ -37,6 +37,7 @@ export default function AudioSettings() {
    const audioGain = useSelector((state: RootState) => state.settings.obj.mic.audioGain);
    const audioDevice = useSelector((state: RootState) => state.settings.obj.mic.device);
    const musicMode = useSelector((state: RootState) => Boolean(state.settings.obj.mic.musicMode));
+   const monitorStatus = useSelector((state: RootState) => state.settings.monitorStatus);
    const monitorInstrument = useSelector((state: RootState) => Boolean(state.settings.obj.mic.monitorInstrument));
    const instrumentDeviceId = useSelector((state: RootState) => state.settings.obj.mic.instrumentDeviceId);
    const dispatch = useDispatch();
@@ -109,6 +110,29 @@ export default function AudioSettings() {
                   <Typography variant="body2" color="text.secondary">
                      {t('conference.settings.audio.instrument_monitor_description')}
                   </Typography>
+                  {monitorInstrument && (
+                     <Alert
+                        id="instrument-monitor-status"
+                        severity={
+                           monitorStatus.state === 'playing'
+                              ? 'success'
+                              : monitorStatus.state === 'error'
+                              ? 'error'
+                              : 'info'
+                        }
+                        sx={{ mt: 1 }}
+                     >
+                        {!instrumentDeviceId
+                           ? t('conference.settings.audio.instrument_monitor_no_input')
+                           : monitorStatus.state === 'playing'
+                           ? t('conference.settings.audio.instrument_monitor_playing', { delay: monitorStatus.delayMs })
+                           : monitorStatus.state === 'blocked'
+                           ? t('conference.settings.audio.instrument_monitor_blocked')
+                           : monitorStatus.state === 'error'
+                           ? t('conference.settings.audio.instrument_monitor_error')
+                           : t('conference.settings.audio.instrument_monitor_starting')}
+                     </Alert>
+                  )}
                </Box>
             )}
          </Box>

@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { DomainError, SuccessOrError } from 'src/communication-types';
 import { getEquipmentToken } from 'src/core-hub';
 import { ProducerDevice } from 'src/store/webrtc/types';
+import type { InstrumentMonitorStatus } from 'src/store/webrtc/hooks/useInstrumentMonitor';
 import { fetchDevices } from './thunks';
 import { AnyInputDevice, InputDeviceDto } from './types';
 
@@ -44,6 +45,8 @@ type SettingsState = {
    equipmentToken: string | null;
    equipmentTokenError: DomainError | null;
    availableDevices: InputDeviceDto[] | null;
+   /** what the monitor of the own instrument does right now (not saved) */
+   monitorStatus: InstrumentMonitorStatus;
 };
 
 const initialState: SettingsState = {
@@ -64,6 +67,7 @@ const initialState: SettingsState = {
    equipmentToken: null,
    equipmentTokenError: null,
    availableDevices: null,
+   monitorStatus: { state: 'off' },
 };
 
 const settingsSlice = createSlice({
@@ -81,6 +85,9 @@ const settingsSlice = createSlice({
       },
       setInstrumentDeviceId(state, { payload }: PayloadAction<string | undefined>) {
          state.obj.mic.instrumentDeviceId = payload;
+      },
+      setMonitorStatus(state, { payload }: PayloadAction<InstrumentMonitorStatus>) {
+         state.monitorStatus = payload;
       },
       setMonitorInstrument(state, { payload }: PayloadAction<boolean>) {
          state.obj.mic.monitorInstrument = payload;
@@ -142,6 +149,7 @@ export const {
    setMetronomeMuted,
    setMetronomeVolume,
    setMonitorInstrument,
+   setMonitorStatus,
    setMusicMode,
    setPlaySoundOnOpen,
 } = settingsSlice.actions;

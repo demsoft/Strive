@@ -27,6 +27,7 @@ import { RootState } from 'src/store';
 import { showMessage } from 'src/store/notifier/actions';
 import useWebRtcStatus from 'src/store/webrtc/hooks/useWebRtcStatus';
 import { formatErrorMessage } from 'src/utils/error-utils';
+import InstrumentMonitor from 'src/features/settings/components/InstrumentMonitor';
 import useInstrument from 'src/store/webrtc/hooks/useInstrument';
 import useMicrophone from 'src/store/webrtc/hooks/useMicrophone';
 import useScreen from 'src/store/webrtc/hooks/useScreen';
@@ -110,8 +111,7 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
    const micController = useDeviceManagement('mic', localMic, audioDevice);
 
    const instrumentDeviceId = useSelector((state: RootState) => state.settings.obj.mic.instrumentDeviceId);
-   const monitorInstrument = useSelector((state: RootState) => Boolean(state.settings.obj.mic.monitorInstrument));
-   const instrument = useInstrument(monitorInstrument);
+   const instrument = useInstrument();
    useEffect(() => {
       instrument.switchDevice(instrumentDeviceId);
    }, [instrumentDeviceId, instrument.connected]);
@@ -175,6 +175,7 @@ export default function MediaControls({ className, show, leftActionsRef }: Props
          animate={show ? 'visible' : 'hidden'}
          variants={variants}
       >
+         <InstrumentMonitor />
          <Grid container spacing={1} className={classes.leftActions} ref={leftActionsRef} />
          <div className={classes.controlsContainer}>
             {canShareScreen && screenAvailable && (
