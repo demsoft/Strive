@@ -1,6 +1,8 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
@@ -10,6 +12,12 @@ namespace Strive.Infrastructure.Recording
 {
     public class HttpRecorderClient : IRecorderClient
     {
+        /// <summary>The recorder reads the kind of recording as text ("rehearsal"), not as a number</summary>
+        private static readonly JsonSerializerOptions CommandJson = new(JsonSerializerDefaults.Web)
+        {
+            Converters = {new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)},
+        };
+
         private readonly HttpClient _client;
         private readonly RecorderOptions _options;
 
@@ -22,7 +30,7 @@ namespace Strive.Infrastructure.Recording
         public async Task Start(RecorderStartCommand command, CancellationToken cancellationToken = default)
         {
             using var request = CreateRequest(HttpMethod.Post, "recordings");
-            request.Content = JsonContent.Create(command);
+            request.Content = JsonContent.Create(command, options: CommandJson);
 
             using var response = await _client.SendAsync(request, cancellationToken);
             response.EnsureSuccessStatusCode();

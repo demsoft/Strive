@@ -15,6 +15,17 @@ conference is told); the Strive server then asks this service to record it.
    as a multipart upload, and the result is reported to the server (`POST {STRIVE_API_URL}/internal/recorder/{id}/report`).
 5. After a crash or restart the files left on the disk are uploaded and reported on startup.
 
+### Rehearsals
+
+A recording of the kind `rehearsal` (a `kind` and a `tracksStorageKey` in the start command) is for musicians: sound only,
+no screen capture. The mix is recorded from the virtual sound card as stereo AAC at 256 kbps (`.m4a`). In addition the
+recording page records every voice and every instrument it plays as a track of its own (`MediaRecorder`, handed over
+to this service through exposed functions, see `src/stems.ts`). When the recording ends each track is placed on the
+timeline of the mix (pieces from a microphone that was switched off and on again are put at their time), padded to the
+length of the mix, written as a FLAC file, and all files are packed into one ZIP archive that is uploaded next to the
+mix. If the tracks cannot be processed the mix is still stored. The page marks its audio with
+`data-stem-id`, `data-stem-source` and `data-stem-name`.
+
 Only the main room is recorded: the recorder is placed in the default room like any participant.
 
 ## Configuration (environment variables)

@@ -15,7 +15,13 @@ export function validateCommand(command: StartCommand): string | null {
    if (!ID_PATTERN.test(command.recordingId ?? '')) return 'recordingId is invalid';
    if (!ID_PATTERN.test(command.conferenceId ?? '')) return 'conferenceId is invalid';
    if (typeof command.joinToken !== 'string' || command.joinToken.length < 20) return 'joinToken is missing';
-   if (!/^recordings\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\.mp4$/.test(command.storageKey ?? '')) return 'storageKey is invalid';
+   const kind = String(command.kind ?? 'meeting').toLowerCase();
+   if (kind !== 'meeting' && kind !== 'rehearsal') return 'kind is invalid';
+   const extension = kind === 'rehearsal' ? 'm4a' : 'mp4';
+   if (!new RegExp(`^recordings/[A-Za-z0-9_-]+/[A-Za-z0-9_-]+\\.${extension}$`).test(command.storageKey ?? ''))
+      return 'storageKey is invalid';
+   if (kind === 'rehearsal' && !/^recordings\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+-tracks\.zip$/.test(command.tracksStorageKey ?? ''))
+      return 'tracksStorageKey is invalid';
    if (!Number.isInteger(command.maxDurationMinutes) || command.maxDurationMinutes < 1 || command.maxDurationMinutes > 24 * 60)
       return 'maxDurationMinutes is invalid';
    return null;
@@ -46,6 +52,7 @@ export class RecorderManager {
     * seconds. A failure is reported to the server asynchronously.
     */
    start(command: StartCommand): void {
+      command = { ...command, kind: String(command?.kind ?? 'meeting').toLowerCase() as StartCommand['kind'] };
       const problem = validateCommand(command);
       if (problem) throw new RangeError(problem);
 

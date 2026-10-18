@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildProbeArgs, buildRecordArgs, buildRemuxArgs, parseDuration } from '../src/ffmpeg';
+import { buildAudioRecordArgs, buildProbeArgs, buildRecordArgs, buildRemuxArgs, buildStemMixArgs, parseDuration } from '../src/ffmpeg';
 
 const options = { display: ':101', sink: 'rec_101', outFile: '/data/r/out.mp4', width: 1280, height: 720, fps: 25, crf: 26, maxSeconds: 7200 };
 
@@ -66,4 +66,63 @@ describe('parseDuration', () => {
    ])('%j -> %d', (output, expected) => expect(parseDuration(output)).toBe(expected));
 
    test.each(['N/A', '', 'abc', '-3'])('%j -> null', (output) => expect(parseDuration(output)).toBeNull());
+});
+
+describe('buildAudioRecordArgs', () => {
+   const args = buildAudioRecordArgs({ sink: 'rec_101', outFile: '/data/r/out.m4a', maxSeconds: 3600 });
+   const after = (flag: string) => args[args.indexOf(flag) + 1];
+
+   test('records only the sound of the sink, no screen', () => {
+      expect(args).toContain('rec_101.monitor');
+      expect(args).not.toContain('x11grab');
+      expect(args).not.toContain('libx264');
+   });
+
+   test('high quality stereo aac in a fragmented file', () => {
+      expect(after('-c:a')).toBe('aac');
+      expect(after('-b:a')).toBe('256k');
+      expect(after('-ac')).toBe('2');
+      expect(after('-ar')).toBe('48000');
+      expect(after('-movflags')).toContain('frag_keyframe');
+      expect(args[args.length - 1]).toBe('/data/r/out.m4a');
+   });
+});
+
+describe('buildStemMixArgs', () => {
+   const graphOf = (args: string[]) => args[args.indexOf('-filter_complex') + 1];
+
+   test('a single piece starting at the beginning is only padded to the length of the mix', () => {
+      const args = buildStemMixArgs([{ file: '/s/1.webm', offsetMs: 0 }], 61.25, '/s/a.flac');
+
+      expect(graphOf(args)).toBe('[0:a]aresample=48000,aformat=channel_layouts=stereo[s0];[s0]apad=whole_dur=61.250[out]');
+      expect(args.slice(-4)).toEqual(['-c:a', 'flac', '-y', '/s/a.flac']);
+      expect(args[args.indexOf('-t') + 1]).toBe('61.250');
+   });
+
+   test('a later piece is delayed to its place on the timeline', () => {
+      const graph = graphOf(buildStemMixArgs([{ file: '/s/1.webm', offsetMs: 2500 }], 10, '/s/a.flac'));
+
+      expect(graph).toContain('adelay=2500|2500');
+   });
+
+   test('a piece that began before the recording is cut at the start', () => {
+      const graph = graphOf(buildStemMixArgs([{ file: '/s/1.webm', offsetMs: -1200 }], 10, '/s/a.flac'));
+
+      expect(graph).toContain('atrim=start=1.200,asetpts=PTS-STARTPTS');
+      expect(graph).not.toContain('adelay');
+   });
+
+   test('several pieces of one person are mixed together without changing the volume', () => {
+      const args = buildStemMixArgs(
+         [
+            { file: '/s/1.webm', offsetMs: 0 },
+            { file: '/s/2.webm', offsetMs: 30000 },
+         ],
+         60,
+         '/s/a.flac',
+      );
+
+      expect(args.filter((x) => x === '-i')).toHaveLength(2);
+      expect(graphOf(args)).toContain('[s0][s1]amix=inputs=2:normalize=0:duration=longest,apad=whole_dur=60.000[out]');
+   });
 });

@@ -59,6 +59,8 @@ export class FakeSystem implements SystemOps {
    ffmpeg = new FakeProcess();
    sinkRemoved = false;
    browserClosed = false;
+   stemsFlushed = false;
+   failZip = false;
    launched: BrowserOptions[] = [];
    runCalls: Array<[string, string[]]> = [];
    failReady = false;
@@ -83,6 +85,9 @@ export class FakeSystem implements SystemOps {
          waitUntilReady: async () => {
             if (this.failReady) throw new Error('not ready');
          },
+         flushStems: async () => {
+            this.stemsFlushed = true;
+         },
          close: async () => {
             this.browserClosed = true;
          },
@@ -98,6 +103,12 @@ export class FakeSystem implements SystemOps {
       if (cmd === 'ffmpeg') {
          if (this.failRemux) throw new Error('remux failed');
          await writeFile(args[args.length - 1], Buffer.alloc(this.recordedBytes));
+         return '';
+      }
+      if (cmd === 'zip') {
+         if (this.failZip) throw new Error('zip failed');
+         // zip -0 -j -q <archive> <files...>
+         await writeFile(args[3], Buffer.alloc(this.recordedBytes));
          return '';
       }
       if (cmd === 'ffprobe') return '61.25\n';
