@@ -1,4 +1,4 @@
-import { Dialog, DialogTitle, useMediaQuery, useTheme } from '@mui/material';
+import { Alert, Button, Dialog, DialogTitle, useMediaQuery, useTheme } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { compare } from 'fast-json-patch';
 import React from 'react';
@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'src/store';
 import { ConferenceDataForm, mapDataToForm, mapFormToData } from '../form';
-import { closeDialog, createConferenceAsync, patchConferenceAsync } from '../reducer';
+import { formatErrorMessage } from 'src/utils/error-utils';
+import { closeDialog, createConferenceAsync, openDialogToCreateAsync, patchConferenceAsync } from '../reducer';
 import ConferenceCreatedView from './ConferenceCreatedView';
 import CreateConferenceForm from './CreateConferenceForm';
 import CreateConferenceFormSkeleton from './CreateConferenceFormSkeleton';
@@ -37,9 +38,8 @@ function CreateConferenceDialog() {
 
    const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-   const { dialogOpen, createdConferenceId, isCreating, conferenceData, mode } = useSelector(
-      (state: RootState) => state.createConference,
-   );
+   const { dialogOpen, createdConferenceId, isCreating, conferenceData, mode, loadingConferenceDataError } =
+      useSelector((state: RootState) => state.createConference);
 
    const handleSubmit = (data: ConferenceDataForm) => {
       const dto = mapFormToData(data);
@@ -88,6 +88,22 @@ function CreateConferenceDialog() {
                      mode={mode}
                      conferenceId={createdConferenceId}
                   />
+               ) : loadingConferenceDataError ? (
+                  <Alert
+                     severity="error"
+                     sx={{ m: 3 }}
+                     action={
+                        <Button
+                           color="inherit"
+                           size="small"
+                           onClick={() => (mode === 'create' ? dispatch(openDialogToCreateAsync()) : handleClose())}
+                        >
+                           {mode === 'create' ? t('dialog_create_conference.retry') : t('common:close')}
+                        </Button>
+                     }
+                  >
+                     {t('dialog_create_conference.loading_failed')} ({formatErrorMessage(loadingConferenceDataError)})
+                  </Alert>
                ) : (
                   <CreateConferenceFormSkeleton />
                )}

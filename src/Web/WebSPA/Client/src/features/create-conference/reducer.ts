@@ -60,21 +60,29 @@ export const loadUserInfo = createAsyncThunk(
    },
 );
 
-export const openDialogToCreateAsync = createAsyncThunk('createConference/openForCreate', async (_, { getState }) => {
-   const defaultState = await conferenceServices.getDefault();
-   const myId = selectMyParticipantId(getState() as RootState);
-   const result: ConferenceData = {
-      ...defaultState,
-      configuration: { ...defaultState.configuration, moderators: myId ? [myId] : [] },
-   };
+export const openDialogToCreateAsync = createAsyncThunk(
+   'createConference/openForCreate',
+   async (_, { getState }) => {
+      const defaultState = await conferenceServices.getDefault();
+      const myId = selectMyParticipantId(getState() as RootState);
+      const result: ConferenceData = {
+         ...defaultState,
+         configuration: { ...defaultState.configuration, moderators: myId ? [myId] : [] },
+      };
 
-   return result;
-});
+      return result;
+   },
+   { serializeError: serializeRequestError },
+);
 
-export const openDialogToPatchAsync = createAsyncThunk('createConference/openToPatch', async (conferenceId: string) => {
-   const conferenceData = await conferenceServices.get(conferenceId);
-   return { conferenceData, conferenceId };
-});
+export const openDialogToPatchAsync = createAsyncThunk(
+   'createConference/openToPatch',
+   async (conferenceId: string) => {
+      const conferenceData = await conferenceServices.get(conferenceId);
+      return { conferenceData, conferenceId };
+   },
+   { serializeError: serializeRequestError },
+);
 
 const createConference = createSlice({
    name: 'createConference',

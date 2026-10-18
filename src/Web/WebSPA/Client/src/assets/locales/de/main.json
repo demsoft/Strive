@@ -32,6 +32,8 @@
     "my_conferences": "Deine Konferenzen"
   },
   "dialog_create_conference": {
+    "loading_failed": "Das Formular konnte nicht geladen werden.",
+    "retry": "Erneut versuchen",
     "title_mode_create": "Neue Konferenz erstellen",
     "title_mode_patch": "Konferenz ändern",
     "unnamed_conference": "Unbenannte Konfernenz",
