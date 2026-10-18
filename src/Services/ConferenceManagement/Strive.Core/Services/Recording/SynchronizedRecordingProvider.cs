@@ -21,7 +21,7 @@ namespace Strive.Core.Services.Recording
             return new SynchronizedRecording(active == null
                 ? null
                 : new SynchronizedRecording.ActiveRecording(active.RecordingId, active.Status, active.StartedAt,
-                    active.StartedBy));
+                    active.StartedBy, active.Kind));
         }
     }
 }

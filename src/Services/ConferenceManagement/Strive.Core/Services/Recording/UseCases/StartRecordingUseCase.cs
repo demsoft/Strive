@@ -46,7 +46,7 @@ namespace Strive.Core.Services.Recording.UseCases
             var now = _timeProvider.GetUtcNow();
             var recordingId = RecordingTokens.CreateRecordingId();
             var recording = new ConferenceRecording(recordingId, conferenceId, participantId, now,
-                now.AddDays(_options.RetentionDays), RecordingTokens.CreateShareToken());
+                now.AddDays(_options.RetentionDays), RecordingTokens.CreateShareToken()) {Kind = request.Kind};
 
             // the repository refuses a second unfinished recording of the same conference, this also covers two
             // moderators pressing the button at the same time
@@ -54,7 +54,10 @@ namespace Strive.Core.Services.Recording.UseCases
 
             await UpdateSyncObject(conferenceId, cancellationToken);
 
-            var storageKey = RecordingTokens.BuildStorageKey(conferenceId, recordingId);
+            var storageKey = RecordingTokens.BuildStorageKey(conferenceId, recordingId, request.Kind);
+            var tracksStorageKey = request.Kind == RecordingKind.Rehearsal
+                ? RecordingTokens.BuildTracksStorageKey(conferenceId, recordingId)
+                : null;
             var maxDuration = TimeSpan.FromMinutes(_options.MaxDurationMinutes);
             var token = _tokenFactory.Create(recordingId, conferenceId, maxDuration + TimeSpan.FromMinutes(15));
 
@@ -62,7 +65,7 @@ namespace Strive.Core.Services.Recording.UseCases
             {
                 await _recorder.Start(
                     new RecorderStartCommand(recordingId, conferenceId, token, storageKey,
-                        _options.MaxDurationMinutes), cancellationToken);
+                        _options.MaxDurationMinutes, request.Kind, tracksStorageKey), cancellationToken);
             }
             catch (Exception e)
             {

@@ -30,6 +30,8 @@ namespace Strive.Core.Services.Recording.UseCases
                 return RecordingError.AlreadyRecording;
 
             if (recording.StorageKey != null) await _storage.Delete(recording.StorageKey, cancellationToken);
+            if (recording.TracksStorageKey != null)
+                await _storage.Delete(recording.TracksStorageKey, cancellationToken);
             await _repository.Delete(recording.RecordingId);
 
             return Unit.Value;

@@ -84,7 +84,7 @@ namespace Strive.Controllers
             Response.Headers.CacheControl = "no-store";
             return recordings.Select(x => new MyRecordingDto(x.RecordingId, x.ConferenceId, names[x.ConferenceId],
                 x.Status, x.StartedAt, x.EndedAt, x.DurationSeconds, x.SizeBytes, x.Visibility, x.ShareToken,
-                x.ExpiresAt, x.FailureReason)).ToArray();
+                x.ExpiresAt, x.FailureReason, x.Kind, x.TracksStorageKey != null)).ToArray();
         }
 
         // PATCH v1/recordings/{recordingId}/visibility
@@ -133,8 +133,13 @@ namespace Strive.Controllers
             var conference = await _conferences.FindById(recording.ConferenceId);
             var url = _storage.GetPlaybackUrl(recording.StorageKey, _options.PlaybackUrlValidFor);
 
+            var tracksUrl = recording.TracksStorageKey == null
+                ? null
+                : _storage.GetPlaybackUrl(recording.TracksStorageKey, _options.PlaybackUrlValidFor).ToString();
+
             return new SharedRecordingDto(conference?.Configuration.Name, recording.StartedAt,
-                recording.DurationSeconds, url.ToString(), _timeProvider.GetUtcNow().Add(_options.PlaybackUrlValidFor));
+                recording.DurationSeconds, url.ToString(), _timeProvider.GetUtcNow().Add(_options.PlaybackUrlValidFor),
+                recording.Kind, tracksUrl, recording.TracksSizeBytes);
         }
 
         // POST internal/recorder/{recordingId}/report

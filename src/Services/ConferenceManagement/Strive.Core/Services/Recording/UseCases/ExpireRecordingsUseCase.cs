@@ -56,6 +56,8 @@ namespace Strive.Core.Services.Recording.UseCases
                 {
                     if (recording.StorageKey != null)
                         await _storage.Delete(recording.StorageKey, cancellationToken);
+                    if (recording.TracksStorageKey != null)
+                        await _storage.Delete(recording.TracksStorageKey, cancellationToken);
                     await _repository.Delete(recording.RecordingId);
 
                     _logger.LogInformation("Deleted expired recording {recordingId}", recording.RecordingId);

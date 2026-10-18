@@ -243,6 +243,13 @@ namespace Strive.Hubs.Core
                 .RequirePermissions(DefinedPermissions.Recording.CanManage).ConferenceMustBeOpen().Send();
         }
 
+        /// <summary>A rehearsal: sound only, in high quality, with a track for every voice and instrument</summary>
+        public Task<SuccessOrError<Unit>> StartRehearsalRecording()
+        {
+            return GetInvoker().Create(new StartRecordingRequest(GetContextParticipant(), RecordingKind.Rehearsal))
+                .RequirePermissions(DefinedPermissions.Recording.CanManage).ConferenceMustBeOpen().Send();
+        }
+
         public Task<SuccessOrError<Unit>> StopRecording()
         {
             var (conferenceId, _) = GetContextParticipant();

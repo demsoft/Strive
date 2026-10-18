@@ -159,6 +159,42 @@ namespace Strive.Core.Tests.Services.Recording
         }
 
         [Fact]
+        public async Task Start_Rehearsal_RecordSoundOnlyWithTracks()
+        {
+            SetupConference();
+            var useCase = CreateStart();
+            ConferenceRecording? created = null;
+            _repository.Setup(x => x.TryCreate(It.IsAny<ConferenceRecording>()))
+                .Callback<ConferenceRecording>(x => created = x).ReturnsAsync(true);
+            RecorderStartCommand? command = null;
+            _recorder.Setup(x => x.Start(It.IsAny<RecorderStartCommand>(), It.IsAny<CancellationToken>()))
+                .Callback<RecorderStartCommand, CancellationToken>((x, _) => command = x).Returns(Task.CompletedTask);
+
+            var result = await useCase.Handle(new StartRecordingRequest(_moderator, RecordingKind.Rehearsal), default);
+
+            Assert.True(result.Success);
+            Assert.Equal(RecordingKind.Rehearsal, created!.Kind);
+            Assert.Equal(RecordingKind.Rehearsal, command!.Kind);
+            Assert.Equal($"recordings/{ConferenceId}/{created.RecordingId}.m4a", command.StorageKey);
+            Assert.Equal($"recordings/{ConferenceId}/{created.RecordingId}-tracks.zip", command.TracksStorageKey);
+        }
+
+        [Fact]
+        public async Task Start_Meeting_HasNoTracks()
+        {
+            SetupConference();
+            var useCase = CreateStart();
+            RecorderStartCommand? command = null;
+            _recorder.Setup(x => x.Start(It.IsAny<RecorderStartCommand>(), It.IsAny<CancellationToken>()))
+                .Callback<RecorderStartCommand, CancellationToken>((x, _) => command = x).Returns(Task.CompletedTask);
+
+            await useCase.Handle(new StartRecordingRequest(_moderator), default);
+
+            Assert.Equal(RecordingKind.Meeting, command!.Kind);
+            Assert.Null(command.TracksStorageKey);
+        }
+
+        [Fact]
         public async Task Start_RecorderCannotBeStarted_MarkRecordingAsFailed()
         {
             // arrange
@@ -312,6 +348,23 @@ namespace Strive.Core.Tests.Services.Recording
         }
 
         [Fact]
+        public async Task Report_FinishedRehearsal_StoreTheTracksToo()
+        {
+            var recording = CreateRecording(RecordingStatus.Finalizing);
+            _repository.Setup(x => x.FindById("rec1")).ReturnsAsync(recording);
+
+            await CreateReport().Handle(new RecorderReportRequest("rec1",
+                new RecorderReport(RecorderEvent.Finished)
+                {
+                    StorageKey = "recordings/conference1/rec1.m4a", SizeBytes = 10,
+                    TracksStorageKey = "recordings/conference1/rec1-tracks.zip", TracksSizeBytes = 99,
+                }), default);
+
+            Assert.Equal("recordings/conference1/rec1-tracks.zip", recording.TracksStorageKey);
+            Assert.Equal(99, recording.TracksSizeBytes);
+        }
+
+        [Fact]
         public async Task Report_Failed_StoreReason()
         {
             var recording = CreateRecording();
@@ -356,6 +409,21 @@ namespace Strive.Core.Tests.Services.Recording
             Assert.True(result.Success);
             _storage.Verify(x => x.Delete("key", It.IsAny<CancellationToken>()), Times.Once);
             _repository.Verify(x => x.Delete("rec1"), Times.Once);
+        }
+
+        [Fact]
+        public async Task Delete_RehearsalWithTracks_DeleteTheArchiveToo()
+        {
+            var recording = CreateRecording(RecordingStatus.Ready);
+            recording.StorageKey = "key.m4a";
+            recording.TracksStorageKey = "key-tracks.zip";
+            _repository.Setup(x => x.FindById("rec1")).ReturnsAsync(recording);
+
+            await new DeleteRecordingUseCase(_repository.Object, _storage.Object).Handle(
+                new DeleteRecordingRequest("rec1"), default);
+
+            _storage.Verify(x => x.Delete("key.m4a", It.IsAny<CancellationToken>()), Times.Once);
+            _storage.Verify(x => x.Delete("key-tracks.zip", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Theory]

@@ -23,6 +23,18 @@ namespace Strive.Infrastructure.Tests.Recording
             }
         }
 
+        [Theory]
+        [InlineData("recordings/c/r.mp4", "video/mp4", "inline")]
+        [InlineData("recordings/c/r.m4a", "audio/mp4", "inline")]
+        [InlineData("recordings/c/r-tracks.zip", "application/zip", "attachment; filename=\"r-tracks.zip\"")]
+        public void GetResponseHeaders_ByFileType_PlayOrDownload(string key, string contentType, string disposition)
+        {
+            var headers = S3RecordingStorage.GetResponseHeaders(key);
+
+            Assert.Equal(contentType, headers.ContentType);
+            Assert.Equal(disposition, headers.ContentDisposition);
+        }
+
         private static JwtRecorderJoinTokenFactory CreateFactory(string? secret = Secret)
         {
             return new JwtRecorderJoinTokenFactory(Options.Create(new RecorderOptions {TokenSecret = secret}),

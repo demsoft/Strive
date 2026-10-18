@@ -30,6 +30,11 @@ namespace Strive.Core.Services.Recording.Requests
 
         public double? DurationSeconds { get; init; }
 
+        /// <summary>The archive with the separate tracks (rehearsals only)</summary>
+        public string? TracksStorageKey { get; init; }
+
+        public long? TracksSizeBytes { get; init; }
+
         public string? Reason { get; init; }
     }
 }

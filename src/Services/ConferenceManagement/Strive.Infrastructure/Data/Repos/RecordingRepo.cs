@@ -26,6 +26,7 @@ namespace Strive.Infrastructure.Data.Repos
                 config.MapIdMember(x => x.RecordingId);
                 config.MapMember(x => x.IsActive);
                 config.MapMember(x => x.Status).SetSerializer(new EnumSerializer<RecordingStatus>(BsonType.String));
+                config.MapMember(x => x.Kind).SetSerializer(new EnumSerializer<RecordingKind>(BsonType.String));
                 config.MapMember(x => x.Visibility)
                     .SetSerializer(new EnumSerializer<RecordingVisibility>(BsonType.String));
                 // stored as real dates (the default is a tick and offset document) so that they can be queried

@@ -45,6 +45,18 @@ namespace Strive.Core.Services.Recording
 
         public string? StorageKey { get; set; }
 
+        /// <summary>
+        ///     What is recorded. Recordings from before this existed are meetings.
+        /// </summary>
+        public RecordingKind Kind { get; init; } = RecordingKind.Meeting;
+
+        /// <summary>
+        ///     The archive with the separate tracks of a rehearsal, set when the recorder finished
+        /// </summary>
+        public string? TracksStorageKey { get; set; }
+
+        public long? TracksSizeBytes { get; set; }
+
         public long? SizeBytes { get; set; }
 
         public double? DurationSeconds { get; set; }

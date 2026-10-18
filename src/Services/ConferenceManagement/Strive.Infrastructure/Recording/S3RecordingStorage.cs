@@ -54,13 +54,31 @@ namespace Strive.Infrastructure.Recording
                 Key = storageKey,
                 Verb = HttpVerb.GET,
                 Expires = DateTime.UtcNow.Add(validFor),
-                ResponseHeaderOverrides = new ResponseHeaderOverrides
-                {
-                    ContentType = "video/mp4", ContentDisposition = "inline",
-                },
+                ResponseHeaderOverrides = GetResponseHeaders(storageKey),
             });
 
             return new Uri(url);
+        }
+
+        /// <summary>
+        ///     Videos and mixes are played in the browser, the archive with the tracks is downloaded
+        /// </summary>
+        public static ResponseHeaderOverrides GetResponseHeaders(string storageKey)
+        {
+            if (storageKey.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                return new ResponseHeaderOverrides
+                {
+                    ContentType = "application/zip",
+                    ContentDisposition = $"attachment; filename=\"{System.IO.Path.GetFileName(storageKey)}\"",
+                };
+
+            return new ResponseHeaderOverrides
+            {
+                ContentType = storageKey.EndsWith(".m4a", StringComparison.OrdinalIgnoreCase)
+                    ? "audio/mp4"
+                    : "video/mp4",
+                ContentDisposition = "inline",
+            };
         }
 
         public async Task Delete(string storageKey, CancellationToken cancellationToken = default)
