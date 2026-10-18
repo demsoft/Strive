@@ -184,6 +184,9 @@ export default function RecordingsDialog() {
                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               {DateTime.fromISO(recording.startedAt).toLocaleString(DateTime.DATETIME_MED)}
                               {statusChip(recording)}
+                              {recording.kind === 'rehearsal' && (
+                                 <Chip size="small" variant="outlined" label={t('conference.recording.kind_rehearsal')} />
+                              )}
                            </Box>
                         }
                         secondary={[

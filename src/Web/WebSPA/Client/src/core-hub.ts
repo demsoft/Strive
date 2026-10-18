@@ -62,6 +62,7 @@ export const stopWatchTogether = createHubFn('StopWatchTogether');
 export const setLessonMode = createHubFn<{ active: boolean }>('SetLessonMode');
 
 export const startRecording = createHubFn('StartRecording');
+export const startRehearsalRecording = createHubFn('StartRehearsalRecording');
 export const stopRecording = createHubFn('StopRecording');
 
 export const admitParticipant = createHubFn<LobbyParticipantDto>('AdmitParticipant');

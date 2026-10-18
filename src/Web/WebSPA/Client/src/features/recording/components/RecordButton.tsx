@@ -52,9 +52,9 @@ export default function RecordButton() {
       else setConfirmOpen(true);
    };
 
-   const handleConfirm = () => {
+   const handleConfirm = (kind: 'meeting' | 'rehearsal') => {
       setConfirmOpen(false);
-      dispatch(coreHub.startRecording());
+      dispatch(kind === 'rehearsal' ? coreHub.startRehearsalRecording() : coreHub.startRecording());
    };
 
    const label = isRecording ? t('conference.recording.stop') : t('conference.recording.start');
@@ -98,10 +98,20 @@ export default function RecordButton() {
             <DialogTitle>{t('conference.recording.confirm_title')}</DialogTitle>
             <DialogContent>
                <DialogContentText>{t('conference.recording.confirm_text')}</DialogContentText>
+               <DialogContentText sx={{ mt: 2 }} id="recording-rehearsal-text">
+                  {t('conference.recording.rehearsal_text')}
+               </DialogContentText>
             </DialogContent>
-            <DialogActions>
+            <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
                <Button onClick={() => setConfirmOpen(false)}>{t('common:cancel')}</Button>
-               <Button variant="contained" onClick={handleConfirm} id="recording-confirm-start">
+               <Button
+                  variant="outlined"
+                  onClick={() => handleConfirm('rehearsal')}
+                  id="recording-confirm-start-rehearsal"
+               >
+                  {t('conference.recording.confirm_start_rehearsal')}
+               </Button>
+               <Button variant="contained" onClick={() => handleConfirm('meeting')} id="recording-confirm-start">
                   {t('conference.recording.confirm_start')}
                </Button>
             </DialogActions>

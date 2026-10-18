@@ -674,6 +674,12 @@
     },
     "recording": {
       "rec": "REC",
+      "rec_rehearsal": "REHEARSAL",
+      "kind_rehearsal": "Rehearsal",
+      "rehearsal_text": "Rehearsal recording is for music: sound only, in high quality, and every voice and every instrument is also saved as a track of its own, so that you can mix them afterwards.",
+      "confirm_start_rehearsal": "Record rehearsal (sound and tracks)",
+      "download_tracks": "Download the tracks (ZIP)",
+      "tracks_hint": "One lossless file for every voice and instrument, all starting at the same moment, so that you can load them together in your music software.",
       "starting": "Starting recording…",
       "saving": "Saving recording…",
       "start": "Start recording",

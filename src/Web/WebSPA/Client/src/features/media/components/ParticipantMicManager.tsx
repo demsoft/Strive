@@ -1,12 +1,23 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectParticipantsOfCurrentRoom } from 'src/features/rooms/selectors';
+import { selectParticipant } from 'src/features/conference/selectors';
 import { RootState } from 'src/store';
 import useConsumer from 'src/store/webrtc/hooks/useConsumer';
 import AudioManager from '../AudioManager';
 import { patchParticipantAudio } from '../reducer';
 import { DEFAULT_PARTICIPANT_AUDIO } from '../sagas';
 import { ParticipantAudioElement } from '../types';
+
+/**
+ * Marks the sound of a voice or an instrument so that the recorder can record it as a track of its own (rehearsals,
+ * see the recorder service: it looks for audio elements with these attributes).
+ */
+const stemAttributes = (participantId: string, source: string, name: string | undefined) => ({
+   'data-stem-id': participantId,
+   'data-stem-source': source,
+   'data-stem-name': name ?? '',
+});
 
 const Context = React.createContext<AudioManager | null>(null);
 
@@ -28,6 +39,7 @@ function ParticipantAudio({
    ...props
 }: ParticipantAudioProps) {
    const consumer = useConsumer(participantId, 'mic');
+   const displayName = useSelector((state: RootState) => selectParticipant(state, participantId)?.displayName);
    const audioOptions =
       useSelector((state: RootState) => state.media.participantAudio[participantId]) ?? DEFAULT_PARTICIPANT_AUDIO;
 
@@ -61,7 +73,15 @@ function ParticipantAudio({
       }
    }, [audioOptions.volume, audioOptions.muted, audioElem.current]);
 
-   return <audio ref={audioElem} autoPlay playsInline controls={false} />;
+   return (
+      <audio
+         ref={audioElem}
+         {...stemAttributes(participantId, 'mic', displayName)}
+         autoPlay
+         playsInline
+         controls={false}
+      />
+   );
 }
 
 /**
@@ -76,6 +96,7 @@ function ParticipantExtraAudio({
    source: 'screen-audio' | 'instrument';
 }) {
    const consumer = useConsumer(participantId, source);
+   const displayName = useSelector((state: RootState) => selectParticipant(state, participantId)?.displayName);
    const audioOptions =
       useSelector((state: RootState) => state.media.participantAudio[participantId]) ?? DEFAULT_PARTICIPANT_AUDIO;
 
@@ -102,7 +123,16 @@ function ParticipantExtraAudio({
       }
    }, [audioOptions.volume, audioOptions.muted, audioElem.current]);
 
-   return <audio ref={audioElem} data-extra-audio={`${source}-${participantId}`} autoPlay playsInline controls={false} />;
+   return (
+      <audio
+         ref={audioElem}
+         data-extra-audio={`${source}-${participantId}`}
+         {...stemAttributes(participantId, source, displayName)}
+         autoPlay
+         playsInline
+         controls={false}
+      />
+   );
 }
 
 type Props = {

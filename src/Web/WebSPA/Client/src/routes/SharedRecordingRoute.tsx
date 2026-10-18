@@ -4,7 +4,9 @@ import { DateTime } from 'luxon';
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useTranslation } from 'react-i18next';
+import DownloadIcon from '@mui/icons-material/Download';
 import { Link, useParams } from 'react-router-dom';
+import { formatSize } from 'src/features/recording/format';
 import BrandLogo from 'src/components/BrandLogo';
 import * as api from 'src/services/api/recording';
 import { SharedRecordingDto } from 'src/services/api/recording';
@@ -12,13 +14,20 @@ import { brand } from 'src/theme';
 import to from 'src/utils/to';
 
 const useStyles = makeStyles()((theme) => ({
-   root: { minHeight: '100%', display: 'flex', flexDirection: 'column', padding: theme.spacing(2, 3), boxSizing: 'border-box' },
+   root: {
+      minHeight: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(2, 3),
+      boxSizing: 'border-box',
+   },
    body: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: theme.spacing(3, 0) },
    card: {
       width: '100%',
       maxWidth: 960,
       textAlign: 'center',
    },
+   audio: { width: '100%', maxWidth: 640 },
    video: {
       width: '100%',
       maxHeight: '70vh',
@@ -93,15 +102,25 @@ export default function SharedRecordingRoute() {
                {state.type === 'loading' && <CircularProgress />}
                {state.type === 'ready' && (
                   <>
-                     <video
-                        key={state.recording.url.split('?')[0]}
-                        className={classes.video}
-                        src={state.recording.url}
-                        controls
-                        autoPlay={false}
-                        playsInline
-                        id="shared-recording-video"
-                     />
+                     {state.recording.kind === 'rehearsal' ? (
+                        <audio
+                           key={state.recording.url.split('?')[0]}
+                           className={classes.audio}
+                           src={state.recording.url}
+                           controls
+                           id="shared-recording-audio"
+                        />
+                     ) : (
+                        <video
+                           key={state.recording.url.split('?')[0]}
+                           className={classes.video}
+                           src={state.recording.url}
+                           controls
+                           autoPlay={false}
+                           playsInline
+                           id="shared-recording-video"
+                        />
+                     )}
                      <Box sx={{ mt: 2 }}>
                         <Typography variant="h6">
                            {state.recording.conferenceName || t('conference.recording.untitled')}
@@ -109,6 +128,24 @@ export default function SharedRecordingRoute() {
                         <Typography color="textSecondary">
                            {DateTime.fromISO(state.recording.startedAt).toLocaleString(DateTime.DATETIME_MED)}
                         </Typography>
+                        {state.recording.tracksUrl && (
+                           <Button
+                              id="shared-recording-tracks"
+                              variant="outlined"
+                              sx={{ mt: 2 }}
+                              href={state.recording.tracksUrl}
+                              startIcon={<DownloadIcon />}
+                           >
+                              {t('conference.recording.download_tracks')}
+                              {state.recording.tracksSizeBytes != null &&
+                                 ` (${formatSize(state.recording.tracksSizeBytes)})`}
+                           </Button>
+                        )}
+                        {state.recording.tracksUrl && (
+                           <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                              {t('conference.recording.tracks_hint')}
+                           </Typography>
+                        )}
                      </Box>
                   </>
                )}
