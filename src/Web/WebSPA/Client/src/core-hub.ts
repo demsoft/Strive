@@ -59,6 +59,8 @@ export const controlWatchTogether = createHubFn<{
 }>('ControlWatchTogether');
 export const stopWatchTogether = createHubFn('StopWatchTogether');
 
+export const reportLatency = createHubFn<{ rttMs: number; jitterBufferMs: number; outputMs: number }>('ReportLatency');
+
 export const startMetronome = createHubFn<{ bpm: number; beatsPerBar: number }>('StartMetronome');
 export const stopMetronome = createHubFn('StopMetronome');
 

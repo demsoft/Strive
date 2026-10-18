@@ -25,6 +25,7 @@ export const RECORDING = 'recording';
 export const WATCH_TOGETHER = 'watchTogether';
 export const LESSON_MODE = 'lessonMode';
 export const METRONOME = 'metronome';
+export const LATENCY = 'latency';
 
 /** the server serializes enums in camel case */
 export type RecordingStatus = 'starting' | 'recording' | 'finalizing' | 'ready' | 'failed';
@@ -57,6 +58,11 @@ export type WatchTogetherSession = {
 
 export type SynchronizedWatchTogether = {
    session: WatchTogetherSession | null;
+};
+
+/** what the musicians measured about their connection, by participant id */
+export type SynchronizedLatency = {
+   reports: { [participantId: string]: { rttMs: number; jitterBufferMs: number; outputMs: number } };
 };
 
 /** the click that everybody hears at the same time; the server serializes the time as iso text */
