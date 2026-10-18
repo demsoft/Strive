@@ -24,6 +24,19 @@ namespace Strive.Core.Services.Recording
         Failed,
     }
 
+    public enum RecordingKind
+    {
+        /// <summary>
+        ///     A video of the conference with the sound of everybody mixed
+        /// </summary>
+        Meeting,
+
+        /// <summary>
+        ///     Only sound, in high quality: the mix and a track for every voice and every instrument (rehearsals)
+        /// </summary>
+        Rehearsal,
+    }
+
     public enum RecordingVisibility
     {
         /// <summary>

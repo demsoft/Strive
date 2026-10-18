@@ -134,6 +134,24 @@ namespace Strive.IntegrationTests.Services
         }
 
         [Fact]
+        public async Task StartRehearsalRecording_Moderator_RecorderGetsSoundOnlyWithTracks()
+        {
+            var (moderator, conference) = await ConnectToOpenedConference();
+
+            var result = await moderator.Hub.InvokeAsync<SuccessOrError<Unit>>(
+                nameof(CoreHub.StartRehearsalRecording));
+
+            AssertSuccess(result);
+            var command = Recorder.Started.Last(x => x.ConferenceId == conference.ConferenceId);
+            Assert.Equal(RecordingKind.Rehearsal, command.Kind);
+            Assert.Equal($"recordings/{conference.ConferenceId}/{command.RecordingId}.m4a", command.StorageKey);
+            Assert.Equal($"recordings/{conference.ConferenceId}/{command.RecordingId}-tracks.zip",
+                command.TracksStorageKey);
+            await moderator.SyncObjects.AssertSyncObject<SynchronizedRecording>(SynchronizedRecording.SyncObjId,
+                recording => Assert.Equal(RecordingKind.Rehearsal, recording.Active!.Kind));
+        }
+
+        [Fact]
         public async Task StartRecording_ParticipantWithoutPermission_ReturnPermissionDenied()
         {
             var (_, conference) = await ConnectToOpenedConference();

@@ -43,6 +43,8 @@ namespace Strive.Core.Services.Recording.UseCases
                     recording.StorageKey = report.StorageKey;
                     recording.SizeBytes = report.SizeBytes;
                     recording.DurationSeconds = report.DurationSeconds;
+                    recording.TracksStorageKey = report.TracksStorageKey;
+                    recording.TracksSizeBytes = report.TracksSizeBytes;
                     recording.EndedAt ??= _timeProvider.GetUtcNow();
                     break;
                 case RecorderEvent.Failed:

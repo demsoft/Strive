@@ -11,6 +11,6 @@ namespace Strive.Core.Services.Recording
         public static readonly SynchronizedObjectId SyncObjId = new(SynchronizedObjectIds.RECORDING);
 
         public record ActiveRecording(string RecordingId, RecordingStatus Status, DateTimeOffset StartedAt,
-            string StartedBy);
+            string StartedBy, RecordingKind Kind = RecordingKind.Meeting);
     }
 }

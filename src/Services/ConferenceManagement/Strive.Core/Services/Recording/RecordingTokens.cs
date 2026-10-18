@@ -19,9 +19,17 @@ namespace Strive.Core.Services.Recording
             return Guid.NewGuid().ToString("N");
         }
 
-        public static string BuildStorageKey(string conferenceId, string recordingId)
+        public static string BuildStorageKey(string conferenceId, string recordingId,
+            RecordingKind kind = RecordingKind.Meeting)
         {
-            return $"recordings/{conferenceId}/{recordingId}.mp4";
+            return kind == RecordingKind.Rehearsal
+                ? $"recordings/{conferenceId}/{recordingId}.m4a"
+                : $"recordings/{conferenceId}/{recordingId}.mp4";
+        }
+
+        public static string BuildTracksStorageKey(string conferenceId, string recordingId)
+        {
+            return $"recordings/{conferenceId}/{recordingId}-tracks.zip";
         }
     }
 }
