@@ -51,13 +51,21 @@ test('a visitor sees the welcome page with the sign up and sign in buttons', asy
    expect(document.querySelector('#the-app')).toBeNull();
 });
 
-test('sign up goes to the registration page (prompt create), sign in to the sign in page', async () => {
+test('become a fan goes to the registration page and then to the home page, become a creator to the creator page', async () => {
    await render();
 
    await act(async () => (document.querySelector('#landing-sign-up') as HTMLElement).click());
    expect(auth.signinRedirect).toHaveBeenLastCalledWith({ state: { url: '/' }, prompt: 'create' });
 
+   await act(async () => (document.querySelector('#landing-sign-up-creator') as HTMLElement).click());
+   expect(auth.signinRedirect).toHaveBeenLastCalledWith({ state: { url: '/creator' }, prompt: 'create' });
+});
+
+test('an existing account signs in without the registration page', async () => {
+   await render();
+
    await act(async () => (document.querySelector('#landing-sign-in') as HTMLElement).click());
+
    expect(auth.signinRedirect).toHaveBeenLastCalledWith({ state: { url: '/' } });
 });
 
