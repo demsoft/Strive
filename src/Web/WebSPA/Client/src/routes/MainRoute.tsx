@@ -6,8 +6,6 @@ import GraphicEqIcon from '@mui/icons-material/GraphicEq';
 import GroupsIcon from '@mui/icons-material/Groups';
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 import PianoIcon from '@mui/icons-material/Piano';
-import AvTimerIcon from '@mui/icons-material/AvTimer';
-import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
 import HighQualityIcon from '@mui/icons-material/HighQuality';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import PanToolOutlinedIcon from '@mui/icons-material/PanToolOutlined';
@@ -156,28 +154,34 @@ export default function MainRoute() {
                      <>
                         <Chip
                            className={classes.chip}
-                           icon={<PianoIcon />}
-                           label={t('view_main_gbedu.feature_sound')}
+                           icon={<HighQualityIcon />}
+                           label={t('view_main_gbedu.feature_live')}
                         />
                         <Chip
                            className={classes.chip}
-                           icon={<AvTimerIcon />}
-                           label={t('view_main_gbedu.feature_click')}
-                        />
-                        <Chip
-                           className={classes.chip}
-                           icon={<SchoolOutlinedIcon />}
-                           label={t('view_main_gbedu.feature_lesson')}
+                           icon={<ScreenShareIcon />}
+                           label={t('view_main_gbedu.feature_screen')}
                         />
                         <Chip
                            className={classes.chip}
                            icon={<GraphicEqIcon />}
-                           label={t('view_main_gbedu.feature_tracks')}
+                           label={t('view_main_gbedu.feature_record')}
                         />
                         <Chip
                            className={classes.chip}
+                           icon={<GroupsIcon />}
+                           label={t('view_main_gbedu.feature_tools')}
+                        />
+                        <Chip
+                           className={classes.chip}
+                           icon={<PianoIcon />}
+                           label={t('view_main_gbedu.feature_music')}
+                        />
+                        <Chip
+                           className={classes.chip}
+                           variant="outlined"
                            icon={<PaymentsOutlinedIcon />}
-                           label={t('view_main_gbedu.feature_naira')}
+                           label={t('view_main_gbedu.feature_soon')}
                         />
                      </>
                   ) : (

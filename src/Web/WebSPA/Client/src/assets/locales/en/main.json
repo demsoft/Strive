@@ -18,7 +18,7 @@
       "text": "You are not authenticated."
     }
   },
-  "view_main_gbedu": {"headline_1": "Live music,", "headline_2": "paid in naira.", "subtitle": "Learn, rehearse and perform live with African creators. Pay by card, transfer or USSD and join from your phone.", "feature_sound": "Studio sound for instruments", "feature_click": "Shared click", "feature_lesson": "Lesson mode", "feature_tracks": "Recordings with every track", "feature_naira": "Creators paid in naira"},
+  "view_main_gbedu": {"headline_1": "Go live.", "headline_2": "Bring people together.", "subtitle": "Teach, perform and share what you know in live sessions that people join from their phone. Paid sessions in naira are coming soon.", "feature_live": "Live video sessions", "feature_screen": "Screen share with sound", "feature_record": "Recording with a share link", "feature_tools": "Polls, whiteboard, breakout rooms", "feature_music": "Studio sound for music", "feature_soon": "Paid sessions: coming soon"},
   "view_main": {
     "welcome_message": "Welcome to Strive",
     "start_new_conference": "Start new conference",
