@@ -11,6 +11,12 @@
 
     <partial name="_ValidationSummary" />
 
+    @if (Opts.Value.IsAccountsMode && Opts.Value.Google.IsConfigured)
+    {
+        <partial name="_GoogleButton" model="Model.ReturnUrl" />
+        <div class="divider"><span>or</span></div>
+    }
+
     <form asp-action="Register" method="post">
         <input type="hidden" asp-for="ReturnUrl" />
 
