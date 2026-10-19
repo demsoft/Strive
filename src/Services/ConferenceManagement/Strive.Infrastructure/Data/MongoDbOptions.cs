@@ -12,6 +12,7 @@ namespace Strive.Infrastructure.Data
         {
             {"Conference", "Conference"}, {"ConferenceLink", "ConferenceLink"}, {"ConferenceRecording", "Recording"},
             {"AdminSample", "AdminMetrics"}, {"CreatorProfile", "Creator"},
+            {"PaidSession", "PaidSession"}, {"TicketOrder", "TicketOrder"}, {"Entitlement", "Entitlement"},
         };
     }
 }

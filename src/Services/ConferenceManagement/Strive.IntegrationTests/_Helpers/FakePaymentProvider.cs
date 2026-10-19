@@ -21,6 +21,29 @@ namespace Strive.IntegrationTests._Helpers
 
         public bool Unavailable { get; set; }
 
+        public ConcurrentQueue<CheckoutRequest> Checkouts { get; } = new();
+
+        /// <summary>What the provider says about a payment, by reference. Unknown: the person has not paid.</summary>
+        public ConcurrentDictionary<string, VerifiedTransaction> Transactions { get; } = new();
+
+        /// <summary>The key the notifications are signed with (the same as the key in the test settings)</summary>
+        public const string SecretKey = "sk_test_integration";
+
+        /// <summary>The person pays: the provider will confirm it</summary>
+        public void Pay(string reference, long amountMinor, string currency = "NGN") =>
+            Transactions[reference] = new VerifiedTransaction(reference, true, false, amountMinor, currency, "card",
+                "4099260516", DateTimeOffset.UtcNow);
+
+        public void Fail(string reference, long amountMinor) =>
+            Transactions[reference] = new VerifiedTransaction(reference, false, true, amountMinor, "NGN", "card", null,
+                null);
+
+        public static string Sign(byte[] body)
+        {
+            using var hmac = new System.Security.Cryptography.HMACSHA512(System.Text.Encoding.UTF8.GetBytes(SecretKey));
+            return Convert.ToHexString(hmac.ComputeHash(body)).ToLowerInvariant();
+        }
+
         private int _counter;
 
         public Task<IReadOnlyList<ProviderBank>> ListBanks(string country, CancellationToken cancellationToken = default)
@@ -54,6 +77,25 @@ namespace Strive.IntegrationTests._Helpers
             UpdatedSubaccounts.Enqueue((subaccountCode, request));
             return Task.CompletedTask;
         }
+
+        public Task<CheckoutSession> InitializeCheckout(CheckoutRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            Check();
+            Checkouts.Enqueue(request);
+            return Task.FromResult(new CheckoutSession($"https://checkout.test/{request.Reference}", "access"));
+        }
+
+        public Task<VerifiedTransaction> VerifyTransaction(string reference,
+            CancellationToken cancellationToken = default)
+        {
+            Check();
+            if (!Transactions.TryGetValue(reference, out var transaction))
+                throw new TransactionNotFoundException("Transaction reference not found.");
+            return Task.FromResult(transaction);
+        }
+
+        public bool IsValidWebhookSignature(byte[] rawBody, string? signature) => signature == Sign(rawBody);
 
         private void Check()
         {

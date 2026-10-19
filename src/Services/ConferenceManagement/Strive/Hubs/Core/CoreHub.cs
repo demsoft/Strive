@@ -38,6 +38,7 @@ using Strive.Core.Services.Permissions.Requests;
 using Strive.Core.Services.Permissions.Responses;
 using Strive.Core.Services.Poll.Requests;
 using Strive.Core.Services.Reactions.Requests;
+using Strive.Core.Services.Payments.Requests;
 using Strive.Core.Services.Recording;
 using Strive.Core.Services.Recording.Requests;
 using Strive.Infrastructure.Recording;
@@ -110,6 +111,7 @@ namespace Strive.Hubs.Core
             var connectionId = Context.ConnectionId;
 
             await EnsureRecorderMayJoin(participant);
+            await EnsureMayJoinPaidSession(participant);
 
             if (await _mediator.Send(new ShouldWaitInLobbyRequest(participant), Context.ConnectionAborted))
             {
@@ -127,6 +129,18 @@ namespace Strive.Hubs.Core
 
             _connections.SetParticipant(participant.Id,
                 new ParticipantConnection(participant.ConferenceId, Context.ConnectionId));
+        }
+
+        /// <summary>
+        ///     A paid session can only be joined by its host and by people with a ticket. Recorders are checked
+        ///     separately (they join with the token of a recording).
+        /// </summary>
+        private async Task EnsureMayJoinPaidSession(Participant participant)
+        {
+            if (GetHttpContext().User.IsInRole(RecorderOptions.RoleClaimValue)) return;
+
+            var access = await _mediator.Send(new CheckSessionAccessRequest(participant), Context.ConnectionAborted);
+            if (!access.Success) throw access.Error!.ToException();
         }
 
         /// <summary>

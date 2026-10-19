@@ -51,6 +51,14 @@ namespace Strive.Core.Services
         Payments_InvalidAccount,
         Payments_ProviderUnavailable,
         Payments_CreatorNotFound,
+        Payments_CreatorCannotSell,
+        Payments_InvalidSession,
+        Payments_InvalidEmail,
+        Payments_SessionNotFound,
+        Payments_SessionCancelled,
+        Payments_TicketRequired,
+        Payments_HostCannotBuy,
+        Payments_OrderNotFound,
 
         // Permissions
         Permissions_PermissionKeyNotFound,
