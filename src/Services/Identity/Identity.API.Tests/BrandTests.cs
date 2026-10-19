@@ -94,7 +94,9 @@ namespace Identity.API.Tests
             Assert.Contains("<title>Gbedu</title>", html);
             Assert.Contains("data-brand=\"gbedu\"", html);
             Assert.Contains("aria-label=\"Gbedu\"", html);
-            Assert.Contains("Creators are paid in naira", html);
+            Assert.Contains("Go live.", html);
+            // only what works today: payments are announced as coming, not offered
+            Assert.Contains("coming soon", html);
             Assert.DoesNotContain("Meetings that feel", html);
         }
 

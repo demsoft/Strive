@@ -18,7 +18,7 @@
       "text": "Sie sind nicht authentifiziert."
     }
   },
-  "view_main_gbedu": {"headline_1": "Live-Musik,", "headline_2": "bezahlt in Naira.", "subtitle": "Lerne, probe und spiele live mit afrikanischen Kreativen. Zahle per Karte, Überweisung oder USSD und komm vom Handy.", "feature_sound": "Studioklang für Instrumente", "feature_click": "Gemeinsamer Klick", "feature_lesson": "Unterrichtsmodus", "feature_tracks": "Aufnahmen mit jeder Spur", "feature_naira": "Kreative werden in Naira bezahlt"},
+  "view_main_gbedu": {"headline_1": "Geh live.", "headline_2": "Bring Menschen zusammen.", "subtitle": "Unterrichte, tritt auf und teile, was du kannst, in Live-Sitzungen, denen man vom Handy beitritt. Bezahlte Sitzungen in Naira kommen bald.", "feature_live": "Live-Videositzungen", "feature_screen": "Bildschirm teilen mit Ton", "feature_record": "Aufnahme mit Link zum Teilen", "feature_tools": "Umfragen, Whiteboard, Gruppenräume", "feature_music": "Studioklang für Musik", "feature_soon": "Bezahlte Sitzungen: bald"},
   "view_main": {
     "welcome_message": "Willkomen bei Strive",
     "start_new_conference": "Neue Konferenz öffnen",
