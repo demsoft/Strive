@@ -53,6 +53,9 @@ services:
       - Recording__Storage__AccessKeyId=${RECORDING_STORAGE_ACCESS_KEY_ID:-}
       - Recording__Storage__SecretAccessKey=${RECORDING_STORAGE_SECRET_ACCESS_KEY:-}
       - Recording__Recorder__BaseUrl=http://recorder:3000
+      - Payments__Enabled=${PAYMENTS_ENABLED:-false}
+      - Payments__PlatformCommissionPercent=${PLATFORM_COMMISSION_PERCENT:-10}
+      - Payments__Paystack__SecretKey=${PAYSTACK_SECRET_KEY:-}
       - Recording__Recorder__SharedSecret=${RECORDER_SHARED_SECRET}
       - Recording__Recorder__TokenSecret=${RECORDER_TOKEN_SECRET}
 

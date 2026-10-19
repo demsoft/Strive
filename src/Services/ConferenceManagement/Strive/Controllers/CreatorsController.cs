@@ -1,0 +1,110 @@
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Strive.Core.Services.Payments;
+using Strive.Core.Services.Payments.Gateways;
+using Strive.Core.Services.Payments.Requests;
+using Strive.Extensions;
+using Strive.Models.Response;
+
+namespace Strive.Controllers
+{
+    /// <summary>
+    ///     Creators: people who host paid sessions. They add the bank account their earnings are paid into.
+    /// </summary>
+    [ApiController]
+    [Authorize]
+    public class CreatorsController : Controller
+    {
+        private readonly IMediator _mediator;
+        private readonly ICreatorRepo _creators;
+        private readonly PaymentsOptions _options;
+
+        public CreatorsController(IMediator mediator, ICreatorRepo creators, IOptions<PaymentsOptions> options)
+        {
+            _mediator = mediator;
+            _creators = creators;
+            _options = options.Value;
+        }
+
+        private string? UserId => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        // GET v1/creators/config
+        [HttpGet("v1/creators/config")]
+        public ActionResult<PaymentsConfigDto> GetConfig()
+        {
+            return new PaymentsConfigDto(_options.Enabled, _options.Country, _options.Currency,
+                _options.PlatformCommissionPercent);
+        }
+
+        // GET v1/creators/banks
+        [HttpGet("v1/creators/banks")]
+        public async Task<ActionResult<BankDto[]>> GetBanks()
+        {
+            var result = await _mediator.Send(new ListBanksRequest());
+            if (!result.Success) return result.ToActionResult();
+
+            Response.Headers.CacheControl = "private, max-age=3600";
+            return result.Response!.Select(x => new BankDto(x.Code, x.Name)).ToArray();
+        }
+
+        // POST v1/creators/resolve-account
+        [HttpPost("v1/creators/resolve-account")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<ResolvedAccountDto>> ResolveAccount([FromBody] ResolveAccountDto dto)
+        {
+            if (UserId == null) return Forbid();
+
+            var result = await _mediator.Send(new ResolveBankAccountRequest(dto.BankCode, dto.AccountNumber));
+            if (!result.Success) return result.ToActionResult();
+
+            Response.Headers.CacheControl = "no-store";
+            return new ResolvedAccountDto(result.Response!.AccountName);
+        }
+
+        // GET v1/creators/me
+        [HttpGet("v1/creators/me")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<CreatorProfileDto>> GetMine()
+        {
+            if (UserId == null) return Forbid();
+
+            var profile = await _creators.FindByUserId(UserId);
+            if (profile == null) return PaymentsError.CreatorNotFound.ToActionResult();
+
+            Response.Headers.CacheControl = "no-store";
+            return CreatorProfileDto.From(profile);
+        }
+
+        // PUT v1/creators/me
+        [HttpPut("v1/creators/me")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<CreatorProfileDto>> SaveMine([FromBody] SaveCreatorDto dto)
+        {
+            if (UserId == null) return Forbid();
+
+            var result = await _mediator.Send(new SaveCreatorProfileRequest(UserId, dto.DisplayName, dto.Bio,
+                dto.BankCode, dto.AccountNumber));
+            if (!result.Success) return result.ToActionResult();
+
+            return CreatorProfileDto.From(result.Response!);
+        }
+
+        // GET v1/creators/{creatorId}
+        [HttpGet("v1/creators/{creatorId}")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<PublicCreatorDto>> GetPublic(string creatorId)
+        {
+            var profile = await _creators.FindById(creatorId);
+            if (profile is not {CanSell: true}) return PaymentsError.CreatorNotFound.ToActionResult();
+
+            return PublicCreatorDto.From(profile);
+        }
+    }
+}

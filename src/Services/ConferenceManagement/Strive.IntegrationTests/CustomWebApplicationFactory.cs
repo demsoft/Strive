@@ -12,6 +12,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Serilog;
 using Serilog.Events;
+using Strive.Core.Services.Payments.Gateways;
 using Strive.Core.Services.Recording.Gateways;
 using Strive.IntegrationTests._Helpers;
 using Xunit.Abstractions;
@@ -68,6 +69,8 @@ namespace Strive.IntegrationTests
                 // application, which only add their implementations if nothing is registered yet.
                 services.AddSingleton<FakeRecorderClient>();
                 services.AddSingleton<IRecorderClient>(sp => sp.GetRequiredService<FakeRecorderClient>());
+                services.AddSingleton<FakePaymentProvider>();
+                services.AddSingleton<IPaymentProvider>(sp => sp.GetRequiredService<FakePaymentProvider>());
                 services.AddSingleton<FakeRecordingStorage>();
                 services.AddSingleton<IRecordingStorage>(sp => sp.GetRequiredService<FakeRecordingStorage>());
 
