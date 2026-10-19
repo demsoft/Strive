@@ -2,7 +2,12 @@ import { useAuth } from 'react-oidc-context';
 import { Link as RouterLink } from 'react-router-dom';
 import { Box, Button, Chip, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
+import GraphicEqIcon from '@mui/icons-material/GraphicEq';
 import GroupsIcon from '@mui/icons-material/Groups';
+import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
+import PianoIcon from '@mui/icons-material/Piano';
+import AvTimerIcon from '@mui/icons-material/AvTimer';
+import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
 import HighQualityIcon from '@mui/icons-material/HighQuality';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import PanToolOutlinedIcon from '@mui/icons-material/PanToolOutlined';
@@ -10,6 +15,7 @@ import ScreenShareIcon from '@mui/icons-material/ScreenShare';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
+import { isGbedu } from 'src/brand-id';
 import BrandLogo from 'src/components/BrandLogo';
 import MyConferencesList from 'src/features/conference/components/MyConferencesList';
 import { fetchConferenceLinks } from 'src/features/conference/reducer';
@@ -120,6 +126,7 @@ export default function MainRoute() {
 
    const links = useSelector((state: RootState) => state.conference.conferenceLinks);
    const auth = useAuth();
+   const texts = isGbedu ? 'view_main_gbedu' : 'view_main';
 
    return (
       <div className={classes.root}>
@@ -138,18 +145,66 @@ export default function MainRoute() {
          <main className={classes.main}>
             <section className={classes.hero}>
                <Typography variant="h1" className={classes.title}>
-                  {t('view_main.headline_1')} <span className={classes.gradientText}>{t('view_main.headline_2')}</span>
+                  {t(`${texts}.headline_1`)} <span className={classes.gradientText}>{t(`${texts}.headline_2`)}</span>
                </Typography>
                <Typography variant="h6" component="p" className={classes.subtitle}>
-                  {t('view_main.subtitle')}
+                  {t(`${texts}.subtitle`)}
                </Typography>
                <ConferenceControls />
                <div className={classes.chips}>
-                  <Chip className={classes.chip} icon={<HighQualityIcon />} label={t('view_main.feature_video')} />
-                  <Chip className={classes.chip} icon={<ScreenShareIcon />} label={t('view_main.feature_screen')} />
-                  <Chip className={classes.chip} icon={<MeetingRoomIcon />} label={t('view_main.feature_lobby')} />
-                  <Chip className={classes.chip} icon={<PanToolOutlinedIcon />} label={t('view_main.feature_hands')} />
-                  <Chip className={classes.chip} icon={<GroupsIcon />} label={t('view_main.feature_rooms')} />
+                  {isGbedu ? (
+                     <>
+                        <Chip
+                           className={classes.chip}
+                           icon={<PianoIcon />}
+                           label={t('view_main_gbedu.feature_sound')}
+                        />
+                        <Chip
+                           className={classes.chip}
+                           icon={<AvTimerIcon />}
+                           label={t('view_main_gbedu.feature_click')}
+                        />
+                        <Chip
+                           className={classes.chip}
+                           icon={<SchoolOutlinedIcon />}
+                           label={t('view_main_gbedu.feature_lesson')}
+                        />
+                        <Chip
+                           className={classes.chip}
+                           icon={<GraphicEqIcon />}
+                           label={t('view_main_gbedu.feature_tracks')}
+                        />
+                        <Chip
+                           className={classes.chip}
+                           icon={<PaymentsOutlinedIcon />}
+                           label={t('view_main_gbedu.feature_naira')}
+                        />
+                     </>
+                  ) : (
+                     <>
+                        <Chip
+                           className={classes.chip}
+                           icon={<HighQualityIcon />}
+                           label={t('view_main.feature_video')}
+                        />
+                        <Chip
+                           className={classes.chip}
+                           icon={<ScreenShareIcon />}
+                           label={t('view_main.feature_screen')}
+                        />
+                        <Chip
+                           className={classes.chip}
+                           icon={<MeetingRoomIcon />}
+                           label={t('view_main.feature_lobby')}
+                        />
+                        <Chip
+                           className={classes.chip}
+                           icon={<PanToolOutlinedIcon />}
+                           label={t('view_main.feature_hands')}
+                        />
+                        <Chip className={classes.chip} icon={<GroupsIcon />} label={t('view_main.feature_rooms')} />
+                     </>
+                  )}
                </div>
             </section>
 

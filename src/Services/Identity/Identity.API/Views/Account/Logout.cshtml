@@ -1,8 +1,9 @@
+@inject Identity.API.BrandInfo Brand
 @model Identity.API.Quickstart.Account.LogoutViewModel
 
 <div class="auth-card logout-page">
     <h1>Sign <span class="gradient-text">out?</span></h1>
-    <p class="subtitle">You'll need to sign in again to join your meetings.</p>
+    <p class="subtitle">@(Brand.IsGbedu ? "You'll need to sign in again to join your sessions." : "You'll need to sign in again to join your meetings.")</p>
 
     <form asp-action="Logout">
         <input type="hidden" name="logoutId" value="@Model.LogoutId" />

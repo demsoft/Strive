@@ -75,6 +75,7 @@ namespace Identity.API
 
             services.AddHttpContextAccessor();
             services.AddSingleton<AppUrls>();
+            services.AddSingleton<BrandInfo>();
             services.AddSingleton<IUserProvider, DemoUserProvider>();
             ConfigureAccounts(services);
 

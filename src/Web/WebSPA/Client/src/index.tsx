@@ -7,6 +7,9 @@ import * as serviceWorker from './serviceWorker';
 import store from './store';
 import debug from 'debug';
 import './services/i18n';
+import { brandName } from './brand-id';
+
+document.title = brandName;
 
 window.AudioContext = window.AudioContext || (window as any).webkitAudioContext;
 

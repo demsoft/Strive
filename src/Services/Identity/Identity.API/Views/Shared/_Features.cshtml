@@ -1,3 +1,20 @@
+@inject Identity.API.BrandInfo Brand
+@if (Brand.IsGbedu)
+{
+<section class="features" aria-label="About Gbedu">
+    <h2>Live music, <span class="gradient-text">in your language</span></h2>
+    <p class="lead">Learn, rehearse and perform live with African creators. Pay in naira, join from your phone.</p>
+    <ul>
+        <li><span class="ico">🎶</span><div><strong>Lessons, rehearsals and performances</strong><span>Join live sessions of teachers, choirs and bands, straight in the browser.</span></div></li>
+        <li><span class="ico">🎹</span><div><strong>Studio sound for instruments</strong><span>Piano, bass and voice come across clearly, without call processing.</span></div></li>
+        <li><span class="ico">🥁</span><div><strong>A shared click and a lesson mode</strong><span>Everybody plays to the same beat, and the teacher decides who is heard.</span></div></li>
+        <li><span class="ico">⏺️</span><div><strong>Recordings with a track for everybody</strong><span>Keep the mix of a rehearsal and every voice and instrument on its own.</span></div></li>
+        <li><span class="ico">₦</span><div><strong>Creators are paid in naira</strong><span>Fans pay by card, transfer or USSD and the creator gets their share in their bank account.</span></div></li>
+    </ul>
+</section>
+}
+else
+{
 <section class="features" aria-label="About Strive">
     <h2>Meetings that feel <span class="gradient-text">effortless</span></h2>
     <p class="lead">Video meetings for teams, classes and communities. No downloads, just a link.</p>
@@ -10,3 +27,4 @@
         <li><span class="ico">👥</span><div><strong>Breakout rooms, polls and a whiteboard</strong><span>Everything for workshops and lessons in one place.</span></div></li>
     </ul>
 </section>
+}

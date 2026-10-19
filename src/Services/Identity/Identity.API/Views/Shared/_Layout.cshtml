@@ -1,3 +1,4 @@
+@inject Identity.API.BrandInfo Brand
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,14 +8,14 @@
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#0b0d17" />
 
-    <title>Strive</title>
+    <title>@Brand.Name</title>
 
     <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
     <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico" />
 
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
-<body>
+<body data-brand="@Brand.Id">
     <div class="page">
         <partial name="_Nav" />
 

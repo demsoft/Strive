@@ -1,6 +1,7 @@
 import { Button } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import AddIcon from '@mui/icons-material/Add';
+import { brand } from 'src/theme';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
@@ -32,7 +33,7 @@ function ConferenceControls() {
             onClick={handleCreateConference}
             id="create-conference-button"
             startIcon={<AddIcon />}
-            sx={{ boxShadow: '0 12px 32px rgba(124, 92, 255, 0.45)', borderRadius: 4 }}
+            sx={{ boxShadow: `0 12px 32px ${brand.accentShadow}`, borderRadius: 4 }}
          >
             {t('view_main.start_new_conference')}
          </Button>
