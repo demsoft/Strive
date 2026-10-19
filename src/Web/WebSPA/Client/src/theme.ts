@@ -1,10 +1,11 @@
 import { alpha, createTheme, responsiveFontSizes } from '@mui/material';
+import { isGbedu } from './brand-id';
 
 /**
  * The Strive design tokens. The Identity server pages (Services/Identity/Identity.API/wwwroot/css/site.css) use the same
  * values, keep them in sync so that the sign in feels like part of the app.
  */
-export const brand = {
+const strive = {
    violet: '#7C5CFF',
    violetLight: '#A18BFF',
    cyan: '#22D3EE',
@@ -14,7 +15,32 @@ export const brand = {
    border: 'rgba(255, 255, 255, 0.08)',
    gradient: 'linear-gradient(135deg, #7C5CFF 0%, #22D3EE 100%)',
    gradientSoft: 'linear-gradient(135deg, rgba(124, 92, 255, 0.18) 0%, rgba(34, 211, 238, 0.12) 100%)',
+   glowA: 'rgba(124, 92, 255, 0.16)',
+   glowB: 'rgba(34, 211, 238, 0.10)',
+   accentShadow: 'rgba(124, 92, 255, 0.45)',
+   pulse: 'rgba(34, 211, 238, 0.6)',
+   pulseFade: 'rgba(34, 211, 238, 0)',
 };
+
+/** Gbedu: warm amber and coral on a warm dark base. The names stay the same, the values are the brand's own. */
+const gbedu: typeof strive = {
+   violet: '#FF9F1C',
+   violetLight: '#FFC266',
+   cyan: '#FF4D6D',
+   background: '#120D0A',
+   surface: '#1D1511',
+   surfaceRaised: '#281D17',
+   border: 'rgba(255, 255, 255, 0.08)',
+   gradient: 'linear-gradient(135deg, #FF9F1C 0%, #FF4D6D 100%)',
+   gradientSoft: 'linear-gradient(135deg, rgba(255, 159, 28, 0.18) 0%, rgba(255, 77, 109, 0.12) 100%)',
+   glowA: 'rgba(255, 159, 28, 0.14)',
+   glowB: 'rgba(255, 77, 109, 0.09)',
+   accentShadow: 'rgba(255, 159, 28, 0.40)',
+   pulse: 'rgba(255, 77, 109, 0.6)',
+   pulseFade: 'rgba(255, 77, 109, 0)',
+};
+
+export const brand = isGbedu ? gbedu : strive;
 
 const fontFamily = '"Inter", "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif';
 
@@ -22,7 +48,7 @@ const baseTheme = createTheme({
    palette: {
       mode: 'dark',
       primary: { main: brand.violet, light: brand.violetLight, contrastText: '#ffffff' },
-      secondary: { main: brand.cyan, contrastText: '#06202a' },
+      secondary: { main: brand.cyan, contrastText: isGbedu ? '#2a0610' : '#06202a' },
       error: { main: '#F87171' },
       success: { main: '#34D399' },
       warning: { main: '#FBBF24' },
@@ -53,7 +79,7 @@ const theme = responsiveFontSizes(
                body: {
                   backgroundColor: brand.background,
                   backgroundImage:
-                     'radial-gradient(1200px 600px at 10% -10%, rgba(124, 92, 255, 0.16), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(34, 211, 238, 0.10), transparent 55%)',
+                     `radial-gradient(1200px 600px at 10% -10%, ${brand.glowA}, transparent 60%), radial-gradient(900px 500px at 100% 0%, ${brand.glowB}, transparent 55%)`,
                   backgroundAttachment: 'fixed',
                },
                '::-webkit-scrollbar': { width: 10, height: 10 },

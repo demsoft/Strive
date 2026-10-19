@@ -1,8 +1,9 @@
+@inject Identity.API.BrandInfo Brand
 @model Identity.API.Quickstart.Account.WelcomeModel
 
 <div class="auth-card">
-    <h1>Welcome to <span class="gradient-text">Strive</span></h1>
-    <p class="subtitle">Choose the name other participants will see in your meetings. You can use your real name or a nickname.</p>
+    <h1>Welcome to <span class="gradient-text">@Brand.Name</span></h1>
+    <p class="subtitle">Choose the name other participants will see in your @(Brand.IsGbedu ? "sessions" : "meetings"). You can use your real name or a nickname.</p>
 
     <partial name="_ValidationSummary" />
 

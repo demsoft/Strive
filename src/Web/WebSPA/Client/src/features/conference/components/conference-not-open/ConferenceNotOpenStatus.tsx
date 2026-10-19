@@ -7,9 +7,9 @@ import { useTranslation } from 'react-i18next';
 import { brand } from 'src/theme';
 
 const pulse = keyframes`
-   0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.6); }
-   70% { box-shadow: 0 0 0 12px rgba(34, 211, 238, 0); }
-   100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0); }
+   0% { box-shadow: 0 0 0 0 ${brand.pulse}; }
+   70% { box-shadow: 0 0 0 12px ${brand.pulseFade}; }
+   100% { box-shadow: 0 0 0 0 ${brand.pulseFade}; }
 `;
 
 const useStyles = makeStyles()((theme) => ({

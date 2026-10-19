@@ -1,5 +1,6 @@
+@inject Identity.API.BrandInfo Brand
 <div class="auth-card welcome-page">
-    <h1>Strive <span class="gradient-text">accounts</span></h1>
-    <p class="subtitle">This is the sign-in service for Strive. Head back to the app to start or join a meeting.</p>
-    <a class="btn btn-primary btn-block" href="/">Open Strive</a>
+    <h1>@Brand.Name <span class="gradient-text">accounts</span></h1>
+    <p class="subtitle">This is the sign-in service for @Brand.Name. Head back to the app to start or join a @(Brand.IsGbedu ? "session" : "meeting").</p>
+    <a class="btn btn-primary btn-block" href="/">Open @Brand.Name</a>
 </div>

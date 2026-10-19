@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { brand } from 'src/theme';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router-dom';
@@ -292,7 +293,7 @@ export default function AdminPage() {
                      <Sparkline
                         title={t('admin.people')}
                         values={history.map((x) => x.participants)}
-                        color="#7C5CFF"
+                        color={brand.violet}
                         currentText={`${history[history.length - 1].participants} · max ${Math.max(...history.map((x) => x.participants))}`}
                         firstLabel={labels[0]}
                         lastLabel={labels[1]}
@@ -301,7 +302,7 @@ export default function AdminPage() {
                         title={t('admin.busiest_worker')}
                         values={history.map((x) => x.maxWorkerCpu)}
                         max={100}
-                        color="#22D3EE"
+                        color={brand.cyan}
                         currentText={`${history[history.length - 1].maxWorkerCpu.toFixed(0)}%`}
                         lines={[
                            { value: th.workerCpuWarningPercent, color: '#FBBF24' },
@@ -406,7 +407,7 @@ export default function AdminPage() {
                               flex: 1,
                               height: `${Math.max(4, (day.count / maxSignups) * 100)}%`,
                               borderRadius: 0.5,
-                              backgroundColor: day.count > 0 ? '#7C5CFF' : 'rgba(255,255,255,0.08)',
+                              backgroundColor: day.count > 0 ? brand.violet : 'rgba(255,255,255,0.08)',
                            }}
                         />
                      ))}

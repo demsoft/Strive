@@ -1,3 +1,4 @@
+@inject Identity.API.BrandInfo Brand
 @model Identity.API.Quickstart.Account.LoginViewModel
 
 <div class="auth-split">
@@ -6,7 +7,7 @@
 
 <div class="auth-card login-page">
     <h1>Welcome <span class="gradient-text">back</span></h1>
-    <p class="subtitle">Sign in to start or join your meetings.</p>
+    <p class="subtitle">@(Brand.IsGbedu ? "Sign in to join or run live sessions." : "Sign in to start or join your meetings.")</p>
 
     @if (!string.IsNullOrEmpty(Model.Notice))
     {
