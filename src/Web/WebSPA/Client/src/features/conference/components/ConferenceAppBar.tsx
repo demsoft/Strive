@@ -25,6 +25,7 @@ import RecordingsDialog from 'src/features/recording/components/RecordingsDialog
 import { openRecordings } from 'src/features/recording/reducer';
 import InviteLinkButton from 'src/components/InviteLinkButton';
 import LobbyButton from 'src/features/lobby/components/LobbyButton';
+import ConferenceTools from './ConferenceTools';
 import AppBarLogo from './appbar/AppBarLogo';
 import BreakoutRoomChip from './appbar/BreakoutRoomChip';
 import UserMenu from './appbar/UserMenu';
@@ -102,32 +103,7 @@ export default function ConferenceAppBar() {
             </Box>
 
             {/* what you can do */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0, sm: 0.5 }, flexShrink: 0 }}>
-               <RecordButton />
-               <WatchTogetherButton />
-               <LessonModeButton />
-               <MetronomeButton />
-               <LatencyButton />
-               <LobbyButton />
-               <InviteLinkButton />
-               {!isMobile && (
-                  <Tooltip title={t('common:settings')}>
-                     <IconButton aria-label={t('common:settings')} color="inherit" onClick={() => dispatch(openSettings())}>
-                        <SettingsOutlinedIcon />
-                     </IconButton>
-                  </Tooltip>
-               )}
-               <UserMenu
-                  showSettings={isMobile}
-                  canManageRecordings={Boolean(canManageRecordings)}
-                  canCloseConference={Boolean(canCloseConference)}
-                  onShowPermissions={() => dispatch(coreHub.fetchPermissions(null))}
-                  onShowRecordings={() => dispatch(openRecordings())}
-                  onChangeConference={handlePatchConference}
-                  onCloseConference={() => dispatch(coreHub.closeConference())}
-                  onOpenSettings={() => dispatch(openSettings())}
-               />
-            </Box>
+            <ConferenceTools />
 
             <RecordingsDialog />
          </Toolbar>

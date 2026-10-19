@@ -10,6 +10,9 @@ import MobileConference from './MobileConference';
 import ConferenceNotOpen from './conference-not-open/ConferenceNotOpen';
 import ConferenceNotOpenModerator from './conference-not-open/ConferenceNotOpenModerator';
 import RequestUserInteractionView from './RequestUserInteractionView';
+import { isGbedu } from 'src/brand-id';
+import GbeduLive from 'src/features/gbedu/live/GbeduLive';
+import GbeduWaitingRoom from 'src/features/gbedu/live/GbeduWaitingRoom';
 
 type Props = {
    conference: SynchronizedConferenceInfo;
@@ -30,6 +33,8 @@ export default function index({ conference }: Props) {
    }
 
    if (!conference.isOpen) {
+      if (isGbedu) return <GbeduWaitingRoom conferenceInfo={conference} isHost={isModerator} />;
+
       return isModerator ? (
          <ConferenceNotOpenModerator conferenceInfo={conference} />
       ) : (
@@ -40,6 +45,9 @@ export default function index({ conference }: Props) {
    if (!userInteractionMade) {
       return <RequestUserInteractionView />;
    }
+
+   // Gbedu has its own room: a stage and a live chat instead of the tools of a meeting
+   if (isGbedu && !isMobile) return <GbeduLive />;
 
    return isMobile ? <MobileConference /> : <ClassConference />;
 }
