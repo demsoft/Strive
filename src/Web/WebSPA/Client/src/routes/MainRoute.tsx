@@ -14,6 +14,7 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { isGbedu } from 'src/brand-id';
+import GbeduRoles from 'src/features/gbedu/GbeduRoles';
 import BrandLogo from 'src/components/BrandLogo';
 import MyConferencesList from 'src/features/conference/components/MyConferencesList';
 import { fetchConferenceLinks } from 'src/features/conference/reducer';
@@ -220,6 +221,7 @@ export default function MainRoute() {
                      </>
                   )}
                </div>
+               {isGbedu && <GbeduRoles />}
             </section>
 
             {links && links.length > 0 && (

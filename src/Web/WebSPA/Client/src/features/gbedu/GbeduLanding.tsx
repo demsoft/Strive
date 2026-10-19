@@ -62,7 +62,9 @@ export default function GbeduLanding() {
    const auth = useAuth();
 
    const signIn = () => auth.signinRedirect({ state: { url: '/' } });
-   const signUp = () => auth.signinRedirect({ state: { url: '/' }, prompt: 'create' });
+   // a fan signs up and lands on the home page, a creator lands on the page where the creator profile is made
+   const signUpAsFan = () => auth.signinRedirect({ state: { url: '/' }, prompt: 'create' });
+   const signUpAsCreator = () => auth.signinRedirect({ state: { url: '/creator' }, prompt: 'create' });
 
    return (
       <div className={classes.root} id="gbedu-landing">
@@ -83,13 +85,19 @@ export default function GbeduLanding() {
             </Typography>
 
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-               <Button id="landing-sign-up" variant="contained" size="large" onClick={signUp}>
-                  {t('landing.sign_up')}
+               <Button id="landing-sign-up" variant="contained" size="large" onClick={signUpAsFan}>
+                  {t('landing.become_fan')}
                </Button>
-               <Button id="landing-sign-in" variant="outlined" color="inherit" size="large" onClick={signIn}>
-                  {t('landing.sign_in')}
+               <Button id="landing-sign-up-creator" variant="outlined" size="large" onClick={signUpAsCreator}>
+                  {t('landing.become_creator')}
                </Button>
             </Box>
+            <Typography color="text.secondary" sx={{ mt: 2 }}>
+               {t('landing.have_account')}{' '}
+               <Button id="landing-sign-in" size="small" onClick={signIn} sx={{ verticalAlign: 'baseline' }}>
+                  {t('landing.sign_in')}
+               </Button>
+            </Typography>
 
             <div className={classes.steps}>
                <div className={classes.step}>
