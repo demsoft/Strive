@@ -38,8 +38,11 @@ using Strive.Core;
 using Strive.Core.Domain.Entities;
 using Strive.Core.Services.Media;
 using Strive.Extensions;
+using Strive.Core.Services.Payments;
+using Strive.Core.Services.Payments.Gateways;
 using Strive.Core.Services.Recording;
 using Strive.Core.Services.Recording.Gateways;
+using Strive.Infrastructure.Payments;
 using Strive.Infrastructure.Recording;
 using Strive.Recording;
 using Strive.Hubs.Core;
@@ -143,6 +146,16 @@ namespace Strive
             services.AddHttpClient<HttpRecorderClient>(client => client.Timeout = TimeSpan.FromSeconds(15));
             services.TryAddTransient<IRecorderClient>(sp => sp.GetRequiredService<HttpRecorderClient>());
             services.AddHostedService<RecordingMaintenanceService>();
+
+            // Payments (paid sessions)
+            services.Configure<PaymentsOptions>(Configuration.GetSection(PaymentsOptions.Section));
+            services.AddSingleton<BankListCache>();
+            services.AddHttpClient<PaystackPaymentProvider>(client => client.Timeout = TimeSpan.FromSeconds(20));
+            // TryAdd: the tests bring their own provider. Without a key every call says that payments are not set up.
+            services.TryAddTransient<IPaymentProvider>(sp =>
+                string.IsNullOrWhiteSpace(sp.GetRequiredService<IOptions<PaymentsOptions>>().Value.Paystack.SecretKey)
+                    ? new UnavailablePaymentProvider()
+                    : sp.GetRequiredService<PaystackPaymentProvider>());
 
             // SignalR
             // Since .NET 7, hub and API parameters are bound from DI if the container can resolve their type. Autofac

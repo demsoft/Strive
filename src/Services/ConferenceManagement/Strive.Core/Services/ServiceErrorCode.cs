@@ -45,6 +45,13 @@ namespace Strive.Core.Services
         // Metronome
         Metronome_InvalidTempo,
 
+        // Payments
+        Payments_NotEnabled,
+        Payments_InvalidProfile,
+        Payments_InvalidAccount,
+        Payments_ProviderUnavailable,
+        Payments_CreatorNotFound,
+
         // Permissions
         Permissions_PermissionKeyNotFound,
         Permissions_InvalidPermissionValueType,

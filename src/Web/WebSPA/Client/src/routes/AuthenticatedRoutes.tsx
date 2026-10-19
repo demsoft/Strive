@@ -8,6 +8,7 @@ import { setParticipantId } from 'src/features/auth/reducer';
 import { refreshTokenOnUnauthorized } from 'src/features/auth/unauthorized';
 import AdminRoute from './AdminRoute';
 import ConferenceRoute from './ConferenceRoute';
+import CreatorPage from 'src/features/creator/components/CreatorPage';
 import MainRoute from './MainRoute';
 import MyRecordingsRoute from './MyRecordingsRoute';
 
@@ -39,6 +40,7 @@ export default function AuthenticatedRoutes() {
       <Switch>
          <Route exact path="/" component={MainRoute} />
          <Route path="/admin" component={AdminRoute} />
+         <Route path="/creator" component={CreatorPage} />
          <Route path="/recordings" component={MyRecordingsRoute} />
          <Route path="/c/:id" component={ConferenceRoute} />
       </Switch>
