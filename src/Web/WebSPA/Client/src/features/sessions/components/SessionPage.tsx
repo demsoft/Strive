@@ -19,6 +19,10 @@ import BrandLogo from 'src/components/BrandLogo';
 import { PaymentStatus, PublicSession } from 'src/services/api/sessions';
 import * as api from 'src/services/api/sessions';
 import { requestErrorMessage } from 'src/features/creator/errors';
+import { categoryGradient, categoryStyle } from 'src/features/gbedu/ui/categories';
+import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
+import { brand } from 'src/theme';
+import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import { formatMoney } from '../money';
 
 const POLL_EVERY_MS = 2000;
@@ -140,6 +144,7 @@ export default function SessionPage() {
    const handleSignUp = () => auth.signinRedirect({ state: { url: location.pathname }, prompt: 'create' });
    const joinRoom = () => session?.conferenceId && history.push(`/c/${session.conferenceId}`);
 
+   const CategoryIcon = categoryStyle(session?.category ?? 'music').Icon;
    const startsAt = session?.startsAt ? DateTime.fromISO(session.startsAt).toLocaleString(DateTime.DATETIME_MED) : null;
 
    return (
@@ -167,26 +172,95 @@ export default function SessionPage() {
 
             {session && (
                <>
-                  <Chip size="small" label={t(`sessions.category_${session.category}`)} sx={{ mb: 1.5 }} />
-                  <Typography variant="h4" gutterBottom id="session-title">
-                     {session.title}
-                  </Typography>
-                  <Typography color="text.secondary" sx={{ mb: 0.5 }}>
-                     {t('sessions.with', { name: session.creator.displayName })}
-                  </Typography>
-                  {startsAt && (
-                     <Typography color="text.secondary" sx={{ mb: 2 }} id="session-starts">
-                        {startsAt}
-                     </Typography>
-                  )}
-                  {session.description && (
-                     <Typography sx={{ my: 2, whiteSpace: 'pre-wrap' }}>{session.description}</Typography>
-                  )}
-                  {session.creator.bio && (
-                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        {session.creator.bio}
-                     </Typography>
-                  )}
+                  <Box
+                     className="session-hero"
+                     sx={{
+                        borderRadius: '24px',
+                        overflow: 'hidden',
+                        mb: 3,
+                        backgroundColor: brand.surface,
+                        border: `1px solid ${brand.border}`,
+                     }}
+                  >
+                     <Box
+                        sx={{
+                           p: 3,
+                           color: '#fff',
+                           background: categoryGradient(session.category),
+                           display: 'flex',
+                           alignItems: 'center',
+                           justifyContent: 'space-between',
+                           gap: 2,
+                        }}
+                     >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                           <CategoryIcon sx={{ fontSize: 40 }} />
+                           <Typography sx={{ fontWeight: 800, letterSpacing: 0.3 }}>
+                              {t(`sessions.category_${session.category}`)}
+                           </Typography>
+                        </Box>
+                        <Chip
+                           size="small"
+                           label={formatMoney(session.priceMinor, session.currency)}
+                           sx={{ bgcolor: 'rgba(0, 0, 0, 0.28)', color: '#fff', fontWeight: 800 }}
+                        />
+                     </Box>
+                     <Box sx={{ p: 3 }}>
+                        <Typography
+                           variant="h4"
+                           gutterBottom
+                           id="session-title"
+                           sx={{ fontSize: { xs: '1.7rem', sm: '2.1rem' } }}
+                        >
+                           {session.title}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, my: 2 }} id="session-host">
+                           <HostAvatar
+                              name={session.creator.displayName}
+                              size={44}
+                              background={categoryGradient(session.category)}
+                           />
+                           <Box sx={{ minWidth: 0 }}>
+                              <Typography sx={{ fontWeight: 700 }}>
+                                 {t('sessions.hosted_by', { name: session.creator.displayName })}
+                              </Typography>
+                              {session.creator.bio && (
+                                 <Typography variant="body2" color="text.secondary">
+                                    {session.creator.bio}
+                                 </Typography>
+                              )}
+                           </Box>
+                        </Box>
+                        {startsAt && (
+                           <Typography sx={{ fontWeight: 600 }} id="session-starts">
+                              {startsAt}
+                           </Typography>
+                        )}
+                        {session.description && (
+                           <Typography color="text.secondary" sx={{ mt: 2, whiteSpace: 'pre-wrap' }}>
+                              {session.description}
+                           </Typography>
+                        )}
+                        <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, mt: 2.5, display: 'grid', gap: 0.75 }}>
+                           {['perk_live', 'perk_phone', 'perk_rejoin'].map((perk) => (
+                              <Box
+                                 component="li"
+                                 key={perk}
+                                 sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    color: 'text.secondary',
+                                    fontSize: 14,
+                                 }}
+                              >
+                                 <CheckCircleOutlinedIcon sx={{ fontSize: 18, color: 'success.main' }} />
+                                 {t(`sessions.${perk}`)}
+                              </Box>
+                           ))}
+                        </Box>
+                     </Box>
+                  </Box>
 
                   {payment?.state === 'checking' && (
                      <Alert severity="info" icon={<CircularProgress size={18} />} id="payment-checking" sx={{ mb: 2 }}>
