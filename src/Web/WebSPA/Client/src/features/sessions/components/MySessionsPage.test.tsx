@@ -133,7 +133,7 @@ test('published sessions are listed with their price and a way into the room', a
    expect(rows[1].textContent).toContain('sessions.cancelled_chip');
 });
 
-test('my tickets lists the sessions with a join button, not for a called off one', async () => {
+test('my tickets lists the sessions with a join button, a called off one is under past and has none', async () => {
    api.fetchMyTickets.mockResolvedValue([
       {
          sessionId: 'a',
@@ -157,9 +157,23 @@ test('my tickets lists the sessions with a join button, not for a called off one
    await act(async () => createRoot(container).render(<MyTicketsPage />));
    await settle();
 
-   const rows = document.querySelectorAll('.my-ticket');
-   expect(rows).toHaveLength(2);
-   await act(async () => (rows[0].querySelector('button') as HTMLElement).click());
+   const upcoming = document.querySelectorAll('.my-ticket');
+   expect(upcoming).toHaveLength(1);
+   await act(async () => (upcoming[0].querySelector('button') as HTMLElement).click());
    expect(push).toHaveBeenCalledWith('/c/room1');
-   expect(rows[1].querySelector('button')).toBeNull();
+
+   await act(async () => (document.querySelector('#tickets-tab-past') as HTMLElement).click());
+   const past = document.querySelectorAll('.my-ticket');
+   expect(past).toHaveLength(1);
+   expect(past[0].textContent).toContain('Old');
+   expect(past[0].querySelector('button')).toBeNull();
+});
+
+test('without tickets there is a friendly empty state', async () => {
+   api.fetchMyTickets.mockResolvedValue([]);
+   await act(async () => createRoot(container).render(<MyTicketsPage />));
+   await settle();
+
+   expect(document.querySelector('#no-tickets')).not.toBeNull();
+   expect(document.querySelectorAll('.my-ticket')).toHaveLength(0);
 });

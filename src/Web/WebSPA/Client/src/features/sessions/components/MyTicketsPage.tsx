@@ -1,17 +1,5 @@
-import {
-   Alert,
-   AppBar,
-   Box,
-   Button,
-   Chip,
-   CircularProgress,
-   Container,
-   List,
-   ListItem,
-   ListItemText,
-   Toolbar,
-   Typography,
-} from '@mui/material';
+import { Alert, AppBar, Box, Button, CircularProgress, Container, Tab, Tabs, Toolbar, Typography } from '@mui/material';
+import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined';
 import { DateTime } from 'luxon';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,74 +8,140 @@ import BrandLogo from 'src/components/BrandLogo';
 import { requestErrorMessage } from 'src/features/creator/errors';
 import * as api from 'src/services/api/sessions';
 import { Ticket } from 'src/services/api/sessions';
+import { brand } from 'src/theme';
+import TicketCard from './TicketCard';
 
-/** The tickets a person bought, with a way into the room of every session. */
+/** A session that started more than this long ago is over (sessions have no end time yet). */
+const SESSION_OVER_AFTER_HOURS = 8;
+
+/** Upcoming: not called off and not started long ago. Past: everything else. */
+export function splitTickets(tickets: Ticket[], now = DateTime.now()) {
+   const upcoming: Ticket[] = [];
+   const past: Ticket[] = [];
+   for (const ticket of tickets) {
+      const over =
+         ticket.status === 'cancelled' ||
+         (ticket.startsAt != null && DateTime.fromISO(ticket.startsAt).plus({ hours: SESSION_OVER_AFTER_HOURS }) < now);
+      (over ? past : upcoming).push(ticket);
+   }
+
+   // the next session first
+   upcoming.sort((a, b) => (a.startsAt ?? '9999').localeCompare(b.startsAt ?? '9999'));
+   return { upcoming, past };
+}
+
+/** The tickets a person bought, as tickets, with a way into the room of every session. */
 export default function MyTicketsPage() {
    const { t } = useTranslation();
    const history = useHistory();
    const [tickets, setTickets] = useState<Ticket[] | null>(null);
    const [error, setError] = useState<string | null>(null);
+   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
 
    useEffect(() => {
       api.fetchMyTickets().then(setTickets, (e) => setError(requestErrorMessage(e)));
    }, []);
 
+   const { upcoming, past } = splitTickets(tickets ?? []);
+   const shown = tab === 'upcoming' ? upcoming : past;
+
    return (
       <Box sx={{ minHeight: '100%' }}>
          <AppBar position="static" color="transparent" elevation={0}>
-            <Toolbar>
+            <Toolbar sx={{ gap: 2 }}>
                <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
                   <BrandLogo size={30} />
                </RouterLink>
             </Toolbar>
          </AppBar>
 
-         <Container maxWidth="sm" sx={{ py: 4 }} id="my-tickets-page">
-            <Typography variant="h4" gutterBottom>
-               {t('sessions.tickets_title')}
-            </Typography>
-            {error && <Alert severity="error">{error}</Alert>}
-            {!error && tickets === null && <CircularProgress />}
-            {tickets?.length === 0 && (
-               <Typography color="text.secondary" id="no-tickets">
-                  {t('sessions.no_tickets')}
-               </Typography>
-            )}
-            <List disablePadding>
-               {tickets?.map((ticket) => (
-                  <ListItem
-                     key={ticket.sessionId}
-                     divider
-                     className="my-ticket"
-                     secondaryAction={
-                        ticket.status === 'cancelled' ? (
-                           <Chip size="small" color="warning" label={t('sessions.cancelled_chip')} />
-                        ) : (
-                           <Button
-                              variant="contained"
-                              size="small"
-                              onClick={() => history.push(`/c/${ticket.conferenceId}`)}
-                           >
-                              {t('sessions.join')}
-                           </Button>
-                        )
-                     }
+         <Container maxWidth="md" sx={{ py: { xs: 2, sm: 4 } }} id="my-tickets-page">
+            <Box sx={{ mb: 3 }}>
+               <Typography variant="h3" sx={{ fontSize: { xs: '2rem', sm: '2.6rem' } }}>
+                  <span
+                     style={{
+                        backgroundImage: brand.gradient,
+                        WebkitBackgroundClip: 'text',
+                        backgroundClip: 'text',
+                        color: 'transparent',
+                        WebkitTextFillColor: 'transparent',
+                     }}
                   >
-                     <ListItemText
-                        primary={<b>{ticket.title}</b>}
-                        secondary={[
-                           ticket.creatorName,
-                           t(`sessions.category_${ticket.category}`),
-                           ticket.startsAt
-                              ? DateTime.fromISO(ticket.startsAt).toLocaleString(DateTime.DATETIME_MED)
-                              : null,
-                        ]
-                           .filter(Boolean)
-                           .join(' · ')}
+                     {t('sessions.tickets_title')}
+                  </span>
+               </Typography>
+               <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                  {t('sessions.tickets_subtitle')}
+               </Typography>
+            </Box>
+
+            {error && <Alert severity="error">{error}</Alert>}
+            {!error && tickets === null && (
+               <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
+                  <CircularProgress />
+               </Box>
+            )}
+
+            {tickets && tickets.length > 0 && (
+               <>
+                  <Tabs
+                     value={tab}
+                     onChange={(_, value) => setTab(value)}
+                     sx={{
+                        mb: 2,
+                        minHeight: 40,
+                        '& .MuiTab-root': { minHeight: 40, textTransform: 'none', fontWeight: 700 },
+                     }}
+                  >
+                     <Tab
+                        value="upcoming"
+                        id="tickets-tab-upcoming"
+                        label={`${t('sessions.tab_upcoming')} · ${upcoming.length}`}
                      />
-                  </ListItem>
-               ))}
-            </List>
+                     <Tab value="past" id="tickets-tab-past" label={`${t('sessions.tab_past')} · ${past.length}`} />
+                  </Tabs>
+
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                     {shown.map((ticket) => (
+                        <TicketCard
+                           key={ticket.sessionId}
+                           ticket={ticket}
+                           past={tab === 'past'}
+                           onJoin={() => history.push(`/c/${ticket.conferenceId}`)}
+                        />
+                     ))}
+                     {shown.length === 0 && (
+                        <Typography color="text.secondary" id="tickets-tab-empty" sx={{ py: 3 }}>
+                           {tab === 'upcoming' ? t('sessions.no_upcoming') : t('sessions.no_past')}
+                        </Typography>
+                     )}
+                  </Box>
+               </>
+            )}
+
+            {tickets?.length === 0 && (
+               <Box
+                  id="no-tickets"
+                  sx={{
+                     textAlign: 'center',
+                     p: { xs: 4, sm: 6 },
+                     borderRadius: '24px',
+                     backgroundColor: brand.surface,
+                     border: `1px dashed ${brand.border}`,
+                  }}
+               >
+                  <ConfirmationNumberOutlinedIcon sx={{ fontSize: 56, color: 'primary.main', mb: 1 }} />
+                  <Typography variant="h5" gutterBottom>
+                     {t('sessions.no_tickets_title')}
+                  </Typography>
+                  <Typography color="text.secondary" sx={{ maxWidth: 420, mx: 'auto', mb: 3 }}>
+                     {t('sessions.no_tickets')}
+                  </Typography>
+                  <Button component={RouterLink} to="/" variant="contained" size="large">
+                     {t('common:back_to_start')}
+                  </Button>
+               </Box>
+            )}
          </Container>
       </Box>
    );
