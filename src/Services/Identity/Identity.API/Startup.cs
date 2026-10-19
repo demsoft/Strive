@@ -3,6 +3,7 @@
 
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.RateLimiting;
 using System.Threading.Tasks;
@@ -54,6 +55,7 @@ namespace Identity.API
         {
             var identityConfig = Configuration.GetSection("IdentityServer");
             var spaHost = identityConfig["SpaClientHost"];
+            var extraSpaHosts = AppUrls.ParseExtraHosts(identityConfig["ExtraSpaHosts"]);
             var issuerUri = identityConfig["Issuer"];
 
             services.AddControllersWithViews().AddRazorRuntimeCompilation();
@@ -71,13 +73,14 @@ namespace Identity.API
                 options.EmitStaticAudienceClaim = true;
             });
 
+            services.AddHttpContextAccessor();
             services.AddSingleton<AppUrls>();
             services.AddSingleton<IUserProvider, DemoUserProvider>();
             ConfigureAccounts(services);
 
             // in-memory, code config
             builder.AddInMemoryIdentityResources(Config.IdentityResources);
-            builder.AddInMemoryClients(new[] {Config.BuildSpaClient(spaHost)});
+            builder.AddInMemoryClients(new[] {Config.BuildSpaClient(spaHost, extraSpaHosts)});
             builder.AddProfileService<ProfileService>();
 
             services.Configure<ForwardedHeadersOptions>(options =>
@@ -104,7 +107,7 @@ namespace Identity.API
             });
 
             services.AddCors(x =>
-                x.AddDefaultPolicy(builder => builder.WithOrigins(spaHost).AllowAnyMethod().AllowAnyHeader()));
+                x.AddDefaultPolicy(builder => builder.WithOrigins(new[] {spaHost}.Concat(extraSpaHosts).ToArray()).AllowAnyMethod().AllowAnyHeader()));
         }
 
         /// <summary>

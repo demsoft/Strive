@@ -19,11 +19,12 @@ namespace Strive.IntegrationTests.Services
         {
         }
 
-        private HttpClient ClientWithOrigins(string? origins)
+        private HttpClient ClientWithOrigins(string? origins, string? extraHosts = null)
         {
             return Factory.WithWebHostBuilder(b =>
             {
                 if (origins != null) b.UseSetting("Cors:AllowedOrigins", origins);
+                if (extraHosts != null) b.UseSetting("App:ExtraHosts", extraHosts);
             }).CreateClient();
         }
 
@@ -49,6 +50,20 @@ namespace Strive.IntegrationTests.Services
             Assert.Equal("true", Assert.Single(response.Headers.GetValues("Access-Control-Allow-Credentials")));
             Assert.Contains("x-signalr-user-agent",
                 string.Join(",", response.Headers.GetValues("Access-Control-Allow-Headers")).ToLowerInvariant());
+        }
+
+        [Fact]
+        public async Task ExtraHost_OfAnotherBrand_IsAllowedToo()
+        {
+            var client = ClientWithOrigins("https://meet.example.com", "gbedu.example.com, arena.example.com");
+
+            var response = await Preflight(client, "https://gbedu.example.com");
+
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+            Assert.Equal("https://gbedu.example.com",
+                Assert.Single(response.Headers.GetValues("Access-Control-Allow-Origin")));
+            // and the main one still is
+            Assert.Equal(HttpStatusCode.NoContent, (await Preflight(client, "https://meet.example.com")).StatusCode);
         }
 
         [Fact]

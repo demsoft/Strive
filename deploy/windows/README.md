@@ -87,6 +87,21 @@ Backup of the accounts and conferences (MongoDB):
 docker exec strive-prod-nosqldata-1 mongodump --archive --gzip > D:\Backups\strive-$(Get-Date -f yyyyMMdd).gz
 ```
 
+## A second address for the web app (another brand)
+
+The same installation can answer on more host names, for example `gbedu.goserp.co.uk` next to `meet.goserp.co.uk`: the web
+app, the sign in pages (`https://gbedu.goserp.co.uk/account`) and the links all stay on the host the person came from.
+
+1. Make sure the host name points to the server (a wildcard DNS record `*.goserp.co.uk` already does).
+2. In `src\.env.production` add the host name (no `https://`, several separated by commas):
+   `EXTRA_APP_HOSTS=gbedu.goserp.co.uk`
+3. Run `.\Setup-Iis.ps1` as administrator (adds the binding and the rules, the wildcard certificate covers it) and then
+   `.\strive.ps1 up` (the sign in service and the API learn the new address).
+4. For sign in with Google add the redirect address `https://gbedu.goserp.co.uk/account/signin-google` in the Google console.
+
+The tokens keep the issuer of the main host (`https://meet.goserp.co.uk/account`), so a person is signed in on both
+addresses with the same account, but each address has its own sign in session (cookie).
+
 ## Boot
 
 Docker Desktop normally starts when a user logs in. On a server that restarts by itself:

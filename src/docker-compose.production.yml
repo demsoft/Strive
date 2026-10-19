@@ -16,6 +16,7 @@ services:
       - "127.0.0.1:5001:80"
     environment:
       - IdentityServer__SpaClientHost=https://${FRONTEND_DNS_OR_IP}
+      - IdentityServer__ExtraSpaHosts=${EXTRA_APP_HOSTS:-}
       # the pages of the sign in are served under /account of the address of the app: people only ever see meet.<domain>
       - IdentityServer__PathBase=/account
       - IdentityServer__Issuer=https://${FRONTEND_DNS_OR_IP}/account
@@ -30,6 +31,7 @@ services:
       - Authentication__Issuer=https://${FRONTEND_DNS_OR_IP}/account
       # the web app is on another host, IIS does not add CORS headers
       - Cors__AllowedOrigins=https://${FRONTEND_DNS_OR_IP}
+      - App__ExtraHosts=${EXTRA_APP_HOSTS:-}
       # TURN is not part of the first release (a relay behind Docker Desktop does not see the client addresses). Without
       # the secret the server hands no TURN servers to the browsers.
       - Turn__Secret=
