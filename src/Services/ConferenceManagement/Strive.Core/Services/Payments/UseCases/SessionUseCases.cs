@@ -12,6 +12,7 @@ using Strive.Core.Interfaces;
 using Strive.Core.Services.ConferenceManagement;
 using Strive.Core.Services.ConferenceManagement.Requests;
 using Strive.Core.Services.Permissions.Options;
+using Strive.Core.Services.Scenes;
 using Strive.Core.Services.Payments.Gateways;
 using Strive.Core.Services.Payments.Requests;
 using Strive.Core.Services.Payments.Sessions;
@@ -94,7 +95,18 @@ namespace Strive.Core.Services.Payments.UseCases
             // the room of the session: the creator is its moderator
             var data = new ConferenceData
             {
-                Configuration = new ConferenceConfiguration {Name = title, Moderators = new[] {request.UserId}.ToList()},
+                Configuration = new ConferenceConfiguration
+                {
+                    Name = title,
+                    Moderators = new[] {request.UserId}.ToList(),
+                    // a stage: the person who speaks is shown large, the audience without a camera is not shown as
+                    // empty tiles
+                    Scenes = new SceneOptions
+                    {
+                        DefaultScene = SceneOptions.BasicSceneType.ActiveSpeaker,
+                        HideParticipantsWithoutWebcam = true,
+                    },
+                },
                 Permissions = _defaultPermissions.Default.ToDictionary(x => x.Key,
                     x => x.Value.ToDictionary(y => y.Key, y => y.Value)),
             };

@@ -122,6 +122,21 @@ namespace Strive.IntegrationTests.Services
         }
 
         [Fact]
+        public async Task Publish_TheRoomIsAStage_SpeakerLargeAndNoEmptyTilesForTheAudience()
+        {
+            var (host, session) = await PublishedSession();
+
+            var data = await Read<Strive.Core.Services.ConferenceManagement.ConferenceData>(
+                await Client(host).GetAsync($"/v1/conference/{session.ConferenceId}"));
+
+            Assert.Equal(Strive.Core.Services.Scenes.SceneOptions.BasicSceneType.ActiveSpeaker,
+                data.Configuration.Scenes.DefaultScene);
+            Assert.True(data.Configuration.Scenes.HideParticipantsWithoutWebcam);
+            Assert.Equal("Piano for beginners", data.Configuration.Name);
+            Assert.Equal(new[] {host.Sub}, data.Configuration.Moderators);
+        }
+
+        [Fact]
         public async Task Publish_NotACreator_BadRequest()
         {
             var response = await Client(NewUser("nobody")).PostAsync("/v1/sessions",

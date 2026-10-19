@@ -16,6 +16,8 @@ import SceneManagement from 'src/features/scenes/components/SceneManagement';
 import useThrottledResizeObserver from 'src/hooks/useThrottledResizeObserver';
 import SceneView from '../../scenes/components/SceneView';
 import ConferenceLayoutContext, { ConferenceLayoutContextType } from '../conference-layout-context';
+import { isGbedu } from 'src/brand-id';
+import GbeduLiveHeader from 'src/features/gbedu/live/GbeduLiveHeader';
 import ConferenceAppBar from './ConferenceAppBar';
 import PermissionDialog from './PermissionDialog';
 
@@ -104,7 +106,7 @@ export default function MobileConference() {
          <ConferenceLayoutContext.Provider value={context}>
             <div className={classes.root} id="mobile-conference">
                <AnnouncementOverlay />
-               <ConferenceAppBar />
+               {isGbedu ? <GbeduLiveHeader /> : <ConferenceAppBar />}
                <div className={classes.main} ref={contentRef}>
                   <div className={classes.scene}>
                      <div ref={sceneBarContainer} />
@@ -116,19 +118,13 @@ export default function MobileConference() {
                   </div>
 
                   {/* always mounted: the chat bar subscribes to the messages */}
-                  <div
-                     className={cx(classes.panel, activeTab !== 'chat' && classes.hidden)}
-                     id="mobile-panel-chat"
-                  >
+                  <div className={cx(classes.panel, activeTab !== 'chat' && classes.hidden)} id="mobile-panel-chat">
                      <Grid ref={chatContainer} />
                      <CurrentPollsBar />
                      {showChat && <ChatBar />}
                   </div>
 
-                  <div
-                     className={cx(classes.panel, activeTab !== 'people' && classes.hidden)}
-                     id="mobile-panel-people"
-                  >
+                  <div className={cx(classes.panel, activeTab !== 'people' && classes.hidden)} id="mobile-panel-people">
                      <div className={classes.people}>
                         <RoomsList />
                         <SceneManagement />
@@ -149,7 +145,11 @@ export default function MobileConference() {
                            value="chat"
                            label={t('conference.mobile.chat')}
                            icon={
-                              <Badge color="secondary" variant="dot" invisible={!hasNewMessages || activeTab === 'chat'}>
+                              <Badge
+                                 color="secondary"
+                                 variant="dot"
+                                 invisible={!hasNewMessages || activeTab === 'chat'}
+                              >
                                  <ChatIcon />
                               </Badge>
                            }
