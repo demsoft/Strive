@@ -1,4 +1,5 @@
 import { Log, UserManagerSettings } from 'oidc-client-ts';
+import { adaptToHost } from './app-host';
 
 export type AppGitInfo = {
    commit: string;
@@ -17,11 +18,14 @@ export type AppSettings = {
 };
 
 // injected by ASP.Net Core, normalize urls. All urls don't have a trailing slash
-const appSettings: AppSettings = Object.fromEntries(
+const configured: AppSettings = Object.fromEntries(
    Object.entries((window as any).ENV).map(([name, value]) =>
       typeof value === 'string' ? [name, value.replace(/\/$/, '')] : [name, value],
    ),
 ) as AppSettings;
+
+// another brand on its own host name: the app and the sign in pages are reached through the host the person came from
+const appSettings: AppSettings = adaptToHost(configured, window.location.origin);
 
 export default appSettings;
 

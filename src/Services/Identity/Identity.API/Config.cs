@@ -3,6 +3,7 @@
 
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using Duende.IdentityModel;
 using Duende.IdentityServer;
@@ -20,8 +21,11 @@ namespace Identity.API
                 new IdentityResource {Name = "user.info", UserClaims = {ClaimTypes.Role, ClaimTypes.Name, JwtClaimTypes.Role}},
             };
 
-        public static Client BuildSpaClient(string host)
+        /// <param name="host">The address of the web app, e.g. https://meet.example.com</param>
+        /// <param name="extraHosts">More addresses that serve the same web app (another brand on its own domain)</param>
+        public static Client BuildSpaClient(string host, IEnumerable<string>? extraHosts = null)
         {
+            var hosts = new[] {host}.Concat(extraHosts ?? Enumerable.Empty<string>()).Distinct().ToArray();
             return new()
             {
                 ClientId = "spa", AllowedGrantTypes = GrantTypes.Code,
@@ -30,9 +34,10 @@ namespace Identity.API
                     IdentityServerConstants.StandardScopes.OpenId, IdentityServerConstants.StandardScopes.Profile,
                     "user.info",
                 },
-                RedirectUris = {$"{host}/authentication/callback", $"{host}/authentication/silent_callback"},
-                PostLogoutRedirectUris = {$"{host}/"},
-                AllowedCorsOrigins = {host},
+                RedirectUris = hosts.SelectMany(h => new[]
+                    {$"{h}/authentication/callback", $"{h}/authentication/silent_callback"}).ToList(),
+                PostLogoutRedirectUris = hosts.Select(h => $"{h}/").ToList(),
+                AllowedCorsOrigins = hosts.ToList(),
                 RequireClientSecret = false,
             };
         }

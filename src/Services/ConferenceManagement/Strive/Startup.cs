@@ -291,8 +291,13 @@ namespace Strive
 
             // The web app is served from another host than the API. Behind a reverse proxy that does not add the
             // CORS headers (IIS), the API does it itself: Cors:AllowedOrigins = origins separated by commas.
+            // The web app may answer on more addresses (App:ExtraHosts = host names separated by commas, one per brand).
             var allowedOrigins = Configuration["Cors:AllowedOrigins"]?
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Concat((Configuration["App:ExtraHosts"] ?? "")
+                    .Split(new[] {',', ';', ' '}, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(x => x.StartsWith("http") ? x.TrimEnd('/') : "https://" + x))
+                .Distinct().ToArray();
             if (allowedOrigins is {Length: > 0})
                 services.AddCors(options => options.AddPolicy("Configured",
                     builder => builder.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader()

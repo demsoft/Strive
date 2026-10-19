@@ -14,12 +14,13 @@ Import-Module WebAdministration
 $env = Join-Path (Split-Path (Split-Path $PSScriptRoot)) 'src\.env.production'
 $vars = @{}; Get-Content $env | ForEach-Object { if ($_ -match '^([A-Z0-9_]+)=(.*)$') { $vars[$Matches[1]] = $Matches[2] } }
 $domain = $vars.SITE_HOST
-$hosts = [ordered]@{
-   $vars.FRONTEND_DNS_OR_IP = 5003   # web app
-   "api.$domain"            = 5002   # strive
-   "identity.$domain"       = 5001   # sign in
-   "sfu.$domain"            = 5004   # media server signaling
-}
+# more addresses of the web app (another brand on its own host name), see EXTRA_APP_HOSTS in .env.production
+$appHosts = @($vars.FRONTEND_DNS_OR_IP) + @(($vars.EXTRA_APP_HOSTS -split '[,; ]') | Where-Object { $_ })
+$hosts = [ordered]@{}
+foreach ($h in $appHosts) { $hosts[$h] = 5003 }   # web app
+$hosts["api.$domain"]      = 5002   # strive
+$hosts["identity.$domain"] = 5001   # sign in
+$hosts["sfu.$domain"]      = 5004   # media server signaling
 
 foreach ($module in 'Rewrite', 'ApplicationRequestRouting') {
    if (-not (Get-WebGlobalModule | Where-Object Name -like "*$module*")) { throw "IIS module $module is missing. Install URL Rewrite and ARR first (README.md)." }
@@ -47,17 +48,18 @@ Set-WebConfigurationProperty -PSPath 'MACHINE/WEBROOT/APPHOST' -Filter 'system.w
 $root = 'C:\inetpub\strive-proxy'
 New-Item -ItemType Directory -Force -Path $root | Out-Null
 # the sign in pages live under /account of the address of the app: this rule must come before the rule of the app
-$appHost = $vars.FRONTEND_DNS_OR_IP
-$accountRule = @"
-        <rule name="$appHost /account" stopProcessing="true">
+$accountRule = ($appHosts | ForEach-Object {
+@"
+        <rule name="$_ /account" stopProcessing="true">
           <match url="^account(/.*)?$" />
-          <conditions><add input="{HTTP_HOST}" pattern="^$([regex]::Escape($appHost))$" /></conditions>
+          <conditions><add input="{HTTP_HOST}" pattern="^$([regex]::Escape($_))$" /></conditions>
           <serverVariables>
             <set name="HTTP_X_FORWARDED_PROTO" value="https" />
           </serverVariables>
           <action type="Rewrite" url="http://127.0.0.1:5001/{R:0}" />
         </rule>
 "@
+}) -join "`r`n"
 
 $hostRules = ($hosts.GetEnumerator() | ForEach-Object {
    $pattern = '^' + [regex]::Escape($_.Key) + '$'
