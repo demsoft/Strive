@@ -37,6 +37,8 @@ namespace Strive.Controllers
             _configuration = configuration;
         }
 
+        private const int SessionOverAfterHours = 8;
+
         private string? UserId => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         // POST v1/sessions
@@ -66,6 +68,32 @@ namespace Strive.Controllers
 
             Response.Headers.CacheControl = "no-store";
             return (await _sessions.FindOfCreator(creator.CreatorId, 100)).Select(SessionDto.From).ToArray();
+        }
+
+        // GET v1/sessions/discover
+        /// <summary>What is on: published sessions that are not over, the ones that start first at the top</summary>
+        [HttpGet("v1/sessions/discover")]
+        [AllowAnonymous]
+        public async Task<ActionResult<DiscoverSessionDto[]>> Discover()
+        {
+            // sessions have no end time yet: one that started this long ago is over
+            var sessions = await _sessions.FindForSale(DateTimeOffset.UtcNow.AddHours(-SessionOverAfterHours), 60);
+
+            var result = new List<DiscoverSessionDto>();
+            foreach (var session in sessions.OrderBy(x => x.StartsAt ?? DateTimeOffset.MaxValue))
+            {
+                var creator = await _creators.FindById(session.CreatorId);
+                if (creator == null) continue;
+
+                result.Add(new DiscoverSessionDto(session.SessionId, session.Title, session.Description,
+                    session.Category, session.PriceMinor, session.Currency, session.StartsAt, creator.DisplayName,
+                    UserId != null && session.CreatorUserId == UserId,
+                    UserId != null && await _entitlements.Holds(UserId, session.ConferenceId)));
+            }
+
+            // the answer depends on who asks
+            Response.Headers.CacheControl = "no-store";
+            return result.ToArray();
         }
 
         // GET v1/sessions/{sessionId}

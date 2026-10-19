@@ -10,15 +10,17 @@ import HighQualityIcon from '@mui/icons-material/HighQuality';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import PanToolOutlinedIcon from '@mui/icons-material/PanToolOutlined';
 import ScreenShareIcon from '@mui/icons-material/ScreenShare';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { isGbedu } from 'src/brand-id';
+import DiscoverSessions from 'src/features/gbedu/DiscoverSessions';
 import GbeduRoles from 'src/features/gbedu/GbeduRoles';
 import BrandLogo from 'src/components/BrandLogo';
 import MyConferencesList from 'src/features/conference/components/MyConferencesList';
 import { fetchConferenceLinks } from 'src/features/conference/reducer';
 import ConferenceControls from 'src/features/create-conference/components/ConferenceControls';
+import { fetchMyCreatorProfile } from 'src/services/api/creators';
 import { RootState } from 'src/store';
 import { brand } from 'src/theme';
 
@@ -123,6 +125,17 @@ export default function MainRoute() {
       dispatch(fetchConferenceLinks());
    }, [dispatch]);
 
+   // on Gbedu only creators start conferences; everybody else finds sessions and buys tickets
+   const [isCreator, setIsCreator] = useState(false);
+   useEffect(() => {
+      if (!isGbedu) return;
+      fetchMyCreatorProfile().then(
+         (profile) => setIsCreator(profile != null),
+         () => setIsCreator(false),
+      );
+   }, []);
+   const mayStartConference = !isGbedu || isCreator;
+
    const links = useSelector((state: RootState) => state.conference.conferenceLinks);
    const auth = useAuth();
    const texts = isGbedu ? 'view_main_gbedu' : 'view_main';
@@ -159,7 +172,19 @@ export default function MainRoute() {
                <Typography variant="h6" component="p" className={classes.subtitle}>
                   {t(`${texts}.subtitle`)}
                </Typography>
-               <ConferenceControls />
+               {mayStartConference ? (
+                  <ConferenceControls />
+               ) : (
+                  <Button
+                     variant="contained"
+                     size="large"
+                     href="#discover"
+                     id="browse-sessions-button"
+                     sx={{ boxShadow: `0 12px 32px ${brand.accentShadow}`, borderRadius: 4 }}
+                  >
+                     {t('sessions.browse')}
+                  </Button>
+               )}
                <div className={classes.chips}>
                   {isGbedu ? (
                      <>
@@ -233,6 +258,8 @@ export default function MainRoute() {
                </Box>
             )}
          </main>
+
+         {isGbedu && <DiscoverSessions />}
       </div>
    );
 }
