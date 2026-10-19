@@ -108,6 +108,35 @@ namespace Strive.IntegrationTests.Services
         // ---- publish
 
         [Fact]
+        public async Task Discover_ListsPublishedSessionsForEverybody_NotCancelledOnes()
+        {
+            // arrange
+            var host = await NewCreator();
+            var open = await Publish(host, title: "Open for tickets");
+            var called = await Publish(host, title: "Called off");
+            (await Client(host).PostAsync($"/v1/sessions/{called.SessionId}/cancel", null)).EnsureSuccessStatusCode();
+
+            // act: nobody is signed in
+            var list = await Read<DiscoverSessionDto[]>(await Client(null).GetAsync("/v1/sessions/discover"));
+
+            // assert
+            var entry = Assert.Single(list, x => x.SessionId == open.SessionId);
+            Assert.Equal("Ada Lovelace", entry.CreatorName);
+            Assert.False(entry.HasTicket);
+            Assert.DoesNotContain(list, x => x.SessionId == called.SessionId);
+        }
+
+        [Fact]
+        public async Task Discover_SignedInHost_IsMarkedAsHost()
+        {
+            var (host, session) = await PublishedSession();
+
+            var list = await Read<DiscoverSessionDto[]>(await Client(host).GetAsync("/v1/sessions/discover"));
+
+            Assert.True(Assert.Single(list, x => x.SessionId == session.SessionId).IsHost);
+        }
+
+        [Fact]
         public async Task Publish_Creator_GetsASessionWithARoomOfItsOwn()
         {
             var (host, session) = await PublishedSession();

@@ -63,6 +63,20 @@ export type Ticket = {
    status: SessionStatus;
 };
 
+/** A session in the list of what is on */
+export type DiscoverSession = {
+   sessionId: string;
+   title: string;
+   description?: string | null;
+   category: string;
+   priceMinor: number;
+   currency: string;
+   startsAt?: string | null;
+   creatorName: string;
+   isHost: boolean;
+   hasTicket: boolean;
+};
+
 const base = () => appSettings.conferenceUrl.replace(/\/+$/, '');
 const auth = (accessToken?: string) => (accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : {});
 
@@ -103,3 +117,8 @@ export async function fetchMyTickets(): Promise<Ticket[]> {
 }
 
 export const sessionLink = (sessionId: string) => new URL('/s/' + sessionId, document.baseURI).href;
+
+/** The published sessions that are not over, the ones that start first at the top. */
+export async function fetchDiscover(): Promise<DiscoverSession[]> {
+   return (await Axios.get<DiscoverSession[]>(`${base()}/v1/sessions/discover`)).data;
+}

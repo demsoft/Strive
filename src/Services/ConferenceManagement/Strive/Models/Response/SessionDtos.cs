@@ -29,6 +29,10 @@ namespace Strive.Models.Response
         long PriceMinor, string Currency, SessionStatus Status, DateTimeOffset? StartsAt, PublicCreatorDto Creator,
         bool IsHost, bool HasTicket, string? ConferenceId);
 
+    /// <summary>A session in the list of what is on, for everybody to see (the room is not part of it)</summary>
+    public record DiscoverSessionDto(string SessionId, string Title, string? Description, string Category,
+        long PriceMinor, string Currency, DateTimeOffset? StartsAt, string CreatorName, bool IsHost, bool HasTicket);
+
     public record CheckoutDto(string Email);
 
     public record CheckoutResultDto(string? AuthorizationUrl, string? Reference, bool AlreadyHasTicket);

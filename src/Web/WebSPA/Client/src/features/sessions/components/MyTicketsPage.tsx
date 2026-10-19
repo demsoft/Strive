@@ -137,8 +137,8 @@ export default function MyTicketsPage() {
                   <Typography color="text.secondary" sx={{ maxWidth: 420, mx: 'auto', mb: 3 }}>
                      {t('sessions.no_tickets')}
                   </Typography>
-                  <Button component={RouterLink} to="/" variant="contained" size="large">
-                     {t('common:back_to_start')}
+                  <Button component={RouterLink} to="/" variant="contained" size="large" id="find-session">
+                     {t('sessions.find_session')}
                   </Button>
                </Box>
             )}

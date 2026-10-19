@@ -14,6 +14,9 @@ namespace Strive.Core.Services.Payments.Gateways
 
         Task<IReadOnlyList<PaidSession>> FindOfCreator(string creatorId, int limit);
 
+        /// <summary>Published sessions that are not over: no start time, or one that is not before <paramref name="notBefore" /></summary>
+        Task<IReadOnlyList<PaidSession>> FindForSale(System.DateTimeOffset notBefore, int limit);
+
         Task Update(PaidSession session);
     }
 

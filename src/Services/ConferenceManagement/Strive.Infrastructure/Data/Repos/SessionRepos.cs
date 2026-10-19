@@ -57,6 +57,11 @@ namespace Strive.Infrastructure.Data.Repos
             await Collection.Find(x => x.CreatorId == creatorId).SortByDescending(x => x.CreatedAt).Limit(limit)
                 .ToListAsync();
 
+        public async Task<IReadOnlyList<PaidSession>> FindForSale(DateTimeOffset notBefore, int limit) =>
+            await Collection.Find(x => x.Status == SessionStatus.Published &&
+                                       (x.StartsAt == null || x.StartsAt >= notBefore))
+                .SortByDescending(x => x.CreatedAt).Limit(limit).ToListAsync();
+
         public Task Update(PaidSession session) =>
             Collection.ReplaceOneAsync(x => x.SessionId == session.SessionId, session);
     }
