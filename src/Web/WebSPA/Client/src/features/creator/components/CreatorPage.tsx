@@ -253,6 +253,20 @@ export default function CreatorPage() {
                      </Alert>
                   )}
 
+                  {profile?.canSell && (
+                     <Button
+                        id="creator-sessions-link"
+                        component={RouterLink}
+                        to="/creator/sessions"
+                        variant="outlined"
+                        size="large"
+                        fullWidth
+                        sx={{ mt: 3 }}
+                     >
+                        {t('sessions.my_title')}
+                     </Button>
+                  )}
+
                   <Button
                      id="creator-save"
                      variant="contained"

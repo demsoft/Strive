@@ -132,9 +132,14 @@ export default function MainRoute() {
             <BrandLogo size={34} />
             <Box sx={{ display: 'flex', gap: 1 }}>
                {isGbedu && (
-                  <Button color="inherit" component={RouterLink} to="/creator" id="creator-link">
-                     {t('creator.link')}
-                  </Button>
+                  <>
+                     <Button color="inherit" component={RouterLink} to="/tickets" id="tickets-link">
+                        {t('sessions.tickets_link')}
+                     </Button>
+                     <Button color="inherit" component={RouterLink} to="/creator" id="creator-link">
+                        {t('creator.link')}
+                     </Button>
+                  </>
                )}
                <Button color="inherit" component={RouterLink} to="/recordings" id="my-recordings-link">
                   {t('conference.recording.my_link')}

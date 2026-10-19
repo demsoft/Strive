@@ -12,6 +12,7 @@ import StriveAuthProvider from './features/auth/components/StriveAuthProvider';
 import UserInteractionListener from './features/media/components/UserInteractionListener';
 import theme from './theme';
 import RecordingRoute from './routes/RecordingRoute';
+import SessionPage from './features/sessions/components/SessionPage';
 import SharedRecordingRoute from './routes/SharedRecordingRoute';
 import RedirectToConference from './RedirectToConference';
 import AuthenticatedRoutes from './routes/AuthenticatedRoutes';
@@ -42,6 +43,8 @@ function App() {
                         <Route path="/authentication/silent_callback" render={() => null} />
                         {/* viewable without signing in if the recording is shared with everybody */}
                         <Route path="/r/:token" component={SharedRecordingRoute} />
+                        {/* the page of a paid session: everybody can read it, paying needs a sign in */}
+                        <Route path="/s/:sessionId" component={SessionPage} />
                         <Route>
                            <RequireAuth>
                               <AuthenticatedRoutes />
