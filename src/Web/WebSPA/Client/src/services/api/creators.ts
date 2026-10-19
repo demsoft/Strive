@@ -49,11 +49,13 @@ export async function resolveAccount(bankCode: string, accountNumber: string): P
    return response.data.accountName;
 }
 
-/** null if the person is not a creator yet */
+/** null if the person is not a creator yet (a fan: the server answers with no content) */
 export async function fetchMyCreatorProfile(): Promise<CreatorProfile | null> {
    try {
-      return (await Axios.get<CreatorProfile>(`${base()}/me`)).data;
+      const response = await Axios.get<CreatorProfile | ''>(`${base()}/me`);
+      return response.status === 204 || !response.data ? null : response.data;
    } catch (error) {
+      // an older server answered 404
       if ((error as { response?: { status?: number } }).response?.status === 404) return null;
       throw error;
    }

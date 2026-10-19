@@ -91,11 +91,12 @@ namespace Strive.IntegrationTests.Services
         }
 
         [Fact]
-        public async Task Me_NoProfileYet_NotFound()
+        public async Task Me_NoProfileYet_NoContent()
         {
             var response = await Client(CreateUser()).GetAsync("/v1/creators/me");
 
-            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            // a fan has no creator profile: a normal answer, not an error
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         }
 
         [Fact]
@@ -158,7 +159,7 @@ namespace Strive.IntegrationTests.Services
             var response = await Client(user).PutAsync("/v1/creators/me", Save(number: FakePaymentProvider.UnknownAccount));
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            Assert.Equal(HttpStatusCode.NotFound, (await Client(user).GetAsync("/v1/creators/me")).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent, (await Client(user).GetAsync("/v1/creators/me")).StatusCode);
         }
 
         [Fact]

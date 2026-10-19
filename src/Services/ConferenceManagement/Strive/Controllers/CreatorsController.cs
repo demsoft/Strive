@@ -68,14 +68,18 @@ namespace Strive.Controllers
         }
 
         // GET v1/creators/me
+        /// <summary>
+        ///     The creator profile of the signed in person. A fan has none: that is a normal answer (204, no content), not an
+        ///     error, so that it does not show up as a red line in the browser.
+        /// </summary>
         [HttpGet("v1/creators/me")]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<ActionResult<CreatorProfileDto>> GetMine()
         {
             if (UserId == null) return Forbid();
 
             var profile = await _creators.FindByUserId(UserId);
-            if (profile == null) return PaymentsError.CreatorNotFound.ToActionResult();
+            if (profile == null) return NoContent();
 
             Response.Headers.CacheControl = "no-store";
             return CreatorProfileDto.From(profile);
