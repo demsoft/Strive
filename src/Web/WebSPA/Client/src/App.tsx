@@ -12,6 +12,8 @@ import StriveAuthProvider from './features/auth/components/StriveAuthProvider';
 import UserInteractionListener from './features/media/components/UserInteractionListener';
 import theme from './theme';
 import RecordingRoute from './routes/RecordingRoute';
+import { isGbedu } from './brand-id';
+import LandingGate from './features/gbedu/LandingGate';
 import SessionPage from './features/sessions/components/SessionPage';
 import SharedRecordingRoute from './routes/SharedRecordingRoute';
 import RedirectToConference from './RedirectToConference';
@@ -45,6 +47,8 @@ function App() {
                         <Route path="/r/:token" component={SharedRecordingRoute} />
                         {/* the page of a paid session: everybody can read it, paying needs a sign in */}
                         <Route path="/s/:sessionId" component={SessionPage} />
+                        {/* Gbedu: a welcome page with sign up and sign in for visitors */}
+                        {isGbedu && <Route exact path="/" component={LandingGate} />}
                         <Route>
                            <RequireAuth>
                               <AuthenticatedRoutes />
