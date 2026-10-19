@@ -6,7 +6,9 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -99,6 +101,75 @@ namespace Strive.Infrastructure.Payments
         {
             await SendSubaccount<SubaccountDto>(HttpMethod.Put, $"subaccount/{Uri.EscapeDataString(subaccountCode)}",
                 request, cancellationToken);
+        }
+
+        public async Task<CheckoutSession> InitializeCheckout(CheckoutRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            var body = new
+            {
+                email = request.Email,
+                amount = request.AmountMinor,
+                currency = request.Currency,
+                reference = request.Reference,
+                callback_url = request.CallbackUrl,
+                subaccount = request.SubaccountCode,
+                // what stays with the platform, in minor units; the rest goes to the sub account of the creator
+                transaction_charge = request.PlatformAmountMinor,
+                // the platform pays the fees of the payment
+                bearer = "account",
+                metadata = request.Metadata,
+            };
+
+            var response = await Send<InitializeDto>(HttpMethod.Post, "transaction/initialize", JsonContent.Create(body),
+                cancellationToken);
+            if (string.IsNullOrEmpty(response.Data?.AuthorizationUrl))
+                throw new PaymentProviderException("Paystack answered without a payment address.");
+            return new CheckoutSession(response.Data.AuthorizationUrl!, response.Data.AccessCode ?? "");
+        }
+
+        public async Task<VerifiedTransaction> VerifyTransaction(string reference,
+            CancellationToken cancellationToken = default)
+        {
+            Envelope<TransactionDto> response;
+            try
+            {
+                response = await Send<TransactionDto>(HttpMethod.Get,
+                    $"transaction/verify/{Uri.EscapeDataString(reference)}", null, cancellationToken);
+            }
+            catch (ProviderRefusedException e) when (e.StatusCode == HttpStatusCode.NotFound)
+            {
+                throw new TransactionNotFoundException(e.Message);
+            }
+
+            var data = response.Data ?? throw new PaymentProviderException("Paystack answered without data.");
+            var status = data.Status ?? "";
+            return new VerifiedTransaction(data.Reference ?? reference,
+                status == "success",
+                status is "failed" or "reversed",
+                data.Amount, data.Currency ?? "", data.Channel,
+                data.Id == 0 ? null : data.Id.ToString(CultureInfo.InvariantCulture),
+                data.PaidAt);
+        }
+
+        public bool IsValidWebhookSignature(byte[] rawBody, string? signature)
+        {
+            if (string.IsNullOrWhiteSpace(_options.SecretKey) || string.IsNullOrWhiteSpace(signature)) return false;
+
+            using var hmac = new HMACSHA512(Encoding.UTF8.GetBytes(_options.SecretKey));
+            var expected = hmac.ComputeHash(rawBody);
+
+            byte[] supplied;
+            try
+            {
+                supplied = Convert.FromHexString(signature.Trim());
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
+
+            return CryptographicOperations.FixedTimeEquals(expected, supplied);
         }
 
         private async Task<Envelope<T>> SendSubaccount<T>(HttpMethod method, string url, SubaccountRequest request,
@@ -209,6 +280,30 @@ namespace Strive.Infrastructure.Payments
             [JsonPropertyName("account_name")] public string? AccountName { get; set; }
         }
 
+        private class InitializeDto
+        {
+            [JsonPropertyName("authorization_url")] public string? AuthorizationUrl { get; set; }
+
+            [JsonPropertyName("access_code")] public string? AccessCode { get; set; }
+        }
+
+        private class TransactionDto
+        {
+            [JsonPropertyName("id")] public long Id { get; set; }
+
+            [JsonPropertyName("status")] public string? Status { get; set; }
+
+            [JsonPropertyName("reference")] public string? Reference { get; set; }
+
+            [JsonPropertyName("amount")] public long Amount { get; set; }
+
+            [JsonPropertyName("currency")] public string? Currency { get; set; }
+
+            [JsonPropertyName("channel")] public string? Channel { get; set; }
+
+            [JsonPropertyName("paid_at")] public DateTimeOffset? PaidAt { get; set; }
+        }
+
         private class SubaccountDto
         {
             [JsonPropertyName("subaccount_code")] public string? SubaccountCode { get; set; }
@@ -261,5 +356,13 @@ namespace Strive.Infrastructure.Payments
 
         public Task UpdateSubaccount(string subaccountCode, SubaccountRequest request,
             CancellationToken cancellationToken = default) => throw NotSetUp;
+
+        public Task<CheckoutSession> InitializeCheckout(CheckoutRequest request,
+            CancellationToken cancellationToken = default) => throw NotSetUp;
+
+        public Task<VerifiedTransaction> VerifyTransaction(string reference,
+            CancellationToken cancellationToken = default) => throw NotSetUp;
+
+        public bool IsValidWebhookSignature(byte[] rawBody, string? signature) => false;
     }
 }

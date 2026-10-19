@@ -22,6 +22,37 @@ namespace Strive.Core.Services.Payments.Gateways
 
         Task UpdateSubaccount(string subaccountCode, SubaccountRequest request,
             CancellationToken cancellationToken = default);
+
+        /// <summary>Starts a payment: the person is sent to the returned address to pay</summary>
+        Task<CheckoutSession> InitializeCheckout(CheckoutRequest request, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        ///     Asks the provider what happened to a payment. Only this answer proves a payment, never what the browser says.
+        ///     Throws <see cref="TransactionNotFoundException" /> if the provider does not know the reference.
+        /// </summary>
+        Task<VerifiedTransaction> VerifyTransaction(string reference, CancellationToken cancellationToken = default);
+
+        /// <summary>Whether a notification really comes from the provider (a signature over the exact bytes)</summary>
+        bool IsValidWebhookSignature(byte[] rawBody, string? signature);
+    }
+
+    /// <param name="PlatformAmountMinor">The part of the amount that stays with the platform</param>
+    /// <param name="SubaccountCode">The sub account of the creator that receives the rest</param>
+    public record CheckoutRequest(string Reference, string Email, long AmountMinor, string Currency, string CallbackUrl,
+        string SubaccountCode, long PlatformAmountMinor, IReadOnlyDictionary<string, string> Metadata);
+
+    public record CheckoutSession(string AuthorizationUrl, string AccessCode);
+
+    /// <param name="Paid">The provider confirms the money was received</param>
+    /// <param name="Failed">The provider says it did not work (not just: not paid yet)</param>
+    public record VerifiedTransaction(string Reference, bool Paid, bool Failed, long AmountMinor, string Currency,
+        string? Channel, string? ProviderTransactionId, DateTimeOffset? PaidAt);
+
+    public class TransactionNotFoundException : Exception
+    {
+        public TransactionNotFoundException(string message) : base(message)
+        {
+        }
     }
 
     public record ProviderBank(string Code, string Name);

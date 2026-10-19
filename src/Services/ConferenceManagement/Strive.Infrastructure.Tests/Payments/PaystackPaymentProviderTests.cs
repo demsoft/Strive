@@ -219,6 +219,124 @@ namespace Strive.Infrastructure.Tests.Payments
             await Assert.ThrowsAsync<PaymentProviderException>(() => provider.ResolveAccount("058", "0123456789"));
         }
 
+        // ---- checkout, verification and notifications
+
+        [Fact]
+        public async Task InitializeCheckout_SendsTheAmountInKoboTheSubaccountAndTheCommission()
+        {
+            var (provider, handler) = Create();
+            handler.Answer = _ => (HttpStatusCode.OK,
+                "{\"status\":true,\"data\":{\"authorization_url\":\"https://checkout.paystack.com/abc\",\"access_code\":\"abc\",\"reference\":\"gbd_1\"}}");
+
+            var session = await provider.InitializeCheckout(new CheckoutRequest("gbd_1", "fan@example.com", 500_000, "NGN",
+                "https://gbedu.goserp.co.uk/s/abcd2345", "ACCT_x", 50_000,
+                new Dictionary<string, string> {{"sessionId", "abcd2345"}}));
+
+            Assert.Equal("https://checkout.paystack.com/abc", session.AuthorizationUrl);
+            var (request, body) = handler.Calls.Single();
+            Assert.Equal("https://api.paystack.co/transaction/initialize", request.RequestUri!.ToString());
+            Assert.Contains("\"amount\":500000", body);
+            Assert.Contains("\"currency\":\"NGN\"", body);
+            Assert.Contains("\"reference\":\"gbd_1\"", body);
+            Assert.Contains("\"subaccount\":\"ACCT_x\"", body);
+            Assert.Contains("\"transaction_charge\":50000", body);
+            Assert.Contains("\"bearer\":\"account\"", body);
+            Assert.Contains("\"callback_url\":\"https://gbedu.goserp.co.uk/s/abcd2345\"", body);
+        }
+
+        [Fact]
+        public async Task InitializeCheckout_AnswerWithoutAnAddress_Fails()
+        {
+            var (provider, handler) = Create();
+            handler.Answer = _ => (HttpStatusCode.OK, "{\"status\":true,\"data\":{}}");
+
+            await Assert.ThrowsAsync<PaymentProviderException>(() => provider.InitializeCheckout(
+                new CheckoutRequest("r", "a@b.co", 1, "NGN", "https://x", "ACCT", 0, new Dictionary<string, string>())));
+        }
+
+        [Theory]
+        [InlineData("success", true, false)]
+        [InlineData("failed", false, true)]
+        [InlineData("reversed", false, true)]
+        [InlineData("abandoned", false, false)]
+        [InlineData("ongoing", false, false)]
+        [InlineData("pending", false, false)]
+        public async Task VerifyTransaction_ReadsTheState(string status, bool paid, bool failed)
+        {
+            var (provider, handler) = Create();
+            handler.Answer = _ => (HttpStatusCode.OK,
+                "{\"status\":true,\"data\":{\"id\":4099260516,\"status\":\"" + status +
+                "\",\"reference\":\"gbd_1\",\"amount\":500000,\"currency\":\"NGN\",\"channel\":\"bank_transfer\",\"paid_at\":\"2026-10-19T10:15:00.000Z\"}}");
+
+            var result = await provider.VerifyTransaction("gbd_1");
+
+            Assert.Equal(paid, result.Paid);
+            Assert.Equal(failed, result.Failed);
+            Assert.Equal(500_000, result.AmountMinor);
+            Assert.Equal("NGN", result.Currency);
+            Assert.Equal("bank_transfer", result.Channel);
+            Assert.Equal("4099260516", result.ProviderTransactionId);
+            Assert.Equal("https://api.paystack.co/transaction/verify/gbd_1", handler.Calls.Single().Request.RequestUri!.ToString());
+        }
+
+        [Fact]
+        public async Task VerifyTransaction_UnknownReference_IsNotFound()
+        {
+            var (provider, handler) = Create();
+            handler.Answer = _ => (HttpStatusCode.NotFound, "{\"status\":false,\"message\":\"Transaction reference not found\"}");
+
+            await Assert.ThrowsAsync<TransactionNotFoundException>(() => provider.VerifyTransaction("gbd_nope"));
+        }
+
+        [Fact]
+        public async Task VerifyTransaction_TheServiceHasAProblem_IsNotMistakenForNotPaid()
+        {
+            var (provider, handler) = Create();
+            handler.Answer = _ => (HttpStatusCode.InternalServerError, "{\"status\":false}");
+
+            await Assert.ThrowsAsync<PaymentProviderException>(() => provider.VerifyTransaction("gbd_1"));
+        }
+
+        private static string Sign(string key, byte[] body)
+        {
+            using var hmac = new System.Security.Cryptography.HMACSHA512(Encoding.UTF8.GetBytes(key));
+            return Convert.ToHexString(hmac.ComputeHash(body)).ToLowerInvariant();
+        }
+
+        [Fact]
+        public void Webhook_SignatureOverTheExactBytesWithTheSecretKey_IsValid()
+        {
+            var (provider, _) = Create();
+            var body = Encoding.UTF8.GetBytes("{\"event\":\"charge.success\",\"data\":{\"reference\":\"gbd_1\"}}");
+
+            Assert.True(provider.IsValidWebhookSignature(body, Sign(Key, body)));
+            Assert.True(provider.IsValidWebhookSignature(body, Sign(Key, body).ToUpperInvariant()));
+        }
+
+        [Fact]
+        public void Webhook_AnythingElse_IsNotValid()
+        {
+            var (provider, _) = Create();
+            var body = Encoding.UTF8.GetBytes("{\"event\":\"charge.success\"}");
+            var changed = Encoding.UTF8.GetBytes("{\"event\":\"charge.success\" }");
+
+            Assert.False(provider.IsValidWebhookSignature(body, Sign("another-key", body)));
+            // one space more in the body: the signature of the original does not fit
+            Assert.False(provider.IsValidWebhookSignature(changed, Sign(Key, body)));
+            Assert.False(provider.IsValidWebhookSignature(body, null));
+            Assert.False(provider.IsValidWebhookSignature(body, ""));
+            Assert.False(provider.IsValidWebhookSignature(body, "not hex"));
+        }
+
+        [Fact]
+        public void Webhook_WithoutASecretKey_NothingIsValid()
+        {
+            var (provider, _) = Create(key: "");
+            var body = Encoding.UTF8.GetBytes("{}");
+
+            Assert.False(provider.IsValidWebhookSignature(body, Sign("", body)));
+        }
+
         private class ThrowingHandler : HttpMessageHandler
         {
             protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
