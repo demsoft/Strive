@@ -134,5 +134,37 @@ namespace Identity.API.Tests
             // the tokens keep the issuer of the main host: the API checks that one
             Assert.Contains("\"issuer\":\"https://meet.test/account\"", json);
         }
+
+        private const string AuthorizeQuery =
+            "client_id=spa&response_type=code&scope=openid%20profile%20user.info&state=s&nonce=n" +
+            "&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256";
+
+        [Theory]
+        [InlineData("https://meet.test")]
+        [InlineData("https://gbedu.test")]
+        public async Task Authorize_WithPromptCreate_LeadsToTheRegistrationPageOfTheSameAddress(string origin)
+        {
+            var client = Start(origin);
+
+            var response = await client.GetAsync($"/account/connect/authorize?{AuthorizeQuery}" +
+                                                 $"&redirect_uri={Uri.EscapeDataString(origin + "/authentication/callback")}&prompt=create");
+
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            var location = response.Headers.Location!.ToString();
+            Assert.Contains("/account/Registration/Register", location);
+            Assert.Contains("returnUrl=", location);
+        }
+
+        [Fact]
+        public async Task Authorize_WithoutPrompt_LeadsToTheSignInPage()
+        {
+            var client = Start("https://gbedu.test");
+
+            var response = await client.GetAsync($"/account/connect/authorize?{AuthorizeQuery}" +
+                                                 $"&redirect_uri={Uri.EscapeDataString("https://gbedu.test/authentication/callback")}");
+
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            Assert.Contains("/account/Account/Login", response.Headers.Location!.ToString());
+        }
     }
 }

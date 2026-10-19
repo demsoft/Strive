@@ -137,6 +137,7 @@ export default function SessionPage() {
    };
 
    const handleSignIn = () => auth.signinRedirect({ state: { url: location.pathname } });
+   const handleSignUp = () => auth.signinRedirect({ state: { url: location.pathname }, prompt: 'create' });
    const joinRoom = () => session?.conferenceId && history.push(`/c/${session.conferenceId}`);
 
    const startsAt = session?.startsAt ? DateTime.fromISO(session.startsAt).toLocaleString(DateTime.DATETIME_MED) : null;
@@ -230,9 +231,14 @@ export default function SessionPage() {
                         </Button>
                      </>
                   ) : !accessToken ? (
-                     <Button id="session-sign-in" variant="contained" size="large" fullWidth onClick={handleSignIn}>
-                        {t('sessions.sign_in_to_buy', { price: formatMoney(session.priceMinor, session.currency) })}
-                     </Button>
+                     <Box>
+                        <Button id="session-sign-in" variant="contained" size="large" fullWidth onClick={handleSignIn}>
+                           {t('sessions.sign_in_to_buy', { price: formatMoney(session.priceMinor, session.currency) })}
+                        </Button>
+                        <Button id="session-sign-up" size="large" fullWidth onClick={handleSignUp} sx={{ mt: 1 }}>
+                           {t('sessions.sign_up_to_buy')}
+                        </Button>
+                     </Box>
                   ) : (
                      <Box id="session-buy">
                         <TextField

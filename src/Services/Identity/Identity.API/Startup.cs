@@ -69,6 +69,9 @@ namespace Identity.API
 
                 options.IssuerUri = issuerUri;
 
+                // the sign up button of the web app asks for prompt=create: the person lands on the registration page
+                options.UserInteraction.CreateAccountUrl = "/Registration/Register";
+
                 // see https://docs.duendesoftware.com/identityserver/v5/fundamentals/resources/
                 options.EmitStaticAudienceClaim = true;
             });
