@@ -15,6 +15,7 @@ const ticket = (id: string, startsAt: string | null, status: Ticket['status'] = 
    creatorName: 'Ada',
    grantedAt: '',
    status,
+   refunded: false,
 });
 
 describe('splitTickets', () => {

@@ -32,6 +32,13 @@ namespace Strive.Core.Services.Payments.Gateways
         /// </summary>
         Task<VerifiedTransaction> VerifyTransaction(string reference, CancellationToken cancellationToken = default);
 
+        /// <summary>
+        ///     Gives the whole payment back to the buyer. Throws <see cref="PaymentProviderException" /> if the provider
+        ///     did not accept the refund (the caller tries again later).
+        /// </summary>
+        Task<RefundResult> RefundTransaction(string reference, long amountMinor,
+            CancellationToken cancellationToken = default);
+
         /// <summary>Whether a notification really comes from the provider (a signature over the exact bytes)</summary>
         bool IsValidWebhookSignature(byte[] rawBody, string? signature);
     }
@@ -47,6 +54,10 @@ namespace Strive.Core.Services.Payments.Gateways
     /// <param name="Failed">The provider says it did not work (not just: not paid yet)</param>
     public record VerifiedTransaction(string Reference, bool Paid, bool Failed, long AmountMinor, string Currency,
         string? Channel, string? ProviderTransactionId, DateTimeOffset? PaidAt);
+
+    /// <param name="RefundId">The id at the provider, if it gave one</param>
+    /// <param name="Status">What the provider says about the refund (pending, processing, processed)</param>
+    public record RefundResult(string? RefundId, string Status);
 
     public class TransactionNotFoundException : Exception
     {

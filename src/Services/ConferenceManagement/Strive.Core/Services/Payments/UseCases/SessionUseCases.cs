@@ -202,14 +202,18 @@ namespace Strive.Core.Services.Payments.UseCases
         private readonly IPaymentProvider _provider;
         private readonly IOrderRepo _orders;
         private readonly IEntitlementRepo _entitlements;
+        private readonly ISessionRepo _sessions;
+        private readonly TimeProvider _timeProvider;
         private readonly ILogger<SettleOrderUseCase> _logger;
 
         public SettleOrderUseCase(IPaymentProvider provider, IOrderRepo orders, IEntitlementRepo entitlements,
-            ILogger<SettleOrderUseCase> logger)
+            ISessionRepo sessions, TimeProvider timeProvider, ILogger<SettleOrderUseCase> logger)
         {
             _provider = provider;
             _orders = orders;
             _entitlements = entitlements;
+            _sessions = sessions;
+            _timeProvider = timeProvider;
             _logger = logger;
         }
 
@@ -226,7 +230,7 @@ namespace Strive.Core.Services.Payments.UseCases
                 return order;
             }
 
-            if (order.Status == OrderStatus.Failed) return order;
+            if (order.Status is OrderStatus.Failed or OrderStatus.Refunded) return order;
 
             VerifiedTransaction verified;
             try
@@ -273,6 +277,15 @@ namespace Strive.Core.Services.Payments.UseCases
 
             // whoever settled it first, the ticket is granted once
             var settled = await _orders.FindByReference(order.Reference) ?? order;
+
+            // paid while the session was being called off: no ticket, the money goes back
+            var session = await _sessions.FindById(settled.SessionId);
+            if (session?.Status == SessionStatus.Cancelled)
+            {
+                await OrderRefunds.Refund(_provider, _orders, _timeProvider, _logger, settled, cancellationToken);
+                return await _orders.FindByReference(order.Reference) ?? settled;
+            }
+
             await GrantTicket(settled);
             return settled;
         }
@@ -320,22 +333,65 @@ namespace Strive.Core.Services.Payments.UseCases
         }
     }
 
+    internal static class OrderRefunds
+    {
+        /// <summary>Gives a paid order back. A failure is written on the order and logged, never thrown.</summary>
+        public static async Task Refund(IPaymentProvider provider, IOrderRepo orders, TimeProvider timeProvider,
+            ILogger logger, TicketOrder order, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var refund = await provider.RefundTransaction(order.Reference, order.AmountMinor, cancellationToken);
+                await orders.TryMarkRefunded(order.Reference, timeProvider.GetUtcNow(), refund.RefundId);
+            }
+            catch (PaymentProviderException e)
+            {
+                logger.LogWarning(e, "Refund of order {reference} did not work", order.Reference);
+                await orders.RecordRefundFailure(order.Reference, e.Message);
+            }
+        }
+    }
+
     public class CancelSessionUseCase : IRequestHandler<CancelSessionRequest, SuccessOrError<Unit>>
     {
         private readonly ISessionRepo _sessions;
+        private readonly IOrderRepo _orders;
+        private readonly IPaymentProvider _provider;
+        private readonly TimeProvider _timeProvider;
+        private readonly ILogger<CancelSessionUseCase> _logger;
 
-        public CancelSessionUseCase(ISessionRepo sessions)
+        public CancelSessionUseCase(ISessionRepo sessions, IOrderRepo orders, IPaymentProvider provider,
+            TimeProvider timeProvider, ILogger<CancelSessionUseCase> logger)
         {
             _sessions = sessions;
+            _orders = orders;
+            _provider = provider;
+            _timeProvider = timeProvider;
+            _logger = logger;
         }
 
+        /// <summary>
+        ///     Calls the session off and gives every ticket money back. Doing it again on a session that is already called
+        ///     off tries the refunds that did not work before; a refund that fails never undoes the cancellation.
+        /// </summary>
         public async Task<SuccessOrError<Unit>> Handle(CancelSessionRequest request, CancellationToken cancellationToken)
         {
             var session = await _sessions.FindById(request.SessionId);
             if (session == null || session.CreatorUserId != request.UserId) return PaymentsError.SessionNotFound;
 
-            session.Status = SessionStatus.Cancelled;
-            await _sessions.Update(session);
+            if (session.Status != SessionStatus.Cancelled)
+            {
+                session.Status = SessionStatus.Cancelled;
+                await _sessions.Update(session);
+            }
+
+            foreach (var order in await _orders.FindPaidOfSession(session.SessionId))
+            {
+                if (order.Status != OrderStatus.Paid) continue;
+
+                await OrderRefunds.Refund(_provider, _orders, _timeProvider, _logger, order, cancellationToken);
+            }
+
             return Unit.Value;
         }
     }

@@ -15,6 +15,9 @@ export type Session = {
    status: SessionStatus;
    startsAt?: string | null;
    createdAt: string;
+   /** after a cancellation: tickets given back, and tickets whose refund did not work yet */
+   refunded: number;
+   refundsPending: number;
 };
 
 export type PublicSession = {
@@ -61,6 +64,8 @@ export type Ticket = {
    creatorName: string;
    grantedAt: string;
    status: SessionStatus;
+   /** the price was given back because the session was called off */
+   refunded: boolean;
 };
 
 /** A session in the list of what is on */
