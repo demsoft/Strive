@@ -221,7 +221,17 @@ export default function SessionPage() {
                               background={categoryGradient(session.category)}
                            />
                            <Box sx={{ minWidth: 0 }}>
-                              <Typography sx={{ fontWeight: 700 }}>
+                              <Typography
+                                 component={RouterLink}
+                                 to={`/u/${session.creator.creatorId}`}
+                                 id="session-host-link"
+                                 sx={{
+                                    fontWeight: 700,
+                                    color: 'inherit',
+                                    textDecoration: 'none',
+                                    '&:hover': { textDecoration: 'underline' },
+                                 }}
+                              >
                                  {t('sessions.hosted_by', { name: session.creator.displayName })}
                               </Typography>
                               {session.creator.bio && (

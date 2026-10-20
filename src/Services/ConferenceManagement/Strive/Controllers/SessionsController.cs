@@ -98,16 +98,39 @@ namespace Strive.Controllers
                 var creator = await _creators.FindById(session.CreatorId);
                 if (creator == null) continue;
 
-                result.Add(new DiscoverSessionDto(session.SessionId, session.Title, session.Description,
-                    session.Category, session.PriceMinor, session.Currency, session.StartsAt, creator.DisplayName,
-                    UserId != null && session.CreatorUserId == UserId,
-                    UserId != null && await _entitlements.Holds(UserId, session.ConferenceId)));
+                result.Add(await ToDiscoverDto(session, creator));
             }
 
             // the answer depends on who asks
             Response.Headers.CacheControl = "no-store";
             return result.ToArray();
         }
+
+        // GET v1/creators/{creatorId}/page
+        /// <summary>The page of a creator, the one link to share: the name, the bio and what they have on</summary>
+        [HttpGet("v1/creators/{creatorId}/page")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<CreatorPageDto>> GetCreatorPage(string creatorId)
+        {
+            var creator = await _creators.FindById(creatorId);
+            if (creator == null) return PaymentsError.SessionNotFound.ToActionResult();
+
+            var sessions = await _sessions.FindForSaleOfCreator(creator.CreatorId,
+                DateTimeOffset.UtcNow.AddHours(-SessionOverAfterHours), 60);
+            var list = new List<DiscoverSessionDto>();
+            foreach (var session in sessions.OrderBy(x => x.StartsAt ?? DateTimeOffset.MaxValue))
+                list.Add(await ToDiscoverDto(session, creator));
+
+            Response.Headers.CacheControl = "no-store";
+            return new CreatorPageDto(PublicCreatorDto.From(creator), list.ToArray());
+        }
+
+        private async Task<DiscoverSessionDto> ToDiscoverDto(PaidSession session, CreatorProfile creator) =>
+            new(session.SessionId, session.Title, session.Description, session.Category, session.PriceMinor,
+                session.Currency, session.StartsAt, creator.DisplayName,
+                UserId != null && session.CreatorUserId == UserId,
+                UserId != null && await _entitlements.Holds(UserId, session.ConferenceId));
 
         // GET v1/sessions/{sessionId}
         [HttpGet("v1/sessions/{sessionId}")]

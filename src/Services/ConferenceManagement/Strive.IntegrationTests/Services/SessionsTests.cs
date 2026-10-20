@@ -207,6 +207,54 @@ namespace Strive.IntegrationTests.Services
             Assert.Contains(Provider.Refunds, x => x.Reference == checkout.Reference);
         }
 
+        // ---- the page of a creator
+
+        private async Task<string> CreatorIdOf(UserAccount host) =>
+            (await Read<CreatorProfileDto>(await Client(host).GetAsync("/v1/creators/me"))).CreatorId;
+
+        [Fact]
+        public async Task CreatorPage_ShowsTheCreatorAndOnlyTheirOpenSessions_ForEverybody()
+        {
+            // arrange: two creators, one of them has a session open and one called off
+            var host = await NewCreator();
+            var open = await Publish(host, title: "Open for tickets");
+            var called = await Publish(host, title: "Called off");
+            await Cancel(host, called.SessionId);
+            var other = await NewCreator();
+            var othersSession = await Publish(other, title: "Someone else");
+
+            // act: nobody is signed in
+            var page = await Read<CreatorPageDto>(
+                await Client(null).GetAsync($"/v1/creators/{await CreatorIdOf(host)}/page"));
+
+            // assert
+            Assert.Equal("Ada Lovelace", page.Creator.DisplayName);
+            Assert.Equal("Piano", page.Creator.Bio);
+            Assert.Equal(open.SessionId, Assert.Single(page.Sessions).SessionId);
+            Assert.DoesNotContain(page.Sessions, x => x.SessionId == othersSession.SessionId);
+        }
+
+        [Fact]
+        public async Task CreatorPage_NoBankDetailsAreShown()
+        {
+            var host = await NewCreator();
+
+            var response = await Client(null).GetAsync($"/v1/creators/{await CreatorIdOf(host)}/page");
+            var json = await response.Content.ReadAsStringAsync();
+
+            Assert.DoesNotContain("0123456789", json);
+            Assert.DoesNotContain("ccountLast4", json);
+            Assert.DoesNotContain("ubaccount", json);
+        }
+
+        [Fact]
+        public async Task CreatorPage_UnknownCreator_NotFound()
+        {
+            var response = await Client(null).GetAsync("/v1/creators/does-not-exist/page");
+
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+
         [Fact]
         public async Task Discover_ListsPublishedSessionsForEverybody_NotCancelledOnes()
         {
