@@ -82,6 +82,11 @@ export type DiscoverSession = {
    hasTicket: boolean;
 };
 
+export type CreatorPage = {
+   creator: { creatorId: string; displayName: string; bio?: string | null };
+   sessions: DiscoverSession[];
+};
+
 const base = () => appSettings.conferenceUrl.replace(/\/+$/, '');
 const auth = (accessToken?: string) => (accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : {});
 
@@ -127,3 +132,12 @@ export const sessionLink = (sessionId: string) => new URL('/s/' + sessionId, doc
 export async function fetchDiscover(): Promise<DiscoverSession[]> {
    return (await Axios.get<DiscoverSession[]>(`${base()}/v1/sessions/discover`)).data;
 }
+
+/** What a creator has on, for their page. The token (if the person is signed in) marks their own and ticketed sessions. */
+export async function fetchCreatorPage(creatorId: string, accessToken?: string): Promise<CreatorPage> {
+   return (
+      await Axios.get<CreatorPage>(`${base()}/v1/creators/${encodeURIComponent(creatorId)}/page`, auth(accessToken))
+   ).data;
+}
+
+export const creatorPageLink = (creatorId: string) => new URL('/u/' + creatorId, document.baseURI).href;

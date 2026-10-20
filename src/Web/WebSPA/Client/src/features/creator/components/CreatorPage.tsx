@@ -255,6 +255,20 @@ export default function CreatorPage() {
 
                   {profile?.canSell && (
                      <Button
+                        id="creator-page-link"
+                        component={RouterLink}
+                        to={`/u/${profile.creatorId}`}
+                        variant="outlined"
+                        size="large"
+                        fullWidth
+                        sx={{ mt: 3 }}
+                     >
+                        {t('creator.view_my_page')}
+                     </Button>
+                  )}
+
+                  {profile?.canSell && (
+                     <Button
                         id="creator-sessions-link"
                         component={RouterLink}
                         to="/creator/sessions"

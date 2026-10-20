@@ -33,6 +33,9 @@ namespace Strive.Models.Response
     public record DiscoverSessionDto(string SessionId, string Title, string? Description, string Category,
         long PriceMinor, string Currency, DateTimeOffset? StartsAt, string CreatorName, bool IsHost, bool HasTicket);
 
+    /// <summary>The page of a creator: who they are and what they have on</summary>
+    public record CreatorPageDto(PublicCreatorDto Creator, DiscoverSessionDto[] Sessions);
+
     public record CheckoutDto(string Email);
 
     public record CheckoutResultDto(string? AuthorizationUrl, string? Reference, bool AlreadyHasTicket);

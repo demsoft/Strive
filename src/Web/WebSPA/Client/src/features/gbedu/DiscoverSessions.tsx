@@ -15,7 +15,7 @@ import HostAvatar from './ui/HostAvatar';
 export const isLiveNow = (session: DiscoverSession, now = DateTime.now()) =>
    session.startsAt != null && DateTime.fromISO(session.startsAt) <= now;
 
-function SessionTile({ session }: { session: DiscoverSession }) {
+export function SessionTile({ session }: { session: DiscoverSession }) {
    const { t } = useTranslation();
    const { Icon } = categoryStyle(session.category);
    const live = isLiveNow(session);

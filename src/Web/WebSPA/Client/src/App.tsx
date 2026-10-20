@@ -14,6 +14,7 @@ import theme from './theme';
 import RecordingRoute from './routes/RecordingRoute';
 import { isGbedu } from './brand-id';
 import LandingGate from './features/gbedu/LandingGate';
+import CreatorPublicPage from 'src/features/creator/components/CreatorPublicPage';
 import SessionPage from './features/sessions/components/SessionPage';
 import SharedRecordingRoute from './routes/SharedRecordingRoute';
 import RedirectToConference from './RedirectToConference';
@@ -47,6 +48,8 @@ function App() {
                         <Route path="/r/:token" component={SharedRecordingRoute} />
                         {/* the page of a paid session: everybody can read it, paying needs a sign in */}
                         <Route path="/s/:sessionId" component={SessionPage} />
+                        {/* the page of a creator: their name and what they have on, one link to share */}
+                        <Route path="/u/:creatorId" component={CreatorPublicPage} />
                         {/* Gbedu: a welcome page with sign up and sign in for visitors */}
                         {isGbedu && <Route exact path="/" component={LandingGate} />}
                         <Route>
