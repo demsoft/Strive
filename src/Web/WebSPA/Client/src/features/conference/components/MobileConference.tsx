@@ -34,6 +34,10 @@ const useStyles = makeStyles()((theme) => ({
       position: 'relative',
       minHeight: 0,
    },
+   mainColumn: {
+      display: 'flex',
+      flexDirection: 'column',
+   },
    scene: {
       position: 'absolute',
       inset: 0,
@@ -59,6 +63,10 @@ const useStyles = makeStyles()((theme) => ({
       zIndex: 2,
       padding: theme.spacing(1),
    },
+   // the panels position themselves against the main area, as before
+   contents: {
+      display: 'contents',
+   },
    hidden: {
       display: 'none',
    },
@@ -68,6 +76,21 @@ const useStyles = makeStyles()((theme) => ({
       flex: 1,
       minHeight: 0,
       overflowY: 'auto',
+   },
+   // stage first (Gbedu): the stage keeps a 16:9 box at the top and never gets covered; chat and people share the rest
+   stage: {
+      flexShrink: 0,
+      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
+      height: 'min(56.25vw, 42vh)',
+      minHeight: 160,
+      backgroundColor: '#000',
+   },
+   lower: {
+      flex: 1,
+      position: 'relative',
+      minHeight: 0,
    },
    nav: {
       flexShrink: 0,
@@ -83,9 +106,11 @@ export default function MobileConference() {
    const showChat = useSelector(selectShowChat);
    const hasNewMessages = useSelector(selectHasNewMessages);
 
-   const [tab, setTab] = useState<Tab>('meeting');
+   // on Gbedu the stage is always on top, so there is no meeting tab: the chat is what lies below it
+   const stageFirst = isGbedu;
+   const [tab, setTab] = useState<Tab>(stageFirst ? 'chat' : 'meeting');
    // never stay on the chat tab if the chat gets unavailable
-   const activeTab: Tab = tab === 'chat' && !showChat ? 'meeting' : tab;
+   const activeTab: Tab = tab === 'chat' && !showChat ? (stageFirst ? 'people' : 'meeting') : tab;
 
    const [contentRef, dimensions] = useThrottledResizeObserver(100);
    const chatContainer = useRef<HTMLDivElement>(null);
@@ -107,8 +132,8 @@ export default function MobileConference() {
             <div className={classes.root} id="mobile-conference">
                <AnnouncementOverlay />
                {isGbedu ? <GbeduLiveHeader /> : <ConferenceAppBar />}
-               <div className={classes.main} ref={contentRef}>
-                  <div className={classes.scene}>
+               <div className={cx(classes.main, stageFirst && classes.mainColumn)} ref={contentRef}>
+                  <div className={stageFirst ? classes.stage : classes.scene}>
                      <div ref={sceneBarContainer} />
                      <div className={classes.sceneLayout}>
                         <div className={classes.sceneInner}>
@@ -117,28 +142,35 @@ export default function MobileConference() {
                      </div>
                   </div>
 
-                  {/* always mounted: the chat bar subscribes to the messages */}
-                  <div className={cx(classes.panel, activeTab !== 'chat' && classes.hidden)} id="mobile-panel-chat">
-                     <Grid ref={chatContainer} />
-                     <CurrentPollsBar />
-                     {showChat && <ChatBar />}
-                  </div>
+                  <div className={stageFirst ? classes.lower : classes.contents}>
+                     {/* always mounted: the chat bar subscribes to the messages */}
+                     <div className={cx(classes.panel, activeTab !== 'chat' && classes.hidden)} id="mobile-panel-chat">
+                        <Grid ref={chatContainer} />
+                        <CurrentPollsBar />
+                        {showChat && <ChatBar />}
+                     </div>
 
-                  <div className={cx(classes.panel, activeTab !== 'people' && classes.hidden)} id="mobile-panel-people">
-                     <div className={classes.people}>
-                        <RoomsList />
-                        <SceneManagement />
+                     <div
+                        className={cx(classes.panel, activeTab !== 'people' && classes.hidden)}
+                        id="mobile-panel-people"
+                     >
+                        <div className={classes.people}>
+                           <RoomsList />
+                           <SceneManagement />
+                        </div>
                      </div>
                   </div>
                </div>
                <Paper elevation={4} square className={classes.nav}>
                   <BottomNavigation showLabels value={activeTab} onChange={(_event, value: Tab) => setTab(value)}>
-                     <BottomNavigationAction
-                        id="mobile-nav-meeting"
-                        value="meeting"
-                        label={t('conference.mobile.meeting')}
-                        icon={<VideocamIcon />}
-                     />
+                     {!stageFirst && (
+                        <BottomNavigationAction
+                           id="mobile-nav-meeting"
+                           value="meeting"
+                           label={t('conference.mobile.meeting')}
+                           icon={<VideocamIcon />}
+                        />
+                     )}
                      {showChat && (
                         <BottomNavigationAction
                            id="mobile-nav-chat"
