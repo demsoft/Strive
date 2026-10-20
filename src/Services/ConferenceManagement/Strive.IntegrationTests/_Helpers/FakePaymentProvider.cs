@@ -95,6 +95,21 @@ namespace Strive.IntegrationTests._Helpers
             return Task.FromResult(transaction);
         }
 
+        /// <summary>The refunds the provider was asked for, as (reference, amount)</summary>
+        public ConcurrentQueue<(string Reference, long AmountMinor)> Refunds { get; } = new();
+
+        /// <summary>Refunds fail while this is set (the provider is up, but refuses)</summary>
+        public bool RefuseRefunds { get; set; }
+
+        public Task<RefundResult> RefundTransaction(string reference, long amountMinor,
+            CancellationToken cancellationToken = default)
+        {
+            Check();
+            if (RefuseRefunds) throw new PaymentProviderException("Insufficient balance.");
+            Refunds.Enqueue((reference, amountMinor));
+            return Task.FromResult(new RefundResult("rf_" + reference, "pending"));
+        }
+
         public bool IsValidWebhookSignature(byte[] rawBody, string? signature) => signature == Sign(rawBody);
 
         private void Check()

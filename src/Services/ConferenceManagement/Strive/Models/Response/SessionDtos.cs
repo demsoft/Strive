@@ -11,13 +11,13 @@ namespace Strive.Models.Response
     /// <summary>A session as its host sees it</summary>
     public record SessionDto(string SessionId, string ConferenceId, string Title, string? Description,
         string Category, long PriceMinor, string Currency, SessionStatus Status, DateTimeOffset? StartsAt,
-        DateTimeOffset CreatedAt)
+        DateTimeOffset CreatedAt, int Refunded = 0, int RefundsPending = 0)
     {
-        public static SessionDto From(PaidSession session)
+        public static SessionDto From(PaidSession session, int refunded = 0, int refundsPending = 0)
         {
             return new SessionDto(session.SessionId, session.ConferenceId, session.Title, session.Description,
                 session.Category, session.PriceMinor, session.Currency, session.Status, session.StartsAt,
-                session.CreatedAt);
+                session.CreatedAt, refunded, refundsPending);
         }
     }
 
@@ -42,5 +42,6 @@ namespace Strive.Models.Response
         string? ConferenceId, string? FailureReason);
 
     public record TicketDto(string SessionId, string ConferenceId, string Title, string Category,
-        DateTimeOffset? StartsAt, string CreatorName, DateTimeOffset GrantedAt, SessionStatus Status);
+        DateTimeOffset? StartsAt, string CreatorName, DateTimeOffset GrantedAt, SessionStatus Status,
+        bool Refunded = false);
 }

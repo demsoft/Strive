@@ -107,6 +107,106 @@ namespace Strive.IntegrationTests.Services
 
         // ---- publish
 
+        // ---- refunds
+
+        private Task<HttpResponseMessage> Cancel(UserAccount host, string sessionId) =>
+            Client(host).PostAsync($"/v1/sessions/{sessionId}/cancel", null);
+
+        private async Task<TicketDto> TicketOf(UserAccount fan, string sessionId) =>
+            Assert.Single(await Read<TicketDto[]>(await Client(fan).GetAsync("/v1/tickets/mine")),
+                x => x.SessionId == sessionId);
+
+        [Fact]
+        public async Task Cancel_PaidTickets_AreRefundedInFull()
+        {
+            // arrange
+            var (host, session) = await PublishedSession();
+            var fan = await FanWithTicket(session);
+            var reference = Provider.Checkouts.Last().Reference;
+
+            // act
+            (await Cancel(host, session.SessionId)).EnsureSuccessStatusCode();
+
+            // assert: the provider gave all of it back, the fan sees it, the host sees the number
+            Assert.Contains(Provider.Refunds, x => x.Reference == reference && x.AmountMinor == session.PriceMinor);
+            Assert.True((await TicketOf(fan, session.SessionId)).Refunded);
+            var mine = await Read<SessionDto[]>(await Client(host).GetAsync("/v1/sessions/mine"));
+            var entry = Assert.Single(mine, x => x.SessionId == session.SessionId);
+            Assert.Equal(1, entry.Refunded);
+            Assert.Equal(0, entry.RefundsPending);
+        }
+
+        [Fact]
+        public async Task Cancel_ProviderRefusesRefund_StillCancelsAndRetryRefunds()
+        {
+            // arrange
+            var (host, session) = await PublishedSession();
+            var fan = await FanWithTicket(session);
+            Provider.RefuseRefunds = true;
+
+            // act: the cancellation holds, the refund is open
+            (await Cancel(host, session.SessionId)).EnsureSuccessStatusCode();
+            var open = Assert.Single(await Read<SessionDto[]>(await Client(host).GetAsync("/v1/sessions/mine")),
+                x => x.SessionId == session.SessionId);
+
+            // assert
+            Assert.Equal(SessionStatus.Cancelled, open.Status);
+            Assert.Equal(1, open.RefundsPending);
+            Assert.False((await TicketOf(fan, session.SessionId)).Refunded);
+
+            // act: the provider works again and the host tries once more
+            Provider.RefuseRefunds = false;
+            (await Cancel(host, session.SessionId)).EnsureSuccessStatusCode();
+
+            // assert
+            Assert.True((await TicketOf(fan, session.SessionId)).Refunded);
+        }
+
+        [Fact]
+        public async Task Cancel_Twice_RefundsOnlyOnce()
+        {
+            var (host, session) = await PublishedSession();
+            await FanWithTicket(session);
+            var reference = Provider.Checkouts.Last().Reference;
+
+            await Cancel(host, session.SessionId);
+            await Cancel(host, session.SessionId);
+
+            Assert.Single(Provider.Refunds, x => x.Reference == reference);
+        }
+
+        [Fact]
+        public async Task Cancel_ByAnotherPerson_RefundsNothing()
+        {
+            var (_, session) = await PublishedSession();
+            await FanWithTicket(session);
+            var before = Provider.Refunds.Count;
+
+            var response = await Cancel(NewUser("other"), session.SessionId);
+
+            Assert.False(response.IsSuccessStatusCode);
+            Assert.Equal(before, Provider.Refunds.Count);
+        }
+
+        [Fact]
+        public async Task Payment_ConfirmedAfterCancel_IsRefundedAndGivesNoTicket()
+        {
+            // arrange: the fan started to pay, then the host called the session off
+            var (host, session) = await PublishedSession();
+            var fan = NewUser("fan");
+            var checkout = await Checkout(fan, session.SessionId);
+            await Cancel(host, session.SessionId);
+
+            // act: the money arrives after that
+            Provider.Pay(checkout.Reference!, session.PriceMinor);
+            var status = await Status(fan, checkout.Reference!);
+
+            // assert
+            Assert.Equal("refunded", status.Status);
+            Assert.False(status.HasTicket);
+            Assert.Contains(Provider.Refunds, x => x.Reference == checkout.Reference);
+        }
+
         [Fact]
         public async Task Discover_ListsPublishedSessionsForEverybody_NotCancelledOnes()
         {

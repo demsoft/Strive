@@ -13,6 +13,9 @@ namespace Strive.Core.Services.Payments.Sessions
 
         /// <summary>The provider says the payment failed, or what was paid does not match the order</summary>
         Failed,
+
+        /// <summary>Paid, and given back to the buyer because the session was called off</summary>
+        Refunded,
     }
 
     /// <summary>Who gets how much of a paid order, in minor units. The parts add up to the amount.</summary>
@@ -76,6 +79,14 @@ namespace Strive.Core.Services.Payments.Sessions
         public DateTimeOffset CreatedAt { get; init; }
 
         public DateTimeOffset? PaidAt { get; set; }
+
+        public DateTimeOffset? RefundedAt { get; set; }
+
+        /// <summary>The refund at the provider</summary>
+        public string? RefundId { get; set; }
+
+        /// <summary>Why the last refund attempt did not work; the order stays paid and is tried again</summary>
+        public string? RefundFailure { get; set; }
     }
 
     /// <summary>The right of a person to join the room of a session. One per paid order.</summary>

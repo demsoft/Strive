@@ -25,11 +25,13 @@ namespace Strive.Controllers
         private readonly ISessionRepo _sessions;
         private readonly ICreatorRepo _creators;
         private readonly IEntitlementRepo _entitlements;
+        private readonly IOrderRepo _orders;
         private readonly IConfiguration _configuration;
 
         public SessionsController(IMediator mediator, ISessionRepo sessions, ICreatorRepo creators,
-            IEntitlementRepo entitlements, IConfiguration configuration)
+            IEntitlementRepo entitlements, IOrderRepo orders, IConfiguration configuration)
         {
+            _orders = orders;
             _mediator = mediator;
             _sessions = sessions;
             _creators = creators;
@@ -67,7 +69,18 @@ namespace Strive.Controllers
             if (creator == null) return Array.Empty<SessionDto>();
 
             Response.Headers.CacheControl = "no-store";
-            return (await _sessions.FindOfCreator(creator.CreatorId, 100)).Select(SessionDto.From).ToArray();
+            var result = new List<SessionDto>();
+            foreach (var session in await _sessions.FindOfCreator(creator.CreatorId, 100))
+            {
+                // after a cancellation the host sees how many tickets were given back and how many are still to do
+                var orders = session.Status == SessionStatus.Cancelled
+                    ? await _orders.FindPaidOfSession(session.SessionId)
+                    : new List<TicketOrder>();
+                result.Add(SessionDto.From(session, orders.Count(x => x.Status == OrderStatus.Refunded),
+                    orders.Count(x => x.Status == OrderStatus.Paid)));
+            }
+
+            return result.ToArray();
         }
 
         // GET v1/sessions/discover
@@ -161,8 +174,10 @@ namespace Strive.Controllers
                 var session = await _sessions.FindById(entitlement.SessionId);
                 if (session == null) continue;
                 var creator = await _creators.FindById(session.CreatorId);
+                var order = await _orders.FindById(entitlement.OrderId);
                 tickets.Add(new TicketDto(session.SessionId, session.ConferenceId, session.Title, session.Category,
-                    session.StartsAt, creator?.DisplayName ?? "", entitlement.GrantedAt, session.Status));
+                    session.StartsAt, creator?.DisplayName ?? "", entitlement.GrantedAt, session.Status,
+                    order?.Status == OrderStatus.Refunded));
             }
 
             Response.Headers.CacheControl = "no-store";

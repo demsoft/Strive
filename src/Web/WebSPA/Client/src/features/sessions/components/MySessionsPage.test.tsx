@@ -122,6 +122,8 @@ test('published sessions are listed with their price and a way into the room', a
          currency: 'NGN',
          status: 'cancelled',
          createdAt: '',
+         refunded: 3,
+         refundsPending: 0,
       },
    ]);
    await act(async () => createRoot(container).render(<MySessionsPage />));
@@ -131,6 +133,33 @@ test('published sessions are listed with their price and a way into the room', a
    expect(rows).toHaveLength(2);
    expect(rows[0].textContent).toContain('₦5,000');
    expect(rows[1].textContent).toContain('sessions.cancelled_chip');
+   // everything was given back: said so, nothing to retry
+   expect(rows[1].querySelector('.refund-summary')?.textContent).toContain('sessions.refunds_done');
+   expect(rows[1].querySelector('.retry-refunds')).toBeNull();
+});
+
+test('a refund that did not go through can be tried again', async () => {
+   api.fetchMySessions.mockResolvedValue([
+      {
+         sessionId: 'zzzz2345',
+         conferenceId: 'room2',
+         title: 'Old class',
+         category: 'teach',
+         priceMinor: 100000,
+         currency: 'NGN',
+         status: 'cancelled',
+         createdAt: '',
+         refunded: 1,
+         refundsPending: 2,
+      },
+   ]);
+   api.cancelSession.mockResolvedValue(undefined);
+   await act(async () => createRoot(container).render(<MySessionsPage />));
+   await settle();
+
+   expect(document.querySelector('.refund-summary')?.textContent).toContain('sessions.refunds_open');
+   await act(async () => (document.querySelector('.retry-refunds') as HTMLElement).click());
+   expect(api.cancelSession).toHaveBeenCalledWith('zzzz2345');
 });
 
 test('my tickets lists the sessions with a join button, a called off one is under past and has none', async () => {
@@ -152,6 +181,7 @@ test('my tickets lists the sessions with a join button, a called off one is unde
          creatorName: 'Kofi',
          grantedAt: '',
          status: 'cancelled',
+         refunded: true,
       },
    ]);
    await act(async () => createRoot(container).render(<MyTicketsPage />));
@@ -167,6 +197,7 @@ test('my tickets lists the sessions with a join button, a called off one is unde
    expect(past).toHaveLength(1);
    expect(past[0].textContent).toContain('Old');
    expect(past[0].querySelector('button')).toBeNull();
+   expect(past[0].querySelector('.ticket-refunded')).not.toBeNull();
 });
 
 test('without tickets there is a friendly empty state', async () => {

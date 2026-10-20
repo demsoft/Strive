@@ -35,6 +35,16 @@ namespace Strive.Core.Services.Payments.Gateways
             string? channel, IList<OrderAllocation> allocations);
 
         Task MarkFailed(string reference, string reason);
+
+        Task<TicketOrder?> FindById(string orderId);
+
+        /// <summary>The orders of a session that were paid (and maybe given back since)</summary>
+        Task<IReadOnlyList<TicketOrder>> FindPaidOfSession(string sessionId);
+
+        /// <summary>Marks a paid order as refunded. Only a paid order changes.</summary>
+        Task<bool> TryMarkRefunded(string reference, System.DateTimeOffset refundedAt, string? refundId);
+
+        Task RecordRefundFailure(string reference, string reason);
     }
 
     public interface IEntitlementRepo

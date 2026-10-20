@@ -78,6 +78,8 @@ namespace Strive.Infrastructure.Data.Repos
                 config.MapMember(x => x.CreatedAt).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
                 config.MapMember(x => x.PaidAt).SetSerializer(
                     new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
+                config.MapMember(x => x.RefundedAt).SetSerializer(
+                    new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
                 config.SetIgnoreExtraElements(true);
             });
             BsonClassMap.RegisterClassMap<OrderAllocation>(config =>
@@ -97,6 +99,8 @@ namespace Strive.Infrastructure.Data.Repos
                 Builders<TicketOrder>.IndexKeys.Ascending(x => x.Reference), new CreateIndexOptions {Unique = true}));
             await Collection.Indexes.CreateOneAsync(new CreateIndexModel<TicketOrder>(
                 Builders<TicketOrder>.IndexKeys.Ascending(x => x.BuyerUserId).Descending(x => x.CreatedAt)));
+            await Collection.Indexes.CreateOneAsync(new CreateIndexModel<TicketOrder>(
+                Builders<TicketOrder>.IndexKeys.Ascending(x => x.SessionId)));
         }
 
         public Task Create(TicketOrder order) => Collection.InsertOneAsync(order);
@@ -115,6 +119,28 @@ namespace Strive.Infrastructure.Data.Repos
                     .Set(x => x.Allocations, allocations.ToList()));
             return result.ModifiedCount == 1;
         }
+
+        public Task<TicketOrder?> FindById(string orderId) =>
+            Collection.Find(x => x.OrderId == orderId).FirstOrDefaultAsync()!;
+
+        public async Task<IReadOnlyList<TicketOrder>> FindPaidOfSession(string sessionId) =>
+            await Collection.Find(x => x.SessionId == sessionId &&
+                                       (x.Status == OrderStatus.Paid || x.Status == OrderStatus.Refunded))
+                .ToListAsync();
+
+        public async Task<bool> TryMarkRefunded(string reference, DateTimeOffset refundedAt, string? refundId)
+        {
+            var result = await Collection.UpdateOneAsync(
+                x => x.Reference == reference && x.Status == OrderStatus.Paid,
+                Builders<TicketOrder>.Update.Set(x => x.Status, OrderStatus.Refunded)
+                    .Set(x => x.RefundedAt, refundedAt).Set(x => x.RefundId, refundId)
+                    .Set(x => x.RefundFailure, null));
+            return result.ModifiedCount == 1;
+        }
+
+        public Task RecordRefundFailure(string reference, string reason) =>
+            Collection.UpdateOneAsync(x => x.Reference == reference && x.Status == OrderStatus.Paid,
+                Builders<TicketOrder>.Update.Set(x => x.RefundFailure, reason));
 
         public Task MarkFailed(string reference, string reason) =>
             Collection.UpdateOneAsync(x => x.Reference == reference && x.Status == OrderStatus.Pending,

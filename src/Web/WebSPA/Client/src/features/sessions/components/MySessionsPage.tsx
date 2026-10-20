@@ -254,6 +254,22 @@ export default function MySessionsPage() {
                               {t(`sessions.category_${session.category}`)}
                               {session.startsAt &&
                                  ` · ${DateTime.fromISO(session.startsAt).toLocaleString(DateTime.DATETIME_MED)}`}
+                              {session.status === 'cancelled' && session.refunded + session.refundsPending > 0 && (
+                                 <Box sx={{ mt: 0.5 }} className="refund-summary">
+                                    {session.refundsPending === 0
+                                       ? t('sessions.refunds_done', { count: session.refunded })
+                                       : t('sessions.refunds_open', { count: session.refundsPending })}
+                                    {session.refundsPending > 0 && (
+                                       <Button
+                                          size="small"
+                                          className="retry-refunds"
+                                          onClick={() => api.cancelSession(session.sessionId).then(load)}
+                                       >
+                                          {t('sessions.refunds_retry')}
+                                       </Button>
+                                    )}
+                                 </Box>
+                              )}
                               {session.status === 'published' && (
                                  <Box sx={{ mt: 0.5, display: 'flex', gap: 1 }}>
                                     <Button size="small" onClick={() => history.push(`/c/${session.conferenceId}`)}>

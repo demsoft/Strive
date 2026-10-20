@@ -152,6 +152,25 @@ namespace Strive.Infrastructure.Payments
                 data.PaidAt);
         }
 
+        public async Task<RefundResult> RefundTransaction(string reference, long amountMinor,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await Send<RefundDto>(HttpMethod.Post, "refund",
+                    JsonContent.Create(new Dictionary<string, object> {{"transaction", reference}, {"amount", amountMinor}}),
+                    cancellationToken);
+                var data = response.Data ?? throw new PaymentProviderException("Paystack answered without data.");
+                return new RefundResult(data.Id == 0 ? null : data.Id.ToString(CultureInfo.InvariantCulture),
+                    data.Status ?? "pending");
+            }
+            catch (ProviderRefusedException e)
+            {
+                // e.g. already refunded, or not enough balance: the caller records it and tries again later
+                throw new PaymentProviderException(e.Message, e);
+            }
+        }
+
         public bool IsValidWebhookSignature(byte[] rawBody, string? signature)
         {
             if (string.IsNullOrWhiteSpace(_options.SecretKey) || string.IsNullOrWhiteSpace(signature)) return false;
@@ -304,6 +323,13 @@ namespace Strive.Infrastructure.Payments
             [JsonPropertyName("paid_at")] public DateTimeOffset? PaidAt { get; set; }
         }
 
+        private class RefundDto
+        {
+            [JsonPropertyName("id")] public long Id { get; set; }
+
+            [JsonPropertyName("status")] public string? Status { get; set; }
+        }
+
         private class SubaccountDto
         {
             [JsonPropertyName("subaccount_code")] public string? SubaccountCode { get; set; }
@@ -361,6 +387,9 @@ namespace Strive.Infrastructure.Payments
             CancellationToken cancellationToken = default) => throw NotSetUp;
 
         public Task<VerifiedTransaction> VerifyTransaction(string reference,
+            CancellationToken cancellationToken = default) => throw NotSetUp;
+
+        public Task<RefundResult> RefundTransaction(string reference, long amountMinor,
             CancellationToken cancellationToken = default) => throw NotSetUp;
 
         public bool IsValidWebhookSignature(byte[] rawBody, string? signature) => false;
