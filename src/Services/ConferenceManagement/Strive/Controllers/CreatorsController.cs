@@ -99,6 +99,19 @@ namespace Strive.Controllers
             return CreatorProfileDto.From(result.Response!);
         }
 
+        // PUT v1/creators/me/pass
+        [HttpPut("v1/creators/me/pass")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<CreatorProfileDto>> SetPassPrice([FromBody] SetPassPriceDto dto)
+        {
+            if (UserId == null) return Forbid();
+
+            var result = await _mediator.Send(new SetPassPriceRequest(UserId, dto.PriceMinor));
+            if (!result.Success) return result.ToActionResult();
+
+            return CreatorProfileDto.From(result.Response!);
+        }
+
         // GET v1/creators/{creatorId}
         [HttpGet("v1/creators/{creatorId}")]
         [AllowAnonymous]

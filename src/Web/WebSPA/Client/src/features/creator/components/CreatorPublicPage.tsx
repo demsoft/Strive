@@ -1,11 +1,12 @@
 import { Alert, AppBar, Box, Button, CircularProgress, Container, Toolbar, Typography } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import BrandLogo from 'src/components/BrandLogo';
 import { SessionTile } from 'src/features/gbedu/DiscoverSessions';
+import PassCard from './PassCard';
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import * as api from 'src/services/api/sessions';
 import { CreatorPage } from 'src/services/api/sessions';
@@ -24,10 +25,15 @@ export default function CreatorPublicPage() {
    const [notFound, setNotFound] = useState(false);
    const [copied, setCopied] = useState(false);
 
+   const load = useCallback(
+      () => api.fetchCreatorPage(creatorId, token).then(setPage, () => setNotFound(true)),
+      [creatorId, token],
+   );
+
    useEffect(() => {
       if (auth.isLoading) return;
-      api.fetchCreatorPage(creatorId, token).then(setPage, () => setNotFound(true));
-   }, [creatorId, token, auth.isLoading]);
+      load();
+   }, [auth.isLoading, load]);
 
    const copy = async () => {
       const link = api.creatorPageLink(creatorId);
@@ -75,6 +81,8 @@ export default function CreatorPublicPage() {
                         {copied ? t('sessions.copied') : t('creator.copy_page_link')}
                      </Button>
                   </Box>
+
+                  <PassCard page={page} onPaid={load} />
 
                   <Typography variant="h5" sx={{ fontWeight: 800, mb: 2 }}>
                      {t('creator.page_sessions')}

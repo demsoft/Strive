@@ -46,7 +46,9 @@ export async function fetchRecordings(conferenceId: string): Promise<RecordingDt
 export type MyRecordingDto = RecordingDto & { conferenceId: string; conferenceName: string | null };
 
 export async function fetchMyRecordings(): Promise<MyRecordingDto[]> {
-   const response = await Axios.get<MyRecordingDto[]>(`${appSettings.conferenceUrl.replace(/\/+$/, '')}/v1/recordings/mine`);
+   const response = await Axios.get<MyRecordingDto[]>(
+      `${appSettings.conferenceUrl.replace(/\/+$/, '')}/v1/recordings/mine`,
+   );
    return response.data;
 }
 

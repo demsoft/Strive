@@ -81,6 +81,7 @@ namespace Strive.Infrastructure.Data.Repos
                 config.AutoMap();
                 config.MapIdMember(x => x.OrderId);
                 config.MapMember(x => x.Status).SetSerializer(new EnumSerializer<OrderStatus>(BsonType.String));
+                config.MapMember(x => x.Kind).SetSerializer(new EnumSerializer<OrderKind>(BsonType.String));
                 config.MapMember(x => x.CreatedAt).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
                 config.MapMember(x => x.PaidAt).SetSerializer(
                     new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
@@ -199,5 +200,66 @@ namespace Strive.Infrastructure.Data.Repos
         public async Task<IReadOnlyList<Entitlement>> FindOfUser(string userId, int limit) =>
             await Collection.Find(x => x.UserId == userId && !x.Revoked).SortByDescending(x => x.GrantedAt)
                 .Limit(limit).ToListAsync();
+    }
+
+    public class PassRepo : MongoRepo<PassEntitlement>, IMongoIndexBuilder, IPassRepo
+    {
+        static PassRepo()
+        {
+            BsonClassMap.RegisterClassMap<PassEntitlement>(config =>
+            {
+                config.AutoMap();
+                config.MapIdMember(x => x.PassId);
+                config.MapMember(x => x.GrantedAt).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
+                config.MapMember(x => x.ValidUntil).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
+                config.SetIgnoreExtraElements(true);
+            });
+        }
+
+        public PassRepo(IOptions<MongoDbOptions> options) : base(options)
+        {
+        }
+
+        public async Task CreateIndexes()
+        {
+            // one pass per paid order: this is what makes granting safe to repeat
+            await Collection.Indexes.CreateOneAsync(new CreateIndexModel<PassEntitlement>(
+                Builders<PassEntitlement>.IndexKeys.Ascending(x => x.OrderId), new CreateIndexOptions {Unique = true}));
+            await Collection.Indexes.CreateOneAsync(new CreateIndexModel<PassEntitlement>(
+                Builders<PassEntitlement>.IndexKeys.Ascending(x => x.UserId).Ascending(x => x.CreatorId)
+                    .Descending(x => x.ValidUntil)));
+        }
+
+        public async Task<PassEntitlement> GrantOnce(string userId, string creatorId, string orderId,
+            DateTimeOffset now, int days)
+        {
+            var existing = await Collection.Find(x => x.OrderId == orderId).FirstOrDefaultAsync();
+            if (existing != null) return existing;
+
+            var start = await ActiveUntil(userId, creatorId, now) ?? now;
+            var pass = new PassEntitlement(Guid.NewGuid().ToString("N"), userId, creatorId, orderId, now,
+                start.AddDays(days));
+            try
+            {
+                await Collection.InsertOneAsync(pass);
+                return pass;
+            }
+            catch (MongoWriteException e) when (e.WriteError.Category == ServerErrorCategory.DuplicateKey)
+            {
+                return await Collection.Find(x => x.OrderId == orderId).FirstAsync();
+            }
+        }
+
+        public async Task<DateTimeOffset?> ActiveUntil(string userId, string creatorId, DateTimeOffset now)
+        {
+            var latest = await Collection.Find(x => x.UserId == userId && x.CreatorId == creatorId &&
+                                                    x.ValidUntil > now)
+                .SortByDescending(x => x.ValidUntil).FirstOrDefaultAsync();
+            return latest?.ValidUntil;
+        }
+
+        public async Task<IReadOnlyList<PassEntitlement>> FindActiveOfUser(string userId, DateTimeOffset now) =>
+            await Collection.Find(x => x.UserId == userId && x.ValidUntil > now)
+                .SortByDescending(x => x.ValidUntil).Limit(100).ToListAsync();
     }
 }

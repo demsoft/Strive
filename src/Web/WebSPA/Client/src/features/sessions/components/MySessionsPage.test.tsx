@@ -9,6 +9,7 @@ const api = vi.hoisted(() => ({
    createSession: vi.fn(),
    cancelSession: vi.fn(),
    fetchMyTickets: vi.fn(),
+   fetchMyPasses: vi.fn(),
    sessionLink: (id: string) => `https://gbedu.test/s/${id}`,
 }));
 const push = vi.hoisted(() => vi.fn());
@@ -19,7 +20,11 @@ vi.mock('react-i18next', () => ({
    }),
 }));
 vi.mock('react-router-dom', () => ({
-   Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
+   Link: ({ children, to, className }: { children: React.ReactNode; to?: string; className?: string }) => (
+      <a href={to} className={className}>
+         {children}
+      </a>
+   ),
    useHistory: () => ({ push }),
 }));
 vi.mock('src/components/BrandLogo', () => ({ default: () => null }));
@@ -48,6 +53,7 @@ beforeEach(() => {
    Object.values(api).forEach(
       (fn) => typeof fn === 'function' && 'mockReset' in fn && (fn as ReturnType<typeof vi.fn>).mockReset(),
    );
+   api.fetchMyPasses.mockResolvedValue([]);
    push.mockReset();
    container = document.createElement('div');
    document.body.appendChild(container);
@@ -207,4 +213,26 @@ test('without tickets there is a friendly empty state', async () => {
 
    expect(document.querySelector('#no-tickets')).not.toBeNull();
    expect(document.querySelectorAll('.my-ticket')).toHaveLength(0);
+});
+
+test('my tickets shows the running passes, each leading to the page of the creator', async () => {
+   api.fetchMyTickets.mockResolvedValue([]);
+   api.fetchMyPasses.mockResolvedValue([{ creatorId: 'c1', creatorName: 'Ada', validUntil: '2030-01-15T10:00:00Z' }]);
+   await act(async () => createRoot(container).render(<MyTicketsPage />));
+   await settle();
+
+   const passes = document.querySelectorAll('.my-pass');
+   expect(passes).toHaveLength(1);
+   expect(passes[0].textContent).toContain('Ada');
+   expect(passes[0].getAttribute('href')).toBe('/u/c1');
+});
+
+test('my tickets still works if the passes cannot be loaded', async () => {
+   api.fetchMyTickets.mockResolvedValue([]);
+   api.fetchMyPasses.mockRejectedValue(new Error('down'));
+   await act(async () => createRoot(container).render(<MyTicketsPage />));
+   await settle();
+
+   expect(document.querySelector('#no-tickets')).not.toBeNull();
+   expect(document.querySelector('#my-passes')).toBeNull();
 });

@@ -51,6 +51,23 @@ namespace Strive.Core.Services.Payments.Gateways
         Task RecordRefundFailure(string reference, string reason);
     }
 
+    public interface IPassRepo
+    {
+        /// <summary>
+        ///     Grants the pass once per order: a second call with the same order changes nothing. The pass runs from now,
+        ///     or from the end of the pass the person has already (buying early does not waste time).
+        /// </summary>
+        /// <returns>The pass of the order</returns>
+        Task<PassEntitlement> GrantOnce(string userId, string creatorId, string orderId, System.DateTimeOffset now,
+            int days);
+
+        /// <summary>When the pass of the person for this creator ends, if it is running</summary>
+        Task<System.DateTimeOffset?> ActiveUntil(string userId, string creatorId, System.DateTimeOffset now);
+
+        /// <summary>The passes of a person that are running</summary>
+        Task<IReadOnlyList<PassEntitlement>> FindActiveOfUser(string userId, System.DateTimeOffset now);
+    }
+
     public interface IEntitlementRepo
     {
         /// <summary>Grants the right once per order: a second call with the same order changes nothing</summary>

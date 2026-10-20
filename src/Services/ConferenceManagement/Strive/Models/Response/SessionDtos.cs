@@ -34,7 +34,11 @@ namespace Strive.Models.Response
         long PriceMinor, string Currency, DateTimeOffset? StartsAt, string CreatorName, bool IsHost, bool HasTicket);
 
     /// <summary>The page of a creator: who they are and what they have on</summary>
-    public record CreatorPageDto(PublicCreatorDto Creator, DiscoverSessionDto[] Sessions);
+    public record CreatorPageDto(PublicCreatorDto Creator, DiscoverSessionDto[] Sessions, bool HasPass = false,
+        DateTimeOffset? PassValidUntil = null);
+
+    /// <summary>A pass of the person that is running</summary>
+    public record PassDto(string CreatorId, string CreatorName, DateTimeOffset ValidUntil);
 
     public record CheckoutDto(string Email);
 
@@ -42,7 +46,7 @@ namespace Strive.Models.Response
 
     /// <summary>The state of a payment, for the page the person comes back to after paying</summary>
     public record PaymentStatusDto(string Reference, string Status, string SessionId, bool HasTicket,
-        string? ConferenceId, string? FailureReason);
+        string? ConferenceId, string? FailureReason, string Kind = "ticket", string? CreatorId = null);
 
     public record TicketDto(string SessionId, string ConferenceId, string Title, string Category,
         DateTimeOffset? StartsAt, string CreatorName, DateTimeOffset GrantedAt, SessionStatus Status,

@@ -21,6 +21,8 @@ export type CreatorProfile = {
    /** bank account verified and ready to be paid into */
    canSell: boolean;
    createdAt: string;
+   /** what the 30-day pass costs, in minor units; none: no pass is sold */
+   passPriceMinor?: number | null;
 };
 
 export type Bank = { code: string; name: string };
@@ -63,4 +65,9 @@ export async function fetchMyCreatorProfile(): Promise<CreatorProfile | null> {
 
 export async function saveMyCreatorProfile(request: SaveCreatorRequest): Promise<CreatorProfile> {
    return (await Axios.put<CreatorProfile>(`${base()}/me`, request)).data;
+}
+
+/** Sets what the pass costs, or stops selling it (null). */
+export async function setPassPrice(priceMinor: number | null): Promise<CreatorProfile> {
+   return (await Axios.put<CreatorProfile>(`${base()}/me/pass`, { priceMinor })).data;
 }

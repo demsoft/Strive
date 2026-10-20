@@ -23,7 +23,7 @@ import { categoryGradient, categoryStyle } from 'src/features/gbedu/ui/categorie
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import { brand } from 'src/theme';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
-import { formatMoney } from '../money';
+import { formatMoney, PASS_DAYS } from '../money';
 
 const POLL_EVERY_MS = 2000;
 const POLL_TIMES = 30;
@@ -325,6 +325,17 @@ export default function SessionPage() {
                      </Box>
                   ) : (
                      <Box id="session-buy">
+                        {session.creator.passPriceMinor != null && (
+                           <Alert severity="info" icon={false} id="session-pass-hint" sx={{ mb: 2 }}>
+                              <RouterLink to={`/u/${session.creator.creatorId}`} style={{ color: 'inherit' }}>
+                                 {t('creator.pass_or', {
+                                    name: session.creator.displayName,
+                                    days: PASS_DAYS,
+                                    price: formatMoney(session.creator.passPriceMinor, session.currency),
+                                 })}
+                              </RouterLink>
+                           </Alert>
+                        )}
                         <TextField
                            id="session-email"
                            type="email"

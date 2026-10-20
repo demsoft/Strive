@@ -59,6 +59,7 @@ namespace Strive.Core.Services
         Payments_TicketRequired,
         Payments_HostCannotBuy,
         Payments_OrderNotFound,
+        Payments_PassNotOffered,
 
         // Permissions
         Permissions_PermissionKeyNotFound,

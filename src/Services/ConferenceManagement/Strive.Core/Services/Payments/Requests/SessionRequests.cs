@@ -14,6 +14,13 @@ namespace Strive.Core.Services.Payments.Requests
     public record StartCheckoutRequest(string UserId, string SessionId, string Email, string CallbackUrl)
         : IRequest<SuccessOrError<CheckoutResult>>;
 
+    /// <summary>Starts the payment of a pass: all sessions of a creator for <see cref="PassRules.Days" /> days</summary>
+    public record StartPassCheckoutRequest(string UserId, string CreatorId, string Email, string CallbackUrl)
+        : IRequest<SuccessOrError<CheckoutResult>>;
+
+    /// <summary>A creator sets what a pass costs, or stops selling it (null)</summary>
+    public record SetPassPriceRequest(string UserId, long? PriceMinor) : IRequest<SuccessOrError<CreatorProfile>>;
+
     /// <param name="AuthorizationUrl">Null if the person has a ticket already</param>
     public record CheckoutResult(string? AuthorizationUrl, string? Reference, bool AlreadyHasTicket);
 
