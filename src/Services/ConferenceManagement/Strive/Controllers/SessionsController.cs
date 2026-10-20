@@ -26,11 +26,13 @@ namespace Strive.Controllers
         private readonly ICreatorRepo _creators;
         private readonly IEntitlementRepo _entitlements;
         private readonly IOrderRepo _orders;
+        private readonly IPassRepo _passes;
         private readonly IConfiguration _configuration;
 
         public SessionsController(IMediator mediator, ISessionRepo sessions, ICreatorRepo creators,
-            IEntitlementRepo entitlements, IOrderRepo orders, IConfiguration configuration)
+            IEntitlementRepo entitlements, IOrderRepo orders, IPassRepo passes, IConfiguration configuration)
         {
+            _passes = passes;
             _orders = orders;
             _mediator = mediator;
             _sessions = sessions;
@@ -122,15 +124,24 @@ namespace Strive.Controllers
             foreach (var session in sessions.OrderBy(x => x.StartsAt ?? DateTimeOffset.MaxValue))
                 list.Add(await ToDiscoverDto(session, creator));
 
+            var passUntil = UserId == null
+                ? null
+                : await _passes.ActiveUntil(UserId, creator.CreatorId, DateTimeOffset.UtcNow);
+
             Response.Headers.CacheControl = "no-store";
-            return new CreatorPageDto(PublicCreatorDto.From(creator), list.ToArray());
+            return new CreatorPageDto(PublicCreatorDto.From(creator), list.ToArray(), passUntil != null, passUntil);
         }
 
         private async Task<DiscoverSessionDto> ToDiscoverDto(PaidSession session, CreatorProfile creator) =>
             new(session.SessionId, session.Title, session.Description, session.Category, session.PriceMinor,
                 session.Currency, session.StartsAt, creator.DisplayName,
                 UserId != null && session.CreatorUserId == UserId,
-                UserId != null && await _entitlements.Holds(UserId, session.ConferenceId));
+                UserId != null && await CanJoin(session));
+
+        /// <summary>A ticket for the session, or a running pass of its host</summary>
+        private async Task<bool> CanJoin(PaidSession session) =>
+            await _entitlements.Holds(UserId!, session.ConferenceId) ||
+            await _passes.ActiveUntil(UserId!, session.CreatorId, DateTimeOffset.UtcNow) != null;
 
         // GET v1/sessions/{sessionId}
         [HttpGet("v1/sessions/{sessionId}")]
@@ -145,7 +156,7 @@ namespace Strive.Controllers
             if (creator == null) return PaymentsError.SessionNotFound.ToActionResult();
 
             var isHost = UserId != null && session.CreatorUserId == UserId;
-            var hasTicket = UserId != null && await _entitlements.Holds(UserId, session.ConferenceId);
+            var hasTicket = UserId != null && await CanJoin(session);
 
             // the answer depends on who asks: never cache it
             Response.Headers.CacheControl = "no-store";
@@ -165,12 +176,50 @@ namespace Strive.Controllers
             if (UserId == null) return Forbid();
 
             var result = await _mediator.Send(new StartCheckoutRequest(UserId, sessionId, dto.Email,
-                CallbackUrl(sessionId)));
+                CallbackUrl("s", sessionId)));
             if (!result.Success) return result.ToActionResult();
 
             Response.Headers.CacheControl = "no-store";
             return new CheckoutResultDto(result.Response!.AuthorizationUrl, result.Response.Reference,
                 result.Response.AlreadyHasTicket);
+        }
+
+        // POST v1/creators/{creatorId}/pass/checkout
+        [HttpPost("v1/creators/{creatorId}/pass/checkout")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<CheckoutResultDto>> PassCheckout(string creatorId, [FromBody] CheckoutDto dto)
+        {
+            if (UserId == null) return Forbid();
+
+            var result = await _mediator.Send(new StartPassCheckoutRequest(UserId, creatorId, dto.Email,
+                CallbackUrl("u", creatorId)));
+            if (!result.Success) return result.ToActionResult();
+
+            Response.Headers.CacheControl = "no-store";
+            return new CheckoutResultDto(result.Response!.AuthorizationUrl, result.Response.Reference,
+                result.Response.AlreadyHasTicket);
+        }
+
+        // GET v1/passes/mine
+        [HttpGet("v1/passes/mine")]
+        [Authorize]
+        public async Task<ActionResult<PassDto[]>> GetMyPasses()
+        {
+            if (UserId == null) return Forbid();
+
+            var result = new List<PassDto>();
+            // a person with two passes of one creator (bought early) is shown once, with the latest end
+            foreach (var pass in (await _passes.FindActiveOfUser(UserId, DateTimeOffset.UtcNow))
+                     .GroupBy(x => x.CreatorId).Select(g => g.OrderByDescending(x => x.ValidUntil).First()))
+            {
+                var creator = await _creators.FindById(pass.CreatorId);
+                result.Add(new PassDto(pass.CreatorId, creator?.DisplayName ?? "", pass.ValidUntil));
+            }
+
+            Response.Headers.CacheControl = "no-store";
+            return result.ToArray();
         }
 
         // POST v1/sessions/{sessionId}/cancel
@@ -211,7 +260,7 @@ namespace Strive.Controllers
         ///     Where the provider sends the person back after paying: the page of the session on the address the person
         ///     came from (one installation has several addresses), if that is one of ours.
         /// </summary>
-        private string CallbackUrl(string sessionId)
+        private string CallbackUrl(string kind, string id)
         {
             var allowed = (_configuration["Cors:AllowedOrigins"] ?? "")
                 .Split(new[] {',', ';', ' '}, StringSplitOptions.RemoveEmptyEntries)
@@ -226,7 +275,7 @@ namespace Strive.Controllers
                 ? origin
                 : allowed.FirstOrDefault() ?? _configuration["App:FrontendUrl"]?.TrimEnd('/') ?? "";
 
-            return $"{home}/s/{Uri.EscapeDataString(sessionId)}";
+            return $"{home}/{kind}/{Uri.EscapeDataString(id)}";
         }
     }
 }

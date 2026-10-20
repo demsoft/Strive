@@ -2,6 +2,12 @@ using System;
 
 namespace Strive.Core.Services.Payments
 {
+    public static class PassRules
+    {
+        /// <summary>How long a pass lasts after it was paid (buying another one while it runs adds to it)</summary>
+        public const int Days = 30;
+    }
+
     public enum CreatorStatus
     {
         /// <summary>Verified bank account, can sell tickets</summary>
@@ -50,6 +56,12 @@ namespace Strive.Core.Services.Payments
 
         /// <summary>The sub account at the payment provider that receives the share of the creator</summary>
         public string? ProviderSubaccountCode { get; set; }
+
+        /// <summary>
+        ///     What a pass costs in minor units: it gives access to every session of this creator for
+        ///     <see cref="PassRules.Days" /> days. Null: the creator does not sell a pass.
+        /// </summary>
+        public long? PassPriceMinor { get; set; }
 
         public CreatorStatus Status { get; set; } = CreatorStatus.Active;
 

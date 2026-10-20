@@ -18,6 +18,15 @@ namespace Strive.Core.Services.Payments.Sessions
         Refunded,
     }
 
+    public enum OrderKind
+    {
+        /// <summary>A ticket for one session</summary>
+        Ticket,
+
+        /// <summary>A pass: all sessions of one creator for a while</summary>
+        Pass,
+    }
+
     /// <summary>Who gets how much of a paid order, in minor units. The parts add up to the amount.</summary>
     public record OrderAllocation(string Recipient, long AmountMinor)
     {
@@ -46,6 +55,12 @@ namespace Strive.Core.Services.Payments.Sessions
         }
 
         public string OrderId { get; init; }
+
+        /// <summary>What was bought. Older orders have no value and are tickets.</summary>
+        public OrderKind Kind { get; set; } = OrderKind.Ticket;
+
+        /// <summary>Of a pass: the creator it is for (a pass has no session, SessionId and ConferenceId are empty)</summary>
+        public string? PassCreatorId { get; set; }
 
         /// <summary>The reference at the provider, unique</summary>
         public string Reference { get; init; }
@@ -116,5 +131,32 @@ namespace Strive.Core.Services.Payments.Sessions
         public bool Revoked { get; set; }
 
         public DateTimeOffset GrantedAt { get; init; }
+    }
+
+    /// <summary>The right of a person to join every session of a creator until <see cref="ValidUntil" />. One per paid pass order.</summary>
+    public class PassEntitlement
+    {
+        public PassEntitlement(string passId, string userId, string creatorId, string orderId,
+            DateTimeOffset grantedAt, DateTimeOffset validUntil)
+        {
+            PassId = passId;
+            UserId = userId;
+            CreatorId = creatorId;
+            OrderId = orderId;
+            GrantedAt = grantedAt;
+            ValidUntil = validUntil;
+        }
+
+        public string PassId { get; init; }
+
+        public string UserId { get; init; }
+
+        public string CreatorId { get; init; }
+
+        public string OrderId { get; init; }
+
+        public DateTimeOffset GrantedAt { get; init; }
+
+        public DateTimeOffset ValidUntil { get; init; }
     }
 }

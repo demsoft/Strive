@@ -6,6 +6,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 const api = vi.hoisted(() => ({
    fetchCreatorPage: vi.fn(),
+   fetchPayment: vi.fn(),
+   startPassCheckout: vi.fn(),
    creatorPageLink: (id: string) => `https://gbedu.test/u/${id}`,
 }));
 
@@ -24,9 +26,12 @@ vi.mock('react-router-dom', () => ({
       ),
    ),
    useParams: () => ({ creatorId: 'c1' }),
+   useLocation: () => ({ pathname: '/u/c1', search: '' }),
 }));
 vi.mock('src/components/BrandLogo', () => ({ default: () => null }));
 vi.mock('src/services/api/sessions', () => api);
+
+vi.mock('../errors', () => ({ requestErrorMessage: (e: unknown) => String((e as Error).message ?? e) }));
 
 import CreatorPublicPage from './CreatorPublicPage';
 
@@ -58,6 +63,7 @@ test('shows the creator and links every session to its page', async () => {
    api.fetchCreatorPage.mockResolvedValue({
       creator: { creatorId: 'c1', displayName: 'Ada Lovelace', bio: 'Piano teacher' },
       sessions: [session('aaaa1111'), session('bbbb2222')],
+      hasPass: false,
    });
    await act(async () => createRoot(container).render(<CreatorPublicPage />));
    await settle();
@@ -72,7 +78,11 @@ test('shows the creator and links every session to its page', async () => {
 });
 
 test('a creator with nothing on says so', async () => {
-   api.fetchCreatorPage.mockResolvedValue({ creator: { creatorId: 'c1', displayName: 'Ada' }, sessions: [] });
+   api.fetchCreatorPage.mockResolvedValue({
+      creator: { creatorId: 'c1', displayName: 'Ada' },
+      sessions: [],
+      hasPass: false,
+   });
    await act(async () => createRoot(container).render(<CreatorPublicPage />));
    await settle();
 
@@ -88,7 +98,11 @@ test('an unknown creator shows the not found message', async () => {
 });
 
 test('the share button copies the link of the page', async () => {
-   api.fetchCreatorPage.mockResolvedValue({ creator: { creatorId: 'c1', displayName: 'Ada' }, sessions: [] });
+   api.fetchCreatorPage.mockResolvedValue({
+      creator: { creatorId: 'c1', displayName: 'Ada' },
+      sessions: [],
+      hasPass: false,
+   });
    const writeText = vi.fn().mockResolvedValue(undefined);
    Object.assign(navigator, { clipboard: { writeText } });
    await act(async () => createRoot(container).render(<CreatorPublicPage />));

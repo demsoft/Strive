@@ -255,6 +255,212 @@ namespace Strive.IntegrationTests.Services
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
 
+        // ---- passes
+
+        private const long PassPrice = 2_000_000; // ₦20,000
+
+        private Task<HttpResponseMessage> SetPassPrice(UserAccount host, long? price) =>
+            Client(host).PutAsync("/v1/creators/me/pass", new JsonNetContent(new SetPassPriceDto(price)));
+
+        private async Task<(UserAccount host, string creatorId)> CreatorWithPass()
+        {
+            var host = await NewCreator();
+            (await SetPassPrice(host, PassPrice)).EnsureSuccessStatusCode();
+            return (host, await CreatorIdOf(host));
+        }
+
+        private async Task<CheckoutResultDto> PassCheckout(UserAccount fan, string creatorId) =>
+            await Read<CheckoutResultDto>(await Client(fan).PostAsync($"/v1/creators/{creatorId}/pass/checkout",
+                new JsonNetContent(new CheckoutDto("fan@example.com"))));
+
+        private async Task<UserAccount> FanWithPass(string creatorId, UserAccount? existing = null)
+        {
+            var fan = existing ?? NewUser("fan");
+            var checkout = await PassCheckout(fan, creatorId);
+            Provider.Pay(checkout.Reference!, PassPrice);
+            var status = await Status(fan, checkout.Reference!);
+            Assert.Equal("paid", status.Status);
+            Assert.Equal("pass", status.Kind);
+            return fan;
+        }
+
+        private async Task<CreatorPageDto> PageOf(string creatorId, UserAccount? viewer) =>
+            await Read<CreatorPageDto>(await Client(viewer).GetAsync($"/v1/creators/{creatorId}/page"));
+
+        [Fact]
+        public async Task Pass_CreatorSetsAPrice_ItIsShownOnTheirPage()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+
+            var page = await PageOf(creatorId, null);
+
+            Assert.Equal(PassPrice, page.Creator.PassPriceMinor);
+            Assert.False(page.HasPass);
+        }
+
+        [Theory]
+        [InlineData(100L)]
+        [InlineData(1_000_000_000L)]
+        public async Task Pass_PriceOutOfRange_BadRequest(long price)
+        {
+            var host = await NewCreator();
+
+            Assert.Equal(HttpStatusCode.BadRequest, (await SetPassPrice(host, price)).StatusCode);
+        }
+
+        [Fact]
+        public async Task Pass_NullPrice_StopsSellingIt()
+        {
+            var (host, creatorId) = await CreatorWithPass();
+
+            (await SetPassPrice(host, null)).EnsureSuccessStatusCode();
+
+            Assert.Null((await PageOf(creatorId, null)).Creator.PassPriceMinor);
+            Assert.Equal(HttpStatusCode.BadRequest, (await Client(NewUser("fan")).PostAsync(
+                $"/v1/creators/{creatorId}/pass/checkout",
+                new JsonNetContent(new CheckoutDto("fan@example.com")))).StatusCode);
+        }
+
+        [Fact]
+        public async Task Pass_NotACreator_CannotSetAPrice()
+        {
+            var response = await SetPassPrice(NewUser("fan"), PassPrice);
+
+            Assert.False(response.IsSuccessStatusCode);
+        }
+
+        [Fact]
+        public async Task Pass_Checkout_UsesThePassPriceAndTheCreatorsShare()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+
+            await PassCheckout(NewUser("fan"), creatorId);
+
+            var request = Provider.Checkouts.Last();
+            Assert.Equal(PassPrice, request.AmountMinor);
+            Assert.Equal(PassPrice / 10, request.PlatformAmountMinor); // 10% commission
+        }
+
+        [Fact]
+        public async Task Pass_Paid_OpensEverySessionOfThatCreatorOnly()
+        {
+            // arrange
+            var (host, creatorId) = await CreatorWithPass();
+            var first = await Publish(host, title: "First");
+            var second = await Publish(host, title: "Second");
+            var (_, other) = await PublishedSession();
+
+            // act
+            var fan = await FanWithPass(creatorId);
+
+            // assert: both sessions of the creator are open to the fan, the other creator's is not
+            foreach (var session in new[] {first, second})
+                Assert.True(
+                    (await Read<PublicSessionDto>(await Client(fan).GetAsync($"/v1/sessions/{session.SessionId}")))
+                    .HasTicket);
+            Assert.False(
+                (await Read<PublicSessionDto>(await Client(fan).GetAsync($"/v1/sessions/{other.SessionId}")))
+                .HasTicket);
+            Assert.True((await PageOf(creatorId, fan)).HasPass);
+        }
+
+        [Fact]
+        public async Task Pass_Paid_FanCanJoinTheRoom()
+        {
+            var (host, creatorId) = await CreatorWithPass();
+            var session = await Publish(host);
+            var hostConnection = await ConnectUserToConference(host, Room(session));
+            AssertSuccess(await OpenConference(hostConnection));
+            var fan = await FanWithPass(creatorId);
+
+            var connection = await ConnectUserToConference(fan, Room(session));
+
+            Assert.NotNull(connection);
+        }
+
+        [Fact]
+        public async Task Pass_Paid_TicketCheckoutOfThatCreatorIsNotNeeded()
+        {
+            var (host, creatorId) = await CreatorWithPass();
+            var session = await Publish(host);
+            var fan = await FanWithPass(creatorId);
+
+            var checkout = await Checkout(fan, session.SessionId);
+
+            Assert.True(checkout.AlreadyHasTicket);
+        }
+
+        [Fact]
+        public async Task Pass_NotPaid_GivesNothing()
+        {
+            var (host, creatorId) = await CreatorWithPass();
+            var session = await Publish(host);
+            var fan = NewUser("fan");
+            await PassCheckout(fan, creatorId);
+
+            Assert.False(
+                (await Read<PublicSessionDto>(await Client(fan).GetAsync($"/v1/sessions/{session.SessionId}")))
+                .HasTicket);
+            Assert.False((await PageOf(creatorId, fan)).HasPass);
+        }
+
+        [Fact]
+        public async Task Pass_BoughtAgainWhileRunning_AddsTheTime()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+            var fan = await FanWithPass(creatorId);
+            var first = (await PageOf(creatorId, fan)).PassValidUntil!.Value;
+
+            await FanWithPass(creatorId, fan);
+            var second = (await PageOf(creatorId, fan)).PassValidUntil!.Value;
+
+            Assert.InRange((second - first).TotalDays, 29.9, 30.1);
+        }
+
+        [Fact]
+        public async Task Pass_TheCreatorCannotBuyTheirOwn()
+        {
+            var (host, creatorId) = await CreatorWithPass();
+
+            var response = await Client(host).PostAsync($"/v1/creators/{creatorId}/pass/checkout",
+                new JsonNetContent(new CheckoutDto("host@example.com")));
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Pass_MyPasses_ListsTheRunningOnes()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+            var fan = await FanWithPass(creatorId);
+
+            var passes = await Read<PassDto[]>(await Client(fan).GetAsync("/v1/passes/mine"));
+
+            var pass = Assert.Single(passes);
+            Assert.Equal(creatorId, pass.CreatorId);
+            Assert.Equal("Ada Lovelace", pass.CreatorName);
+        }
+
+        [Fact]
+        public async Task Pass_SessionCalledOff_PassIsNotRefundedAndStillWorks()
+        {
+            // arrange
+            var (host, creatorId) = await CreatorWithPass();
+            var cancelled = await Publish(host, title: "Cancelled");
+            var next = await Publish(host, title: "Next");
+            var fan = await FanWithPass(creatorId);
+            var passReference = Provider.Checkouts.Last().Reference;
+
+            // act
+            await Cancel(host, cancelled.SessionId);
+
+            // assert: the pass money stays, the other session is still open to the fan
+            Assert.DoesNotContain(Provider.Refunds, x => x.Reference == passReference);
+            Assert.True(
+                (await Read<PublicSessionDto>(await Client(fan).GetAsync($"/v1/sessions/{next.SessionId}")))
+                .HasTicket);
+        }
+
         [Fact]
         public async Task Discover_ListsPublishedSessionsForEverybody_NotCancelledOnes()
         {

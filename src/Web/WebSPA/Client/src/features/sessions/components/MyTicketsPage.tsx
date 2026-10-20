@@ -7,7 +7,7 @@ import { Link as RouterLink, useHistory } from 'react-router-dom';
 import BrandLogo from 'src/components/BrandLogo';
 import { requestErrorMessage } from 'src/features/creator/errors';
 import * as api from 'src/services/api/sessions';
-import { Ticket } from 'src/services/api/sessions';
+import { Pass, Ticket } from 'src/services/api/sessions';
 import { brand } from 'src/theme';
 import TicketCard from './TicketCard';
 
@@ -37,9 +37,12 @@ export default function MyTicketsPage() {
    const [tickets, setTickets] = useState<Ticket[] | null>(null);
    const [error, setError] = useState<string | null>(null);
    const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
+   const [passes, setPasses] = useState<Pass[]>([]);
 
    useEffect(() => {
       api.fetchMyTickets().then(setTickets, (e) => setError(requestErrorMessage(e)));
+      // the passes are a plus: the page works without them
+      api.fetchMyPasses().then(setPasses, () => undefined);
    }, []);
 
    const { upcoming, past } = splitTickets(tickets ?? []);
@@ -74,6 +77,42 @@ export default function MyTicketsPage() {
                   {t('sessions.tickets_subtitle')}
                </Typography>
             </Box>
+
+            {passes.length > 0 && (
+               <Box id="my-passes" sx={{ mb: 3 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                     {t('creator.my_passes')}
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                     {passes.map((pass) => (
+                        <Box
+                           key={pass.creatorId}
+                           component={RouterLink}
+                           to={`/u/${pass.creatorId}`}
+                           className="my-pass"
+                           sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              gap: 2,
+                              p: 1.5,
+                              borderRadius: '14px',
+                              textDecoration: 'none',
+                              color: 'inherit',
+                              backgroundColor: brand.surface,
+                              border: `1px solid ${brand.border}`,
+                           }}
+                        >
+                           <b>{pass.creatorName}</b>
+                           <span>
+                              {t('creator.pass_until', {
+                                 date: DateTime.fromISO(pass.validUntil).toLocaleString(DateTime.DATE_MED),
+                              })}
+                           </span>
+                        </Box>
+                     ))}
+                  </Box>
+               </Box>
+            )}
 
             {error && <Alert severity="error">{error}</Alert>}
             {!error && tickets === null && (

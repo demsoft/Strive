@@ -42,6 +42,12 @@ namespace Strive.Core.Services.Payments
         public static Error HostCannotBuy =>
             BadRequest("You host this session: you do not need a ticket.", ServiceErrorCode.Payments_HostCannotBuy);
 
+        public static Error PassNotOffered =>
+            BadRequest("This creator does not sell a pass.", ServiceErrorCode.Payments_PassNotOffered);
+
+        public static Error OwnPass =>
+            BadRequest("This is your own page: you do not need a pass.", ServiceErrorCode.Payments_HostCannotBuy);
+
         public static Error OrderNotFound =>
             NotFound("This payment was not found.", ServiceErrorCode.Payments_OrderNotFound);
 

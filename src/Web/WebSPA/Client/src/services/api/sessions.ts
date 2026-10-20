@@ -20,6 +20,15 @@ export type Session = {
    refundsPending: number;
 };
 
+export type PublicCreator = {
+   creatorId: string;
+   displayName: string;
+   bio?: string | null;
+   /** what the 30-day pass of this creator costs; none if the creator does not sell one */
+   passPriceMinor?: number | null;
+   currency?: string | null;
+};
+
 export type PublicSession = {
    sessionId: string;
    title: string;
@@ -29,7 +38,7 @@ export type PublicSession = {
    currency: string;
    status: SessionStatus;
    startsAt?: string | null;
-   creator: { creatorId: string; displayName: string; bio?: string | null };
+   creator: PublicCreator;
    isHost: boolean;
    hasTicket: boolean;
    /** only for the host and people with a ticket */
@@ -53,6 +62,8 @@ export type PaymentStatus = {
    hasTicket: boolean;
    conferenceId?: string | null;
    failureReason?: string | null;
+   kind?: 'ticket' | 'pass';
+   creatorId?: string | null;
 };
 
 export type Ticket = {
@@ -83,9 +94,14 @@ export type DiscoverSession = {
 };
 
 export type CreatorPage = {
-   creator: { creatorId: string; displayName: string; bio?: string | null };
+   creator: PublicCreator;
    sessions: DiscoverSession[];
+   /** the person has a running pass of this creator */
+   hasPass: boolean;
+   passValidUntil?: string | null;
 };
+
+export type Pass = { creatorId: string; creatorName: string; validUntil: string };
 
 const base = () => appSettings.conferenceUrl.replace(/\/+$/, '');
 const auth = (accessToken?: string) => (accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : {});
@@ -141,3 +157,22 @@ export async function fetchCreatorPage(creatorId: string, accessToken?: string):
 }
 
 export const creatorPageLink = (creatorId: string) => new URL('/u/' + creatorId, document.baseURI).href;
+
+export async function startPassCheckout(
+   creatorId: string,
+   email: string,
+   accessToken: string,
+): Promise<CheckoutResult> {
+   return (
+      await Axios.post<CheckoutResult>(
+         `${base()}/v1/creators/${encodeURIComponent(creatorId)}/pass/checkout`,
+         { email },
+         auth(accessToken),
+      )
+   ).data;
+}
+
+/** The passes of the person that are running. */
+export async function fetchMyPasses(): Promise<Pass[]> {
+   return (await Axios.get<Pass[]>(`${base()}/v1/passes/mine`)).data;
+}

@@ -132,14 +132,16 @@ namespace Strive.Core.Services.Payments.UseCases
         private readonly ISessionRepo _sessions;
         private readonly IOrderRepo _orders;
         private readonly IEntitlementRepo _entitlements;
+        private readonly IPassRepo _passes;
         private readonly PaymentsOptions _options;
         private readonly TimeProvider _timeProvider;
         private readonly ILogger<StartCheckoutUseCase> _logger;
 
         public StartCheckoutUseCase(IPaymentProvider provider, ICreatorRepo creators, ISessionRepo sessions,
-            IOrderRepo orders, IEntitlementRepo entitlements, IOptions<PaymentsOptions> options,
+            IOrderRepo orders, IEntitlementRepo entitlements, IPassRepo passes, IOptions<PaymentsOptions> options,
             TimeProvider timeProvider, ILogger<StartCheckoutUseCase> logger)
         {
+            _passes = passes;
             _provider = provider;
             _creators = creators;
             _sessions = sessions;
@@ -163,6 +165,10 @@ namespace Strive.Core.Services.Payments.UseCases
 
             // a person who has the ticket does not pay twice
             if (await _entitlements.Holds(request.UserId, session.ConferenceId))
+                return new CheckoutResult(null, null, true);
+
+            // a running pass of the host covers the session
+            if (await _passes.ActiveUntil(request.UserId, session.CreatorId, _timeProvider.GetUtcNow()) != null)
                 return new CheckoutResult(null, null, true);
 
             var creator = await _creators.FindById(session.CreatorId);
@@ -202,13 +208,15 @@ namespace Strive.Core.Services.Payments.UseCases
         private readonly IPaymentProvider _provider;
         private readonly IOrderRepo _orders;
         private readonly IEntitlementRepo _entitlements;
+        private readonly IPassRepo _passes;
         private readonly ISessionRepo _sessions;
         private readonly TimeProvider _timeProvider;
         private readonly ILogger<SettleOrderUseCase> _logger;
 
         public SettleOrderUseCase(IPaymentProvider provider, IOrderRepo orders, IEntitlementRepo entitlements,
-            ISessionRepo sessions, TimeProvider timeProvider, ILogger<SettleOrderUseCase> logger)
+            IPassRepo passes, ISessionRepo sessions, TimeProvider timeProvider, ILogger<SettleOrderUseCase> logger)
         {
+            _passes = passes;
             _provider = provider;
             _orders = orders;
             _entitlements = entitlements;
@@ -279,7 +287,7 @@ namespace Strive.Core.Services.Payments.UseCases
             var settled = await _orders.FindByReference(order.Reference) ?? order;
 
             // paid while the session was being called off: no ticket, the money goes back
-            var session = await _sessions.FindById(settled.SessionId);
+            var session = settled.Kind == OrderKind.Ticket ? await _sessions.FindById(settled.SessionId) : null;
             if (session?.Status == SessionStatus.Cancelled)
             {
                 await OrderRefunds.Refund(_provider, _orders, _timeProvider, _logger, settled, cancellationToken);
@@ -292,6 +300,13 @@ namespace Strive.Core.Services.Payments.UseCases
 
         private async Task GrantTicket(TicketOrder order)
         {
+            if (order.Kind == OrderKind.Pass)
+            {
+                await _passes.GrantOnce(order.BuyerUserId, order.PassCreatorId!, order.OrderId,
+                    _timeProvider.GetUtcNow(), PassRules.Days);
+                return;
+            }
+
             await _entitlements.GrantOnce(new Entitlement(Guid.NewGuid().ToString("N"), order.BuyerUserId,
                 order.SessionId, order.ConferenceId, order.OrderId, DateTimeOffset.UtcNow));
         }
@@ -302,11 +317,15 @@ namespace Strive.Core.Services.Payments.UseCases
         private readonly IMediator _mediator;
         private readonly ISessionRepo _sessions;
         private readonly IEntitlementRepo _entitlements;
+        private readonly IPassRepo _passes;
+        private readonly TimeProvider _timeProvider;
         private readonly IOptions<PaymentsOptions> _options;
 
         public CheckSessionAccessUseCase(IMediator mediator, ISessionRepo sessions, IEntitlementRepo entitlements,
-            IOptions<PaymentsOptions> options)
+            IPassRepo passes, TimeProvider timeProvider, IOptions<PaymentsOptions> options)
         {
+            _passes = passes;
+            _timeProvider = timeProvider;
             _mediator = mediator;
             _sessions = sessions;
             _entitlements = entitlements;
@@ -329,7 +348,12 @@ namespace Strive.Core.Services.Payments.UseCases
 
             if (session.Status == SessionStatus.Cancelled) return PaymentsError.SessionCancelled;
 
-            return await _entitlements.Holds(participantId, conferenceId) ? Unit.Value : PaymentsError.TicketRequired;
+            if (await _entitlements.Holds(participantId, conferenceId)) return Unit.Value;
+
+            // a running pass of the host is as good as a ticket
+            return await _passes.ActiveUntil(participantId, session.CreatorId, _timeProvider.GetUtcNow()) != null
+                ? Unit.Value
+                : PaymentsError.TicketRequired;
         }
     }
 
@@ -393,6 +417,103 @@ namespace Strive.Core.Services.Payments.UseCases
             }
 
             return Unit.Value;
+        }
+    }
+
+    public class StartPassCheckoutUseCase : IRequestHandler<StartPassCheckoutRequest, SuccessOrError<CheckoutResult>>
+    {
+        private readonly IPaymentProvider _provider;
+        private readonly ICreatorRepo _creators;
+        private readonly IOrderRepo _orders;
+        private readonly PaymentsOptions _options;
+        private readonly TimeProvider _timeProvider;
+        private readonly ILogger<StartPassCheckoutUseCase> _logger;
+
+        public StartPassCheckoutUseCase(IPaymentProvider provider, ICreatorRepo creators, IOrderRepo orders,
+            IOptions<PaymentsOptions> options, TimeProvider timeProvider, ILogger<StartPassCheckoutUseCase> logger)
+        {
+            _provider = provider;
+            _creators = creators;
+            _orders = orders;
+            _options = options.Value;
+            _timeProvider = timeProvider;
+            _logger = logger;
+        }
+
+        public async Task<SuccessOrError<CheckoutResult>> Handle(StartPassCheckoutRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (!_options.Enabled) return PaymentsError.NotEnabled;
+            if (!SessionRules.IsValidEmail(request.Email)) return PaymentsError.InvalidEmail;
+
+            var creator = await _creators.FindById(request.CreatorId);
+            if (creator == null || !creator.CanSell) return PaymentsError.CreatorNotFound;
+            if (creator.PassPriceMinor is not { } price) return PaymentsError.PassNotOffered;
+            if (creator.UserId == request.UserId) return PaymentsError.OwnPass;
+
+            // buying again while a pass runs is fine: the time is added to it
+            var order = new TicketOrder(Guid.NewGuid().ToString("N"), SessionRules.NewReference(), "", "",
+                request.UserId, request.Email.Trim(), price, creator.Currency, _options.PlatformCommissionPercent,
+                _timeProvider.GetUtcNow())
+            {
+                Kind = OrderKind.Pass,
+                PassCreatorId = creator.CreatorId,
+                Shares = new System.Collections.Generic.List<RevenueShare>
+                {
+                    new(creator.CreatorId, creator.ProviderSubaccountCode!, 100),
+                },
+            };
+            await _orders.Create(order);
+
+            try
+            {
+                var checkout = await _provider.InitializeCheckout(new CheckoutRequest(order.Reference, order.Email,
+                    order.AmountMinor, order.Currency, request.CallbackUrl, creator.ProviderSubaccountCode!,
+                    PriceSplit.PlatformAmount(order.AmountMinor, order.CommissionPercent),
+                    new System.Collections.Generic.Dictionary<string, string>
+                        {{"kind", "pass"}, {"creatorId", creator.CreatorId}, {"orderId", order.OrderId}}),
+                    cancellationToken);
+                return new CheckoutResult(checkout.AuthorizationUrl, order.Reference, false);
+            }
+            catch (PaymentProviderException e)
+            {
+                _logger.LogWarning(e, "The checkout of pass order {orderId} could not be started", order.OrderId);
+                await _orders.MarkFailed(order.Reference, "The checkout could not be started.");
+                return PaymentsError.ProviderUnavailable;
+            }
+        }
+    }
+
+    public class SetPassPriceUseCase : IRequestHandler<SetPassPriceRequest, SuccessOrError<CreatorProfile>>
+    {
+        private readonly ICreatorRepo _creators;
+        private readonly PaymentsOptions _options;
+        private readonly TimeProvider _timeProvider;
+
+        public SetPassPriceUseCase(ICreatorRepo creators, IOptions<PaymentsOptions> options, TimeProvider timeProvider)
+        {
+            _creators = creators;
+            _options = options.Value;
+            _timeProvider = timeProvider;
+        }
+
+        public async Task<SuccessOrError<CreatorProfile>> Handle(SetPassPriceRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (!_options.Enabled) return PaymentsError.NotEnabled;
+
+            var creator = await _creators.FindByUserId(request.UserId);
+            if (creator == null) return PaymentsError.CreatorNotFound;
+            if (!creator.CanSell) return PaymentsError.CreatorCannotSell;
+
+            if (request.PriceMinor is { } price and (< SessionRules.MinPriceMinor or > SessionRules.MaxPriceMinor))
+                return PaymentsError.InvalidSession(
+                    $"The price must be between {SessionRules.MinPriceMinor / 100} and {SessionRules.MaxPriceMinor / 100} {creator.Currency}.");
+
+            creator.PassPriceMinor = request.PriceMinor;
+            creator.UpdatedAt = _timeProvider.GetUtcNow();
+            await _creators.Save(creator);
+            return creator;
         }
     }
 }
