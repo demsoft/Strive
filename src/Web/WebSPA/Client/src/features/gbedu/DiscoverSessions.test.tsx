@@ -23,7 +23,7 @@ vi.mock('react-router-dom', () => ({
 }));
 vi.mock('src/services/api/sessions', () => api);
 
-import DiscoverSessions, { isLiveNow } from './DiscoverSessions';
+import DiscoverSessions, { filterSessions, isLiveNow } from './DiscoverSessions';
 
 const session = (over: Record<string, unknown> = {}) => ({
    sessionId: 'abcd2345',
@@ -82,4 +82,72 @@ test('the call to the server fails: an error is shown, not an empty list', async
    await act(async () => createRoot(container).render(<DiscoverSessions />));
    expect(document.querySelector('#discover-empty')).toBeNull();
    expect(document.body.textContent).toContain('sessions.discover_failed');
+});
+
+const setValue = async (selector: string, value: string) => {
+   const input = document.querySelector(selector) as HTMLInputElement;
+   const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+   await act(async () => {
+      setter.call(input, value);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+   });
+};
+
+const catalog = [
+   session({ sessionId: 'a', title: 'Piano for beginners', category: 'music', creatorName: 'Ada Lovelace' }),
+   session({
+      sessionId: 'b',
+      title: 'Café économie',
+      category: 'expertise',
+      creatorName: 'Kofi',
+      description: 'Money talk',
+   }),
+   session({ sessionId: 'c', title: 'Drum circle', category: 'music', creatorName: 'Ngozi' }),
+];
+
+test('filterSessions: words are matched in title, text and host, without capitals or accents', () => {
+   const ids = (q: string, c: string | null = null) => filterSessions(catalog as any, q, c).map((x) => x.sessionId);
+
+   expect(ids('')).toEqual(['a', 'b', 'c']);
+   expect(ids('PIANO')).toEqual(['a']);
+   expect(ids('lovelace')).toEqual(['a']);
+   expect(ids('cafe economie')).toEqual(['b']);
+   expect(ids('money')).toEqual(['b']);
+   expect(ids('piano drum')).toEqual([]);
+});
+
+test('filterSessions: the category narrows it down, together with the words', () => {
+   expect(filterSessions(catalog as any, '', 'music').map((x) => x.sessionId)).toEqual(['a', 'c']);
+   expect(filterSessions(catalog as any, 'drum', 'music').map((x) => x.sessionId)).toEqual(['c']);
+   expect(filterSessions(catalog as any, 'drum', 'teach')).toEqual([]);
+});
+
+test('typing and choosing a category change what is shown, and nothing matching says so', async () => {
+   api.fetchDiscover.mockResolvedValue(catalog);
+   await act(async () => createRoot(container).render(<DiscoverSessions />));
+   await act(async () => {});
+   const shown = () => [...document.querySelectorAll('.discover-session')].map((x) => x.getAttribute('href'));
+
+   expect(shown()).toHaveLength(3);
+   await act(async () => (document.querySelector('#discover-cat-music') as HTMLElement).click());
+   expect(shown()).toEqual(['/s/a', '/s/c']);
+   await setValue('#discover-search', 'drum');
+   expect(shown()).toEqual(['/s/c']);
+   await setValue('#discover-search', 'nothing like this');
+   expect(shown()).toEqual([]);
+   expect(document.querySelector('#discover-no-match')).not.toBeNull();
+
+   // the same category again clears it, "all" too
+   await setValue('#discover-search', '');
+   await act(async () => (document.querySelector('#discover-cat-all') as HTMLElement).click());
+   expect(shown()).toHaveLength(3);
+   expect(document.querySelector('#discover-no-match')).toBeNull();
+});
+
+test('no filters while there is nothing on', async () => {
+   api.fetchDiscover.mockResolvedValue([]);
+   await act(async () => createRoot(container).render(<DiscoverSessions />));
+   await act(async () => {});
+
+   expect(document.querySelector('#discover-filters')).toBeNull();
 });
