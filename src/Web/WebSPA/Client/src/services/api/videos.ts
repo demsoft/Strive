@@ -28,6 +28,10 @@ export type Video = {
    /** a temporary link that plays the video (only when one video is asked for) */
    playbackUrl?: string | null;
    creator?: PublicCreator | null;
+   /** how many people like it */
+   likes?: number;
+   /** the person who asks likes it */
+   liked?: boolean;
 };
 
 export type VideoFeed = {
@@ -168,4 +172,15 @@ export async function reportVideo(
    details: string,
 ): Promise<void> {
    await Axios.post(`${base()}/${encodeURIComponent(videoId)}/report`, { reason, details: details || undefined });
+}
+
+export type LikeState = { likes: number; liked: boolean };
+
+/** The person likes the video. Doing it again changes nothing. */
+export async function likeVideo(videoId: string): Promise<LikeState> {
+   return (await Axios.put<LikeState>(`${base()}/${encodeURIComponent(videoId)}/like`)).data;
+}
+
+export async function unlikeVideo(videoId: string): Promise<LikeState> {
+   return (await Axios.delete<LikeState>(`${base()}/${encodeURIComponent(videoId)}/like`)).data;
 }

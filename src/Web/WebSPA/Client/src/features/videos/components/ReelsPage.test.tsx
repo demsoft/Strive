@@ -7,6 +7,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 const api = vi.hoisted(() => ({
    fetchFeed: vi.fn(),
    fetchVideo: vi.fn(),
+   likeVideo: vi.fn(),
+   unlikeVideo: vi.fn(),
    videoLink: (id: string) => `https://gbedu.test/v/${id}`,
 }));
 const state = vi.hoisted(() => ({
@@ -271,4 +273,25 @@ test('with ?following=1 only the videos of the followed creators are asked for, 
 
    expect(api.fetchFeed).toHaveBeenCalledWith(undefined, 12, true);
    expect(document.querySelector('#reels-empty')?.textContent).toBe('social.following_empty');
+});
+
+test('the heart shows the likes; pressing it likes the video, or asks for a sign in', async () => {
+   api.likeVideo.mockResolvedValue({ likes: 6, liked: true });
+   api.fetchFeed.mockResolvedValue({ items: [video('a', { likes: 5, liked: false })], next: null });
+   await render();
+   expect(document.querySelector('.like-count')?.textContent).toBe('5');
+
+   await act(async () => document.querySelector<HTMLElement>('.like-button')?.click());
+   expect(state.signinRedirect).toHaveBeenCalledWith({ state: { url: '/reels' } });
+   expect(api.likeVideo).not.toHaveBeenCalled();
+
+   act(() => root.unmount());
+   root = createRoot(container);
+   state.user = { access_token: 'tok' };
+   await render();
+   await act(async () => document.querySelector<HTMLElement>('.like-button')?.click());
+   await settle();
+   expect(api.likeVideo).toHaveBeenCalledWith('a');
+   expect(document.querySelector('.like-count')?.textContent).toBe('6');
+   expect(document.querySelector('.like-button')?.getAttribute('aria-pressed')).toBe('true');
 });

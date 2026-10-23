@@ -12,6 +12,8 @@ import * as api from 'src/services/api/videos';
 import { Video } from 'src/services/api/videos';
 import usePaymentReturn from 'src/features/payments/usePaymentReturn';
 import FollowButton from 'src/features/social/FollowButton';
+import LikeButton from 'src/features/social/LikeButton';
+import useVideoLike from 'src/features/social/useVideoLike';
 import useFollowing from 'src/features/social/useFollowing';
 import ReportVideoDialog from './ReportVideoDialog';
 import VideoBuyBox from './VideoBuyBox';
@@ -29,6 +31,11 @@ export default function WatchVideoPage() {
    const [copied, setCopied] = useState(false);
    const [reporting, setReporting] = useState(false);
    const following = useFollowing(token);
+   const signIn = useCallback(
+      () => auth.signinRedirect({ state: { url: location.pathname } }),
+      [auth, location.pathname],
+   );
+   const like = useVideoLike(videoId, video ?? {}, !!token, signIn);
 
    const load = useCallback(
       () => api.fetchVideo(videoId, token).then(setVideo, () => setNotFound(true)),
@@ -180,6 +187,10 @@ export default function WatchVideoPage() {
                      </Button>
                   )}
                   <ReportVideoDialog videoId={video.videoId} open={reporting} onClose={() => setReporting(false)} />
+
+                  <Box sx={{ mt: 2 }}>
+                     <LikeButton liked={like.liked} count={like.likes} onClick={like.toggle} />
+                  </Box>
 
                   <Button
                      id="watch-more"
