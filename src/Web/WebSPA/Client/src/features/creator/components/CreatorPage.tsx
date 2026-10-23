@@ -256,6 +256,20 @@ export default function CreatorPage() {
                      </Alert>
                   )}
 
+                  {profile && (
+                     <Button
+                        id="creator-videos-link"
+                        component={RouterLink}
+                        to="/creator/videos"
+                        variant="outlined"
+                        size="large"
+                        fullWidth
+                        sx={{ mt: 3 }}
+                     >
+                        {t('videos.title')}
+                     </Button>
+                  )}
+
                   {profile?.canSell && (
                      <Button
                         id="creator-earnings-link"

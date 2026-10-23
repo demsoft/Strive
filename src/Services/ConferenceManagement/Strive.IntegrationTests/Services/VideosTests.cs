@@ -1,0 +1,549 @@
+using System;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Strive.Core.Services.Videos;
+using Strive.Infrastructure.Serialization;
+using Strive.IntegrationTests._Helpers;
+using Strive.Models.Response;
+using Xunit;
+using Xunit.Abstractions;
+
+namespace Strive.IntegrationTests.Services
+{
+    /// <summary>Videos from the creator's file to the player: sent to the converter, copied to the storage, played from there.</summary>
+    [Collection(IntegrationTestCollection.Definition)]
+    public class VideosTests : ServiceIntegrationTest
+    {
+        public VideosTests(ITestOutputHelper testOutputHelper, MongoDbFixture mongoDb) : base(testOutputHelper, mongoDb)
+        {
+        }
+
+        private FakeVideoConverter Converter => Factory.Services.GetRequiredService<FakeVideoConverter>();
+        private FakeVideoStorage Storage => Factory.Services.GetRequiredService<FakeVideoStorage>();
+        private IVideoRepo Videos => Factory.Services.GetRequiredService<IVideoRepo>();
+
+        private HttpClient Api(UserAccount? user)
+        {
+            var client = Factory.CreateClient();
+            if (user != null)
+                client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, user.Token);
+            return client;
+        }
+
+        private static async Task<T> Read<T>(HttpResponseMessage response)
+        {
+            response.EnsureSuccessStatusCode();
+            return JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync(), JsonConfig.Default)!;
+        }
+
+        private async Task<UserAccount> NewCreator()
+        {
+            var host = Factory.CreateUser("host" + Guid.NewGuid().ToString("N")[..6], false);
+            (await Api(host).PutAsync("/v1/creators/me",
+                new JsonNetContent(new SaveCreatorDto("Ada Lovelace", "Piano", "058", "0123456789"))))
+                .EnsureSuccessStatusCode();
+            return host;
+        }
+
+        private Task<HttpResponseMessage> Create(UserAccount? user, string title = "My first reel", long size = 50_000_000) =>
+            Api(user).PostAsync("/v1/videos", new JsonNetContent(new CreateVideoDto(title, "About piano", size)));
+
+        private async Task<CreatedVideoDto> Created(UserAccount host) => await Read<CreatedVideoDto>(await Create(host));
+
+        private async Task<VideoDto> Complete(UserAccount host, string videoId) =>
+            await Read<VideoDto>(await Api(host).PostAsync($"/v1/videos/{videoId}/uploaded", null));
+
+        /// <summary>Looks at one video only: the database is shared, other tests leave videos behind</summary>
+        private async Task<int> Process(string videoId)
+        {
+            var result = await Factory.Services.GetRequiredService<MediatR.IMediator>()
+                .Send(new ProcessVideosRequest(videoId));
+            AssertSuccess(result);
+            return result.Response;
+        }
+
+        /// <summary>A video that is uploaded, converted and copied: ready to play</summary>
+        private async Task<(UserAccount host, string id)> ReadyVideo()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+            Converter.Receive(id);
+            await Complete(host, id);
+            Converter.Finish(id);
+            await Process(id);
+            return (host, id);
+        }
+
+        private async Task Age(string videoId, TimeSpan by)
+        {
+            var video = (await Videos.FindById(videoId))!;
+            await Videos.Update(new Video(video.VideoId, video.CreatorId, video.CreatorUserId, video.Title,
+                video.CreatedAt - by)
+            {
+                Description = video.Description, Status = video.Status, ProcessingSince = video.ProcessingSince - by,
+                CopyAttempts = video.CopyAttempts, DurationSeconds = video.DurationSeconds, PriceMinor = video.PriceMinor,
+            });
+        }
+
+        // ---- announcing
+
+        [Fact]
+        public async Task Create_GivesASignedFormForTheConverter_AndTheVideoIsUploading()
+        {
+            var host = await NewCreator();
+
+            var created = await Created(host);
+
+            Assert.Equal("uploading", created.Video.Status);
+            Assert.Equal("My first reel", created.Video.Title);
+            Assert.True(created.Video.IsOwner);
+            Assert.Equal("https://converter.test/video/upload", created.Ticket.Url);
+            Assert.Equal("gbedu/videos/" + created.Video.VideoId, created.Ticket.Fields["public_id"]);
+            Assert.Contains("signature", created.Ticket.Fields.Keys);
+        }
+
+        [Theory]
+        [InlineData("ab", 1000)]
+        [InlineData("   ", 1000)]
+        [InlineData("A fine title", 0)]
+        [InlineData("A fine title", -5)]
+        [InlineData("A fine title", 2_000_000_000)]
+        public async Task Create_InvalidInput_BadRequest(string title, long size)
+        {
+            var response = await Create(await NewCreator(), title, size);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Contains("Videos_Invalid", await response.Content.ReadAsStringAsync());
+        }
+
+        [Fact]
+        public async Task Create_NotACreator_NotFound_NotSignedIn_Unauthorized()
+        {
+            Assert.Equal(HttpStatusCode.NotFound, (await Create(Factory.CreateUser("fan", false))).StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await Create(null)).StatusCode);
+        }
+
+        [Fact]
+        public async Task Create_ServicesNotSetUp_SaysSo()
+        {
+            var host = await NewCreator();
+            Converter.Configured = false;
+            try
+            {
+                var response = await Create(host);
+
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Contains("Videos_NotEnabled", await response.Content.ReadAsStringAsync());
+            }
+            finally
+            {
+                Converter.Configured = true;
+            }
+        }
+
+        [Fact]
+        public async Task Create_TooManyVideos_IsRefused()
+        {
+            var host = await NewCreator();
+            var creatorId = (await Read<CreatorProfileDto>(await Api(host).GetAsync("/v1/creators/me"))).CreatorId;
+            for (var i = 0; i < VideoRules.MaxVideosPerCreator; i++)
+                await Videos.Create(new Video(Guid.NewGuid().ToString("N"), creatorId, host.Sub, "Video " + i,
+                    DateTimeOffset.UtcNow));
+
+            var response = await Create(host);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        // ---- the file arrived
+
+        [Fact]
+        public async Task Uploaded_BeforeTheFileArrived_AsksToWait_AndWorksAfterwards()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+
+            var early = await Api(host).PostAsync($"/v1/videos/{id}/uploaded", null);
+            Assert.Equal(HttpStatusCode.BadRequest, early.StatusCode);
+            Assert.Contains("Videos_UploadNotFound", await early.Content.ReadAsStringAsync());
+
+            Converter.Receive(id, 95.5);
+            var video = await Complete(host, id);
+
+            Assert.Equal("processing", video.Status);
+            Assert.Equal(95.5, video.DurationSeconds);
+        }
+
+        [Fact]
+        public async Task Uploaded_TooLong_FailsWithAReason_AndIsDeletedAtTheConverter()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+            Converter.Receive(id, VideoRules.MaxSeconds + 1);
+
+            var video = await Complete(host, id);
+
+            Assert.Equal("failed", video.Status);
+            Assert.Contains("longer than 5 minutes", video.FailureReason);
+            Assert.Contains(id, Converter.Deleted);
+        }
+
+        [Fact]
+        public async Task Uploaded_JustAtTheLimit_IsAccepted()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+            Converter.Receive(id, VideoRules.MaxSeconds);
+
+            Assert.Equal("processing", (await Complete(host, id)).Status);
+        }
+
+        [Fact]
+        public async Task Uploaded_SaidTwice_ChangesNothing()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+            Converter.Receive(id);
+            var first = await Complete(host, id);
+
+            var second = await Complete(host, id);
+
+            Assert.Equal("processing", second.Status);
+            Assert.Equal(first.CreatedAt, second.CreatedAt);
+        }
+
+        [Fact]
+        public async Task Uploaded_ConverterUnreachable_AsksToTryAgain_AndNothingIsLost()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+            Converter.Receive(id);
+            Converter.Unreachable = true;
+            try
+            {
+                Assert.Equal(HttpStatusCode.BadRequest,
+                    (await Api(host).PostAsync($"/v1/videos/{id}/uploaded", null)).StatusCode);
+            }
+            finally
+            {
+                Converter.Unreachable = false;
+            }
+
+            Assert.Equal("processing", (await Complete(host, id)).Status);
+        }
+
+        // ---- converting and copying
+
+        [Fact]
+        public async Task Process_ConversionNotFinished_StaysProcessing()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+            Converter.Receive(id);
+            await Complete(host, id);
+
+            await Process(id);
+
+            var video = await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"));
+            Assert.Equal("processing", video.Status);
+            Assert.Null(video.PlaybackUrl);
+        }
+
+        [Fact]
+        public async Task Process_ConversionFinished_CopiesVideoAndCoverToTheStorage_AndCleansUpTheConverter()
+        {
+            var (host, id) = await ReadyVideo();
+
+            Assert.Equal(FakeVideoConverter.VideoBytes, Storage.Objects[$"videos/{id}/video.mp4"].Data);
+            Assert.Equal("video/mp4", Storage.Objects[$"videos/{id}/video.mp4"].ContentType);
+            Assert.Equal(FakeVideoConverter.PosterBytes, Storage.Objects[$"videos/{id}/poster.jpg"].Data);
+            Assert.Equal("image/jpeg", Storage.Objects[$"videos/{id}/poster.jpg"].ContentType);
+            Assert.Contains(id, Converter.Deleted);
+            var video = await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"));
+            Assert.Equal("ready", video.Status);
+        }
+
+        [Fact]
+        public async Task Process_WithoutAVideoId_LooksAtEveryWaitingVideo()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+            Converter.Receive(id);
+            await Complete(host, id);
+            Converter.Finish(id);
+
+            // the way the background service calls it; videos that other tests left behind are cleared on the way
+            for (var round = 0; round < 10; round++)
+            {
+                AssertSuccess(await Factory.Services.GetRequiredService<MediatR.IMediator>().Send(new ProcessVideosRequest()));
+                if ((await Videos.FindById(id))!.Status == VideoStatus.Ready) break;
+            }
+
+            Assert.Equal("ready", (await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"))).Status);
+        }
+
+        [Fact]
+        public async Task Process_CoverNotThereYet_WaitsABitAndThenGoesWithoutIt()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+            Converter.Receive(id);
+            await Complete(host, id);
+            Converter.Finish(id, poster: false);
+
+            await Process(id);
+            Assert.Equal("processing", (await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"))).Status);
+
+            await Age(id, TimeSpan.FromMinutes(6));
+            await Process(id);
+
+            var video = await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"));
+            Assert.Equal("ready", video.Status);
+            Assert.Null(video.PosterUrl);
+            Assert.NotNull(video.PlaybackUrl);
+            Assert.DoesNotContain($"videos/{id}/poster.jpg", Storage.Objects.Keys);
+        }
+
+        [Fact]
+        public async Task Process_NeverFinishes_FailsAfterTwoHours()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+            Converter.Receive(id);
+            await Complete(host, id);
+
+            await Age(id, TimeSpan.FromHours(1));
+            await Process(id);
+            Assert.Equal("processing", (await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"))).Status);
+
+            await Age(id, TimeSpan.FromHours(1.5));
+            await Process(id);
+
+            var video = await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"));
+            Assert.Equal("failed", video.Status);
+            Assert.Contains("could not be converted", video.FailureReason);
+            Assert.Contains(id, Converter.Deleted);
+        }
+
+        [Fact]
+        public async Task Process_StorageDown_IsTriedAgain_ThenFails()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+            Converter.Receive(id);
+            await Complete(host, id);
+            Converter.Finish(id);
+            Storage.Failing = true;
+            try
+            {
+                for (var i = 0; i < VideoRules.MaxCopyAttempts - 1; i++) await Process(id);
+                Assert.Equal("processing", (await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"))).Status);
+
+                await Process(id);
+            }
+            finally
+            {
+                Storage.Failing = false;
+            }
+
+            var video = await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"));
+            Assert.Equal("failed", video.Status);
+            Assert.Contains("could not be saved", video.FailureReason);
+        }
+
+        [Fact]
+        public async Task Process_StorageComesBack_TheVideoBecomesReady()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+            Converter.Receive(id);
+            await Complete(host, id);
+            Converter.Finish(id);
+            Storage.Failing = true;
+            await Process(id);
+            Storage.Failing = false;
+
+            await Process(id);
+
+            Assert.Equal("ready", (await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"))).Status);
+        }
+
+        [Fact]
+        public async Task Process_FileNeverArrived_IsGivenUpAfterAWhile()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+
+            await Age(id, TimeSpan.FromHours(1));
+            await Process(id);
+            Assert.Equal("uploading", (await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"))).Status);
+
+            await Age(id, TimeSpan.FromHours(3));
+            await Process(id);
+
+            var video = await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"));
+            Assert.Equal("failed", video.Status);
+            Assert.Contains("not finished", video.FailureReason);
+        }
+
+        [Fact]
+        public async Task Process_ConverterLostTheFile_Fails()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+            Converter.Receive(id);
+            await Complete(host, id);
+            Converter.Files.TryRemove(id, out _);
+
+            await Process(id);
+
+            Assert.Equal("failed", (await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"))).Status);
+        }
+
+        [Fact]
+        public async Task Process_ConverterUnreachable_ChangesNothing()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+            Converter.Receive(id);
+            await Complete(host, id);
+            Converter.Finish(id);
+            Converter.Unreachable = true;
+            try
+            {
+                await Process(id);
+            }
+            finally
+            {
+                Converter.Unreachable = false;
+            }
+
+            Assert.Equal("processing", (await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"))).Status);
+            await Process(id);
+            Assert.Equal("ready", (await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"))).Status);
+        }
+
+        // ---- watching
+
+        [Fact]
+        public async Task Watch_ReadyFreeVideo_IsForEverybody_WithTemporaryLinks()
+        {
+            var (host, id) = await ReadyVideo();
+
+            var video = await Read<VideoDto>(await Api(null).GetAsync($"/v1/videos/{id}"));
+
+            Assert.Equal("ready", video.Status);
+            Assert.False(video.IsOwner);
+            Assert.StartsWith($"https://r2.test/videos/{id}/video.mp4", video.PlaybackUrl);
+            Assert.Contains("expires=7200", video.PlaybackUrl); // two hours
+            Assert.Contains("type=video%2Fmp4", video.PlaybackUrl);
+            Assert.StartsWith($"https://r2.test/videos/{id}/poster.jpg", video.PosterUrl);
+            Assert.Equal("Ada Lovelace", video.Creator!.DisplayName);
+            Assert.Null(video.FailureReason);
+        }
+
+        [Fact]
+        public async Task Watch_NotReadyOrNotFree_IsHiddenFromOthers_ButNotFromTheOwner()
+        {
+            var host = await NewCreator();
+            var fan = Factory.CreateUser("fan", false);
+            var processing = (await Created(host)).Video.VideoId;
+            Converter.Receive(processing);
+            await Complete(host, processing);
+            var failed = (await Created(host)).Video.VideoId;
+            Converter.Receive(failed, 999);
+            await Complete(host, failed);
+            var (owner, paid) = await ReadyVideo();
+            var stored = (await Videos.FindById(paid))!;
+            stored.PriceMinor = 500_000;
+            await Videos.Update(stored);
+
+            foreach (var id in new[] {processing, failed})
+            {
+                Assert.Equal(HttpStatusCode.NotFound, (await Api(null).GetAsync($"/v1/videos/{id}")).StatusCode);
+                Assert.Equal(HttpStatusCode.NotFound, (await Api(fan).GetAsync($"/v1/videos/{id}")).StatusCode);
+                Assert.Equal(HttpStatusCode.OK, (await Api(host).GetAsync($"/v1/videos/{id}")).StatusCode);
+            }
+
+            Assert.Equal(HttpStatusCode.NotFound, (await Api(fan).GetAsync($"/v1/videos/{paid}")).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await Api(owner).GetAsync($"/v1/videos/{paid}")).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await Api(null).GetAsync("/v1/videos/does-not-exist")).StatusCode);
+        }
+
+        [Fact]
+        public async Task Watch_OnlyTheOwnerSeesWhyItFailed()
+        {
+            var host = await NewCreator();
+            var id = (await Created(host)).Video.VideoId;
+            Converter.Receive(id, 999);
+            await Complete(host, id);
+
+            var mine = await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"));
+
+            Assert.Contains("longer than 5 minutes", mine.FailureReason);
+        }
+
+        [Fact]
+        public async Task Mine_ListsTheOwnVideosNewestFirst_WithACoverButNoPlaybackLink()
+        {
+            var (host, first) = await ReadyVideo();
+            var second = (await Created(host)).Video.VideoId;
+
+            var list = await Read<VideoDto[]>(await Api(host).GetAsync("/v1/videos/mine"));
+
+            Assert.Equal(new[] {second, first}, list.Select(x => x.VideoId));
+            Assert.NotNull(list[1].PosterUrl);
+            Assert.All(list, x => Assert.Null(x.PlaybackUrl));
+        }
+
+        [Fact]
+        public async Task Mine_ShowsNothingOfOthers_AndANonCreatorHasNoVideos()
+        {
+            await ReadyVideo();
+            var other = await NewCreator();
+
+            Assert.Empty(await Read<VideoDto[]>(await Api(other).GetAsync("/v1/videos/mine")));
+            Assert.Empty(await Read<VideoDto[]>(await Api(Factory.CreateUser("fan", false)).GetAsync("/v1/videos/mine")));
+            Assert.Equal(HttpStatusCode.Unauthorized, (await Api(null).GetAsync("/v1/videos/mine")).StatusCode);
+        }
+
+        // ---- deleting, and other people's videos
+
+        [Fact]
+        public async Task Delete_RemovesTheFilesEverywhere_AndTheVideo()
+        {
+            var (host, id) = await ReadyVideo();
+
+            var response = await Api(host).DeleteAsync($"/v1/videos/{id}");
+
+            response.EnsureSuccessStatusCode();
+            Assert.DoesNotContain($"videos/{id}/video.mp4", Storage.Objects.Keys);
+            Assert.DoesNotContain($"videos/{id}/poster.jpg", Storage.Objects.Keys);
+            Assert.Contains($"videos/{id}/video.mp4", Storage.Deleted);
+            Assert.Equal(HttpStatusCode.NotFound, (await Api(host).GetAsync($"/v1/videos/{id}")).StatusCode);
+            Assert.Null(await Videos.FindById(id));
+        }
+
+        [Fact]
+        public async Task OthersCannotCompleteOrDeleteAVideo_AndItStaysIntact()
+        {
+            var (host, id) = await ReadyVideo();
+            var other = await NewCreator();
+
+            Assert.Equal(HttpStatusCode.NotFound,
+                (await Api(other).PostAsync($"/v1/videos/{id}/uploaded", null)).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await Api(other).DeleteAsync($"/v1/videos/{id}")).StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await Api(null).DeleteAsync($"/v1/videos/{id}")).StatusCode);
+
+            Assert.Equal("ready", (await Read<VideoDto>(await Api(host).GetAsync($"/v1/videos/{id}"))).Status);
+            Assert.Contains($"videos/{id}/video.mp4", Storage.Objects.Keys);
+        }
+    }
+}

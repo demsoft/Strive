@@ -44,7 +44,9 @@ using Strive.Core.Services.Recording;
 using Strive.Core.Services.Recording.Gateways;
 using Strive.Core.Services.Reminders;
 using Strive.Infrastructure.Email;
+using Strive.Core.Services.Videos;
 using Strive.Infrastructure.Photos;
+using Strive.Infrastructure.Videos;
 using Strive.Infrastructure.Payments;
 using Strive.Infrastructure.Recording;
 using Strive.Recording;
@@ -187,8 +189,21 @@ namespace Strive
                 sp.GetRequiredService<IOptions<CloudinaryOptions>>().Value.IsConfigured
                     ? sp.GetRequiredService<CloudinaryPhotoStorage>()
                     : ActivatorUtilities.CreateInstance<MongoPhotoStorage>(sp));
-            services.AddHostedService<SessionReminderService>();
-            services.AddHostedService<PassRenewalService>();
+            // Videos of the creators: converted at Cloudinary, kept in R2
+            services.Configure<VideoOptions>(Configuration.GetSection(VideoOptions.Section));
+            services.Configure<VideoStorageOptions>(Configuration.GetSection("Videos:Storage"));
+            services.AddHttpClient<CloudinaryVideoConverter>(client => client.Timeout = TimeSpan.FromMinutes(10));
+            // TryAdd: the tests bring their own converter and storage
+            services.TryAddTransient<IVideoConverter>(sp => sp.GetRequiredService<CloudinaryVideoConverter>());
+            services.TryAddSingleton<IVideoStorage, S3VideoStorage>();
+            // The background jobs of the payments side (reminders, renewals, videos). A setting switches them off, for a
+            // second server that must not do the same work, and for the tests, which call the use cases themselves.
+            if (Configuration.GetValue("BackgroundJobs:Enabled", true))
+            {
+                services.AddHostedService<VideoProcessingService>();
+                services.AddHostedService<SessionReminderService>();
+                services.AddHostedService<PassRenewalService>();
+            }
 
             // SignalR
             // Since .NET 7, hub and API parameters are bound from DI if the container can resolve their type. Autofac

@@ -63,6 +63,14 @@ services:
       - Cloudinary__CloudName=${CLOUDINARY_CLOUD_NAME:-}
       - Cloudinary__ApiKey=${CLOUDINARY_API_KEY:-}
       - Cloudinary__ApiSecret=${CLOUDINARY_API_SECRET:-}
+      # videos of the creators: converted at Cloudinary (the same account as the photos), kept in an R2 bucket. The R2
+      # account and keys of the recordings are used unless VIDEO_STORAGE_* say otherwise.
+      - Videos__Storage__ServiceUrl=${VIDEO_STORAGE_ENDPOINT:-${RECORDING_STORAGE_ENDPOINT:-}}
+      - Videos__Storage__Bucket=${VIDEO_STORAGE_BUCKET:-gbedu-videos}
+      - Videos__Storage__AccessKeyId=${VIDEO_STORAGE_ACCESS_KEY_ID:-${RECORDING_STORAGE_ACCESS_KEY_ID:-}}
+      - Videos__Storage__SecretAccessKey=${VIDEO_STORAGE_SECRET_ACCESS_KEY:-${RECORDING_STORAGE_SECRET_ACCESS_KEY:-}}
+      - Videos__Storage__Region=${RECORDING_STORAGE_REGION:-auto}
+      - Videos__Storage__ForcePathStyle=${RECORDING_STORAGE_FORCE_PATH_STYLE:-false}
       # reminder mails shortly before a session starts: through the Brevo API, nothing is sent without BREVO_API_KEY
       - Email__BrevoApiKey=${BREVO_API_KEY:-}
       - Email__From=${REMINDERS_FROM:-${SMTP_FROM:-Gbedu <no-reply@localhost>}}

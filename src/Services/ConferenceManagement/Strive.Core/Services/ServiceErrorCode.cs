@@ -62,6 +62,10 @@ namespace Strive.Core.Services
         Payments_PassNotOffered,
         Payments_InvalidSlug,
         Payments_InvalidPhoto,
+        Videos_NotEnabled,
+        Videos_Invalid,
+        Videos_NotFound,
+        Videos_UploadNotFound,
         Payments_SubscriptionNotFound,
         Payments_SlugTaken,
 
