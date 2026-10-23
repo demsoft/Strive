@@ -71,7 +71,7 @@ export default function CreatorPublicPage() {
                         name={page.creator.displayName}
                         size={80}
                         background={brand.gradient}
-                        photoUrl={creatorPhotoUrl(page.creator.creatorId, page.creator.photoVersion)}
+                        photoUrl={creatorPhotoUrl(page.creator.creatorId, page.creator.photoVersion, 80)}
                      />
                      <Box sx={{ flex: 1, minWidth: 220 }}>
                         <Typography variant="h3" id="creator-name" sx={{ fontSize: { xs: '1.9rem', sm: '2.5rem' } }}>

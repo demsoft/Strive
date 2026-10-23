@@ -858,10 +858,10 @@ namespace Strive.Core.Services.Payments.UseCases
     public class SetCreatorPhotoUseCase : IRequestHandler<SetCreatorPhotoRequest, SuccessOrError<CreatorProfile>>
     {
         private readonly ICreatorRepo _creators;
-        private readonly ICreatorPhotoRepo _photos;
+        private readonly IPhotoStorage _photos;
         private readonly TimeProvider _timeProvider;
 
-        public SetCreatorPhotoUseCase(ICreatorRepo creators, ICreatorPhotoRepo photos, TimeProvider timeProvider)
+        public SetCreatorPhotoUseCase(ICreatorRepo creators, IPhotoStorage photos, TimeProvider timeProvider)
         {
             _creators = creators;
             _photos = photos;
@@ -877,8 +877,9 @@ namespace Strive.Core.Services.Payments.UseCases
             var now = _timeProvider.GetUtcNow();
             if (request.Data == null)
             {
-                await _photos.Delete(creator.CreatorId);
+                await _photos.Remove(creator.CreatorId, creator.PhotoPublicId, cancellationToken);
                 creator.PhotoVersion = null;
+                creator.PhotoPublicId = null;
             }
             else
             {
@@ -889,8 +890,19 @@ namespace Strive.Core.Services.Payments.UseCases
                 var type = PhotoRules.Sniff(request.Data);
                 if (type == null) return PaymentsError.InvalidPhoto("Use a jpeg, png or webp picture.");
 
-                await _photos.Save(new CreatorPhoto(creator.CreatorId, type, request.Data, now));
-                creator.PhotoVersion = now.ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
+                StoredPhoto stored;
+                try
+                {
+                    stored = await _photos.Save(creator.CreatorId, type, request.Data, cancellationToken);
+                }
+                catch (PhotoStorageException)
+                {
+                    // the profile keeps the photo it has
+                    return PaymentsError.InvalidPhoto("The picture could not be saved. Try again in a moment.");
+                }
+
+                creator.PhotoVersion = stored.Version;
+                creator.PhotoPublicId = stored.PublicId;
             }
 
             creator.UpdatedAt = now;

@@ -70,7 +70,7 @@ export default function PhotoSetup({ profile, onSaved }: Props) {
                name={profile.displayName}
                size={72}
                background={brand.gradient}
-               photoUrl={creatorPhotoUrl(profile.creatorId, profile.photoVersion)}
+               photoUrl={creatorPhotoUrl(profile.creatorId, profile.photoVersion, 72)}
             />
             <input
                ref={input}

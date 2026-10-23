@@ -104,6 +104,9 @@ namespace Strive.Core.Services.Payments
         /// <summary>Changes whenever the photo does (it is part of the address of the picture, so that caches renew). Null: no photo.</summary>
         public string? PhotoVersion { get; set; }
 
+        /// <summary>The name of the photo at the image service (Cloudinary); null: it is kept in the database or there is none</summary>
+        public string? PhotoPublicId { get; set; }
+
         public CreatorStatus Status { get; set; } = CreatorStatus.Active;
 
         public DateTimeOffset CreatedAt { get; init; }
