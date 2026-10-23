@@ -58,10 +58,16 @@ namespace Strive.Infrastructure.Data.Repos
         public Task<long> CountOfCreator(string creatorId) =>
             Collection.CountDocumentsAsync(x => x.CreatorId == creatorId);
 
-        public async Task<IReadOnlyList<Video>> FindReady(DateTimeOffset? before, int limit) =>
-            await Collection.Find(x => x.Status == VideoStatus.Ready && x.Moderation != VideoModeration.Hidden &&
-                                       x.Moderation != VideoModeration.Removed && (before == null || x.ReadyAt < before))
-                .SortByDescending(x => x.ReadyAt).Limit(limit).ToListAsync();
+        public async Task<IReadOnlyList<Video>> FindReady(DateTimeOffset? before, int limit,
+            IReadOnlyCollection<string>? creatorIds = null)
+        {
+            var filter = Builders<Video>.Filter.Where(x => x.Status == VideoStatus.Ready &&
+                                                           x.Moderation != VideoModeration.Hidden &&
+                                                           x.Moderation != VideoModeration.Removed);
+            if (before != null) filter &= Builders<Video>.Filter.Where(x => x.ReadyAt < before);
+            if (creatorIds != null) filter &= Builders<Video>.Filter.In(x => x.CreatorId, creatorIds);
+            return await Collection.Find(filter).SortByDescending(x => x.ReadyAt).Limit(limit).ToListAsync();
+        }
 
         public async Task<IReadOnlyList<Video>> FindReadyOfCreator(string creatorId, int limit) =>
             await Collection.Find(x => x.CreatorId == creatorId && x.Status == VideoStatus.Ready &&

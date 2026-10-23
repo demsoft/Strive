@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using Strive.Core.Services.Payments;
 using Strive.Core.Services.Payments.Gateways;
 using Strive.Core.Services.Payments.Requests;
+using Strive.Core.Services.Social;
 using Strive.Extensions;
 using Strive.Models.Response;
 
@@ -26,10 +27,12 @@ namespace Strive.Controllers
         private readonly PaymentsOptions _options;
         private readonly ICreatorPhotoRepo _photos;
         private readonly IPhotoStorage _photoStorage;
+        private readonly IFollowRepo _follows;
 
         public CreatorsController(IMediator mediator, ICreatorRepo creators, ICreatorPhotoRepo photos,
-            IPhotoStorage photoStorage, IOptions<PaymentsOptions> options)
+            IPhotoStorage photoStorage, IFollowRepo follows, IOptions<PaymentsOptions> options)
         {
+            _follows = follows;
             _photos = photos;
             _photoStorage = photoStorage;
             _mediator = mediator;
@@ -128,6 +131,44 @@ namespace Strive.Controllers
             if (!result.Success) return result.ToActionResult();
 
             return CreatorProfileDto.From(result.Response!);
+        }
+
+        // GET v1/creators/following
+        /// <summary>The creators the person follows, the latest follow first</summary>
+        [HttpGet("v1/creators/following")]
+        public async Task<ActionResult<PublicCreatorDto[]>> GetFollowing()
+        {
+            if (UserId == null) return Forbid();
+
+            var result = new System.Collections.Generic.List<PublicCreatorDto>();
+            foreach (var creatorId in await _follows.CreatorIdsOfUser(UserId, 200))
+            {
+                var creator = await _creators.FindById(creatorId);
+                if (creator != null) result.Add(PublicCreatorDto.From(creator));
+            }
+
+            Response.Headers.CacheControl = "no-store";
+            return result.ToArray();
+        }
+
+        // PUT v1/creators/{creatorId}/follow
+        [HttpPut("v1/creators/{creatorId}/follow")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> Follow(string creatorId)
+        {
+            if (UserId == null) return Forbid();
+
+            return (await _mediator.Send(new FollowCreatorRequest(UserId, creatorId))).ToActionResult();
+        }
+
+        // DELETE v1/creators/{creatorId}/follow
+        [HttpDelete("v1/creators/{creatorId}/follow")]
+        public async Task<ActionResult> Unfollow(string creatorId)
+        {
+            if (UserId == null) return Forbid();
+
+            return (await _mediator.Send(new UnfollowCreatorRequest(UserId, creatorId))).ToActionResult();
         }
 
         // PUT v1/creators/me/photo
