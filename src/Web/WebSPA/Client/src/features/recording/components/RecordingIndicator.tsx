@@ -45,8 +45,10 @@ export default function RecordingIndicator() {
       active.status === 'finalizing'
          ? t('conference.recording.saving')
          : active.status === 'starting'
-           ? t('conference.recording.starting')
-           : `${active.kind === 'rehearsal' ? t('conference.recording.rec_rehearsal') : t('conference.recording.rec')} ${formatDuration((now - new Date(active.startedAt).getTime()) / 1000)}`;
+         ? t('conference.recording.starting')
+         : `${
+              active.kind === 'rehearsal' ? t('conference.recording.rec_rehearsal') : t('conference.recording.rec')
+           } ${formatDuration((now - new Date(active.startedAt).getTime()) / 1000)}`;
 
    return (
       <Chip

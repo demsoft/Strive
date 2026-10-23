@@ -108,13 +108,7 @@ const chatSlice = createSlice({
    },
 });
 
-export const {
-   setSelectedChannel,
-   addAnnouncement,
-   removeAnnouncement,
-   openPrivateChat,
-   closePrivateChat,
-   clearChat,
-} = chatSlice.actions;
+export const { setSelectedChannel, addAnnouncement, removeAnnouncement, openPrivateChat, closePrivateChat, clearChat } =
+   chatSlice.actions;
 
 export default chatSlice.reducer;

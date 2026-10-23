@@ -200,7 +200,8 @@ namespace Strive.Controllers
             return new CreatorPageDto(publicCreator, list.ToArray(), passUntil != null, passUntil,
                 _paymentsOptions.AutoRenewEnabled, renewing?.NextChargeAt, videos,
                 await _follows.CountOfCreator(creator.CreatorId),
-                UserId != null && await _follows.Exists(UserId, creator.CreatorId));
+                UserId != null && await _follows.Exists(UserId, creator.CreatorId),
+                UserId != null && creator.UserId == UserId);
         }
 
         /// <summary>The session in a list; null if it is over (it was meant to end and its room is not open)</summary>

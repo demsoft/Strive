@@ -105,7 +105,10 @@ export default function MyRecordingsPage() {
                         recording.status === 'ready' ? (
                            <>
                               <Tooltip title={t('conference.recording.copy_link')}>
-                                 <IconButton aria-label={t('conference.recording.copy_link')} onClick={() => copyLink(recording)}>
+                                 <IconButton
+                                    aria-label={t('conference.recording.copy_link')}
+                                    onClick={() => copyLink(recording)}
+                                 >
                                     <ContentCopyIcon fontSize="small" />
                                  </IconButton>
                               </Tooltip>
@@ -134,13 +137,21 @@ export default function MyRecordingsPage() {
                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                               <b>{recording.conferenceName || recording.conferenceId}</b>
                               {recording.kind === 'rehearsal' && (
-                                 <Chip size="small" variant="outlined" label={t('conference.recording.kind_rehearsal')} />
+                                 <Chip
+                                    size="small"
+                                    variant="outlined"
+                                    label={t('conference.recording.kind_rehearsal')}
+                                 />
                               )}
                               {recording.status === 'failed' && (
                                  <Chip size="small" color="error" label={t('conference.recording.status_failed')} />
                               )}
                               {recording.status !== 'ready' && recording.status !== 'failed' && (
-                                 <Chip size="small" color="primary" label={t('conference.recording.status_processing')} />
+                                 <Chip
+                                    size="small"
+                                    color="primary"
+                                    label={t('conference.recording.status_processing')}
+                                 />
                               )}
                            </Box>
                         }

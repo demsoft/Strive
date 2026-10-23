@@ -143,9 +143,16 @@ export function uploadToConverter(
    return { promise, abort: () => request.abort() };
 }
 
-/** The latest videos that are ready, newest first. Pass `next` of the last answer for the following page. */
-export async function fetchFeed(before?: string | null, limit = 12): Promise<VideoFeed> {
-   return (await Axios.get<VideoFeed>(`${base()}/feed`, { params: { before: before ?? undefined, limit } })).data;
+/**
+ * The latest videos that are ready, newest first (with `following`: only those of the creators the person follows).
+ * Pass `next` of the last answer for the following page.
+ */
+export async function fetchFeed(before?: string | null, limit = 12, following = false): Promise<VideoFeed> {
+   return (
+      await Axios.get<VideoFeed>(`${base()}/feed`, {
+         params: { before: before ?? undefined, limit, following: following || undefined },
+      })
+   ).data;
 }
 
 /** The address a video is shared with. */

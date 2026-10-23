@@ -88,9 +88,19 @@ namespace Strive.IntegrationTests.Services
             Assert.Equal(2, asFan.Followers);
             Assert.True(asFan.Following);
 
+            Assert.False(asFan.IsYou);
             var anonymous = await Page(null, creatorId);
             Assert.Equal(2, anonymous.Followers);
             Assert.False(anonymous.Following);
+        }
+
+        [Fact]
+        public async Task Page_SaysThatItIsYours_ToTheCreator()
+        {
+            var (host, creatorId) = await NewCreator();
+
+            Assert.True((await Page(host, creatorId)).IsYou);
+            Assert.False((await Page(null, creatorId)).IsYou);
         }
 
         [Fact]

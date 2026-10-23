@@ -17,7 +17,7 @@ const updatedEvent = onEventOccurred(events.onSynchronizedObjectUpdated);
 const active = { recordingId: 'r1', status: 'recording', startedAt: '2024-01-01T10:00:00Z', startedBy: 'mod' };
 
 const toRoot = (recording: ReturnType<typeof reducer>, isRecordingEnabled = true) =>
-   ({ recording, conference: { conferenceState: { isRecordingEnabled } } }) as unknown as RootState;
+   ({ recording, conference: { conferenceState: { isRecordingEnabled } } } as unknown as RootState);
 
 test('formatDuration', () => {
    expect(formatDuration(0)).toBe('0:00');
@@ -44,7 +44,10 @@ test('active recording is synchronized and can end', () => {
    let state = reducer(undefined, stateEvent({ id: 'recording', value: { active } }) as any);
    expect(selectActiveRecording(toRoot(state))?.recordingId).toBe('r1');
 
-   state = reducer(state, updatedEvent({ id: 'recording', value: [{ op: 'replace', path: '/active', value: null }] } as any));
+   state = reducer(
+      state,
+      updatedEvent({ id: 'recording', value: [{ op: 'replace', path: '/active', value: null }] } as any),
+   );
    expect(selectActiveRecording(toRoot(state))).toBeNull();
 });
 

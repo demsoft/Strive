@@ -33,10 +33,10 @@ const toSnapshot = (player: YouTubePlayer): PlayerSnapshot => {
          state === YT_STATE.playing
             ? 'playing'
             : state === YT_STATE.paused || state === YT_STATE.ended
-              ? 'paused'
-              : state === YT_STATE.buffering
-                ? 'buffering'
-                : 'idle',
+            ? 'paused'
+            : state === YT_STATE.buffering
+            ? 'buffering'
+            : 'idle',
       position: player.getCurrentTime(),
       rate: player.getPlaybackRate(),
    };
@@ -231,7 +231,14 @@ export default function WatchTogetherPlayer({ session, canControl }: Props) {
    return (
       <Box
          id="watch-together-player"
-         sx={{ position: 'relative', width: box.width, height: box.height, backgroundColor: '#000', borderRadius: 2, overflow: 'hidden' }}
+         sx={{
+            position: 'relative',
+            width: box.width,
+            height: box.height,
+            backgroundColor: '#000',
+            borderRadius: 2,
+            overflow: 'hidden',
+         }}
       >
          <div ref={host} />
 
@@ -239,14 +246,29 @@ export default function WatchTogetherPlayer({ session, canControl }: Props) {
          {!canControl && <Box sx={{ position: 'absolute', inset: 0 }} />}
 
          {error && (
-            <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', p: 2, textAlign: 'center' }}>
+            <Box
+               sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', p: 2, textAlign: 'center' }}
+            >
                <Typography>{error}</Typography>
             </Box>
          )}
 
          {blocked && !error && (
-            <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', backgroundColor: 'rgba(0,0,0,0.55)' }}>
-               <Button id="watch-together-start" variant="contained" startIcon={<PlayArrowIcon />} onClick={handleStartClick}>
+            <Box
+               sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'grid',
+                  placeItems: 'center',
+                  backgroundColor: 'rgba(0,0,0,0.55)',
+               }}
+            >
+               <Button
+                  id="watch-together-start"
+                  variant="contained"
+                  startIcon={<PlayArrowIcon />}
+                  onClick={handleStartClick}
+               >
                   {t('conference.watch_together.click_to_play')}
                </Button>
             </Box>

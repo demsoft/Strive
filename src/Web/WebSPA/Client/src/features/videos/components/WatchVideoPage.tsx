@@ -11,6 +11,8 @@ import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import * as api from 'src/services/api/videos';
 import { Video } from 'src/services/api/videos';
 import usePaymentReturn from 'src/features/payments/usePaymentReturn';
+import FollowButton from 'src/features/social/FollowButton';
+import useFollowing from 'src/features/social/useFollowing';
 import ReportVideoDialog from './ReportVideoDialog';
 import VideoBuyBox from './VideoBuyBox';
 import { brand } from 'src/theme';
@@ -26,6 +28,7 @@ export default function WatchVideoPage() {
    const [notFound, setNotFound] = useState(false);
    const [copied, setCopied] = useState(false);
    const [reporting, setReporting] = useState(false);
+   const following = useFollowing(token);
 
    const load = useCallback(
       () => api.fetchVideo(videoId, token).then(setVideo, () => setNotFound(true)),
@@ -111,35 +114,49 @@ export default function WatchVideoPage() {
                   </Typography>
 
                   {creator && (
-                     <Box
-                        id="watch-creator"
-                        component={RouterLink}
-                        to={`/u/${creator.slug || creator.creatorId}`}
-                        sx={{
-                           display: 'flex',
-                           alignItems: 'center',
-                           gap: 1.5,
-                           mt: 2,
-                           p: 1.5,
-                           borderRadius: '16px',
-                           textDecoration: 'none',
-                           color: 'inherit',
-                           backgroundColor: brand.surface,
-                           border: `1px solid ${brand.border}`,
-                        }}
-                     >
-                        <HostAvatar
-                           name={creator.displayName}
-                           size={44}
-                           background={brand.gradient}
-                           photoUrl={creatorPhotoUrl(creator.creatorId, creator.photoVersion, 44)}
-                        />
-                        <Box sx={{ minWidth: 0, flex: 1 }}>
-                           <Typography sx={{ fontWeight: 700 }}>{creator.displayName}</Typography>
-                           <Typography variant="body2" color="text.secondary">
-                              {t('videos.see_creator')}
-                           </Typography>
+                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
+                        <Box
+                           id="watch-creator"
+                           component={RouterLink}
+                           to={`/u/${creator.slug || creator.creatorId}`}
+                           sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1.5,
+                              flex: 1,
+                              minWidth: 0,
+                              p: 1.5,
+                              borderRadius: '16px',
+                              textDecoration: 'none',
+                              color: 'inherit',
+                              backgroundColor: brand.surface,
+                              border: `1px solid ${brand.border}`,
+                           }}
+                        >
+                           <HostAvatar
+                              name={creator.displayName}
+                              size={44}
+                              background={brand.gradient}
+                              photoUrl={creatorPhotoUrl(creator.creatorId, creator.photoVersion, 44)}
+                           />
+                           <Box sx={{ minWidth: 0, flex: 1 }}>
+                              <Typography sx={{ fontWeight: 700 }}>{creator.displayName}</Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                 {t('videos.see_creator')}
+                              </Typography>
+                           </Box>
                         </Box>
+                        {!video.isOwner && (
+                           <FollowButton
+                              className="watch-follow"
+                              following={following.isFollowing(creator.creatorId)}
+                              onClick={() =>
+                                 token
+                                    ? following.toggle(creator.creatorId)
+                                    : auth.signinRedirect({ state: { url: location.pathname } })
+                              }
+                           />
+                        )}
                      </Box>
                   )}
 

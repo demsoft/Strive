@@ -9,7 +9,7 @@ const updatedEvent = onEventOccurred(events.onSynchronizedObjectUpdated);
 
 const raised = { a: '2024-01-01T10:00:02Z', b: '2024-01-01T10:00:01Z', c: '2024-01-01T10:00:03Z' };
 
-const toRoot = (reduced: ReturnType<typeof reducer>) => ({ handRaise: reduced }) as unknown as RootState;
+const toRoot = (reduced: ReturnType<typeof reducer>) => ({ handRaise: reduced } as unknown as RootState);
 
 test('synchronized hand raises, store state', () => {
    const state = reducer(undefined, stateEvent({ id: 'handRaises', value: { raised } } as any));
