@@ -219,3 +219,10 @@ test('the creator has no button to report their own video', async () => {
 
    expect(document.querySelector('#watch-report')).toBeNull();
 });
+
+test('it leads on to the reels, starting with this video', async () => {
+   api.fetchVideo.mockResolvedValue(video());
+   await render();
+
+   expect(document.querySelector('#watch-more')?.getAttribute('href')).toBe('/reels/v1');
+});
