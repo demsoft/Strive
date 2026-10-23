@@ -45,6 +45,18 @@ vi.mock('react-router-dom', () => ({
 vi.mock('src/features/social/useFollowing', () => ({
    default: () => ({ isFollowing: (id: string) => state.following.has(id), toggle: state.toggle }),
 }));
+vi.mock('src/features/social/VideoComments', () => ({
+   default: (props: { videoId: string; signedIn: boolean; locked?: boolean; onTotal?: (n: number) => void }) => (
+      <div
+         id="comments-stub"
+         data-video={props.videoId}
+         data-signed-in={String(props.signedIn)}
+         data-locked={String(!!props.locked)}
+      >
+         <button id="comments-stub-total" onClick={() => props.onTotal?.(7)} />
+      </div>
+   ),
+}));
 vi.mock('src/components/BrandLogo', () => ({ default: () => null }));
 vi.mock('./ReportVideoDialog', () => ({
    default: ({ open }: { open: boolean }) => (open ? <div id="report-dialog" /> : null),
@@ -273,4 +285,17 @@ test('the video shows its likes and can be liked; signed out the person is asked
    await settle();
    expect(api.likeVideo).toHaveBeenCalledWith('v1');
    expect(document.querySelector('.like-count')?.textContent).toBe('9');
+});
+
+test('the comments are under the video, and a video for sale locks them for somebody who has not paid', async () => {
+   api.fetchVideo.mockResolvedValue(video());
+   await render();
+   const stub = document.querySelector('#comments-stub');
+   expect(stub?.getAttribute('data-video')).toBe('v1');
+   expect(stub?.getAttribute('data-signed-in')).toBe('false');
+   expect(stub?.getAttribute('data-locked')).toBe('false');
+
+   api.fetchVideo.mockResolvedValue(video({ locked: true, priceMinor: 250000, playbackUrl: null }));
+   await render();
+   expect(document.querySelector('#comments-stub')?.getAttribute('data-locked')).toBe('true');
 });

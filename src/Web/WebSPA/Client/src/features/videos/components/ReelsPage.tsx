@@ -1,4 +1,5 @@
-import { Alert, Box, Button, CircularProgress, IconButton, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Drawer, IconButton, Typography } from '@mui/material';
+import ChatBubbleOutlinedIcon from '@mui/icons-material/ChatBubbleOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -14,6 +15,7 @@ import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import { formatMoney } from 'src/features/sessions/money';
 import FollowButton from 'src/features/social/FollowButton';
 import LikeButton from 'src/features/social/LikeButton';
+import VideoComments from 'src/features/social/VideoComments';
 import useVideoLike from 'src/features/social/useVideoLike';
 import useFollowing from 'src/features/social/useFollowing';
 import * as api from 'src/services/api/videos';
@@ -34,6 +36,8 @@ type ReelProps = {
    muted: boolean;
    copied: boolean;
    following: boolean;
+   comments: number;
+   onComments: () => void;
    signedIn: boolean;
    onSignIn: () => void;
    onFollow: () => void;
@@ -51,6 +55,8 @@ function Reel({
    muted,
    copied,
    following,
+   comments,
+   onComments,
    signedIn,
    onSignIn,
    onFollow,
@@ -230,6 +236,17 @@ function Reel({
             >
                <LikeButton compact liked={like.liked} count={like.likes} onClick={like.toggle} />
                <IconButton
+                  className="reel-comments"
+                  aria-label={t('social.comments_title')}
+                  onClick={onComments}
+                  sx={{ color: '#fff', backgroundColor: 'rgba(0,0,0,0.4)' }}
+               >
+                  <ChatBubbleOutlinedIcon />
+               </IconButton>
+               <Typography className="reel-comments-count" variant="caption" sx={{ color: '#fff', mt: -0.5 }}>
+                  {comments}
+               </Typography>
+               <IconButton
                   className="reel-mute"
                   aria-label={muted ? t('videos.reels_unmute') : t('videos.reels_mute')}
                   onClick={onToggleMute}
@@ -284,6 +301,9 @@ export default function ReelsPage() {
    const [muted, setMuted] = useState(true);
    const [copiedId, setCopiedId] = useState<string | null>(null);
    const [reporting, setReporting] = useState<string | null>(null);
+   const [commenting, setCommenting] = useState<Video | null>(null);
+   // the numbers the person changed by writing or deleting, over what the list said
+   const [commentTotals, setCommentTotals] = useState<Record<string, number>>({});
    const followed = useFollowing(token);
 
    // the first screen: the video of the link (if there is one), then the latest
@@ -452,6 +472,8 @@ export default function ReelsPage() {
                      muted={muted}
                      copied={copiedId === video.videoId}
                      following={!!video.creator && followed.isFollowing(video.creator.creatorId)}
+                     comments={commentTotals[video.videoId] ?? video.comments ?? 0}
+                     onComments={() => setCommenting(video)}
                      signedIn={!!token}
                      onSignIn={signIn}
                      onFollow={() => follow(video)}
@@ -467,6 +489,48 @@ export default function ReelsPage() {
                )}
             </Box>
          )}
+
+         <Drawer
+            anchor="bottom"
+            open={!!commenting}
+            onClose={() => setCommenting(null)}
+            sx={{ zIndex: 1300 }}
+            slotProps={{
+               paper: {
+                  sx: {
+                     maxHeight: '75vh',
+                     borderRadius: '16px 16px 0 0',
+                     p: 2,
+                     mx: 'auto',
+                     width: '100%',
+                     maxWidth: 560,
+                  },
+               },
+            }}
+         >
+            {commenting && (
+               <Box id="reels-comments">
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                     <IconButton
+                        id="reels-comments-close"
+                        size="small"
+                        aria-label={t('social.comments_close')}
+                        onClick={() => setCommenting(null)}
+                     >
+                        <CloseIcon fontSize="small" />
+                     </IconButton>
+                  </Box>
+                  <VideoComments
+                     key={commenting.videoId}
+                     videoId={commenting.videoId}
+                     signedIn={!!token}
+                     onSignIn={signIn}
+                     locked={commenting.locked}
+                     onTotal={(total) => setCommentTotals((current) => ({ ...current, [commenting.videoId]: total }))}
+                  />
+               </Box>
+            )}
+         </Drawer>
 
          <ReportVideoDialog
             key={reporting ?? 'none'}

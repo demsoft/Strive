@@ -47,6 +47,18 @@ vi.mock('./ReportVideoDialog', () => ({
 vi.mock('src/features/social/useFollowing', () => ({
    default: () => ({ isFollowing: (id: string) => state.following.has(id), toggle: state.toggle }),
 }));
+vi.mock('src/features/social/VideoComments', () => ({
+   default: (props: { videoId: string; signedIn: boolean; locked?: boolean; onTotal?: (n: number) => void }) => (
+      <div
+         id="comments-stub"
+         data-video={props.videoId}
+         data-signed-in={String(props.signedIn)}
+         data-locked={String(!!props.locked)}
+      >
+         <button id="comments-stub-total" onClick={() => props.onTotal?.(7)} />
+      </div>
+   ),
+}));
 vi.mock('src/services/api/videos', () => api);
 
 import ReelsPage from './ReelsPage';
@@ -294,4 +306,20 @@ test('the heart shows the likes; pressing it likes the video, or asks for a sign
    expect(api.likeVideo).toHaveBeenCalledWith('a');
    expect(document.querySelector('.like-count')?.textContent).toBe('6');
    expect(document.querySelector('.like-button')?.getAttribute('aria-pressed')).toBe('true');
+});
+
+test('the comment button shows the number and opens the comments of that video; what changes there shows on the button', async () => {
+   api.fetchFeed.mockResolvedValue({ items: [video('a', { comments: 4 }), video('b')], next: null });
+   await render();
+   expect(document.querySelector('.reel-comments-count')?.textContent).toBe('4');
+   expect(document.querySelector('#comments-stub')).toBeNull();
+
+   await act(async () => document.querySelector<HTMLElement>('.reel-comments')?.click());
+   expect(document.querySelector('#comments-stub')?.getAttribute('data-video')).toBe('a');
+
+   await act(async () => document.querySelector<HTMLElement>('#comments-stub-total')?.click());
+   expect(document.querySelector('.reel-comments-count')?.textContent).toBe('7');
+
+   await act(async () => document.querySelector<HTMLElement>('#reels-comments-close')?.click());
+   await settle();
 });

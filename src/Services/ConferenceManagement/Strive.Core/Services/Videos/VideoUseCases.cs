@@ -189,12 +189,15 @@ namespace Strive.Core.Services.Videos
         private readonly IVideoStorage _storage;
         private readonly IVideoEntitlementRepo _entitlements;
         private readonly Social.IVideoLikeRepo _likes;
+        private readonly Social.IVideoCommentRepo _comments;
         private readonly ILogger<DeleteVideoUseCase> _logger;
 
         public DeleteVideoUseCase(IVideoRepo videos, IVideoConverter converter, IVideoStorage storage,
-            IVideoEntitlementRepo entitlements, Social.IVideoLikeRepo likes, ILogger<DeleteVideoUseCase> logger)
+            IVideoEntitlementRepo entitlements, Social.IVideoLikeRepo likes, Social.IVideoCommentRepo comments,
+            ILogger<DeleteVideoUseCase> logger)
         {
             _likes = likes;
+            _comments = comments;
             _entitlements = entitlements;
             _videos = videos;
             _converter = converter;
@@ -214,6 +217,7 @@ namespace Strive.Core.Services.Videos
             await Cleanup(video.VideoId, cancellationToken);
             await _videos.Delete(video.VideoId);
             await _likes.DeleteOfVideo(video.VideoId);
+            await _comments.DeleteOfVideo(video.VideoId);
             return Unit.Value;
         }
 
