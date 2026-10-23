@@ -28,6 +28,8 @@ namespace Strive.Infrastructure.Data.Repos
                     new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
                 config.MapMember(x => x.ReadyAt).SetSerializer(
                     new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
+                config.MapMember(x => x.FollowersNoticedAt).SetSerializer(
+                    new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
                 config.SetIgnoreExtraElements(true);
             });
         }
@@ -78,6 +80,18 @@ namespace Strive.Infrastructure.Data.Repos
         {
             var ids = videoIds.Distinct().ToList();
             return await Collection.Find(x => ids.Contains(x.VideoId)).ToListAsync();
+        }
+
+        public async Task<IReadOnlyList<Video>> FindForFollowerNotice(DateTimeOffset readySince, int limit) =>
+            await Collection.Find(x => x.Status == VideoStatus.Ready && x.Moderation == VideoModeration.None &&
+                                       x.FollowersNoticedAt == null && x.ReadyAt >= readySince)
+                .SortBy(x => x.ReadyAt).Limit(limit).ToListAsync();
+
+        public async Task<bool> TryClaimFollowerNotice(string videoId, DateTimeOffset at)
+        {
+            var result = await Collection.UpdateOneAsync(x => x.VideoId == videoId && x.FollowersNoticedAt == null,
+                Builders<Video>.Update.Set(x => x.FollowersNoticedAt, at));
+            return result.ModifiedCount == 1;
         }
 
         public async Task<IReadOnlyList<Video>> FindModerated(int limit) =>

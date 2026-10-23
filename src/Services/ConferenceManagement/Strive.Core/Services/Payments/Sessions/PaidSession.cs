@@ -87,5 +87,8 @@ namespace Strive.Core.Services.Payments.Sessions
 
         /// <summary>When the mail that reminds the ticket holders was claimed; null: not sent yet</summary>
         public DateTimeOffset? ReminderSentAt { get; set; }
+
+        /// <summary>When the followers who asked for mail were told about the session; null: not yet</summary>
+        public DateTimeOffset? FollowersNoticedAt { get; set; }
     }
 }

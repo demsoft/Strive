@@ -36,6 +36,8 @@ namespace Strive.Controllers
         private readonly IVideoRepo _videoRepo;
         private readonly Strive.Core.Services.Social.IFollowRepo _follows;
         private readonly EngagementPresenter _engagement;
+        private readonly Strive.Core.Services.Reminders.RemindersOptions _reminders;
+        private readonly Strive.Core.Services.Reminders.IEmailSender _emailSender;
         private readonly VideoPresenter _videoPresenter;
         private readonly VideoAccess _videoAccess;
         private readonly PaymentsOptions _paymentsOptions;
@@ -45,12 +47,16 @@ namespace Strive.Controllers
             IEntitlementRepo entitlements, IOrderRepo orders, IPassRepo passes, IPassSubscriptionRepo subscriptions,
             IOpenConferenceRepository openConferences, IVideoRepo videoRepo, VideoPresenter videoPresenter,
             VideoAccess videoAccess, Strive.Core.Services.Social.IFollowRepo follows, EngagementPresenter engagement,
+            Microsoft.Extensions.Options.IOptions<Strive.Core.Services.Reminders.RemindersOptions> reminders,
+            Strive.Core.Services.Reminders.IEmailSender emailSender,
             Microsoft.Extensions.Options.IOptions<PaymentsOptions> paymentsOptions, IConfiguration configuration)
         {
             _openConferences = openConferences;
             _videoRepo = videoRepo;
             _follows = follows;
             _engagement = engagement;
+            _reminders = reminders.Value;
+            _emailSender = emailSender;
             _videoPresenter = videoPresenter;
             _videoAccess = videoAccess;
             _passes = passes;
@@ -192,6 +198,7 @@ namespace Strive.Controllers
                 : (await _subscriptions.FindActiveOfUser(UserId)).FirstOrDefault(x => x.CreatorId == creator.CreatorId);
 
             Response.Headers.CacheControl = "no-store";
+            var following = UserId == null ? null : await _follows.Find(UserId, creator.CreatorId);
             var publicCreator = PublicCreatorDto.From(creator);
             var readyVideos = await _videoRepo.FindReadyOfCreator(creator.CreatorId, 24);
             var unlocked = await _videoAccess.Unlocked(readyVideos.ToList(), UserId);
@@ -201,9 +208,9 @@ namespace Strive.Controllers
                 .ToList(), UserId);
             return new CreatorPageDto(publicCreator, list.ToArray(), passUntil != null, passUntil,
                 _paymentsOptions.AutoRenewEnabled, renewing?.NextChargeAt, videos,
-                await _follows.CountOfCreator(creator.CreatorId),
-                UserId != null && await _follows.Exists(UserId, creator.CreatorId),
-                UserId != null && creator.UserId == UserId);
+                await _follows.CountOfCreator(creator.CreatorId), following != null, UserId != null && creator.UserId == UserId,
+                following?.Notice.ToString().ToLowerInvariant() ?? "off",
+                _reminders.Enabled && _emailSender.IsConfigured);
         }
 
         /// <summary>The session in a list; null if it is over (it was meant to end and its room is not open)</summary>

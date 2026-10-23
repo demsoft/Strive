@@ -75,6 +75,11 @@ namespace Strive.Core.Services
         Social_CannotComment,
         Social_TooFast,
         Social_CommentNotFound,
+        Social_NotFollowing,
+        Social_EmailNotAvailable,
+        Social_InvalidEmail,
+        Social_EmailFailed,
+        Social_NoticeNotFound,
         Payments_SubscriptionNotFound,
         Payments_SlugTaken,
 

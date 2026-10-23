@@ -38,7 +38,7 @@ namespace Strive.Models.Response
     public record CreatorPageDto(PublicCreatorDto Creator, DiscoverSessionDto[] Sessions, bool HasPass = false,
         DateTimeOffset? PassValidUntil = null, bool AutoRenewAvailable = false, DateTimeOffset? PassRenewsAt = null,
         VideoDto[]? Videos = null, long Followers = 0, bool Following = false,
-        bool IsYou = false);
+        bool IsYou = false, string Notice = "off", bool NoticesAvailable = false);
 
     /// <summary>A pass of the person that is running</summary>
     /// <param name="SubscriptionId">Set if the pass renews itself: the person can stop it with this</param>
@@ -71,4 +71,12 @@ namespace Strive.Models.Response
         DateTimeOffset? StartsAt, string CreatorName, DateTimeOffset GrantedAt, SessionStatus Status,
         bool Refunded = false, int DurationMinutes = 60, bool IsLive = false, string? CreatorId = null,
         string? CreatorPhotoVersion = null);
+}
+
+namespace Strive.Models.Response
+{
+    public record StartNoticesDto(string? Email);
+
+    /// <param name="Status">on or off</param>
+    public record NoticeAnswerDto(string CreatorName, string Status);
 }

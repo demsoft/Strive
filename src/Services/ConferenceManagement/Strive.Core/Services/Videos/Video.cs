@@ -95,6 +95,9 @@ namespace Strive.Core.Services.Videos
         public DateTimeOffset CreatedAt { get; init; }
 
         public DateTimeOffset? ReadyAt { get; set; }
+
+        /// <summary>When the followers who asked for mail were told about the video; null: not yet</summary>
+        public DateTimeOffset? FollowersNoticedAt { get; set; }
     }
 
     public static class VideoRules
