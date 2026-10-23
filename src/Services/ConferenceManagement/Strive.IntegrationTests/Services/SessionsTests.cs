@@ -1118,6 +1118,116 @@ namespace Strive.IntegrationTests.Services
             Assert.Empty(ChargesOf(subscription));
         }
 
+        // ---- how long a session lasts, and whether it is live
+
+        private async Task<HttpResponseMessage> PublishFor(UserAccount host, DateTimeOffset? startsAt, int? minutes) =>
+            await Client(host).PostAsync("/v1/sessions",
+                new JsonNetContent(new CreateSessionDto("Timed session", "Learn", "music", Price, startsAt, minutes)));
+
+        private async Task<DiscoverSessionDto[]> Discover(UserAccount? viewer = null) =>
+            await Read<DiscoverSessionDto[]>(await Client(viewer).GetAsync("/v1/sessions/discover"));
+
+        [Fact]
+        public async Task Duration_DefaultsToAnHour_AndTheHostCanChooseAnother()
+        {
+            var host = await NewCreator();
+
+            var normal = await Read<SessionDto>(await PublishFor(host, null, null));
+            var long90 = await Read<SessionDto>(await PublishFor(host, null, 90));
+
+            Assert.Equal(60, normal.DurationMinutes);
+            Assert.Equal(90, long90.DurationMinutes);
+        }
+
+        [Theory]
+        [InlineData(5)]
+        [InlineData(14)]
+        [InlineData(481)]
+        [InlineData(-30)]
+        public async Task Duration_OutOfRange_BadRequest(int minutes)
+        {
+            var response = await PublishFor(await NewCreator(), null, minutes);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Discover_SessionThatShouldBeOver_IsNotListed_ButOneStillRunningIs()
+        {
+            var host = await NewCreator();
+            var over = await Read<SessionDto>(await PublishFor(host, DateTimeOffset.UtcNow.AddHours(-3), 60));
+            var running = await Read<SessionDto>(await PublishFor(host, DateTimeOffset.UtcNow.AddMinutes(-20), 60));
+            var coming = await Read<SessionDto>(await PublishFor(host, DateTimeOffset.UtcNow.AddHours(2), 60));
+
+            var ids = (await Discover()).Select(x => x.SessionId).ToList();
+
+            Assert.DoesNotContain(over.SessionId, ids);
+            Assert.Contains(running.SessionId, ids);
+            Assert.Contains(coming.SessionId, ids);
+        }
+
+        [Fact]
+        public async Task Live_IsTrueOnlyWhileTheHostHasTheRoomOpen()
+        {
+            var host = await NewCreator();
+            var session = await Read<SessionDto>(await PublishFor(host, DateTimeOffset.UtcNow.AddMinutes(-5), 60));
+
+            // the start time has passed, the room is not open: not live
+            Assert.False(Assert.Single(await Discover(), x => x.SessionId == session.SessionId).IsLive);
+            Assert.False((await Read<PublicSessionDto>(await Client(null).GetAsync($"/v1/sessions/{session.SessionId}")))
+                .IsLive);
+
+            // the host opens the room
+            var connection = await ConnectUserToConference(host, Room(session));
+            AssertSuccess(await OpenConference(connection));
+
+            Assert.True(Assert.Single(await Discover(), x => x.SessionId == session.SessionId).IsLive);
+            Assert.True((await Read<PublicSessionDto>(await Client(null).GetAsync($"/v1/sessions/{session.SessionId}")))
+                .IsLive);
+        }
+
+        [Fact]
+        public async Task Live_ARoomThatIsStillOpenAfterTheEnd_StaysListed()
+        {
+            var host = await NewCreator();
+            var session = await Read<SessionDto>(await PublishFor(host, DateTimeOffset.UtcNow.AddMinutes(-90), 30));
+            Assert.DoesNotContain(await Discover(), x => x.SessionId == session.SessionId);
+
+            var connection = await ConnectUserToConference(host, Room(session));
+            AssertSuccess(await OpenConference(connection));
+
+            Assert.True(Assert.Single(await Discover(), x => x.SessionId == session.SessionId).IsLive);
+        }
+
+        [Fact]
+        public async Task Live_CancelledSession_IsNeverLive()
+        {
+            var host = await NewCreator();
+            var session = await Read<SessionDto>(await PublishFor(host, DateTimeOffset.UtcNow.AddMinutes(-5), 60));
+            var connection = await ConnectUserToConference(host, Room(session));
+            AssertSuccess(await OpenConference(connection));
+            await Cancel(host, session.SessionId);
+
+            Assert.False((await Read<PublicSessionDto>(await Client(null).GetAsync($"/v1/sessions/{session.SessionId}")))
+                .IsLive);
+        }
+
+        [Fact]
+        public async Task Tickets_CarryTheDurationAndWhetherTheSessionIsLive()
+        {
+            var host = await NewCreator();
+            var session = await Read<SessionDto>(await PublishFor(host, DateTimeOffset.UtcNow.AddMinutes(-5), 45));
+            var fan = await FanWithTicket(session);
+
+            var ticket = await TicketOf(fan, session.SessionId);
+            Assert.Equal(45, ticket.DurationMinutes);
+            Assert.False(ticket.IsLive);
+
+            var connection = await ConnectUserToConference(host, Room(session));
+            AssertSuccess(await OpenConference(connection));
+            Assert.True((await TicketOf(fan, session.SessionId)).IsLive);
+        }
+
         [Fact]
         public async Task Discover_ListsPublishedSessionsForEverybody_NotCancelledOnes()
         {

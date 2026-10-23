@@ -12,10 +12,6 @@ import { categoryGradient, categoryStyle } from './ui/categories';
 import CategoryBadge from './ui/CategoryBadge';
 import HostAvatar from './ui/HostAvatar';
 
-/** Started and not over (the server drops sessions that started long ago) */
-export const isLiveNow = (session: DiscoverSession, now = DateTime.now()) =>
-   session.startsAt != null && DateTime.fromISO(session.startsAt) <= now;
-
 /**
  * The sessions that match what the person typed (in the title, the text, or the name of the host: no capitals, no
  * accents, every word has to be found) and the chosen category (none: all).
@@ -38,7 +34,7 @@ export function filterSessions(sessions: DiscoverSession[], query: string, categ
 export function SessionTile({ session }: { session: DiscoverSession }) {
    const { t } = useTranslation();
    const { Icon } = categoryStyle(session.category);
-   const live = isLiveNow(session);
+   const live = session.isLive;
    const when = session.startsAt ? DateTime.fromISO(session.startsAt) : null;
 
    return (
@@ -121,8 +117,7 @@ export default function DiscoverSessions() {
 
    // live ones first, then by start
    const sorted = filterSessions(sessions ?? [], query, category).sort(
-      (a, b) =>
-         Number(isLiveNow(b)) - Number(isLiveNow(a)) || (a.startsAt ?? '9999').localeCompare(b.startsAt ?? '9999'),
+      (a, b) => Number(b.isLive) - Number(a.isLive) || (a.startsAt ?? '9999').localeCompare(b.startsAt ?? '9999'),
    );
 
    return (

@@ -27,4 +27,7 @@ export const MIN_PRICE_MINOR = 10_000;
 export const MAX_PRICE_MINOR = 100_000_000;
 export const isPriceInRange = (minor: number) => minor >= MIN_PRICE_MINOR && minor <= MAX_PRICE_MINOR;
 
+/** What a creator can choose as the length of a session, in minutes (the server accepts 15 to 480). */
+export const SESSION_DURATIONS = [30, 45, 60, 90, 120, 180] as const;
+
 export const SESSION_CATEGORIES = ['teach', 'perform', 'expertise', 'community', 'music'] as const;

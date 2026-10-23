@@ -77,6 +77,12 @@ namespace Strive.Core.Services.Payments.Sessions
         /// <summary>When it starts, as shown to the people (the room is opened by the host)</summary>
         public DateTimeOffset? StartsAt { get; set; }
 
+        /// <summary>How long it is meant to last, in minutes. The room stays open as long as the host wants.</summary>
+        public int DurationMinutes { get; set; } = 60;
+
+        /// <summary>When it is meant to end; unknown without a start time</summary>
+        public DateTimeOffset? EndsAt => StartsAt?.AddMinutes(DurationMinutes);
+
         public DateTimeOffset CreatedAt { get; init; }
 
         /// <summary>When the mail that reminds the ticket holders was claimed; null: not sent yet</summary>

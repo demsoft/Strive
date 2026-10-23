@@ -25,7 +25,7 @@ import BrandLogo from 'src/components/BrandLogo';
 import { requestErrorMessage } from 'src/features/creator/errors';
 import * as api from 'src/services/api/sessions';
 import { Session } from 'src/services/api/sessions';
-import { formatMoney, isPriceInRange, parsePriceToMinor, SESSION_CATEGORIES } from '../money';
+import { formatMoney, isPriceInRange, parsePriceToMinor, SESSION_CATEGORIES, SESSION_DURATIONS } from '../money';
 
 /** For creators: publish a session (a price and a link to share) and see the sessions that were published. */
 export default function MySessionsPage() {
@@ -39,6 +39,7 @@ export default function MySessionsPage() {
    const [description, setDescription] = useState('');
    const [price, setPrice] = useState('');
    const [startsAt, setStartsAt] = useState('');
+   const [duration, setDuration] = useState<number>(60);
    const [saving, setSaving] = useState(false);
    const [saveError, setSaveError] = useState<string | null>(null);
    const [created, setCreated] = useState<Session | null>(null);
@@ -72,6 +73,7 @@ export default function MySessionsPage() {
             category,
             priceMinor,
             startsAt: startsAt ? new Date(startsAt).toISOString() : undefined,
+            durationMinutes: duration,
          });
          setCreated(session);
          setTitle('');
@@ -181,6 +183,22 @@ export default function MySessionsPage() {
                slotProps={{ inputLabel: { shrink: true } }}
                sx={{ mb: 2 }}
             />
+            <TextField
+               id="session-form-duration"
+               select
+               fullWidth
+               label={t('sessions.duration')}
+               helperText={t('sessions.duration_hint')}
+               value={duration}
+               onChange={(e) => setDuration(Number(e.target.value))}
+               sx={{ mb: 2 }}
+            >
+               {SESSION_DURATIONS.map((minutes) => (
+                  <MenuItem key={minutes} value={minutes}>
+                     {t('sessions.minutes', { count: minutes })}
+                  </MenuItem>
+               ))}
+            </TextField>
             {saveError && (
                <Alert severity="error" sx={{ mb: 2 }} id="session-form-error">
                   {saveError}
