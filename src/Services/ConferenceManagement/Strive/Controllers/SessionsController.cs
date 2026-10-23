@@ -85,6 +85,30 @@ namespace Strive.Controllers
             return result.ToArray();
         }
 
+        // GET v1/creators/me/earnings
+        /// <summary>What the creator earned. Only the creator sees it.</summary>
+        [HttpGet("v1/creators/me/earnings")]
+        [Authorize]
+        public async Task<ActionResult<EarningsDto>> GetEarnings()
+        {
+            if (UserId == null) return Forbid();
+
+            var creator = await _creators.FindByUserId(UserId);
+            if (creator == null) return PaymentsError.CreatorNotFound.ToActionResult();
+
+            var orders = await _orders.FindPaidOfCreator(creator.CreatorId, 5000);
+            var titles = new Dictionary<string, string>();
+            foreach (var sessionId in orders.Where(x => x.Kind == OrderKind.Ticket).Select(x => x.SessionId).Distinct())
+            {
+                var session = await _sessions.FindById(sessionId);
+                if (session != null) titles[sessionId] = session.Title;
+            }
+
+            var report = EarningsReport.Build(creator.CreatorId, orders, titles);
+            Response.Headers.CacheControl = "no-store";
+            return new EarningsDto(creator.Currency, report.Totals, report.Sessions, report.Recent);
+        }
+
         // GET v1/sessions/discover
         /// <summary>What is on: published sessions that are not over, the ones that start first at the top</summary>
         [HttpGet("v1/sessions/discover")]
