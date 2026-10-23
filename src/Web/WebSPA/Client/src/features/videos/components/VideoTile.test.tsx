@@ -59,3 +59,31 @@ test('without a length or a creator those parts are left out', async () => {
    expect(container.querySelector('.video-duration')).toBeNull();
    expect(container.textContent).toContain('First reel');
 });
+
+test('a video for sale shows its price and a lock until it is bought', async () => {
+   await act(async () =>
+      createRoot(container).render(<VideoTile video={video({ priceMinor: 300000, locked: true })} />),
+   );
+
+   expect(container.querySelector('.video-price')?.textContent).toBe('₦3,000');
+   expect(container.querySelector('.video-lock')).not.toBeNull();
+});
+
+test('a video that was bought still shows what it cost, without the lock; free and own videos show no price', async () => {
+   await act(async () =>
+      createRoot(container).render(<VideoTile video={video({ priceMinor: 300000, locked: false })} />),
+   );
+   expect(container.querySelector('.video-price')).not.toBeNull();
+   expect(container.querySelector('.video-lock')).toBeNull();
+
+   container.innerHTML = '';
+   const second = document.createElement('div');
+   document.body.appendChild(second);
+   await act(async () => createRoot(second).render(<VideoTile video={video({ priceMinor: 0 })} />));
+   expect(second.querySelector('.video-price')).toBeNull();
+
+   const third = document.createElement('div');
+   document.body.appendChild(third);
+   await act(async () => createRoot(third).render(<VideoTile video={video({ priceMinor: 300000, isOwner: true })} />));
+   expect(third.querySelector('.video-price')).toBeNull();
+});

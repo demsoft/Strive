@@ -47,7 +47,7 @@ export default function EarningsPage() {
 
    const money = (minor: number) => formatMoney(minor, earnings?.currency ?? 'NGN');
    const totals = earnings?.totals;
-   const nothingYet = totals && totals.tickets + totals.passes + totals.refunds === 0;
+   const nothingYet = totals && totals.tickets + totals.passes + (totals.videos ?? 0) + totals.refunds === 0;
 
    return (
       <Box sx={{ minHeight: '100%' }}>
@@ -83,7 +83,11 @@ export default function EarningsPage() {
                      <Stat id="earn-refunded" label={t('creator.earn_refunded')} value={money(totals.refundedMinor)} />
                   </Box>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }} id="earn-counts">
-                     {t('creator.earn_counts', { tickets: totals.tickets, passes: totals.passes })}
+                     {t('creator.earn_counts', {
+                        tickets: totals.tickets,
+                        passes: totals.passes,
+                        videos: totals.videos ?? 0,
+                     })}
                   </Typography>
 
                   {nothingYet ? (
@@ -124,6 +128,37 @@ export default function EarningsPage() {
                            )}
                         </Box>
 
+                        {earnings.videos && earnings.videos.length > 0 && (
+                           <>
+                              <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                                 {t('creator.earn_by_video')}
+                              </Typography>
+                              <Box id="earn-videos" sx={{ mb: 4 }}>
+                                 {earnings.videos.map((row) => (
+                                    <Box
+                                       key={row.videoId}
+                                       className="earn-video"
+                                       sx={{
+                                          display: 'flex',
+                                          justifyContent: 'space-between',
+                                          gap: 2,
+                                          py: 1.25,
+                                          borderBottom: `1px solid ${brand.border}`,
+                                       }}
+                                    >
+                                       <Box sx={{ minWidth: 0 }}>
+                                          <b>{row.title}</b>
+                                          <Typography variant="body2" color="text.secondary">
+                                             {t('creator.earn_sales', { count: row.sales })}
+                                          </Typography>
+                                       </Box>
+                                       <b>{money(row.netMinor)}</b>
+                                    </Box>
+                                 ))}
+                              </Box>
+                           </>
+                        )}
+
                         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
                            {t('creator.earn_recent')}
                         </Typography>
@@ -142,7 +177,11 @@ export default function EarningsPage() {
                                  }}
                               >
                                  <Box sx={{ minWidth: 0 }}>
-                                    <b>{sale.kind === 'pass' ? t('creator.pass_title') : sale.sessionTitle}</b>
+                                    <b>
+                                       {sale.kind === 'pass'
+                                          ? t('creator.pass_title')
+                                          : sale.sessionTitle ?? t('videos.earn_videos')}
+                                    </b>
                                     {sale.refunded && (
                                        <Chip
                                           size="small"

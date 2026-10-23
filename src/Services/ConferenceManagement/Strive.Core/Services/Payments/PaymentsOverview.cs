@@ -12,7 +12,7 @@ namespace Strive.Core.Services.Payments
     /// <param name="CreatorsMinor">What belongs to the creators</param>
     /// <param name="Renewals">Passes that were renewed by themselves (part of <paramref name="Passes" />)</param>
     public record PaymentsPeriod(int Days, long GrossMinor, long PlatformMinor, long CreatorsMinor,
-        long RefundedMinor, int Tickets, int Passes, int Renewals, int Refunds);
+        long RefundedMinor, int Tickets, int Passes, int Renewals, int Refunds, int Videos = 0);
 
     /// <param name="Kind">ticket, pass or renewal</param>
     public record OrderRow(DateTimeOffset At, string Kind, string Status, string CreatorName, string? SessionTitle,
@@ -41,7 +41,7 @@ namespace Strive.Core.Services.Payments
             return new PaymentsPeriod(days, kept.Sum(x => x.AmountMinor), kept.Sum(Platform),
                 kept.Sum(x => x.AmountMinor - Platform(x)), refunded.Sum(x => x.AmountMinor),
                 kept.Count(x => x.Kind == OrderKind.Ticket), kept.Count(x => x.Kind == OrderKind.Pass),
-                kept.Count(x => x.IsRenewal), refunded.Count);
+                kept.Count(x => x.IsRenewal), refunded.Count, kept.Count(x => x.Kind == OrderKind.Video));
         }
 
         /// <summary>The creator of an order: its pass, or the first share of a ticket</summary>
@@ -49,10 +49,15 @@ namespace Strive.Core.Services.Payments
             order.Kind == OrderKind.Pass ? order.PassCreatorId : order.Shares.FirstOrDefault()?.CreatorId;
 
         public static OrderRow Row(TicketOrder order, IReadOnlyDictionary<string, string> creatorNames,
-            IReadOnlyDictionary<string, string> sessionTitles)
+            IReadOnlyDictionary<string, string> sessionTitles, IReadOnlyDictionary<string, string>? videoTitles = null)
         {
             var creatorId = CreatorOf(order);
-            var kind = order.Kind == OrderKind.Pass ? (order.IsRenewal ? "renewal" : "pass") : "ticket";
+            var kind = order.Kind switch
+            {
+                OrderKind.Pass => order.IsRenewal ? "renewal" : "pass",
+                OrderKind.Video => "video",
+                _ => "ticket",
+            };
             var problem = order.Status == OrderStatus.Failed
                 ? order.FailureReason ?? "failed"
                 : order.RefundFailure != null && order.Status == OrderStatus.Paid
@@ -61,7 +66,12 @@ namespace Strive.Core.Services.Payments
 
             return new OrderRow(order.PaidAt ?? order.CreatedAt, kind, order.Status.ToString().ToLowerInvariant(),
                 creatorId != null ? creatorNames.GetValueOrDefault(creatorId, "") : "",
-                order.Kind == OrderKind.Ticket ? sessionTitles.GetValueOrDefault(order.SessionId) : null,
+                order.Kind switch
+                {
+                    OrderKind.Ticket => sessionTitles.GetValueOrDefault(order.SessionId),
+                    OrderKind.Video => order.VideoId == null ? null : videoTitles?.GetValueOrDefault(order.VideoId),
+                    _ => null,
+                },
                 order.AmountMinor, EarningsReport.MaskEmail(order.Email), problem);
         }
 

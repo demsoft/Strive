@@ -119,11 +119,12 @@ export type PaymentsPeriod = {
    passes: number;
    renewals: number;
    refunds: number;
+   videos?: number;
 };
 
 export type OrderRow = {
    at: string;
-   kind: 'ticket' | 'pass' | 'renewal';
+   kind: 'ticket' | 'pass' | 'renewal' | 'video';
    status: string;
    creatorName: string;
    sessionTitle?: string | null;

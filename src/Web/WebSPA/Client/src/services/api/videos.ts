@@ -18,6 +18,8 @@ export type Video = {
    priceMinor: number;
    createdAt: string;
    isOwner: boolean;
+   /** it costs money and the person has not paid and has no pass: there is no playback link */
+   locked?: boolean;
    /** a temporary link to the cover picture */
    posterUrl?: string | null;
    /** a temporary link that plays the video (only when one video is asked for) */
@@ -40,8 +42,42 @@ export { MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS } from 'src/features/videos/limits';
 const base = () => `${appSettings.conferenceUrl.replace(/\/+$/, '')}/v1/videos`;
 const auth = (accessToken?: string) => (accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : {});
 
-export async function createVideo(title: string, description: string, sizeBytes: number): Promise<CreatedVideo> {
-   return (await Axios.post<CreatedVideo>(base(), { title, description: description || undefined, sizeBytes })).data;
+export async function createVideo(
+   title: string,
+   description: string,
+   sizeBytes: number,
+   priceMinor = 0,
+): Promise<CreatedVideo> {
+   return (
+      await Axios.post<CreatedVideo>(base(), { title, description: description || undefined, sizeBytes, priceMinor })
+   ).data;
+}
+
+/** Changes the title, the text or the price (a new price is for the next buyers). */
+export async function updateVideo(
+   videoId: string,
+   change: { title: string; description?: string | null; priceMinor: number },
+): Promise<Video> {
+   return (await Axios.put<Video>(`${base()}/${encodeURIComponent(videoId)}`, change)).data;
+}
+
+/** The videos the person bought. */
+export async function fetchPurchasedVideos(): Promise<Video[]> {
+   return (await Axios.get<Video[]>(`${base()}/purchased`)).data;
+}
+
+export async function startVideoCheckout(
+   videoId: string,
+   email: string,
+   accessToken: string,
+): Promise<import('./sessions').CheckoutResult> {
+   return (
+      await Axios.post<import('./sessions').CheckoutResult>(
+         `${base()}/${encodeURIComponent(videoId)}/checkout`,
+         { email },
+         auth(accessToken),
+      )
+   ).data;
 }
 
 /** Says the file arrived at the converter: the server checks it and conversion starts. */

@@ -56,7 +56,12 @@ function Period({
             />
          </Box>
          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            {t('admin.pay_counts', { tickets: period.tickets, passes: period.passes, renewals: period.renewals })}
+            {t('admin.pay_counts', {
+               tickets: period.tickets,
+               passes: period.passes,
+               renewals: period.renewals,
+               videos: period.videos ?? 0,
+            })}
          </Typography>
       </Box>
    );

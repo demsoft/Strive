@@ -8,10 +8,25 @@ const api = vi.hoisted(() => ({
    fetchVideo: vi.fn(),
    videoLink: (id: string) => `https://gbedu.test/v/${id}`,
 }));
-const state = vi.hoisted(() => ({ user: undefined as undefined | { access_token: string }, isLoading: false }));
+const state = vi.hoisted(() => ({
+   user: undefined as undefined | { access_token: string; profile?: Record<string, unknown> },
+   isLoading: false,
+   search: '',
+   signinRedirect: vi.fn(),
+}));
 
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
-vi.mock('react-oidc-context', () => ({ useAuth: () => ({ user: state.user, isLoading: state.isLoading }) }));
+vi.mock('react-i18next', () => ({
+   useTranslation: () => ({
+      t: (key: string, values?: Record<string, unknown>) => (values ? `${key} ${JSON.stringify(values)}` : key),
+   }),
+}));
+vi.mock('react-oidc-context', () => ({
+   useAuth: () => ({ user: state.user, isLoading: state.isLoading, signinRedirect: state.signinRedirect }),
+}));
+vi.mock('src/services/api/sessions', () => ({ fetchPayment: (...args: unknown[]) => payments.fetchPayment(...args) }));
+vi.mock('src/features/creator/errors', () => ({
+   requestErrorMessage: (e: unknown) => String((e as Error).message ?? e),
+}));
 vi.mock('react-router-dom', () => ({
    Link: React.forwardRef<HTMLAnchorElement, { to: string; children: React.ReactNode; id?: string }>(
       ({ to, children, id }, ref) => (
@@ -21,6 +36,7 @@ vi.mock('react-router-dom', () => ({
       ),
    ),
    useParams: () => ({ videoId: 'v1' }),
+   useLocation: () => ({ pathname: '/v/v1', search: state.search }),
 }));
 vi.mock('src/components/BrandLogo', () => ({ default: () => null }));
 vi.mock('src/services/api/videos', () => api);
@@ -41,6 +57,7 @@ const video = (over: Record<string, unknown> = {}) => ({
    ...over,
 });
 
+const payments = vi.hoisted(() => ({ fetchPayment: vi.fn() }));
 const settle = () => act(async () => {});
 
 let container: HTMLDivElement;
@@ -49,6 +66,7 @@ beforeEach(() => {
    document.body.appendChild(container);
    state.user = undefined;
    state.isLoading = false;
+   state.search = '';
 });
 afterEach(() => {
    container.remove();
@@ -112,4 +130,60 @@ test('the share button copies the link of the video', async () => {
    await act(async () => (document.querySelector('#watch-share') as HTMLElement).click());
 
    expect(writeText).toHaveBeenCalledWith('https://gbedu.test/v/v1');
+});
+
+const locked = (over: Record<string, unknown> = {}) =>
+   video({
+      priceMinor: 300000,
+      locked: true,
+      playbackUrl: null,
+      creator: { creatorId: 'c1', displayName: 'Ada Lovelace', slug: 'ada', passPriceMinor: 2000000, currency: 'NGN' },
+      ...over,
+   });
+
+test('a video that costs money is not played: the lock, the price and the way to buy are shown', async () => {
+   state.user = { access_token: 'tok', profile: { email: 'fan@example.com' } };
+   api.fetchVideo.mockResolvedValue(locked());
+   await render();
+
+   expect(document.querySelector('#video-player')).toBeNull();
+   expect(document.querySelector('#video-locked')).not.toBeNull();
+   expect(document.querySelector('#video-pay')?.textContent).toContain('₦3,000');
+   expect(document.querySelector('#video-pass-hint')?.textContent).toContain('₦20,000');
+});
+
+test('signed out: the buttons lead to the sign in and come back to this page', async () => {
+   api.fetchVideo.mockResolvedValue(locked());
+   await render();
+
+   await act(async () => (document.querySelector('#video-sign-in') as HTMLElement).click());
+   expect(state.signinRedirect).toHaveBeenCalledWith({ state: { url: '/v/v1' } });
+   await act(async () => (document.querySelector('#video-sign-up') as HTMLElement).click());
+   expect(state.signinRedirect).toHaveBeenLastCalledWith({ state: { url: '/v/v1' }, prompt: 'create' });
+});
+
+test('back from the payment page: when it was paid the video is loaded again and plays', async () => {
+   state.user = { access_token: 'tok', profile: { email: 'fan@example.com' } };
+   state.search = '?reference=ref1&trxref=ref1';
+   api.fetchVideo.mockResolvedValueOnce(locked()).mockResolvedValue(video());
+   payments.fetchPayment.mockResolvedValue({ status: 'paid', kind: 'video', videoId: 'v1' });
+   await render();
+   await settle();
+
+   expect(payments.fetchPayment).toHaveBeenCalledWith('ref1', 'tok');
+   expect(api.fetchVideo).toHaveBeenCalledTimes(2);
+   expect(document.querySelector('#video-player')?.getAttribute('src')).toBe('https://r2.test/video.mp4?sig=1');
+   expect(document.querySelector('#video-locked')).toBeNull();
+});
+
+test('back from the payment page: a failed payment is said clearly and the video stays locked', async () => {
+   state.user = { access_token: 'tok', profile: { email: 'fan@example.com' } };
+   state.search = '?reference=ref2';
+   api.fetchVideo.mockResolvedValue(locked());
+   payments.fetchPayment.mockResolvedValue({ status: 'failed', kind: 'video' });
+   await render();
+   await settle();
+
+   expect(document.querySelector('#video-payment-failed')).not.toBeNull();
+   expect(document.querySelector('#video-locked')).not.toBeNull();
 });

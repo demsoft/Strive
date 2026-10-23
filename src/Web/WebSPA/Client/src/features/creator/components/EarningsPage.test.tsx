@@ -127,3 +127,42 @@ test('a server error is shown instead of zeros', async () => {
    expect(document.querySelector('#earnings-page')?.textContent).toContain('There is no creator profile.');
    expect(document.querySelector('#earn-net')).toBeNull();
 });
+
+test('video sales are listed on their own, and the latest sales name the video', async () => {
+   api.fetchMyEarnings.mockResolvedValue(
+      earnings({
+         totals: {
+            grossMinor: 600000,
+            platformMinor: 60000,
+            netMinor: 540000,
+            refundedMinor: 0,
+            tickets: 0,
+            passes: 0,
+            refunds: 0,
+            videos: 2,
+         },
+         sessions: [],
+         videos: [{ videoId: 'v1', title: 'Piano lesson', sales: 2, grossMinor: 600000, netMinor: 540000 }],
+         recent: [
+            {
+               at: '2026-10-01T12:00:00Z',
+               kind: 'video',
+               sessionTitle: 'Piano lesson',
+               amountMinor: 300000,
+               netMinor: 270000,
+               buyer: 'f**@example.com',
+               refunded: false,
+            },
+         ],
+      }),
+   );
+   await act(async () => createRoot(container).render(<EarningsPage />));
+   await settle();
+
+   expect(document.querySelector('#earn-counts')?.textContent).toContain('"videos":2');
+   const rows = document.querySelectorAll('.earn-video');
+   expect(rows).toHaveLength(1);
+   expect(rows[0].textContent).toContain('Piano lesson');
+   expect(rows[0].textContent).toContain('₦5,400');
+   expect(document.querySelector('.earn-sale')?.textContent).toContain('Piano lesson');
+});

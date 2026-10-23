@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Strive.Core.Services.Payments.UseCases;
 
 namespace Strive.Core.Services.Videos
 {
@@ -94,6 +95,10 @@ namespace Strive.Core.Services.Videos
         public static readonly TimeSpan ConversionGivenUpAfter = TimeSpan.FromHours(2);
 
         public const int MaxCopyAttempts = 5;
+
+        /// <summary>The price is nothing (free), or between the smallest and the biggest price of a ticket</summary>
+        public static bool IsValidPrice(long priceMinor) =>
+            priceMinor == 0 || priceMinor is >= SessionRules.MinPriceMinor and <= SessionRules.MaxPriceMinor;
 
         public static string VideoKey(string videoId) => $"videos/{videoId}/video.mp4";
 

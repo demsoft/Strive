@@ -1,9 +1,11 @@
 import { Box, Typography } from '@mui/material';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { creatorPhotoUrl } from 'src/features/creator/photoUrl';
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
+import { formatMoney } from 'src/features/sessions/money';
 import { Video } from 'src/services/api/videos';
 import { brand } from 'src/theme';
 import { formatDuration } from '../videoFile';
@@ -50,8 +52,30 @@ export default function VideoTile({ video }: { video: Video }) {
                   background: 'linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.55) 100%)',
                }}
             >
-               <PlayArrowRoundedIcon sx={{ fontSize: 56, color: '#fff', opacity: 0.9 }} />
+               {video.locked ? (
+                  <LockOutlinedIcon className="video-lock" sx={{ fontSize: 48, color: '#fff', opacity: 0.9 }} />
+               ) : (
+                  <PlayArrowRoundedIcon sx={{ fontSize: 56, color: '#fff', opacity: 0.9 }} />
+               )}
             </Box>
+            {video.priceMinor > 0 && !video.isOwner && (
+               <Box
+                  className="video-price"
+                  sx={{
+                     position: 'absolute',
+                     left: 8,
+                     bottom: 8,
+                     px: 0.75,
+                     borderRadius: '6px',
+                     background: video.locked ? brand.gradient : 'rgba(0,0,0,0.7)',
+                     color: '#fff',
+                     fontSize: 12,
+                     fontWeight: 800,
+                  }}
+               >
+                  {formatMoney(video.priceMinor, 'NGN')}
+               </Box>
+            )}
             {video.durationSeconds ? (
                <Box
                   className="video-duration"

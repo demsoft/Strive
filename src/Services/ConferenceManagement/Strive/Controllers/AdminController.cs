@@ -29,10 +29,12 @@ namespace Strive.Controllers
         private readonly ISessionRepo _sessions;
         private readonly ICreatorRepo _creators;
         private readonly IPassSubscriptionRepo _subscriptions;
+        private readonly Strive.Core.Services.Videos.IVideoRepo _videoRepo;
         private readonly PaymentsOptions _payments;
 
         public AdminController(AdminOverviewService overview, IAdminMetricsStore history, IOrderRepo orders,
             ISessionRepo sessions, ICreatorRepo creators, IPassSubscriptionRepo subscriptions,
+            Strive.Core.Services.Videos.IVideoRepo videoRepo,
             IOptions<PaymentsOptions> payments)
         {
             _overview = overview;
@@ -41,6 +43,7 @@ namespace Strive.Controllers
             _sessions = sessions;
             _creators = creators;
             _subscriptions = subscriptions;
+            _videoRepo = videoRepo;
             _payments = payments.Value;
         }
 
@@ -64,11 +67,18 @@ namespace Strive.Controllers
                 if (session != null) titles[id] = session.Title;
             }
 
+            var videoTitles = new Dictionary<string, string>();
+            foreach (var id in all.Where(x => x.Kind == OrderKind.Video && x.VideoId != null).Select(x => x.VideoId!).Distinct())
+            {
+                var video = await _videoRepo.FindById(id);
+                if (video != null) videoTitles[id] = video.Title;
+            }
+
             Response.Headers.CacheControl = "no-store";
             return new AdminPaymentsDto(_payments.Currency, _payments.Enabled, _payments.AutoRenewEnabled,
                 await _creators.Count(), await _subscriptions.CountActive(),
                 PaymentsOverview.Period(monthOrders, now, 7), PaymentsOverview.Period(monthOrders, now, 30),
-                recent.Select(x => PaymentsOverview.Row(x, names, titles)).ToList(),
+                recent.Select(x => PaymentsOverview.Row(x, names, titles, videoTitles)).ToList(),
                 refundProblems.Select(x => PaymentsOverview.Refund(x, names, titles)).ToList(),
                 subscriptionProblems.Select(x => PaymentsOverview.Subscription(x, names)).ToList());
         }

@@ -35,17 +35,20 @@ namespace Strive.Controllers
         private readonly IOpenConferenceRepository _openConferences;
         private readonly IVideoRepo _videoRepo;
         private readonly VideoPresenter _videoPresenter;
+        private readonly VideoAccess _videoAccess;
         private readonly PaymentsOptions _paymentsOptions;
         private readonly IConfiguration _configuration;
 
         public SessionsController(IMediator mediator, ISessionRepo sessions, ICreatorRepo creators,
             IEntitlementRepo entitlements, IOrderRepo orders, IPassRepo passes, IPassSubscriptionRepo subscriptions,
             IOpenConferenceRepository openConferences, IVideoRepo videoRepo, VideoPresenter videoPresenter,
+            VideoAccess videoAccess,
             Microsoft.Extensions.Options.IOptions<PaymentsOptions> paymentsOptions, IConfiguration configuration)
         {
             _openConferences = openConferences;
             _videoRepo = videoRepo;
             _videoPresenter = videoPresenter;
+            _videoAccess = videoAccess;
             _passes = passes;
             _subscriptions = subscriptions;
             _paymentsOptions = paymentsOptions.Value;
@@ -118,9 +121,17 @@ namespace Strive.Controllers
                 if (session != null) titles[sessionId] = session.Title;
             }
 
-            var report = EarningsReport.Build(creator.CreatorId, orders, titles);
+            var videoTitles = new Dictionary<string, string>();
+            foreach (var id in orders.Where(x => x.Kind == OrderKind.Video && x.VideoId != null).Select(x => x.VideoId!)
+                         .Distinct())
+            {
+                var video = await _videoRepo.FindById(id);
+                if (video != null) videoTitles[id] = video.Title;
+            }
+
+            var report = EarningsReport.Build(creator.CreatorId, orders, titles, videoTitles);
             Response.Headers.CacheControl = "no-store";
-            return new EarningsDto(creator.Currency, report.Totals, report.Sessions, report.Recent);
+            return new EarningsDto(creator.Currency, report.Totals, report.Sessions, report.Recent, report.Videos);
         }
 
         // GET v1/sessions/discover
@@ -178,8 +189,11 @@ namespace Strive.Controllers
 
             Response.Headers.CacheControl = "no-store";
             var publicCreator = PublicCreatorDto.From(creator);
-            var videos = (await _videoRepo.FindReadyOfCreator(creator.CreatorId, 24))
-                .Select(x => _videoPresenter.ToDto(x, publicCreator, UserId != null && x.CreatorUserId == UserId, false))
+            var readyVideos = await _videoRepo.FindReadyOfCreator(creator.CreatorId, 24);
+            var unlocked = await _videoAccess.Unlocked(readyVideos.ToList(), UserId);
+            var videos = readyVideos
+                .Select(x => _videoPresenter.ToDto(x, publicCreator, UserId != null && x.CreatorUserId == UserId,
+                    unlocked.Contains(x.VideoId), false))
                 .ToArray();
             return new CreatorPageDto(publicCreator, list.ToArray(), passUntil != null, passUntil,
                 _paymentsOptions.AutoRenewEnabled, renewing?.NextChargeAt, videos);
@@ -335,26 +349,6 @@ namespace Strive.Controllers
             return tickets.ToArray();
         }
 
-        /// <summary>
-        ///     Where the provider sends the person back after paying: the page of the session on the address the person
-        ///     came from (one installation has several addresses), if that is one of ours.
-        /// </summary>
-        private string CallbackUrl(string kind, string id)
-        {
-            var allowed = (_configuration["Cors:AllowedOrigins"] ?? "")
-                .Split(new[] {',', ';', ' '}, StringSplitOptions.RemoveEmptyEntries)
-                .Concat((_configuration["App:ExtraHosts"] ?? "")
-                    .Split(new[] {',', ';', ' '}, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(x => x.StartsWith("http") ? x : "https://" + x))
-                .Select(x => x.TrimEnd('/'))
-                .ToList();
-
-            var origin = Request.Headers.Origin.ToString().TrimEnd('/');
-            var home = allowed.Contains(origin, StringComparer.OrdinalIgnoreCase)
-                ? origin
-                : allowed.FirstOrDefault() ?? _configuration["App:FrontendUrl"]?.TrimEnd('/') ?? "";
-
-            return $"{home}/{kind}/{Uri.EscapeDataString(id)}";
-        }
+        private string CallbackUrl(string kind, string id) => ReturnUrls.For(Request, _configuration, kind, id);
     }
 }

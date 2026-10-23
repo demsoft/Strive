@@ -1,15 +1,17 @@
 import { Alert, AppBar, Box, Button, CircularProgress, Container, Toolbar, Typography } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { DateTime } from 'luxon';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useTranslation } from 'react-i18next';
-import { Link as RouterLink, useParams } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useParams } from 'react-router-dom';
 import BrandLogo from 'src/components/BrandLogo';
 import { creatorPhotoUrl } from 'src/features/creator/photoUrl';
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import * as api from 'src/services/api/videos';
 import { Video } from 'src/services/api/videos';
+import usePaymentReturn from 'src/features/payments/usePaymentReturn';
+import VideoBuyBox from './VideoBuyBox';
 import { brand } from 'src/theme';
 
 /** The page of one video, the one that is shared: it plays, says who made it and leads to the creator. */
@@ -18,15 +20,24 @@ export default function WatchVideoPage() {
    const { videoId } = useParams<{ videoId: string }>();
    const auth = useAuth();
    const token = auth.user?.access_token;
+   const location = useLocation();
    const [video, setVideo] = useState<Video | null>(null);
    const [notFound, setNotFound] = useState(false);
    const [copied, setCopied] = useState(false);
 
+   const load = useCallback(
+      () => api.fetchVideo(videoId, token).then(setVideo, () => setNotFound(true)),
+      [videoId, token],
+   );
+
    useEffect(() => {
       // wait until it is known whether the person is signed in: the answer depends on it
       if (auth.isLoading) return;
-      api.fetchVideo(videoId, token).then(setVideo, () => setNotFound(true));
-   }, [videoId, token, auth.isLoading]);
+      load();
+   }, [auth.isLoading, load]);
+
+   // back from the payment page: when it was paid the video is loaded again, and now it plays
+   const payment = usePaymentReturn(new URLSearchParams(location.search).get('reference'), token, load);
 
    const share = async () => {
       const link = api.videoLink(videoId);
@@ -64,7 +75,16 @@ export default function WatchVideoPage() {
 
             {video && (
                <>
-                  {video.playbackUrl ? (
+                  {video.locked ? (
+                     <VideoBuyBox
+                        video={video}
+                        accessToken={token}
+                        knownEmail={auth.user?.profile?.email as string | undefined}
+                        payment={payment}
+                        onSignIn={() => auth.signinRedirect({ state: { url: location.pathname } })}
+                        onSignUp={() => auth.signinRedirect({ state: { url: location.pathname }, prompt: 'create' })}
+                     />
+                  ) : video.playbackUrl ? (
                      <video
                         id="video-player"
                         src={video.playbackUrl}
