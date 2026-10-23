@@ -8,10 +8,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Strive.Core.Services.ConferenceControl.Gateways;
 using Strive.Core.Services.Payments;
 using Strive.Core.Services.Payments.Gateways;
 using Strive.Core.Services.Payments.Requests;
 using Strive.Core.Services.Payments.Sessions;
+using Strive.Core.Services.Payments.UseCases;
 using Strive.Extensions;
 using Strive.Models.Response;
 
@@ -28,13 +30,16 @@ namespace Strive.Controllers
         private readonly IOrderRepo _orders;
         private readonly IPassRepo _passes;
         private readonly IPassSubscriptionRepo _subscriptions;
+        private readonly IOpenConferenceRepository _openConferences;
         private readonly PaymentsOptions _paymentsOptions;
         private readonly IConfiguration _configuration;
 
         public SessionsController(IMediator mediator, ISessionRepo sessions, ICreatorRepo creators,
             IEntitlementRepo entitlements, IOrderRepo orders, IPassRepo passes, IPassSubscriptionRepo subscriptions,
+            IOpenConferenceRepository openConferences,
             Microsoft.Extensions.Options.IOptions<PaymentsOptions> paymentsOptions, IConfiguration configuration)
         {
+            _openConferences = openConferences;
             _passes = passes;
             _subscriptions = subscriptions;
             _paymentsOptions = paymentsOptions.Value;
@@ -45,8 +50,6 @@ namespace Strive.Controllers
             _entitlements = entitlements;
             _configuration = configuration;
         }
-
-        private const int SessionOverAfterHours = 8;
 
         private string? UserId => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -59,7 +62,7 @@ namespace Strive.Controllers
             if (UserId == null) return Forbid();
 
             var result = await _mediator.Send(new CreateSessionRequest(UserId, dto.Title, dto.Description,
-                dto.Category, dto.PriceMinor, dto.StartsAt));
+                dto.Category, dto.PriceMinor, dto.StartsAt, dto.DurationMinutes));
             if (!result.Success) return result.ToActionResult();
 
             return SessionDto.From(result.Response!);
@@ -120,8 +123,9 @@ namespace Strive.Controllers
         [AllowAnonymous]
         public async Task<ActionResult<DiscoverSessionDto[]>> Discover()
         {
-            // sessions have no end time yet: one that started this long ago is over
-            var sessions = await _sessions.FindForSale(DateTimeOffset.UtcNow.AddHours(-SessionOverAfterHours), 60);
+            // nothing lasts longer than the longest session: what started earlier than that is over
+            var sessions = await _sessions.FindForSale(
+                DateTimeOffset.UtcNow.AddMinutes(-SessionRules.MaxDurationMinutes), 60);
 
             var result = new List<DiscoverSessionDto>();
             foreach (var session in sessions.OrderBy(x => x.StartsAt ?? DateTimeOffset.MaxValue))
@@ -129,7 +133,8 @@ namespace Strive.Controllers
                 var creator = await _creators.FindById(session.CreatorId);
                 if (creator == null) continue;
 
-                result.Add(await ToDiscoverDto(session, creator));
+                var dto = await ToDiscoverDto(session, creator);
+                if (dto != null) result.Add(dto);
             }
 
             // the answer depends on who asks
@@ -150,10 +155,13 @@ namespace Strive.Controllers
             if (creator == null) return PaymentsError.SessionNotFound.ToActionResult();
 
             var sessions = await _sessions.FindForSaleOfCreator(creator.CreatorId,
-                DateTimeOffset.UtcNow.AddHours(-SessionOverAfterHours), 60);
+                DateTimeOffset.UtcNow.AddMinutes(-SessionRules.MaxDurationMinutes), 60);
             var list = new List<DiscoverSessionDto>();
             foreach (var session in sessions.OrderBy(x => x.StartsAt ?? DateTimeOffset.MaxValue))
-                list.Add(await ToDiscoverDto(session, creator));
+            {
+                var dto = await ToDiscoverDto(session, creator);
+                if (dto != null) list.Add(dto);
+            }
 
             var passUntil = UserId == null
                 ? null
@@ -167,11 +175,21 @@ namespace Strive.Controllers
                 _paymentsOptions.AutoRenewEnabled, renewing?.NextChargeAt);
         }
 
-        private async Task<DiscoverSessionDto> ToDiscoverDto(PaidSession session, CreatorProfile creator) =>
-            new(session.SessionId, session.Title, session.Description, session.Category, session.PriceMinor,
-                session.Currency, session.StartsAt, creator.DisplayName,
+        /// <summary>The session in a list; null if it is over (it was meant to end and its room is not open)</summary>
+        private async Task<DiscoverSessionDto?> ToDiscoverDto(PaidSession session, CreatorProfile creator)
+        {
+            var live = await IsLive(session);
+            if (!live && session.EndsAt < DateTimeOffset.UtcNow) return null;
+
+            return new DiscoverSessionDto(session.SessionId, session.Title, session.Description, session.Category,
+                session.PriceMinor, session.Currency, session.StartsAt, creator.DisplayName,
                 UserId != null && session.CreatorUserId == UserId,
-                UserId != null && await CanJoin(session));
+                UserId != null && await CanJoin(session), session.DurationMinutes, live);
+        }
+
+        /// <summary>Whether the host has opened the room and not closed it again</summary>
+        private async Task<bool> IsLive(PaidSession session) =>
+            session.Status == SessionStatus.Published && await _openConferences.IsOpen(session.ConferenceId);
 
         /// <summary>A ticket for the session, or a running pass of its host</summary>
         private async Task<bool> CanJoin(PaidSession session) =>
@@ -198,7 +216,7 @@ namespace Strive.Controllers
             return new PublicSessionDto(session.SessionId, session.Title, session.Description, session.Category,
                 session.PriceMinor, session.Currency, session.Status, session.StartsAt,
                 PublicCreatorDto.From(creator), isHost, hasTicket,
-                isHost || hasTicket ? session.ConferenceId : null);
+                isHost || hasTicket ? session.ConferenceId : null, session.DurationMinutes, await IsLive(session));
         }
 
         // POST v1/sessions/{sessionId}/checkout
@@ -298,7 +316,7 @@ namespace Strive.Controllers
                 var order = await _orders.FindById(entitlement.OrderId);
                 tickets.Add(new TicketDto(session.SessionId, session.ConferenceId, session.Title, session.Category,
                     session.StartsAt, creator?.DisplayName ?? "", entitlement.GrantedAt, session.Status,
-                    order?.Status == OrderStatus.Refunded));
+                    order?.Status == OrderStatus.Refunded, session.DurationMinutes, await IsLive(session)));
             }
 
             Response.Headers.CacheControl = "no-store";

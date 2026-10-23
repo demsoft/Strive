@@ -89,7 +89,12 @@ test('publishing needs a title and a price in range, and sends the price in kobo
    await settle();
 
    expect(api.createSession).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Piano for beginners', category: 'teach', priceMinor: 500000 }),
+      expect.objectContaining({
+         title: 'Piano for beginners',
+         category: 'teach',
+         priceMinor: 500000,
+         durationMinutes: 60,
+      }),
    );
    expect(document.querySelector('#session-created')).not.toBeNull();
 });
@@ -274,4 +279,39 @@ test('stopping is not done when the person does not confirm; a pass without rene
    expect(document.querySelectorAll('.stop-renewing')).toHaveLength(1);
    await act(async () => (document.querySelector('.stop-renewing') as HTMLElement).click());
    expect(api.cancelPassSubscription).not.toHaveBeenCalled();
+});
+
+test('a ticket of a session that is live shows it, and a ticket of one that is not does not', async () => {
+   api.fetchMyTickets.mockResolvedValue([
+      {
+         sessionId: 'a',
+         conferenceId: 'r1',
+         title: 'Open',
+         category: 'music',
+         creatorName: 'Ada',
+         grantedAt: '',
+         status: 'published',
+         refunded: false,
+         durationMinutes: 60,
+         isLive: true,
+      },
+      {
+         sessionId: 'b',
+         conferenceId: 'r2',
+         title: 'Closed',
+         category: 'music',
+         creatorName: 'Ada',
+         grantedAt: '',
+         status: 'published',
+         refunded: false,
+         durationMinutes: 60,
+         isLive: false,
+      },
+   ]);
+   await act(async () => createRoot(container).render(<MyTicketsPage />));
+   await settle();
+
+   const cards = document.querySelectorAll('.my-ticket');
+   expect(cards[0].querySelector('.ticket-live')).not.toBeNull();
+   expect(cards[1].querySelector('.ticket-live')).toBeNull();
 });

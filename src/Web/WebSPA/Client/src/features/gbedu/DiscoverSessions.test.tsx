@@ -23,7 +23,7 @@ vi.mock('react-router-dom', () => ({
 }));
 vi.mock('src/services/api/sessions', () => api);
 
-import DiscoverSessions, { filterSessions, isLiveNow } from './DiscoverSessions';
+import DiscoverSessions, { filterSessions } from './DiscoverSessions';
 
 const session = (over: Record<string, unknown> = {}) => ({
    sessionId: 'abcd2345',
@@ -35,6 +35,8 @@ const session = (over: Record<string, unknown> = {}) => ({
    creatorName: 'Ada',
    isHost: false,
    hasTicket: false,
+   durationMinutes: 60,
+   isLive: false,
    ...over,
 });
 
@@ -49,25 +51,20 @@ afterEach(() => {
    vi.clearAllMocks();
 });
 
-test('isLiveNow: started sessions are live, coming and undated ones are not', () => {
-   const now = DateTime.fromISO('2026-05-01T12:00:00Z');
-   expect(isLiveNow(session({ startsAt: '2026-05-01T11:00:00Z' }), now)).toBe(true);
-   expect(isLiveNow(session({ startsAt: '2026-05-01T13:00:00Z' }), now)).toBe(false);
-   expect(isLiveNow(session(), now)).toBe(false);
-});
-
 test('every session links to its page, live ones first', async () => {
    const past = DateTime.now().minus({ hours: 1 }).toISO();
    const future = DateTime.now().plus({ days: 1 }).toISO();
    api.fetchDiscover.mockResolvedValue([
       session({ sessionId: 'soon0001', title: 'Coming up', startsAt: future }),
-      session({ sessionId: 'live0001', title: 'Happening', startsAt: past }),
+      // the start time has passed but the host has not opened the room: not live
+      session({ sessionId: 'late0001', title: 'Not open yet', startsAt: past }),
+      session({ sessionId: 'live0001', title: 'Happening', startsAt: past, isLive: true }),
    ]);
 
    await act(async () => createRoot(container).render(<DiscoverSessions />));
 
    const tiles = [...document.querySelectorAll('.discover-session')];
-   expect(tiles.map((x) => x.getAttribute('href'))).toEqual(['/s/live0001', '/s/soon0001']);
+   expect(tiles.map((x) => x.getAttribute('href'))).toEqual(['/s/live0001', '/s/late0001', '/s/soon0001']);
    expect(document.querySelectorAll('.discover-live')).toHaveLength(1);
 });
 

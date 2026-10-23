@@ -214,6 +214,15 @@ export default function SessionPage() {
                         >
                            {session.title}
                         </Typography>
+                        {session.isLive && (
+                           <Chip
+                              size="small"
+                              color="error"
+                              label={t('sessions.live_now')}
+                              id="session-live"
+                              sx={{ mb: 1 }}
+                           />
+                        )}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, my: 2 }} id="session-host">
                            <HostAvatar
                               name={session.creator.displayName}

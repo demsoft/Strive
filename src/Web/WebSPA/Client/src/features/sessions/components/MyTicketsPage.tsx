@@ -11,17 +11,18 @@ import { Pass, Ticket } from 'src/services/api/sessions';
 import { brand } from 'src/theme';
 import TicketCard from './TicketCard';
 
-/** A session that started more than this long ago is over (sessions have no end time yet). */
-const SESSION_OVER_AFTER_HOURS = 8;
+/** A session may run over its time: it is over this long after it was meant to end (unless the room is still open). */
+const GRACE_MINUTES = 60;
 
-/** Upcoming: not called off and not started long ago. Past: everything else. */
+/** Upcoming: not called off and not over. Past: everything else. A session whose room is open is never past. */
 export function splitTickets(tickets: Ticket[], now = DateTime.now()) {
    const upcoming: Ticket[] = [];
    const past: Ticket[] = [];
    for (const ticket of tickets) {
-      const over =
-         ticket.status === 'cancelled' ||
-         (ticket.startsAt != null && DateTime.fromISO(ticket.startsAt).plus({ hours: SESSION_OVER_AFTER_HOURS }) < now);
+      const endsAt = ticket.startsAt
+         ? DateTime.fromISO(ticket.startsAt).plus({ minutes: (ticket.durationMinutes ?? 60) + GRACE_MINUTES })
+         : null;
+      const over = ticket.status === 'cancelled' || (!ticket.isLive && endsAt !== null && endsAt < now);
       (over ? past : upcoming).push(ticket);
    }
 

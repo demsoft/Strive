@@ -76,6 +76,9 @@ export default function TicketCard({ ticket, onJoin, past }: Props) {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                <CategoryBadge category={ticket.category} />
                {cancelled && <Chip size="small" color="warning" label={t('sessions.cancelled_chip')} />}
+               {ticket.isLive && !cancelled && (
+                  <Chip size="small" color="error" label={t('sessions.live_now')} className="ticket-live" />
+               )}
                {ticket.refunded && (
                   <Chip size="small" color="success" label={t('sessions.refunded_chip')} className="ticket-refunded" />
                )}

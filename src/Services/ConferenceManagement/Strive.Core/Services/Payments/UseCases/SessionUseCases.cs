@@ -28,6 +28,10 @@ namespace Strive.Core.Services.Payments.UseCases
         /// <summary>₦1,000,000</summary>
         public const long MaxPriceMinor = 100_000_000;
 
+        public const int MinDurationMinutes = 15;
+        public const int MaxDurationMinutes = 480;
+        public const int DefaultDurationMinutes = 60;
+
         public const int MinTitleLength = 3;
         public const int MaxTitleLength = 100;
         public const int MaxDescriptionLength = 2000;
@@ -93,6 +97,11 @@ namespace Strive.Core.Services.Payments.UseCases
                 return PaymentsError.InvalidSession(
                     $"The price must be between {SessionRules.MinPriceMinor / 100} and {SessionRules.MaxPriceMinor / 100} {creator.Currency}.");
 
+            var duration = request.DurationMinutes ?? SessionRules.DefaultDurationMinutes;
+            if (duration is < SessionRules.MinDurationMinutes or > SessionRules.MaxDurationMinutes)
+                return PaymentsError.InvalidSession(
+                    $"A session lasts {SessionRules.MinDurationMinutes} to {SessionRules.MaxDurationMinutes} minutes.");
+
             // the room of the session: the creator is its moderator
             var data = new ConferenceData
             {
@@ -119,6 +128,7 @@ namespace Strive.Core.Services.Payments.UseCases
                 Description = description,
                 Category = request.Category,
                 StartsAt = request.StartsAt,
+                DurationMinutes = duration,
                 Shares = new[] {new RevenueShare(creator.CreatorId, creator.ProviderSubaccountCode!, 100)}.ToList(),
             };
             await _sessions.Create(session);
