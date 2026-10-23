@@ -170,6 +170,11 @@ namespace Strive.Infrastructure.Data.Repos
                                        (x.Status == OrderStatus.Paid || x.Status == OrderStatus.Refunded))
                 .ToListAsync();
 
+        public async Task<IReadOnlyList<TicketOrder>> FindPaidOfVideo(string videoId) =>
+            await Collection.Find(x => x.Kind == OrderKind.Video && x.VideoId == videoId &&
+                                       (x.Status == OrderStatus.Paid || x.Status == OrderStatus.Refunded))
+                .ToListAsync();
+
         public async Task<bool> TryMarkRefunded(string reference, DateTimeOffset refundedAt, string? refundId)
         {
             var result = await Collection.UpdateOneAsync(

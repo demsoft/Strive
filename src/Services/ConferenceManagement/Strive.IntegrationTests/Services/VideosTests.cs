@@ -1080,7 +1080,8 @@ namespace Strive.IntegrationTests.Services
             var remove = await AdminApi().PostAsync($"/v1/admin/videos/{id}/remove",
                 new JsonNetContent(new ModerateVideoDto("  Not your own work.  ")));
 
-            Assert.Equal(HttpStatusCode.NoContent, remove.StatusCode);
+            remove.EnsureSuccessStatusCode();
+            Assert.Equal(0, (await Read<RemovedVideoDto>(remove)).Refunded);
             Assert.DoesNotContain($"videos/{id}/video.mp4", Storage.Objects.Keys);
             Assert.DoesNotContain($"videos/{id}/poster.jpg", Storage.Objects.Keys);
             Assert.Contains(id, Converter.Deleted);
@@ -1106,6 +1107,77 @@ namespace Strive.IntegrationTests.Services
             Assert.NotNull(await Videos.FindById(id)); // the record stays: the creator is told
             var keep = await AdminApi().PostAsync($"/v1/admin/videos/{id}/keep", null);
             Assert.Equal(HttpStatusCode.BadRequest, keep.StatusCode);
+        }
+
+        private Task<HttpResponseMessage> AdminRemove(string id) =>
+            AdminApi().PostAsync($"/v1/admin/videos/{id}/remove", new JsonNetContent(new ModerateVideoDto("Removed")));
+
+        [Fact]
+        public async Task Admin_Remove_GivesEveryBuyerTheirMoneyBack()
+        {
+            var (_, id) = await PaidVideo();
+            var buyer1 = Factory.CreateUser("buyer1", false);
+            var buyer2 = Factory.CreateUser("buyer2", false);
+            var first = await PayFor(buyer1, id);
+            var second = await PayFor(buyer2, id);
+            Assert.Equal("paid", first.Status);
+            Assert.Equal("paid", second.Status);
+
+            var removed = await Read<RemovedVideoDto>(await AdminRemove(id));
+
+            Assert.Equal(2, removed.Refunded);
+            Assert.Equal(0, removed.RefundsFailed);
+            var refunded = Provider.Refunds.ToArray();
+            Assert.Contains((first.Reference, VideoPrice), refunded);
+            Assert.Contains((second.Reference, VideoPrice), refunded);
+        }
+
+        [Fact]
+        public async Task Admin_Remove_ARefundThatFailsIsReported_AndRemovingAgainTriesItAgain()
+        {
+            var (_, id) = await PaidVideo();
+            var reference = (await PayFor(Factory.CreateUser("buyer", false), id)).Reference;
+
+            Provider.RefuseRefunds = true;
+            try
+            {
+                var failed = await Read<RemovedVideoDto>(await AdminRemove(id));
+                Assert.Equal(0, failed.Refunded);
+                Assert.Equal(1, failed.RefundsFailed);
+            }
+            finally
+            {
+                Provider.RefuseRefunds = false;
+            }
+
+            // it stays on the list of the administrators while a refund is open
+            var listed = Assert.Single(await AdminReports(), x => x.VideoId == id);
+            Assert.Equal("removed", listed.Moderation);
+            Assert.Equal(1, listed.RefundsPending);
+
+            var again = await Read<RemovedVideoDto>(await AdminRemove(id));
+            Assert.DoesNotContain(await AdminReports(), x => x.VideoId == id);
+            Assert.Equal(1, again.Refunded);
+            Assert.Equal(0, again.RefundsFailed);
+            // given back once, however often it is removed
+            Assert.Single(Provider.Refunds, x => x.Reference == reference);
+            await AdminRemove(id);
+            Assert.Single(Provider.Refunds, x => x.Reference == reference);
+        }
+
+        [Fact]
+        public async Task PaidAfterTheVideoWasRemoved_NoRightToWatch_TheMoneyGoesBack()
+        {
+            var (_, id) = await PaidVideo();
+            var buyer = Factory.CreateUser("late", false);
+            var reference = await StartCheckout(buyer, id);
+            (await AdminRemove(id)).EnsureSuccessStatusCode();
+
+            Provider.Pay(reference, VideoPrice);
+            await Api(buyer).GetAsync($"/v1/payments/{reference}");
+
+            Assert.Single(Provider.Refunds, x => x.Reference == reference);
+            Assert.False(await Factory.Services.GetRequiredService<IVideoEntitlementRepo>().Holds(buyer.Sub, id));
         }
 
         [Fact]

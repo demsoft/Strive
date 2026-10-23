@@ -565,12 +565,17 @@ namespace Strive.Core.Services.Videos
         private readonly IVideoReportRepo _reports;
         private readonly IVideoConverter _converter;
         private readonly IVideoStorage _storage;
+        private readonly IOrderRepo _orders;
+        private readonly IPaymentProvider _provider;
         private readonly TimeProvider _timeProvider;
         private readonly ILogger<ModerateVideoUseCase> _logger;
 
         public ModerateVideoUseCase(IVideoRepo videos, IVideoReportRepo reports, IVideoConverter converter,
-            IVideoStorage storage, TimeProvider timeProvider, ILogger<ModerateVideoUseCase> logger)
+            IVideoStorage storage, IOrderRepo orders, IPaymentProvider provider, TimeProvider timeProvider,
+            ILogger<ModerateVideoUseCase> logger)
         {
+            _orders = orders;
+            _provider = provider;
             _videos = videos;
             _reports = reports;
             _converter = converter;
@@ -603,13 +608,23 @@ namespace Strive.Core.Services.Videos
 
                 // the files first: a video that is gone from the list must not stay in the storage
                 await DeleteFiles(video.VideoId, cancellationToken);
+                // removing again (to try the refunds again) keeps what the creator was told
+                if (video.Moderation != VideoModeration.Removed || note != null) video.ModerationNote = note;
                 video.Moderation = VideoModeration.Removed;
-                video.ModerationNote = note;
                 video.ModeratedAt = now;
             }
 
             await _videos.Update(video);
             await _reports.ResolveOpen(video.VideoId, now);
+
+            // the people who paid for a video that is gone get their money back. Removing it again tries the refunds
+            // that did not work before; a refund that fails never undoes the removal.
+            if (video.Moderation == VideoModeration.Removed)
+                foreach (var order in await _orders.FindPaidOfVideo(video.VideoId))
+                    if (order.Status == OrderStatus.Paid)
+                        await OrderRefunds.Refund(_provider, _orders, _timeProvider, _logger, order,
+                            cancellationToken);
+
             return video;
         }
 

@@ -178,7 +178,7 @@ export type VideoReportItem = {
    creatorName: string;
    moderation: 'none' | 'hidden' | 'removed';
    priceMinor: number;
-   /** how many people bought it: removing it is then for the moderators to make right */
+   /** how many people bought it: removing it gives them their money back */
    buyers: number;
    openReports: number;
    reasons: Record<string, number>;
@@ -187,7 +187,11 @@ export type VideoReportItem = {
    posterUrl?: string | null;
    /** a temporary link to watch it, also while it is hidden */
    playbackUrl?: string | null;
+   /** a removed video: buyers whose refund did not work yet */
+   refundsPending?: number;
 };
+
+export type RemovedVideo = { refunded: number; refundsFailed: number };
 
 export async function fetchVideoReports(): Promise<VideoReportItem[]> {
    return (await Axios.get<VideoReportItem[]>(adminUrl('videos/reports'))).data;
@@ -197,6 +201,11 @@ export async function keepVideo(videoId: string): Promise<void> {
    await Axios.post(adminUrl(`videos/${encodeURIComponent(videoId)}/keep`));
 }
 
-export async function removeVideo(videoId: string, note: string): Promise<void> {
-   await Axios.post(adminUrl(`videos/${encodeURIComponent(videoId)}/remove`), { note: note || undefined });
+/** Removes the video and gives the buyers their money back. Doing it again tries the refunds that failed. */
+export async function removeVideo(videoId: string, note: string): Promise<RemovedVideo> {
+   return (
+      await Axios.post<RemovedVideo>(adminUrl(`videos/${encodeURIComponent(videoId)}/remove`), {
+         note: note || undefined,
+      })
+   ).data;
 }

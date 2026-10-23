@@ -223,6 +223,7 @@ namespace Strive.Core.Services.Payments.UseCases
         private readonly IPassRepo _passes;
         private readonly IPassSubscriptionRepo _subscriptions;
         private readonly IVideoEntitlementRepo _videoEntitlements;
+        private readonly Strive.Core.Services.Videos.IVideoRepo _videos;
         private readonly PaymentsOptions _options;
         private readonly ISessionRepo _sessions;
         private readonly TimeProvider _timeProvider;
@@ -230,9 +231,10 @@ namespace Strive.Core.Services.Payments.UseCases
 
         public SettleOrderUseCase(IPaymentProvider provider, IOrderRepo orders, IEntitlementRepo entitlements,
             IPassRepo passes, IPassSubscriptionRepo subscriptions, IVideoEntitlementRepo videoEntitlements,
-            IOptions<PaymentsOptions> options, ISessionRepo sessions, TimeProvider timeProvider,
-            ILogger<SettleOrderUseCase> logger)
+            IOptions<PaymentsOptions> options, ISessionRepo sessions, Strive.Core.Services.Videos.IVideoRepo videos,
+            TimeProvider timeProvider, ILogger<SettleOrderUseCase> logger)
         {
+            _videos = videos;
             _videoEntitlements = videoEntitlements;
             _passes = passes;
             _subscriptions = subscriptions;
@@ -312,6 +314,17 @@ namespace Strive.Core.Services.Payments.UseCases
             {
                 await OrderRefunds.Refund(_provider, _orders, _timeProvider, _logger, settled, cancellationToken);
                 return await _orders.FindByReference(order.Reference) ?? settled;
+            }
+
+            // paid while the video was being removed (or after): no right to watch, the money goes back
+            if (settled.Kind == OrderKind.Video)
+            {
+                var video = await _videos.FindById(settled.VideoId!);
+                if (video == null || video.Moderation == Strive.Core.Services.Videos.VideoModeration.Removed)
+                {
+                    await OrderRefunds.Refund(_provider, _orders, _timeProvider, _logger, settled, cancellationToken);
+                    return await _orders.FindByReference(order.Reference) ?? settled;
+                }
             }
 
             await GrantTicket(settled);

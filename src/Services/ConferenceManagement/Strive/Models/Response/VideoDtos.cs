@@ -12,9 +12,13 @@ namespace Strive.Models.Response
     public record AdminVideoReportDto(string VideoId, string Title, string CreatorName, string Moderation,
         long PriceMinor, long Buyers, int OpenReports, System.Collections.Generic.IReadOnlyDictionary<string, int> Reasons,
         System.Collections.Generic.IReadOnlyList<ReportDetailDto> Details, DateTimeOffset? LatestReportAt,
-        string? PosterUrl, string? PlaybackUrl);
+        string? PosterUrl, string? PlaybackUrl, int RefundsPending = 0);
 
     public record ModerateVideoDto(string? Note);
+
+    /// <param name="Refunded">Buyers who got their money back</param>
+    /// <param name="RefundsFailed">Buyers whose refund did not work (removing the video again tries it again)</param>
+    public record RemovedVideoDto(int Refunded, int RefundsFailed);
 
     public record ReportVideoDto(string Reason, string? Details);
 

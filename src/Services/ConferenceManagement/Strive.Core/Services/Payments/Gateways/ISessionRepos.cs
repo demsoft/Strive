@@ -66,6 +66,9 @@ namespace Strive.Core.Services.Payments.Gateways
         /// <summary>The orders of a session that were paid (and maybe given back since)</summary>
         Task<IReadOnlyList<TicketOrder>> FindPaidOfSession(string sessionId);
 
+        /// <summary>The orders of a video that were paid (and maybe given back since)</summary>
+        Task<IReadOnlyList<TicketOrder>> FindPaidOfVideo(string videoId);
+
         /// <summary>Marks a paid order as refunded. Only a paid order changes.</summary>
         Task<bool> TryMarkRefunded(string reference, System.DateTimeOffset refundedAt, string? refundId);
 
