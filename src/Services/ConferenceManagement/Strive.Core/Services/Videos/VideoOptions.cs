@@ -7,6 +7,9 @@ namespace Strive.Core.Services.Videos
 
         /// <summary>The folder at the converter (Cloudinary) the files are sent to</summary>
         public string Folder { get; set; } = "gbedu/videos";
+
+        /// <summary>This many different people reporting a video hides it until a moderator has looked at it</summary>
+        public int ReportsToHide { get; set; } = ReportRules.DefaultReportsToHide;
     }
 
     /// <summary>The storage of the converted videos (section "Videos:Storage"): Cloudflare R2, or any S3 compatible store</summary>

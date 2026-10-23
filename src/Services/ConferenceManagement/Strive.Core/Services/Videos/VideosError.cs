@@ -16,6 +16,9 @@ namespace Strive.Core.Services.Videos
             BadRequest("People bought this video, so it cannot be deleted. Make it free instead if you do not want to sell it any more.",
                 ServiceErrorCode.Videos_HasBuyers);
 
+        public static Error OwnVideo =>
+            BadRequest("You cannot report your own video.", ServiceErrorCode.Videos_InvalidReport);
+
         public static Error NotForSale =>
             BadRequest("This video is not for sale.", ServiceErrorCode.Videos_NotForSale);
 

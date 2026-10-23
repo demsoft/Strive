@@ -22,7 +22,9 @@ namespace Strive.Presenters
         /// <param name="canWatch">The person may watch it: it is free, theirs, bought, or covered by a pass</param>
         public VideoDto ToDto(Video video, PublicCreatorDto? creator, bool isOwner, bool canWatch, bool withPlayback)
         {
-            var ready = video.Status == VideoStatus.Ready && _storage.IsConfigured;
+            // the files of a removed video are gone
+            var ready = video.Status == VideoStatus.Ready && video.Moderation != VideoModeration.Removed &&
+                        _storage.IsConfigured;
             return new VideoDto(video.VideoId, video.Title, video.Description, video.Status.ToString().ToLowerInvariant(),
                 isOwner ? video.FailureReason : null, video.DurationSeconds, video.Width, video.Height, video.PriceMinor,
                 video.CreatedAt, isOwner,
@@ -34,7 +36,8 @@ namespace Strive.Presenters
                     ? _storage.GetPlaybackUrl(VideoRules.VideoKey(video.VideoId), PlaybackLinkValidFor, "video/mp4")
                         .ToString()
                     : null,
-                creator, video.PriceMinor > 0 && !canWatch);
+                creator, video.PriceMinor > 0 && !canWatch, isOwner ? video.Moderation.ToString().ToLowerInvariant() : "none",
+                isOwner ? video.ModerationNote : null);
         }
     }
 }

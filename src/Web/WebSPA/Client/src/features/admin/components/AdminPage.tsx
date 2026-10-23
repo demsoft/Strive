@@ -149,6 +149,9 @@ export default function AdminPage() {
             >
                {t('admin.pay_title')}
             </Button>
+            <Button size="small" component={RouterLink} to="/admin/videos" id="admin-videos-link" sx={compactButton}>
+               {t('admin.videos_title')}
+            </Button>
             {loadedAt && (
                <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
                   {t('admin.updated', { time: agoText(loadedAt) })}

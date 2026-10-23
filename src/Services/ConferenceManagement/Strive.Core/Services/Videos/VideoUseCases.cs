@@ -36,6 +36,23 @@ namespace Strive.Core.Services.Videos
 
     public record DeleteVideoRequest(string UserId, string VideoId) : IRequest<SuccessOrError<Unit>>;
 
+    /// <summary>A person reports a video. Enough different people hide it until a moderator has looked at it.</summary>
+    public record ReportVideoRequest(string UserId, string VideoId, ReportReason Reason, string? Details)
+        : IRequest<SuccessOrError<Unit>>;
+
+    public enum ModerationDecision
+    {
+        /// <summary>The video is fine: it is shown again and the reports are put aside</summary>
+        Keep,
+
+        /// <summary>The video goes: its files are deleted and the creator is told why</summary>
+        Remove,
+    }
+
+    /// <summary>A moderator decides what to do with a reported video</summary>
+    public record ModerateVideoRequest(string VideoId, ModerationDecision Decision, string? Note)
+        : IRequest<SuccessOrError<Video>>;
+
     /// <summary>The background work: copy converted videos to the storage, give up on the ones that never finish</summary>
     /// <returns>The number of videos that became ready</returns>
     /// <param name="OnlyVideoId">Look at this video only (null: all that are waiting)</param>
@@ -444,7 +461,7 @@ namespace Strive.Core.Services.Videos
             if (!SessionRules.IsValidEmail(request.Email)) return PaymentsError.InvalidEmail;
 
             var video = await _videos.FindById(request.VideoId);
-            if (video == null || video.Status != VideoStatus.Ready) return VideosError.NotFound;
+            if (video == null || !video.IsPublic) return VideosError.NotFound;
             if (video.PriceMinor <= 0) return VideosError.NotForSale;
             if (video.CreatorUserId == request.UserId) return PaymentsError.OwnPass;
 
@@ -481,6 +498,130 @@ namespace Strive.Core.Services.Videos
                 _logger.LogWarning(e, "The checkout of video order {orderId} could not be started", order.OrderId);
                 await _orders.MarkFailed(order.Reference, "The checkout could not be started.");
                 return PaymentsError.ProviderUnavailable;
+            }
+        }
+    }
+
+    public class ReportVideoUseCase : IRequestHandler<ReportVideoRequest, SuccessOrError<Unit>>
+    {
+        private readonly IVideoRepo _videos;
+        private readonly IVideoReportRepo _reports;
+        private readonly VideoOptions _options;
+        private readonly TimeProvider _timeProvider;
+        private readonly ILogger<ReportVideoUseCase> _logger;
+
+        public ReportVideoUseCase(IVideoRepo videos, IVideoReportRepo reports, IOptions<VideoOptions> options,
+            TimeProvider timeProvider, ILogger<ReportVideoUseCase> logger)
+        {
+            _videos = videos;
+            _reports = reports;
+            _options = options.Value;
+            _timeProvider = timeProvider;
+            _logger = logger;
+        }
+
+        public async Task<SuccessOrError<Unit>> Handle(ReportVideoRequest request, CancellationToken cancellationToken)
+        {
+            var video = await _videos.FindById(request.VideoId);
+            // what a person cannot see, they cannot report
+            if (video == null || !video.IsPublic) return VideosError.NotFound;
+            if (video.CreatorUserId == request.UserId) return VideosError.OwnVideo;
+            if (!Enum.IsDefined(typeof(ReportReason), request.Reason))
+                return VideosError.Invalid("Choose what is wrong with the video.");
+
+            var details = string.IsNullOrWhiteSpace(request.Details) ? null : request.Details.Trim();
+            if (details is {Length: > ReportRules.MaxDetailsLength})
+                return VideosError.Invalid($"Tell it in {ReportRules.MaxDetailsLength} characters at most.");
+
+            var now = _timeProvider.GetUtcNow();
+            // reporting twice changes nothing: a person cannot hide a video alone
+            if (!await _reports.TryAdd(new VideoReport(Guid.NewGuid().ToString("N"), video.VideoId, request.UserId,
+                    request.Reason, details, now)))
+                return Unit.Value;
+
+            var open = await _reports.CountOpen(video.VideoId);
+            if (open >= Math.Max(1, _options.ReportsToHide) && video.Moderation == VideoModeration.None)
+            {
+                video.Moderation = VideoModeration.Hidden;
+                video.ModeratedAt = now;
+                await _videos.Update(video);
+                _logger.LogWarning("Video {videoId} was hidden after {count} reports", video.VideoId, open);
+            }
+
+            return Unit.Value;
+        }
+    }
+
+    public class ModerateVideoUseCase : IRequestHandler<ModerateVideoRequest, SuccessOrError<Video>>
+    {
+        private readonly IVideoRepo _videos;
+        private readonly IVideoReportRepo _reports;
+        private readonly IVideoConverter _converter;
+        private readonly IVideoStorage _storage;
+        private readonly TimeProvider _timeProvider;
+        private readonly ILogger<ModerateVideoUseCase> _logger;
+
+        public ModerateVideoUseCase(IVideoRepo videos, IVideoReportRepo reports, IVideoConverter converter,
+            IVideoStorage storage, TimeProvider timeProvider, ILogger<ModerateVideoUseCase> logger)
+        {
+            _videos = videos;
+            _reports = reports;
+            _converter = converter;
+            _storage = storage;
+            _timeProvider = timeProvider;
+            _logger = logger;
+        }
+
+        public async Task<SuccessOrError<Video>> Handle(ModerateVideoRequest request, CancellationToken cancellationToken)
+        {
+            var video = await _videos.FindById(request.VideoId);
+            if (video == null) return VideosError.NotFound;
+
+            var now = _timeProvider.GetUtcNow();
+            if (request.Decision == ModerationDecision.Keep)
+            {
+                // a removed video cannot be brought back: its files are gone
+                if (video.Moderation == VideoModeration.Removed)
+                    return VideosError.Invalid("This video was removed, its files are gone.");
+
+                video.Moderation = VideoModeration.None;
+                video.ModerationNote = null;
+                video.ModeratedAt = now;
+            }
+            else
+            {
+                var note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
+                if (note is {Length: > ReportRules.MaxDetailsLength})
+                    return VideosError.Invalid($"Tell it in {ReportRules.MaxDetailsLength} characters at most.");
+
+                // the files first: a video that is gone from the list must not stay in the storage
+                await DeleteFiles(video.VideoId, cancellationToken);
+                video.Moderation = VideoModeration.Removed;
+                video.ModerationNote = note;
+                video.ModeratedAt = now;
+            }
+
+            await _videos.Update(video);
+            await _reports.ResolveOpen(video.VideoId, now);
+            return video;
+        }
+
+        private async Task DeleteFiles(string videoId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (_storage.IsConfigured)
+                {
+                    await _storage.Delete(VideoRules.VideoKey(videoId), cancellationToken);
+                    await _storage.Delete(VideoRules.PosterKey(videoId), cancellationToken);
+                }
+
+                if (_converter.IsConfigured) await _converter.Delete(videoId, cancellationToken);
+            }
+            catch (Exception e) when (e is VideoServiceException or System.IO.IOException)
+            {
+                // the video is out of sight either way; the files can be deleted by hand
+                _logger.LogWarning(e, "The files of removed video {videoId} could not all be deleted", videoId);
             }
         }
     }

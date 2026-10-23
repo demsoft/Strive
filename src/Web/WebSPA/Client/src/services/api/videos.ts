@@ -18,6 +18,9 @@ export type Video = {
    priceMinor: number;
    createdAt: string;
    isOwner: boolean;
+   /** only for the creator: none, hidden (reported, out of sight until a moderator looked at it) or removed */
+   moderation?: 'none' | 'hidden' | 'removed';
+   moderationNote?: string | null;
    /** it costs money and the person has not paid and has no pass: there is no playback link */
    locked?: boolean;
    /** a temporary link to the cover picture */
@@ -147,3 +150,15 @@ export async function fetchFeed(before?: string | null, limit = 12): Promise<Vid
 
 /** The address a video is shared with. */
 export const videoLink = (videoId: string) => new URL('/v/' + videoId, document.baseURI).href;
+
+export const REPORT_REASONS = ['illegal', 'copyright', 'sexual', 'violence', 'spam', 'other'] as const;
+export type ReportReason = typeof REPORT_REASONS[number];
+
+/** Tells us what is wrong with a video. Enough different people hide it until a moderator has looked at it. */
+export async function reportVideo(
+   videoId: string,
+   reason: import('src/features/videos/reportReasons').ReportReason,
+   details: string,
+): Promise<void> {
+   await Axios.post(`${base()}/${encodeURIComponent(videoId)}/report`, { reason, details: details || undefined });
+}
