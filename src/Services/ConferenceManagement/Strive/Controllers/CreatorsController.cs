@@ -171,6 +171,29 @@ namespace Strive.Controllers
             return (await _mediator.Send(new UnfollowCreatorRequest(UserId, creatorId))).ToActionResult();
         }
 
+        // PUT v1/creators/{creatorId}/follow/email
+        /// <summary>
+        ///     The follower asks for mail when the creator posts. A mail with a link goes to the address first: nothing is
+        ///     sent to an address before its owner confirmed it.
+        /// </summary>
+        [HttpPut("v1/creators/{creatorId}/follow/email")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> StartNotices(string creatorId, [FromBody] StartNoticesDto dto)
+        {
+            if (UserId == null) return Forbid();
+
+            return (await _mediator.Send(new StartEmailNoticesRequest(UserId, creatorId, dto.Email ?? ""))).ToActionResult();
+        }
+
+        // DELETE v1/creators/{creatorId}/follow/email
+        [HttpDelete("v1/creators/{creatorId}/follow/email")]
+        public async Task<ActionResult> StopNotices(string creatorId)
+        {
+            if (UserId == null) return Forbid();
+
+            return (await _mediator.Send(new StopEmailNoticesRequest(UserId, creatorId))).ToActionResult();
+        }
+
         // PUT v1/creators/me/photo
         /// <summary>The body is the picture itself (jpeg, png or webp). What it is is decided by its bytes.</summary>
         [HttpPut("v1/creators/me/photo")]

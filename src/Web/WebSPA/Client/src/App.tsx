@@ -15,6 +15,7 @@ import RecordingRoute from './routes/RecordingRoute';
 import { isGbedu } from './brand-id';
 import LandingGate from './features/gbedu/LandingGate';
 import CreatorPublicPage from 'src/features/creator/components/CreatorPublicPage';
+import NoticePage from 'src/features/social/NoticePage';
 import ReelsPage from 'src/features/videos/components/ReelsPage';
 import WatchVideoPage from 'src/features/videos/components/WatchVideoPage';
 import SessionPage from './features/sessions/components/SessionPage';
@@ -56,6 +57,8 @@ function App() {
                         <Route path="/v/:videoId" component={WatchVideoPage} />
                         {/* the videos one after the other, full screen; with an id it starts with that video */}
                         <Route path="/reels/:videoId?" component={ReelsPage} />
+                        {/* the links in the mails to followers: confirm the address, stop the mail */}
+                        <Route path="/n/:action/:token" component={NoticePage} />
                         {/* Gbedu: a welcome page with sign up and sign in for visitors */}
                         {isGbedu && <Route exact path="/" component={LandingGate} />}
                         <Route>

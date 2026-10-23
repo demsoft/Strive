@@ -27,6 +27,12 @@ namespace Strive.Core.Services.Payments.Gateways
         /// <summary>Marks the reminder as taken. Only the first call for a session returns true.</summary>
         Task<bool> TryClaimReminder(string sessionId, System.DateTimeOffset at);
 
+        /// <summary>Published sessions made since the time whose followers were not told yet</summary>
+        Task<IReadOnlyList<PaidSession>> FindForFollowerNotice(System.DateTimeOffset createdSince, int limit);
+
+        /// <summary>Marks the notice as taken. Only the first call for a session returns true.</summary>
+        Task<bool> TryClaimFollowerNotice(string sessionId, System.DateTimeOffset at);
+
         /// <summary>Gives the reminder back (nobody could be reached), so that it is tried again</summary>
         Task ReleaseReminder(string sessionId);
 

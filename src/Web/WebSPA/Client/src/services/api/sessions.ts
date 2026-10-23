@@ -132,6 +132,10 @@ export type CreatorPage = {
    following?: boolean;
    /** the creator is the person who asks: no follow button */
    isYou?: boolean;
+   /** the person gets mail when the creator posts: off, pending (the address is not confirmed yet) or on */
+   notice?: 'off' | 'pending' | 'on';
+   /** the server can send mail */
+   noticesAvailable?: boolean;
 };
 
 export type Pass = {

@@ -13,6 +13,7 @@ import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import * as api from 'src/services/api/sessions';
 import * as follows from 'src/services/api/follows';
 import FollowButton from 'src/features/social/FollowButton';
+import NoticeSettings from 'src/features/social/NoticeSettings';
 import { CreatorPage } from 'src/services/api/sessions';
 import { brand } from 'src/theme';
 
@@ -31,6 +32,8 @@ export default function CreatorPublicPage() {
    const [copied, setCopied] = useState(false);
    // what the person did on this page; none: what the server said when the page was loaded
    const [followed, setFollowed] = useState<boolean | null>(null);
+   // the same for the mail the person asked for
+   const [notice, setNotice] = useState<'off' | 'pending' | 'on' | null>(null);
 
    const load = useCallback(
       () => api.fetchCreatorPage(creatorId, token).then(setPage, () => setNotFound(true)),
@@ -42,7 +45,10 @@ export default function CreatorPublicPage() {
       load();
    }, [auth.isLoading, load]);
 
-   useEffect(() => setFollowed(null), [page]);
+   useEffect(() => {
+      setFollowed(null);
+      setNotice(null);
+   }, [page]);
 
    const serverFollowing = page?.following ?? false;
    const following = followed ?? serverFollowing;
@@ -53,6 +59,8 @@ export default function CreatorPublicPage() {
       if (!token) return auth.signinRedirect({ state: { url: location.pathname } });
       const was = following;
       setFollowed(!was);
+      // stopping to follow ends the mail as well
+      if (was) setNotice('off');
       try {
          await (was ? follows.unfollowCreator(page.creator.creatorId) : follows.followCreator(page.creator.creatorId));
       } catch {
@@ -117,6 +125,16 @@ export default function CreatorPublicPage() {
                         {copied ? t('sessions.copied') : t('creator.copy_page_link')}
                      </Button>
                   </Box>
+
+                  {following && !page.isYou && page.noticesAvailable && (
+                     <NoticeSettings
+                        creatorId={page.creator.creatorId}
+                        creatorName={page.creator.displayName}
+                        state={notice ?? page.notice ?? 'off'}
+                        onChange={setNotice}
+                        knownEmail={auth.user?.profile?.email as string | undefined}
+                     />
+                  )}
 
                   <PassCard page={page} onPaid={load} />
 

@@ -15,6 +15,12 @@ namespace Strive.Core.Services.Reminders
 
         /// <summary>The address the link in the mail starts with, like https://gbedu.example.com</summary>
         public string LinkBaseUrl { get; set; } = "";
+
+        /// <summary>A follower who asked for mail gets at most one in this many hours (batches of posts are one mail)</summary>
+        public int FollowerNoticeCooldownHours { get; set; } = 6;
+
+        /// <summary>The most people one post is mailed to</summary>
+        public int FollowerNoticeMaxRecipients { get; set; } = 300;
     }
 
     public class EmailOptions

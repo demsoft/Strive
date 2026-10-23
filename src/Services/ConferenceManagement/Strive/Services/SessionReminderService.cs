@@ -6,10 +6,11 @@ using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Strive.Core.Services.Reminders;
+using Strive.Core.Services.Social;
 
 namespace Strive.Services
 {
-    /// <summary>Every few minutes: remind the ticket holders of the sessions that start soon.</summary>
+    /// <summary>Every few minutes: remind the ticket holders of the sessions that start soon, and tell the followers of what is new.</summary>
     public class SessionReminderService : BackgroundService
     {
         private static readonly TimeSpan Interval = TimeSpan.FromMinutes(2);
@@ -30,9 +31,14 @@ namespace Strive.Services
                 try
                 {
                     await using var scope = _scope.BeginLifetimeScope();
-                    var result = await scope.Resolve<IMediator>().Send(new SendSessionRemindersRequest(), stoppingToken);
+                    var mediator = scope.Resolve<IMediator>();
+                    var result = await mediator.Send(new SendSessionRemindersRequest(), stoppingToken);
                     if (result.Success && result.Response > 0)
                         _logger.LogInformation("Sent {count} session reminders", result.Response);
+
+                    var notices = await mediator.Send(new SendFollowerNoticesRequest(), stoppingToken);
+                    if (notices.Success && notices.Response > 0)
+                        _logger.LogInformation("Sent {count} notices to followers", notices.Response);
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {

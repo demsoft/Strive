@@ -25,6 +25,12 @@ namespace Strive.Core.Services.Videos
 
         Task<IReadOnlyList<Video>> FindByIds(IEnumerable<string> videoIds);
 
+        /// <summary>Videos that became ready since the time, are shown, and whose followers were not told yet</summary>
+        Task<IReadOnlyList<Video>> FindForFollowerNotice(DateTimeOffset readySince, int limit);
+
+        /// <summary>Marks the notice as taken. Only the first call for a video returns true.</summary>
+        Task<bool> TryClaimFollowerNotice(string videoId, DateTimeOffset at);
+
         /// <summary>Videos that are hidden or removed (for the moderators), newest first</summary>
         Task<IReadOnlyList<Video>> FindModerated(int limit);
 

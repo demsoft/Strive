@@ -25,6 +25,11 @@ const auth = vi.hoisted(() => ({
 vi.mock('react-oidc-context', () => ({
    useAuth: () => ({ user: auth.user, isLoading: false, signinRedirect: auth.signinRedirect }),
 }));
+vi.mock('src/features/social/NoticeSettings', () => ({
+   default: (props: { state: string; creatorName: string }) => (
+      <div id="notice-stub" data-state={props.state} data-name={props.creatorName} />
+   ),
+}));
 vi.mock('src/services/api/follows', () => ({
    followCreator: (...a: unknown[]) => auth.follow(...a),
    unfollowCreator: (...a: unknown[]) => auth.unfollow(...a),
@@ -217,4 +222,47 @@ test('a person who follows already sees it, and the creator has no follow button
    await settle();
    expect(followButton()).toBeNull();
    act(() => own.unmount());
+});
+
+test('a follower sees the settings for mail when the server can send mail, with what they chose', async () => {
+   auth.user = { access_token: 'tok' };
+   api.fetchCreatorPage.mockResolvedValue(pageOf({ following: true, noticesAvailable: true, notice: 'pending' }));
+   await act(async () => createRoot(container).render(<CreatorPublicPage />));
+   await settle();
+
+   const stub = document.querySelector('#notice-stub');
+   expect(stub?.getAttribute('data-state')).toBe('pending');
+   expect(stub?.getAttribute('data-name')).toBe('Ada');
+});
+
+test('no settings for mail for somebody who does not follow, on the own page, or when mail is not set up', async () => {
+   auth.user = { access_token: 'tok' };
+   for (const over of [
+      { following: false, noticesAvailable: true },
+      { following: true, noticesAvailable: true, isYou: true },
+      { following: true, noticesAvailable: false },
+   ]) {
+      container.innerHTML = '';
+      api.fetchCreatorPage.mockResolvedValue(pageOf(over));
+      const root = createRoot(container);
+      await act(async () => root.render(<CreatorPublicPage />));
+      await settle();
+      expect(document.querySelector('#notice-stub')).toBeNull();
+      act(() => root.unmount());
+   }
+});
+
+test('stopping to follow ends the mail on the page as well', async () => {
+   auth.user = { access_token: 'tok' };
+   api.fetchCreatorPage.mockResolvedValue(pageOf({ following: true, noticesAvailable: true, notice: 'on' }));
+   await act(async () => createRoot(container).render(<CreatorPublicPage />));
+   await settle();
+   expect(document.querySelector('#notice-stub')?.getAttribute('data-state')).toBe('on');
+
+   await act(async () => followButton()?.click());
+
+   // not following any more: the settings are gone, and when following again the mail is off
+   expect(document.querySelector('#notice-stub')).toBeNull();
+   await act(async () => followButton()?.click());
+   expect(document.querySelector('#notice-stub')?.getAttribute('data-state')).toBe('off');
 });

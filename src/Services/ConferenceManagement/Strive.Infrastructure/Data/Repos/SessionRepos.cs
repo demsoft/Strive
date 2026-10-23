@@ -26,6 +26,8 @@ namespace Strive.Infrastructure.Data.Repos
                     new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
                 config.MapMember(x => x.ReminderSentAt).SetSerializer(
                     new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
+                config.MapMember(x => x.FollowersNoticedAt).SetSerializer(
+                    new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
                 config.SetIgnoreExtraElements(true);
             });
             BsonClassMap.RegisterClassMap<RevenueShare>(config =>
@@ -78,6 +80,17 @@ namespace Strive.Infrastructure.Data.Repos
         {
             var result = await Collection.UpdateOneAsync(x => x.SessionId == sessionId && x.ReminderSentAt == null,
                 Builders<PaidSession>.Update.Set(x => x.ReminderSentAt, at));
+            return result.ModifiedCount == 1;
+        }
+
+        public async Task<IReadOnlyList<PaidSession>> FindForFollowerNotice(DateTimeOffset createdSince, int limit) =>
+            await Collection.Find(x => x.Status == SessionStatus.Published && x.FollowersNoticedAt == null &&
+                                       x.CreatedAt >= createdSince).SortBy(x => x.CreatedAt).Limit(limit).ToListAsync();
+
+        public async Task<bool> TryClaimFollowerNotice(string sessionId, DateTimeOffset at)
+        {
+            var result = await Collection.UpdateOneAsync(x => x.SessionId == sessionId && x.FollowersNoticedAt == null,
+                Builders<PaidSession>.Update.Set(x => x.FollowersNoticedAt, at));
             return result.ModifiedCount == 1;
         }
 
