@@ -51,6 +51,9 @@ namespace Strive.Core.Services.Payments
         public static Error SlugTaken =>
             BadRequest("Another creator already has this name. Choose another one.", ServiceErrorCode.Payments_SlugTaken);
 
+        public static Error InvalidPhoto(string message) =>
+            BadRequest(message, ServiceErrorCode.Payments_InvalidPhoto);
+
         public static Error SubscriptionNotFound =>
             NotFound("This subscription was not found.", ServiceErrorCode.Payments_SubscriptionNotFound);
 

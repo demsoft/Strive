@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import BrandLogo from 'src/components/BrandLogo';
 import { SessionTile } from 'src/features/gbedu/DiscoverSessions';
+import { creatorPhotoUrl } from '../photoUrl';
 import PassCard from './PassCard';
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import * as api from 'src/services/api/sessions';
@@ -66,7 +67,12 @@ export default function CreatorPublicPage() {
             {page && (
                <>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5, flexWrap: 'wrap', mb: 4 }}>
-                     <HostAvatar name={page.creator.displayName} size={80} background={brand.gradient} />
+                     <HostAvatar
+                        name={page.creator.displayName}
+                        size={80}
+                        background={brand.gradient}
+                        photoUrl={creatorPhotoUrl(page.creator.creatorId, page.creator.photoVersion, 80)}
+                     />
                      <Box sx={{ flex: 1, minWidth: 220 }}>
                         <Typography variant="h3" id="creator-name" sx={{ fontSize: { xs: '1.9rem', sm: '2.5rem' } }}>
                            {page.creator.displayName}

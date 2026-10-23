@@ -20,6 +20,7 @@ import { PaymentStatus, PublicSession } from 'src/services/api/sessions';
 import * as api from 'src/services/api/sessions';
 import { requestErrorMessage } from 'src/features/creator/errors';
 import { categoryGradient, categoryStyle } from 'src/features/gbedu/ui/categories';
+import { creatorPhotoUrl } from 'src/features/creator/photoUrl';
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import { brand } from 'src/theme';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
@@ -214,11 +215,21 @@ export default function SessionPage() {
                         >
                            {session.title}
                         </Typography>
+                        {session.isLive && (
+                           <Chip
+                              size="small"
+                              color="error"
+                              label={t('sessions.live_now')}
+                              id="session-live"
+                              sx={{ mb: 1 }}
+                           />
+                        )}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, my: 2 }} id="session-host">
                            <HostAvatar
                               name={session.creator.displayName}
                               size={44}
                               background={categoryGradient(session.category)}
+                              photoUrl={creatorPhotoUrl(session.creator.creatorId, session.creator.photoVersion, 44)}
                            />
                            <Box sx={{ minWidth: 0 }}>
                               <Typography

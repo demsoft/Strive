@@ -25,6 +25,8 @@ export type CreatorProfile = {
    passPriceMinor?: number | null;
    /** the short name in the link of the public page: /u/ada */
    slug?: string | null;
+   /** changes when the photo does; none: no photo */
+   photoVersion?: string | null;
 };
 
 export type Bank = { code: string; name: string };
@@ -117,4 +119,14 @@ export async function fetchMyEarnings(): Promise<Earnings> {
 /** Sets the short name in the link of the public page, or goes back to the id (null). */
 export async function setSlug(slug: string | null): Promise<CreatorProfile> {
    return (await Axios.put<CreatorProfile>(`${base()}/me/slug`, { slug })).data;
+}
+
+/** Sets the photo of the creator (already shrunk by the page). */
+export async function uploadPhoto(photo: Blob): Promise<CreatorProfile> {
+   return (await Axios.put<CreatorProfile>(`${base()}/me/photo`, photo, { headers: { 'Content-Type': photo.type } }))
+      .data;
+}
+
+export async function removePhoto(): Promise<CreatorProfile> {
+   return (await Axios.delete<CreatorProfile>(`${base()}/me/photo`)).data;
 }

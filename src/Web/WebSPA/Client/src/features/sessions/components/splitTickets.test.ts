@@ -16,6 +16,8 @@ const ticket = (id: string, startsAt: string | null, status: Ticket['status'] = 
    grantedAt: '',
    status,
    refunded: false,
+   durationMinutes: 60,
+   isLive: false,
 });
 
 describe('splitTickets', () => {
@@ -26,14 +28,39 @@ describe('splitTickets', () => {
       expect(past).toEqual([]);
    });
 
-   test('a session that started more than eight hours ago is past, one that started a little ago is still upcoming', () => {
+   test('a session is past once it should have ended, with an hour of grace; one still running is upcoming', () => {
       const { upcoming, past } = splitTickets(
-         [ticket('old', '2026-10-19T02:00:00Z'), ticket('running', '2026-10-19T10:00:00Z')],
+         [
+            ticket('old', '2026-10-19T02:00:00Z'), // ended long ago
+            ticket('just-over', '2026-10-19T09:30:00Z'), // 60 minutes long, ended 10:30, grace until 11:30
+            ticket('grace', '2026-10-19T10:30:00Z'), // ended 11:30, still in the grace
+            ticket('running', '2026-10-19T11:30:00Z'),
+         ],
          NOW,
       );
 
-      expect(past.map((x) => x.sessionId)).toEqual(['old']);
-      expect(upcoming.map((x) => x.sessionId)).toEqual(['running']);
+      expect(past.map((x) => x.sessionId)).toEqual(['old', 'just-over']);
+      expect(upcoming.map((x) => x.sessionId)).toEqual(['grace', 'running']);
+   });
+
+   test('the length of the session counts: a long session is still upcoming where a short one is past', () => {
+      const { upcoming, past } = splitTickets(
+         [
+            { ...ticket('long', '2026-10-19T06:00:00Z'), durationMinutes: 300 },
+            { ...ticket('short', '2026-10-19T06:00:00Z'), durationMinutes: 30 },
+         ],
+         NOW,
+      );
+
+      expect(upcoming.map((x) => x.sessionId)).toEqual(['long']);
+      expect(past.map((x) => x.sessionId)).toEqual(['short']);
+   });
+
+   test('a session whose room is open is never past, however long it runs', () => {
+      const { upcoming, past } = splitTickets([{ ...ticket('overrun', '2026-10-18T10:00:00Z'), isLive: true }], NOW);
+
+      expect(upcoming.map((x) => x.sessionId)).toEqual(['overrun']);
+      expect(past).toEqual([]);
    });
 
    test('a called off session is past, however soon it was to start', () => {

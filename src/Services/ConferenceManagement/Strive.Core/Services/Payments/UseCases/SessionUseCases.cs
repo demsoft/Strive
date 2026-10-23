@@ -28,6 +28,10 @@ namespace Strive.Core.Services.Payments.UseCases
         /// <summary>₦1,000,000</summary>
         public const long MaxPriceMinor = 100_000_000;
 
+        public const int MinDurationMinutes = 15;
+        public const int MaxDurationMinutes = 480;
+        public const int DefaultDurationMinutes = 60;
+
         public const int MinTitleLength = 3;
         public const int MaxTitleLength = 100;
         public const int MaxDescriptionLength = 2000;
@@ -93,6 +97,11 @@ namespace Strive.Core.Services.Payments.UseCases
                 return PaymentsError.InvalidSession(
                     $"The price must be between {SessionRules.MinPriceMinor / 100} and {SessionRules.MaxPriceMinor / 100} {creator.Currency}.");
 
+            var duration = request.DurationMinutes ?? SessionRules.DefaultDurationMinutes;
+            if (duration is < SessionRules.MinDurationMinutes or > SessionRules.MaxDurationMinutes)
+                return PaymentsError.InvalidSession(
+                    $"A session lasts {SessionRules.MinDurationMinutes} to {SessionRules.MaxDurationMinutes} minutes.");
+
             // the room of the session: the creator is its moderator
             var data = new ConferenceData
             {
@@ -119,6 +128,7 @@ namespace Strive.Core.Services.Payments.UseCases
                 Description = description,
                 Category = request.Category,
                 StartsAt = request.StartsAt,
+                DurationMinutes = duration,
                 Shares = new[] {new RevenueShare(creator.CreatorId, creator.ProviderSubaccountCode!, 100)}.ToList(),
             };
             await _sessions.Create(session);
@@ -842,6 +852,62 @@ namespace Strive.Core.Services.Payments.UseCases
                 _logger.LogWarning(e, "A mail about subscription {id} could not be sent", subscription.SubscriptionId);
                 return false;
             }
+        }
+    }
+
+    public class SetCreatorPhotoUseCase : IRequestHandler<SetCreatorPhotoRequest, SuccessOrError<CreatorProfile>>
+    {
+        private readonly ICreatorRepo _creators;
+        private readonly IPhotoStorage _photos;
+        private readonly TimeProvider _timeProvider;
+
+        public SetCreatorPhotoUseCase(ICreatorRepo creators, IPhotoStorage photos, TimeProvider timeProvider)
+        {
+            _creators = creators;
+            _photos = photos;
+            _timeProvider = timeProvider;
+        }
+
+        public async Task<SuccessOrError<CreatorProfile>> Handle(SetCreatorPhotoRequest request,
+            CancellationToken cancellationToken)
+        {
+            var creator = await _creators.FindByUserId(request.UserId);
+            if (creator == null) return PaymentsError.CreatorNotFound;
+
+            var now = _timeProvider.GetUtcNow();
+            if (request.Data == null)
+            {
+                await _photos.Remove(creator.CreatorId, creator.PhotoPublicId, cancellationToken);
+                creator.PhotoVersion = null;
+                creator.PhotoPublicId = null;
+            }
+            else
+            {
+                if (request.Data.Length == 0) return PaymentsError.InvalidPhoto("Choose a picture.");
+                if (request.Data.Length > PhotoRules.MaxBytes)
+                    return PaymentsError.InvalidPhoto($"The picture is too big ({PhotoRules.MaxBytes / 1024} KB at most).");
+
+                var type = PhotoRules.Sniff(request.Data);
+                if (type == null) return PaymentsError.InvalidPhoto("Use a jpeg, png or webp picture.");
+
+                StoredPhoto stored;
+                try
+                {
+                    stored = await _photos.Save(creator.CreatorId, type, request.Data, cancellationToken);
+                }
+                catch (PhotoStorageException)
+                {
+                    // the profile keeps the photo it has
+                    return PaymentsError.InvalidPhoto("The picture could not be saved. Try again in a moment.");
+                }
+
+                creator.PhotoVersion = stored.Version;
+                creator.PhotoPublicId = stored.PublicId;
+            }
+
+            creator.UpdatedAt = now;
+            await _creators.Save(creator);
+            return creator;
         }
     }
 }

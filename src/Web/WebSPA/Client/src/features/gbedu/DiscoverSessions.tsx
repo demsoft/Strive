@@ -6,15 +6,12 @@ import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router-dom';
 import { formatMoney, SESSION_CATEGORIES } from 'src/features/sessions/money';
 import * as api from 'src/services/api/sessions';
+import { creatorPhotoUrl } from 'src/features/creator/photoUrl';
 import { DiscoverSession } from 'src/services/api/sessions';
 import { brand } from 'src/theme';
 import { categoryGradient, categoryStyle } from './ui/categories';
 import CategoryBadge from './ui/CategoryBadge';
 import HostAvatar from './ui/HostAvatar';
-
-/** Started and not over (the server drops sessions that started long ago) */
-export const isLiveNow = (session: DiscoverSession, now = DateTime.now()) =>
-   session.startsAt != null && DateTime.fromISO(session.startsAt) <= now;
 
 /**
  * The sessions that match what the person typed (in the title, the text, or the name of the host: no capitals, no
@@ -38,7 +35,7 @@ export function filterSessions(sessions: DiscoverSession[], query: string, categ
 export function SessionTile({ session }: { session: DiscoverSession }) {
    const { t } = useTranslation();
    const { Icon } = categoryStyle(session.category);
-   const live = isLiveNow(session);
+   const live = session.isLive;
    const when = session.startsAt ? DateTime.fromISO(session.startsAt) : null;
 
    return (
@@ -81,7 +78,12 @@ export function SessionTile({ session }: { session: DiscoverSession }) {
                {session.title}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-               <HostAvatar name={session.creatorName} size={22} background={categoryGradient(session.category)} />
+               <HostAvatar
+                  name={session.creatorName}
+                  size={22}
+                  background={categoryGradient(session.category)}
+                  photoUrl={creatorPhotoUrl(session.creatorId, session.creatorPhotoVersion, 22)}
+               />
                <Typography variant="body2" color="text.secondary">
                   {t('sessions.with', { name: session.creatorName })}
                </Typography>
@@ -121,8 +123,7 @@ export default function DiscoverSessions() {
 
    // live ones first, then by start
    const sorted = filterSessions(sessions ?? [], query, category).sort(
-      (a, b) =>
-         Number(isLiveNow(b)) - Number(isLiveNow(a)) || (a.startsAt ?? '9999').localeCompare(b.startsAt ?? '9999'),
+      (a, b) => Number(b.isLive) - Number(a.isLive) || (a.startsAt ?? '9999').localeCompare(b.startsAt ?? '9999'),
    );
 
    return (

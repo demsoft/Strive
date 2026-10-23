@@ -14,6 +14,8 @@ export type Session = {
    currency: string;
    status: SessionStatus;
    startsAt?: string | null;
+   /** how long it is meant to last */
+   durationMinutes: number;
    createdAt: string;
    /** after a cancellation: tickets given back, and tickets whose refund did not work yet */
    refunded: number;
@@ -29,6 +31,8 @@ export type PublicCreator = {
    currency?: string | null;
    /** the short name of the page: /u/ada */
    slug?: string | null;
+   /** changes when the photo does; none: no photo */
+   photoVersion?: string | null;
 };
 
 export type PublicSession = {
@@ -45,6 +49,9 @@ export type PublicSession = {
    hasTicket: boolean;
    /** only for the host and people with a ticket */
    conferenceId?: string | null;
+   durationMinutes: number;
+   /** the host has the room open right now */
+   isLive: boolean;
 };
 
 export type CreateSessionRequest = {
@@ -53,6 +60,7 @@ export type CreateSessionRequest = {
    category: string;
    priceMinor: number;
    startsAt?: string;
+   durationMinutes?: number;
 };
 
 export type CheckoutResult = { authorizationUrl?: string | null; reference?: string | null; alreadyHasTicket: boolean };
@@ -79,6 +87,11 @@ export type Ticket = {
    status: SessionStatus;
    /** the price was given back because the session was called off */
    refunded: boolean;
+   durationMinutes: number;
+   /** the host has the room open right now */
+   isLive: boolean;
+   creatorId?: string | null;
+   creatorPhotoVersion?: string | null;
 };
 
 /** A session in the list of what is on */
@@ -93,6 +106,11 @@ export type DiscoverSession = {
    creatorName: string;
    isHost: boolean;
    hasTicket: boolean;
+   durationMinutes: number;
+   /** the host has the room open right now (not just: the start time has passed) */
+   isLive: boolean;
+   creatorId?: string | null;
+   creatorPhotoVersion?: string | null;
 };
 
 export type CreatorPage = {

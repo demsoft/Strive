@@ -7,7 +7,7 @@ namespace Strive.Core.Services.Payments.Requests
 {
     /// <summary>A creator publishes a session: a room is made for it and tickets can be bought</summary>
     public record CreateSessionRequest(string UserId, string Title, string? Description, string Category,
-        long PriceMinor, DateTimeOffset? StartsAt) : IRequest<SuccessOrError<PaidSession>>;
+        long PriceMinor, DateTimeOffset? StartsAt, int? DurationMinutes = null) : IRequest<SuccessOrError<PaidSession>>;
 
     /// <summary>Starts the payment of a ticket. The fan is sent to the returned address to pay.</summary>
     /// <param name="CallbackUrl">Where the provider sends the person back after paying</param>
@@ -30,6 +30,9 @@ namespace Strive.Core.Services.Payments.Requests
 
     /// <summary>Charges the renewals that are due and tells people about the ones that are coming</summary>
     public record RenewPassSubscriptionsRequest : IRequest<SuccessOrError<RenewalSummary>>;
+
+    /// <summary>A creator sets their photo, or removes it (null)</summary>
+    public record SetCreatorPhotoRequest(string UserId, byte[]? Data) : IRequest<SuccessOrError<CreatorProfile>>;
 
     /// <summary>A creator chooses the short name in the link of their page, or goes back to the id (null)</summary>
     public record SetSlugRequest(string UserId, string? Slug) : IRequest<SuccessOrError<CreatorProfile>>;

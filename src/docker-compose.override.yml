@@ -58,6 +58,11 @@ services:
       - Payments__Paystack__SecretKey=${PAYSTACK_SECRET_KEY:-}
       # passes that renew themselves (the card of the first payment is charged again). Off until tried with test cards.
       - Payments__AutoRenewEnabled=${PAYMENTS_AUTO_RENEW:-false}
+      # photos of the creators at Cloudinary (served by its CDN, at the size that is needed). Without these they are
+      # kept in the database and served by the API.
+      - Cloudinary__CloudName=${CLOUDINARY_CLOUD_NAME:-}
+      - Cloudinary__ApiKey=${CLOUDINARY_API_KEY:-}
+      - Cloudinary__ApiSecret=${CLOUDINARY_API_SECRET:-}
       # reminder mails shortly before a session starts: through the Brevo API, nothing is sent without BREVO_API_KEY
       - Email__BrevoApiKey=${BREVO_API_KEY:-}
       - Email__From=${REMINDERS_FROM:-${SMTP_FROM:-Gbedu <no-reply@localhost>}}

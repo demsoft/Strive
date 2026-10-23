@@ -5,6 +5,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { categoryGradient, categoryStyle } from 'src/features/gbedu/ui/categories';
 import CategoryBadge from 'src/features/gbedu/ui/CategoryBadge';
+import { creatorPhotoUrl } from 'src/features/creator/photoUrl';
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import { Ticket } from 'src/services/api/sessions';
 import { brand } from 'src/theme';
@@ -76,6 +77,9 @@ export default function TicketCard({ ticket, onJoin, past }: Props) {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                <CategoryBadge category={ticket.category} />
                {cancelled && <Chip size="small" color="warning" label={t('sessions.cancelled_chip')} />}
+               {ticket.isLive && !cancelled && (
+                  <Chip size="small" color="error" label={t('sessions.live_now')} className="ticket-live" />
+               )}
                {ticket.refunded && (
                   <Chip size="small" color="success" label={t('sessions.refunded_chip')} className="ticket-refunded" />
                )}
@@ -84,7 +88,12 @@ export default function TicketCard({ ticket, onJoin, past }: Props) {
                {ticket.title}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-               <HostAvatar name={ticket.creatorName} size={24} background={categoryGradient(ticket.category)} />
+               <HostAvatar
+                  name={ticket.creatorName}
+                  size={24}
+                  background={categoryGradient(ticket.category)}
+                  photoUrl={creatorPhotoUrl(ticket.creatorId, ticket.creatorPhotoVersion, 24)}
+               />
                <Typography variant="body2" color="text.secondary">
                   {t('sessions.with', { name: ticket.creatorName })}
                </Typography>
