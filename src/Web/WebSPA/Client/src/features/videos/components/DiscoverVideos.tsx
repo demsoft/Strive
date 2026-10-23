@@ -1,6 +1,7 @@
 import { Alert, Box, Button, CircularProgress, Typography } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link as RouterLink } from 'react-router-dom';
 import * as api from 'src/services/api/videos';
 import { Video } from 'src/services/api/videos';
 import VideoTile from './VideoTile';
@@ -44,12 +45,19 @@ export default function DiscoverVideos() {
 
    return (
       <Box id="discover-videos" sx={{ maxWidth: 1180, width: '100%', mx: 'auto', py: 4 }}>
-         <Typography variant="h4" sx={{ fontWeight: 800 }}>
-            {t('videos.feed_title')}
-         </Typography>
-         <Typography color="text.secondary" sx={{ mb: 3 }}>
-            {t('videos.feed_subtitle')}
-         </Typography>
+         <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, mb: 3 }}>
+            <Box>
+               <Typography variant="h4" sx={{ fontWeight: 800 }}>
+                  {t('videos.feed_title')}
+               </Typography>
+               <Typography color="text.secondary">{t('videos.feed_subtitle')}</Typography>
+            </Box>
+            {videos && videos.length > 0 && (
+               <Button id="discover-videos-reels" variant="contained" component={RouterLink} to="/reels">
+                  {t('videos.reels_open')}
+               </Button>
+            )}
+         </Box>
 
          {failed && (
             <Alert severity="error" id="discover-videos-failed" sx={{ mb: 2 }}>

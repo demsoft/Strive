@@ -10,6 +10,15 @@ vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => k
 vi.mock('./VideoTile', () => ({
    default: ({ video }: { video: { videoId: string } }) => <div className="tile" data-id={video.videoId} />,
 }));
+vi.mock('react-router-dom', () => ({
+   Link: React.forwardRef<HTMLAnchorElement, { to: string; children: React.ReactNode; id?: string }>(
+      ({ to, children, id }, ref) => (
+         <a ref={ref} href={to} id={id}>
+            {children}
+         </a>
+      ),
+   ),
+}));
 vi.mock('src/services/api/videos', () => api);
 
 import DiscoverVideos from './DiscoverVideos';
@@ -74,4 +83,13 @@ test('when the videos cannot be loaded a message is shown, not silence', async (
    await settle();
 
    expect(document.querySelector('#discover-videos-failed')).not.toBeNull();
+});
+
+test('leads to the reels when there are videos, and shows no button when there are none', async () => {
+   api.fetchFeed.mockResolvedValue({ items: [video('a')], next: null });
+   const root = createRoot(container);
+   await act(async () => root.render(<DiscoverVideos />));
+   await settle();
+   expect(document.querySelector('#discover-videos-reels')?.getAttribute('href')).toBe('/reels');
+   act(() => root.unmount());
 });

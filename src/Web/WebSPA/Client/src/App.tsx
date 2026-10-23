@@ -15,6 +15,7 @@ import RecordingRoute from './routes/RecordingRoute';
 import { isGbedu } from './brand-id';
 import LandingGate from './features/gbedu/LandingGate';
 import CreatorPublicPage from 'src/features/creator/components/CreatorPublicPage';
+import ReelsPage from 'src/features/videos/components/ReelsPage';
 import WatchVideoPage from 'src/features/videos/components/WatchVideoPage';
 import SessionPage from './features/sessions/components/SessionPage';
 import SharedRecordingRoute from './routes/SharedRecordingRoute';
@@ -53,6 +54,8 @@ function App() {
                         <Route path="/u/:creatorId" component={CreatorPublicPage} />
                         {/* one video: it plays for everybody, the creator may be signed in to see their own */}
                         <Route path="/v/:videoId" component={WatchVideoPage} />
+                        {/* the videos one after the other, full screen; with an id it starts with that video */}
+                        <Route path="/reels/:videoId?" component={ReelsPage} />
                         {/* Gbedu: a welcome page with sign up and sign in for visitors */}
                         {isGbedu && <Route exact path="/" component={LandingGate} />}
                         <Route>

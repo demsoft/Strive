@@ -165,6 +165,15 @@ export default function WatchVideoPage() {
                   <ReportVideoDialog videoId={video.videoId} open={reporting} onClose={() => setReporting(false)} />
 
                   <Button
+                     id="watch-more"
+                     variant="contained"
+                     component={RouterLink}
+                     to={`/reels/${video.videoId}`}
+                     sx={{ mt: 2, mr: 1 }}
+                  >
+                     {t('videos.reels_more')}
+                  </Button>
+                  <Button
                      id="watch-share"
                      variant="outlined"
                      startIcon={<ContentCopyIcon />}
