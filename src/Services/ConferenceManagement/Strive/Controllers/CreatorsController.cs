@@ -112,6 +112,19 @@ namespace Strive.Controllers
             return CreatorProfileDto.From(result.Response!);
         }
 
+        // PUT v1/creators/me/slug
+        [HttpPut("v1/creators/me/slug")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<CreatorProfileDto>> SetSlug([FromBody] SetSlugDto dto)
+        {
+            if (UserId == null) return Forbid();
+
+            var result = await _mediator.Send(new SetSlugRequest(UserId, dto.Slug));
+            if (!result.Success) return result.ToActionResult();
+
+            return CreatorProfileDto.From(result.Response!);
+        }
+
         // GET v1/creators/{creatorId}
         [HttpGet("v1/creators/{creatorId}")]
         [AllowAnonymous]

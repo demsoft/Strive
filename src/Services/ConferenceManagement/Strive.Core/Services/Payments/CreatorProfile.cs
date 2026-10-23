@@ -8,6 +8,38 @@ namespace Strive.Core.Services.Payments
         public const int Days = 30;
     }
 
+    public static class SlugRules
+    {
+        public const int MinLength = 3;
+        public const int MaxLength = 30;
+
+        private static readonly System.Text.RegularExpressions.Regex Shape =
+            new("^[a-z0-9]+(-[a-z0-9]+)*$", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        /// <summary>Names that look like the platform or its staff, or that would confuse the routes</summary>
+        private static readonly System.Collections.Generic.HashSet<string> Reserved =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                "admin", "administrator", "support", "help", "official", "gbedu", "strive", "arena", "headboy", "api",
+                "www", "me", "creator", "creators", "tickets", "ticket", "recordings", "login", "logout", "signup",
+                "settings", "security", "billing", "payments", "paystack", "root", "system", "staff", "team", "null",
+            };
+
+        /// <summary>Capitals and spaces around it are forgiven: " Ada " becomes "ada"</summary>
+        public static string Normalize(string? input) => (input ?? "").Trim().ToLowerInvariant();
+
+        /// <returns>Null if the slug is fine, otherwise what is wrong with it</returns>
+        public static string? Problem(string slug)
+        {
+            if (slug.Length is < MinLength or > MaxLength)
+                return $"The name must have {MinLength} to {MaxLength} characters.";
+            if (!Shape.IsMatch(slug))
+                return "Use only letters, numbers and single hyphens (no hyphen at the start or the end).";
+            if (Reserved.Contains(slug)) return "This name is reserved. Choose another one.";
+            return null;
+        }
+    }
+
     public enum CreatorStatus
     {
         /// <summary>Verified bank account, can sell tickets</summary>
@@ -62,6 +94,12 @@ namespace Strive.Core.Services.Payments
         ///     <see cref="PassRules.Days" /> days. Null: the creator does not sell a pass.
         /// </summary>
         public long? PassPriceMinor { get; set; }
+
+        /// <summary>
+        ///     The short name in the link of the page of the creator (/u/ada), unique, see <see cref="SlugRules" />.
+        ///     Null: the link uses the id.
+        /// </summary>
+        public string? Slug { get; set; }
 
         public CreatorStatus Status { get; set; } = CreatorStatus.Active;
 

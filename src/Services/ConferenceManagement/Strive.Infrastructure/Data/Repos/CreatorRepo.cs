@@ -33,6 +33,20 @@ namespace Strive.Infrastructure.Data.Repos
             // a person has one creator profile
             await Collection.Indexes.CreateOneAsync(new CreateIndexModel<CreatorProfile>(
                 Builders<CreatorProfile>.IndexKeys.Ascending(x => x.UserId), new CreateIndexOptions {Unique = true}));
+
+            // a slug belongs to one creator; most creators have none, so only the ones that are set count
+            await Collection.Indexes.CreateOneAsync(new CreateIndexModel<CreatorProfile>(
+                Builders<CreatorProfile>.IndexKeys.Ascending(x => x.Slug),
+                new CreateIndexOptions<CreatorProfile>
+                {
+                    Unique = true,
+                    PartialFilterExpression = Builders<CreatorProfile>.Filter.Type(x => x.Slug, BsonType.String),
+                }));
+        }
+
+        public Task<CreatorProfile?> FindBySlug(string slug)
+        {
+            return Collection.Find(x => x.Slug == slug).FirstOrDefaultAsync()!;
         }
 
         public Task<CreatorProfile?> FindByUserId(string userId)
@@ -45,10 +59,18 @@ namespace Strive.Infrastructure.Data.Repos
             return Collection.Find(x => x.CreatorId == creatorId).FirstOrDefaultAsync()!;
         }
 
-        public Task Save(CreatorProfile profile)
+        public async Task Save(CreatorProfile profile)
         {
-            return Collection.ReplaceOneAsync(x => x.CreatorId == profile.CreatorId, profile,
-                new ReplaceOptions {IsUpsert = true});
+            try
+            {
+                await Collection.ReplaceOneAsync(x => x.CreatorId == profile.CreatorId, profile,
+                    new ReplaceOptions {IsUpsert = true});
+            }
+            catch (MongoWriteException e) when (e.WriteError.Category == ServerErrorCategory.DuplicateKey &&
+                                                profile.Slug != null)
+            {
+                throw new SlugTakenException();
+            }
         }
     }
 }

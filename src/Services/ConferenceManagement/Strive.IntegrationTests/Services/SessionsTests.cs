@@ -691,6 +691,112 @@ namespace Strive.IntegrationTests.Services
             Assert.Single(MailsAbout(session));
         }
 
+        // ---- the name in the link of a creator page
+
+        private Task<HttpResponseMessage> SetSlug(UserAccount host, string? slug) =>
+            Client(host).PutAsync("/v1/creators/me/slug", new JsonNetContent(new SetSlugDto(slug)));
+
+        [Fact]
+        public async Task Slug_PageIsFoundByTheNameAndById()
+        {
+            var host = await NewCreator();
+            var creatorId = await CreatorIdOf(host);
+            var name = "ada" + Guid.NewGuid().ToString("N")[..8];
+
+            (await SetSlug(host, name)).EnsureSuccessStatusCode();
+
+            var byName = await PageOf(name, null);
+            var byId = await PageOf(creatorId, null);
+            Assert.Equal(creatorId, byName.Creator.CreatorId);
+            Assert.Equal(name, byName.Creator.Slug);
+            Assert.Equal(creatorId, byId.Creator.CreatorId);
+        }
+
+        [Fact]
+        public async Task Slug_CapitalsAndSpacesAreForgiven()
+        {
+            var host = await NewCreator();
+            var name = "ada" + Guid.NewGuid().ToString("N")[..8];
+
+            var response = await SetSlug(host, "  " + name.ToUpperInvariant() + " ");
+
+            response.EnsureSuccessStatusCode();
+            Assert.Equal(name, (await Read<CreatorProfileDto>(response)).Slug);
+            Assert.Equal(await CreatorIdOf(host), (await PageOf(name.ToUpperInvariant(), null)).Creator.CreatorId);
+        }
+
+        [Fact]
+        public async Task Slug_TakenByAnotherCreator_BadRequest_AndTheOwnerKeepsIt()
+        {
+            var first = await NewCreator();
+            var second = await NewCreator();
+            var name = "ada" + Guid.NewGuid().ToString("N")[..8];
+            (await SetSlug(first, name)).EnsureSuccessStatusCode();
+
+            var response = await SetSlug(second, name);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Contains("Payments_SlugTaken", await response.Content.ReadAsStringAsync());
+            Assert.Equal(await CreatorIdOf(first), (await PageOf(name, null)).Creator.CreatorId);
+        }
+
+        [Fact]
+        public async Task Slug_SettingYourOwnAgain_IsFine()
+        {
+            var host = await NewCreator();
+            var name = "ada" + Guid.NewGuid().ToString("N")[..8];
+            (await SetSlug(host, name)).EnsureSuccessStatusCode();
+
+            (await SetSlug(host, name)).EnsureSuccessStatusCode();
+        }
+
+        [Theory]
+        [InlineData("ab")]
+        [InlineData("has space")]
+        [InlineData("under_score")]
+        [InlineData("admin")]
+        public async Task Slug_Invalid_BadRequestWithAReason(string slug)
+        {
+            var response = await SetSlug(await NewCreator(), slug);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Contains("Payments_InvalidSlug", await response.Content.ReadAsStringAsync());
+        }
+
+        [Fact]
+        public async Task Slug_Cleared_GoesBackToTheId_AndTheNameIsFreeAgain()
+        {
+            var host = await NewCreator();
+            var other = await NewCreator();
+            var name = "ada" + Guid.NewGuid().ToString("N")[..8];
+            (await SetSlug(host, name)).EnsureSuccessStatusCode();
+
+            (await SetSlug(host, null)).EnsureSuccessStatusCode();
+
+            Assert.Equal(HttpStatusCode.NotFound,
+                (await Client(null).GetAsync($"/v1/creators/{name}/page")).StatusCode);
+            (await SetSlug(other, name)).EnsureSuccessStatusCode();
+        }
+
+        [Fact]
+        public async Task Slug_TwoCreatorsWithoutOne_DoNotCollide()
+        {
+            // the unique index only counts names that are set
+            var host = await NewCreator();
+            await NewCreator();
+            await NewCreator();
+
+            Assert.Null((await Read<CreatorProfileDto>(await Client(host).GetAsync("/v1/creators/me"))).Slug);
+        }
+
+        [Fact]
+        public async Task Slug_NotACreator_NotFound()
+        {
+            var response = await SetSlug(NewUser("fan"), "somebody");
+
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+
         [Fact]
         public async Task Discover_ListsPublishedSessionsForEverybody_NotCancelledOnes()
         {

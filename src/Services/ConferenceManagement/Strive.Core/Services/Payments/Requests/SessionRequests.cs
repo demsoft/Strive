@@ -18,6 +18,9 @@ namespace Strive.Core.Services.Payments.Requests
     public record StartPassCheckoutRequest(string UserId, string CreatorId, string Email, string CallbackUrl)
         : IRequest<SuccessOrError<CheckoutResult>>;
 
+    /// <summary>A creator chooses the short name in the link of their page, or goes back to the id (null)</summary>
+    public record SetSlugRequest(string UserId, string? Slug) : IRequest<SuccessOrError<CreatorProfile>>;
+
     /// <summary>A creator sets what a pass costs, or stops selling it (null)</summary>
     public record SetPassPriceRequest(string UserId, long? PriceMinor) : IRequest<SuccessOrError<CreatorProfile>>;
 

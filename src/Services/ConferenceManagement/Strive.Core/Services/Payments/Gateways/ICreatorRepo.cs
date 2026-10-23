@@ -8,7 +8,19 @@ namespace Strive.Core.Services.Payments.Gateways
 
         Task<CreatorProfile?> FindById(string creatorId);
 
-        /// <summary>Stores a new profile or replaces the one with the same id</summary>
+        Task<CreatorProfile?> FindBySlug(string slug);
+
+        /// <summary>
+        ///     Stores a new profile or replaces the one with the same id. Throws <see cref="SlugTakenException" /> if another
+        ///     creator has the slug (two requests at the same time cannot both get it).
+        /// </summary>
         Task Save(CreatorProfile profile);
+    }
+
+    public class SlugTakenException : System.Exception
+    {
+        public SlugTakenException() : base("Another creator has this name.")
+        {
+        }
     }
 }
