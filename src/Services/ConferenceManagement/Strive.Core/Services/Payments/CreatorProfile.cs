@@ -101,6 +101,9 @@ namespace Strive.Core.Services.Payments
         /// </summary>
         public string? Slug { get; set; }
 
+        /// <summary>Changes whenever the photo does (it is part of the address of the picture, so that caches renew). Null: no photo.</summary>
+        public string? PhotoVersion { get; set; }
+
         public CreatorStatus Status { get; set; } = CreatorStatus.Active;
 
         public DateTimeOffset CreatedAt { get; init; }

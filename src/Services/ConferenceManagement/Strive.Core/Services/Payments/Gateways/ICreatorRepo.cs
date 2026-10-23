@@ -17,6 +17,16 @@ namespace Strive.Core.Services.Payments.Gateways
         Task Save(CreatorProfile profile);
     }
 
+    public interface ICreatorPhotoRepo
+    {
+        Task<CreatorPhoto?> Find(string creatorId);
+
+        /// <summary>Stores the photo of a creator, replacing the one there is</summary>
+        Task Save(CreatorPhoto photo);
+
+        Task Delete(string creatorId);
+    }
+
     public class SlugTakenException : System.Exception
     {
         public SlugTakenException() : base("Another creator has this name.")

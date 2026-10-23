@@ -854,4 +854,48 @@ namespace Strive.Core.Services.Payments.UseCases
             }
         }
     }
+
+    public class SetCreatorPhotoUseCase : IRequestHandler<SetCreatorPhotoRequest, SuccessOrError<CreatorProfile>>
+    {
+        private readonly ICreatorRepo _creators;
+        private readonly ICreatorPhotoRepo _photos;
+        private readonly TimeProvider _timeProvider;
+
+        public SetCreatorPhotoUseCase(ICreatorRepo creators, ICreatorPhotoRepo photos, TimeProvider timeProvider)
+        {
+            _creators = creators;
+            _photos = photos;
+            _timeProvider = timeProvider;
+        }
+
+        public async Task<SuccessOrError<CreatorProfile>> Handle(SetCreatorPhotoRequest request,
+            CancellationToken cancellationToken)
+        {
+            var creator = await _creators.FindByUserId(request.UserId);
+            if (creator == null) return PaymentsError.CreatorNotFound;
+
+            var now = _timeProvider.GetUtcNow();
+            if (request.Data == null)
+            {
+                await _photos.Delete(creator.CreatorId);
+                creator.PhotoVersion = null;
+            }
+            else
+            {
+                if (request.Data.Length == 0) return PaymentsError.InvalidPhoto("Choose a picture.");
+                if (request.Data.Length > PhotoRules.MaxBytes)
+                    return PaymentsError.InvalidPhoto($"The picture is too big ({PhotoRules.MaxBytes / 1024} KB at most).");
+
+                var type = PhotoRules.Sniff(request.Data);
+                if (type == null) return PaymentsError.InvalidPhoto("Use a jpeg, png or webp picture.");
+
+                await _photos.Save(new CreatorPhoto(creator.CreatorId, type, request.Data, now));
+                creator.PhotoVersion = now.ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            creator.UpdatedAt = now;
+            await _creators.Save(creator);
+            return creator;
+        }
+    }
 }

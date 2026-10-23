@@ -18,6 +18,7 @@ import BrandLogo from 'src/components/BrandLogo';
 import * as api from 'src/services/api/creators';
 import { Bank, CreatorProfile, PaymentsConfig } from 'src/services/api/creators';
 import PassSetup from './PassSetup';
+import PhotoSetup from './PhotoSetup';
 import SlugSetup from './SlugSetup';
 import { cleanAccountNumber, isCompleteAccountNumber } from '../accountNumber';
 import { requestErrorMessage } from '../errors';
@@ -268,6 +269,8 @@ export default function CreatorPage() {
                         {t('creator.earnings_title')}
                      </Button>
                   )}
+
+                  {profile && <PhotoSetup profile={profile} onSaved={setProfile} />}
 
                   {profile?.canSell && <SlugSetup profile={profile} onSaved={setProfile} />}
 

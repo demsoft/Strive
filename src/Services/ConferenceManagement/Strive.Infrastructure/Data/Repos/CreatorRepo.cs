@@ -73,4 +73,30 @@ namespace Strive.Infrastructure.Data.Repos
             }
         }
     }
+
+    public class CreatorPhotoRepo : MongoRepo<CreatorPhoto>, ICreatorPhotoRepo
+    {
+        static CreatorPhotoRepo()
+        {
+            BsonClassMap.RegisterClassMap<CreatorPhoto>(config =>
+            {
+                config.AutoMap();
+                config.MapIdMember(x => x.CreatorId);
+                config.MapMember(x => x.UpdatedAt).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
+                config.SetIgnoreExtraElements(true);
+            });
+        }
+
+        public CreatorPhotoRepo(IOptions<MongoDbOptions> options) : base(options)
+        {
+        }
+
+        public Task<CreatorPhoto?> Find(string creatorId) =>
+            Collection.Find(x => x.CreatorId == creatorId).FirstOrDefaultAsync()!;
+
+        public Task Save(CreatorPhoto photo) =>
+            Collection.ReplaceOneAsync(x => x.CreatorId == photo.CreatorId, photo, new ReplaceOptions {IsUpsert = true});
+
+        public Task Delete(string creatorId) => Collection.DeleteOneAsync(x => x.CreatorId == creatorId);
+    }
 }

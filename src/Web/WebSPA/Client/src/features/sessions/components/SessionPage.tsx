@@ -20,6 +20,7 @@ import { PaymentStatus, PublicSession } from 'src/services/api/sessions';
 import * as api from 'src/services/api/sessions';
 import { requestErrorMessage } from 'src/features/creator/errors';
 import { categoryGradient, categoryStyle } from 'src/features/gbedu/ui/categories';
+import { creatorPhotoUrl } from 'src/features/creator/photoUrl';
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import { brand } from 'src/theme';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
@@ -228,6 +229,7 @@ export default function SessionPage() {
                               name={session.creator.displayName}
                               size={44}
                               background={categoryGradient(session.category)}
+                              photoUrl={creatorPhotoUrl(session.creator.creatorId, session.creator.photoVersion)}
                            />
                            <Box sx={{ minWidth: 0 }}>
                               <Typography
