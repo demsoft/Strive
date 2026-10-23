@@ -32,6 +32,8 @@ export type Video = {
    likes?: number;
    /** the person who asks likes it */
    liked?: boolean;
+   /** how many comments it has */
+   comments?: number;
 };
 
 export type VideoFeed = {
@@ -183,4 +185,41 @@ export async function likeVideo(videoId: string): Promise<LikeState> {
 
 export async function unlikeVideo(videoId: string): Promise<LikeState> {
    return (await Axios.delete<LikeState>(`${base()}/${encodeURIComponent(videoId)}/like`)).data;
+}
+
+export type VideoComment = {
+   commentId: string;
+   authorName: string;
+   text: string;
+   createdAt: string;
+   /** the person who asks wrote it */
+   mine: boolean;
+   /** the person who asks may take it away */
+   canDelete: boolean;
+};
+
+export type CommentList = {
+   items: VideoComment[];
+   /** ask for the comments before this time to get the older ones */
+   next?: string | null;
+   total: number;
+};
+
+export { MAX_COMMENT_LENGTH } from 'src/features/social/commentRules';
+
+/** The comments under a video, newest first. */
+export async function fetchComments(videoId: string, before?: string | null): Promise<CommentList> {
+   return (
+      await Axios.get<CommentList>(`${base()}/${encodeURIComponent(videoId)}/comments`, {
+         params: { before: before ?? undefined },
+      })
+   ).data;
+}
+
+export async function postComment(videoId: string, text: string): Promise<VideoComment> {
+   return (await Axios.post<VideoComment>(`${base()}/${encodeURIComponent(videoId)}/comments`, { text })).data;
+}
+
+export async function deleteComment(videoId: string, commentId: string): Promise<void> {
+   await Axios.delete(`${base()}/${encodeURIComponent(videoId)}/comments/${encodeURIComponent(commentId)}`);
 }

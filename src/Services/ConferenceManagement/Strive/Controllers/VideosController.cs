@@ -32,11 +32,14 @@ namespace Strive.Controllers
         private readonly IFollowRepo _follows;
         private readonly EngagementPresenter _engagement;
         private readonly IVideoLikeRepo _likes;
+        private readonly IVideoCommentRepo _comments;
 
         public VideosController(IMediator mediator, IVideoRepo videos, ICreatorRepo creators,
             IVideoEntitlementRepo entitlements, VideoAccess access, VideoPresenter presenter,
-            IConfiguration configuration, IFollowRepo follows, EngagementPresenter engagement, IVideoLikeRepo likes)
+            IConfiguration configuration, IFollowRepo follows, EngagementPresenter engagement, IVideoLikeRepo likes,
+            IVideoCommentRepo comments)
         {
+            _comments = comments;
             _follows = follows;
             _engagement = engagement;
             _likes = likes;
@@ -50,6 +53,9 @@ namespace Strive.Controllers
         }
 
         private string? UserId => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        private bool IsAdmin => User.Claims.Any(x =>
+            (x.Type == "role" || x.Type == ClaimTypes.Role) && x.Value == Admin.AdminOptions.ServerAdminRole);
 
         // POST v1/videos
         [HttpPost("v1/videos")]
@@ -271,6 +277,65 @@ namespace Strive.Controllers
             Response.Headers.CacheControl = "no-store";
             var counts = await _likes.CountsOf(new[] {videoId});
             return new LikeStateDto(counts.TryGetValue(videoId, out var count) ? count : 0, liked);
+        }
+
+        // GET v1/videos/{videoId}/comments?before=...&limit=...
+        /// <summary>The comments under a video, newest first. Everybody can read them.</summary>
+        [HttpGet("v1/videos/{videoId}/comments")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<CommentListDto>> Comments(string videoId, [FromQuery] DateTimeOffset? before = null,
+            [FromQuery] int limit = 20)
+        {
+            var video = await _videos.FindById(videoId);
+            var isOwner = video != null && UserId != null && video.CreatorUserId == UserId;
+            if (video == null || !(video.IsPublic || isOwner)) return VideosError.NotFound.ToActionResult();
+
+            limit = Math.Clamp(limit, 1, 50);
+            // the creator of the video and the administrators may take any comment away
+            var comments = await _comments.FindOfVideo(videoId, before, limit);
+            var total = (await _comments.CountsOf(new[] {videoId})).GetValueOrDefault(videoId);
+
+            Response.Headers.CacheControl = "no-store";
+            return new CommentListDto(comments.Select(x => ToDto(x, isOwner || IsAdmin)).ToArray(),
+                comments.Count == limit ? comments[^1].CreatedAt : null, total);
+        }
+
+        // POST v1/videos/{videoId}/comments
+        [HttpPost("v1/videos/{videoId}/comments")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<CommentDto>> PostComment(string videoId, [FromBody] PostCommentDto dto)
+        {
+            if (UserId == null) return Forbid();
+
+            var name = User.Claims.FirstOrDefault(x => x.Type == "name")?.Value;
+            var result = await _mediator.Send(new PostCommentRequest(UserId, name ?? "", videoId, dto.Text));
+            if (!result.Success) return result.ToActionResult();
+
+            var video = await _videos.FindById(videoId);
+            Response.Headers.CacheControl = "no-store";
+            return ToDto(result.Response!, video != null && video.CreatorUserId == UserId);
+        }
+
+        // DELETE v1/videos/{videoId}/comments/{commentId}
+        [HttpDelete("v1/videos/{videoId}/comments/{commentId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> DeleteComment(string videoId, string commentId)
+        {
+            if (UserId == null) return Forbid();
+
+            return (await _mediator.Send(new DeleteCommentRequest(UserId, IsAdmin, videoId, commentId)))
+                .ToActionResult();
+        }
+
+        private CommentDto ToDto(VideoComment comment, bool isVideoOwner)
+        {
+            var mine = UserId != null && comment.UserId == UserId;
+            return new CommentDto(comment.CommentId, comment.AuthorName, comment.Text, comment.CreatedAt, mine,
+                mine || isVideoOwner);
         }
 
         // DELETE v1/videos/{videoId}

@@ -10,10 +10,12 @@ namespace Strive.Presenters
     public class EngagementPresenter
     {
         private readonly IVideoLikeRepo _likes;
+        private readonly IVideoCommentRepo _comments;
 
-        public EngagementPresenter(IVideoLikeRepo likes)
+        public EngagementPresenter(IVideoLikeRepo likes, IVideoCommentRepo comments)
         {
             _likes = likes;
+            _comments = comments;
         }
 
         public async Task<VideoDto[]> Apply(IReadOnlyCollection<VideoDto> videos, string? userId)
@@ -22,10 +24,12 @@ namespace Strive.Presenters
 
             var ids = videos.Select(x => x.VideoId).ToList();
             var counts = await _likes.CountsOf(ids);
+            var comments = await _comments.CountsOf(ids);
             var liked = userId == null ? new HashSet<string>() : await _likes.LikedAmong(userId, ids);
             return videos.Select(x => x with
             {
                 Likes = counts.TryGetValue(x.VideoId, out var count) ? count : 0, Liked = liked.Contains(x.VideoId),
+                Comments = comments.TryGetValue(x.VideoId, out var talk) ? talk : 0,
             }).ToArray();
         }
 

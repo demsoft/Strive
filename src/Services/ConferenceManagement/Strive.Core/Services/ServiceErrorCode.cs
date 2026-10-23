@@ -71,6 +71,10 @@ namespace Strive.Core.Services
         Videos_InvalidReport,
         Social_NotFound,
         Social_Invalid,
+        Social_InvalidComment,
+        Social_CannotComment,
+        Social_TooFast,
+        Social_CommentNotFound,
         Payments_SubscriptionNotFound,
         Payments_SlugTaken,
 

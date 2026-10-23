@@ -39,8 +39,22 @@ namespace Strive.Models.Response
     public record VideoDto(string VideoId, string Title, string? Description, string Status, string? FailureReason,
         double? DurationSeconds, int? Width, int? Height, long PriceMinor, DateTimeOffset CreatedAt, bool IsOwner,
         string? PosterUrl, string? PlaybackUrl, PublicCreatorDto? Creator, bool Locked = false,
-        string Moderation = "none", string? ModerationNote = null, long Likes = 0, bool Liked = false);
+        string Moderation = "none", string? ModerationNote = null, long Likes = 0, bool Liked = false,
+        long Comments = 0);
 
     /// <summary>How many people like a video, and whether the person who asks does</summary>
     public record LikeStateDto(long Likes, bool Liked);
+}
+
+namespace Strive.Models.Response
+{
+    public record PostCommentDto(string? Text);
+
+    /// <param name="Mine">The person who asks wrote it</param>
+    /// <param name="CanDelete">The person who asks may take it away: they wrote it, or it is under their video</param>
+    public record CommentDto(string CommentId, string AuthorName, string Text, System.DateTimeOffset CreatedAt,
+        bool Mine, bool CanDelete);
+
+    /// <param name="Next">Ask for the comments before this time to get the older ones</param>
+    public record CommentListDto(CommentDto[] Items, System.DateTimeOffset? Next, long Total);
 }

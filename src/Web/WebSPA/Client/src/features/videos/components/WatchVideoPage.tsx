@@ -13,6 +13,7 @@ import { Video } from 'src/services/api/videos';
 import usePaymentReturn from 'src/features/payments/usePaymentReturn';
 import FollowButton from 'src/features/social/FollowButton';
 import LikeButton from 'src/features/social/LikeButton';
+import VideoComments from 'src/features/social/VideoComments';
 import useVideoLike from 'src/features/social/useVideoLike';
 import useFollowing from 'src/features/social/useFollowing';
 import ReportVideoDialog from './ReportVideoDialog';
@@ -210,6 +211,15 @@ export default function WatchVideoPage() {
                   >
                      {copied ? t('sessions.copied') : t('videos.share')}
                   </Button>
+
+                  <Box sx={{ mt: 4 }}>
+                     <VideoComments
+                        videoId={video.videoId}
+                        signedIn={!!token}
+                        onSignIn={signIn}
+                        locked={video.locked}
+                     />
+                  </Box>
                </>
             )}
          </Container>
