@@ -25,11 +25,13 @@ namespace Strive.Controllers
         private readonly ICreatorRepo _creators;
         private readonly PaymentsOptions _options;
         private readonly ICreatorPhotoRepo _photos;
+        private readonly IPhotoStorage _photoStorage;
 
         public CreatorsController(IMediator mediator, ICreatorRepo creators, ICreatorPhotoRepo photos,
-            IOptions<PaymentsOptions> options)
+            IPhotoStorage photoStorage, IOptions<PaymentsOptions> options)
         {
             _photos = photos;
+            _photoStorage = photoStorage;
             _mediator = mediator;
             _creators = creators;
             _options = options.Value;
@@ -168,11 +170,26 @@ namespace Strive.Controllers
         [HttpGet("v1/creators/{creatorId}/photo")]
         [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetPhoto(string creatorId)
+        public async Task<IActionResult> GetPhoto(string creatorId, [FromQuery(Name = "w")] int? width = null,
+            [FromQuery(Name = "v")] string? version = null)
         {
             var creator = await _creators.FindById(creatorId) ??
                           await _creators.FindBySlug(Strive.Core.Services.Payments.SlugRules.Normalize(creatorId));
             if (creator?.PhotoVersion == null) return NotFound();
+
+            // the picture is at the image service: send the browser to its CDN, at the size that was asked for
+            if (creator.PhotoPublicId != null)
+            {
+                var url = _photoStorage.RedirectUrl(creator.PhotoPublicId, creator.PhotoVersion,
+                    PhotoSizes.Bucket(width));
+                if (url == null) return NotFound();
+
+                // the address the browser asked for carries the version: a current one never changes its answer
+                Response.Headers.CacheControl = version == creator.PhotoVersion
+                    ? "public, max-age=86400"
+                    : "public, max-age=60";
+                return Redirect(url);
+            }
 
             var etag = $"\"{creator.PhotoVersion}\"";
             if (Request.Headers.IfNoneMatch.ToString() == etag) return StatusCode(StatusCodes.Status304NotModified);

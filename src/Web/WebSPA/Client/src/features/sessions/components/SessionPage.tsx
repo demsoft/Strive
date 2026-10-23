@@ -229,7 +229,7 @@ export default function SessionPage() {
                               name={session.creator.displayName}
                               size={44}
                               background={categoryGradient(session.category)}
-                              photoUrl={creatorPhotoUrl(session.creator.creatorId, session.creator.photoVersion)}
+                              photoUrl={creatorPhotoUrl(session.creator.creatorId, session.creator.photoVersion, 44)}
                            />
                            <Box sx={{ minWidth: 0 }}>
                               <Typography

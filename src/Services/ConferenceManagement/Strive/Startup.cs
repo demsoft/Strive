@@ -44,6 +44,7 @@ using Strive.Core.Services.Recording;
 using Strive.Core.Services.Recording.Gateways;
 using Strive.Core.Services.Reminders;
 using Strive.Infrastructure.Email;
+using Strive.Infrastructure.Photos;
 using Strive.Infrastructure.Payments;
 using Strive.Infrastructure.Recording;
 using Strive.Recording;
@@ -178,6 +179,14 @@ namespace Strive
                 string.IsNullOrWhiteSpace(sp.GetRequiredService<IOptions<EmailOptions>>().Value.BrevoApiKey)
                     ? new UnavailableEmailSender()
                     : sp.GetRequiredService<BrevoEmailSender>());
+            // Photos of the creators: at Cloudinary if there is an account, else in the database
+            services.Configure<CloudinaryOptions>(Configuration.GetSection(CloudinaryOptions.Section));
+            services.AddHttpClient<CloudinaryPhotoStorage>(client => client.Timeout = TimeSpan.FromSeconds(30));
+            // TryAdd: the tests bring their own storage
+            services.TryAddTransient<IPhotoStorage>(sp =>
+                sp.GetRequiredService<IOptions<CloudinaryOptions>>().Value.IsConfigured
+                    ? sp.GetRequiredService<CloudinaryPhotoStorage>()
+                    : ActivatorUtilities.CreateInstance<MongoPhotoStorage>(sp));
             services.AddHostedService<SessionReminderService>();
             services.AddHostedService<PassRenewalService>();
 

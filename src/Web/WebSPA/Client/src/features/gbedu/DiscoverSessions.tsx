@@ -82,7 +82,7 @@ export function SessionTile({ session }: { session: DiscoverSession }) {
                   name={session.creatorName}
                   size={22}
                   background={categoryGradient(session.category)}
-                  photoUrl={creatorPhotoUrl(session.creatorId, session.creatorPhotoVersion)}
+                  photoUrl={creatorPhotoUrl(session.creatorId, session.creatorPhotoVersion, 22)}
                />
                <Typography variant="body2" color="text.secondary">
                   {t('sessions.with', { name: session.creatorName })}

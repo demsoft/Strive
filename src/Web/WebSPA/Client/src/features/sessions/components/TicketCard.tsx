@@ -92,7 +92,7 @@ export default function TicketCard({ ticket, onJoin, past }: Props) {
                   name={ticket.creatorName}
                   size={24}
                   background={categoryGradient(ticket.category)}
-                  photoUrl={creatorPhotoUrl(ticket.creatorId, ticket.creatorPhotoVersion)}
+                  photoUrl={creatorPhotoUrl(ticket.creatorId, ticket.creatorPhotoVersion, 24)}
                />
                <Typography variant="body2" color="text.secondary">
                   {t('sessions.with', { name: ticket.creatorName })}
