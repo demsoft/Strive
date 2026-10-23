@@ -45,6 +45,17 @@ export default function MyTicketsPage() {
       api.fetchMyPasses().then(setPasses, () => undefined);
    }, []);
 
+   const stopRenewing = async (pass: Pass) => {
+      if (!pass.subscriptionId) return;
+      if (!window.confirm(t('creator.pass_stop_confirm', { name: pass.creatorName }))) return;
+      try {
+         await api.cancelPassSubscription(pass.subscriptionId);
+         setPasses(await api.fetchMyPasses());
+      } catch (e) {
+         setError(requestErrorMessage(e));
+      }
+   };
+
    const { upcoming, past } = splitTickets(tickets ?? []);
    const shown = tab === 'upcoming' ? upcoming : past;
 
@@ -85,29 +96,59 @@ export default function MyTicketsPage() {
                   </Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                      {passes.map((pass) => (
-                        <Box
-                           key={pass.creatorId}
-                           component={RouterLink}
-                           to={`/u/${pass.creatorId}`}
-                           className="my-pass"
-                           sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              gap: 2,
-                              p: 1.5,
-                              borderRadius: '14px',
-                              textDecoration: 'none',
-                              color: 'inherit',
-                              backgroundColor: brand.surface,
-                              border: `1px solid ${brand.border}`,
-                           }}
-                        >
-                           <b>{pass.creatorName}</b>
-                           <span>
-                              {t('creator.pass_until', {
-                                 date: DateTime.fromISO(pass.validUntil).toLocaleString(DateTime.DATE_MED),
-                              })}
-                           </span>
+                        <Box key={pass.creatorId}>
+                           <Box
+                              component={RouterLink}
+                              to={`/u/${pass.creatorSlug || pass.creatorId}`}
+                              className="my-pass"
+                              sx={{
+                                 display: 'flex',
+                                 justifyContent: 'space-between',
+                                 gap: 2,
+                                 p: 1.5,
+                                 borderRadius: '14px',
+                                 textDecoration: 'none',
+                                 color: 'inherit',
+                                 backgroundColor: brand.surface,
+                                 border: `1px solid ${brand.border}`,
+                              }}
+                           >
+                              <b>{pass.creatorName}</b>
+                              <span>
+                                 {t('creator.pass_until', {
+                                    date: DateTime.fromISO(pass.validUntil).toLocaleString(DateTime.DATE_MED),
+                                 })}
+                              </span>
+                           </Box>
+                           {pass.subscriptionId && (
+                              <Box
+                                 className="my-pass-renews"
+                                 sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    px: 1.5,
+                                    pt: 0.5,
+                                    flexWrap: 'wrap',
+                                 }}
+                              >
+                                 <Typography variant="body2" color="text.secondary">
+                                    {t('creator.pass_renews_on', {
+                                       date: DateTime.fromISO(pass.renewsAt ?? pass.validUntil).toLocaleString(
+                                          DateTime.DATE_MED,
+                                       ),
+                                    })}
+                                 </Typography>
+                                 <Button
+                                    size="small"
+                                    color="inherit"
+                                    className="stop-renewing"
+                                    onClick={() => stopRenewing(pass)}
+                                 >
+                                    {t('creator.pass_stop_renewing')}
+                                 </Button>
+                              </Box>
+                           )}
                         </Box>
                      ))}
                   </Box>

@@ -280,6 +280,74 @@ namespace Strive.Infrastructure.Tests.Payments
         }
 
         [Fact]
+        public async Task VerifyTransaction_ReusableCard_GivesItsToken()
+        {
+            var (provider, handler) = Create();
+            handler.Answer = _ => (HttpStatusCode.OK,
+                "{\"status\":true,\"data\":{\"id\":42,\"status\":\"success\",\"reference\":\"gbd_1\",\"amount\":500000,\"currency\":\"NGN\",\"channel\":\"card\"," +
+                "\"authorization\":{\"authorization_code\":\"AUTH_abc\",\"reusable\":true,\"last4\":\"4081\"}}}");
+
+            var result = await provider.VerifyTransaction("gbd_1");
+
+            Assert.Equal("AUTH_abc", result.AuthorizationCode);
+        }
+
+        [Theory]
+        [InlineData("{\"authorization_code\":\"AUTH_abc\",\"reusable\":false}")] // bank transfer, USSD
+        [InlineData("{\"authorization_code\":\"\",\"reusable\":true}")]
+        [InlineData("null")]
+        public async Task VerifyTransaction_CardThatCannotBeChargedAgain_GivesNoToken(string authorization)
+        {
+            var (provider, handler) = Create();
+            handler.Answer = _ => (HttpStatusCode.OK,
+                "{\"status\":true,\"data\":{\"id\":42,\"status\":\"success\",\"reference\":\"gbd_1\",\"amount\":500000,\"currency\":\"NGN\"," +
+                $"\"authorization\":{authorization}}}}}");
+
+            var result = await provider.VerifyTransaction("gbd_1");
+
+            Assert.Null(result.AuthorizationCode);
+        }
+
+        [Fact]
+        public async Task ChargeAuthorization_SendsTheTokenWithTheSameSplitAsCheckout()
+        {
+            var (provider, handler) = Create();
+            handler.Answer = _ => (HttpStatusCode.OK, "{\"status\":true,\"data\":{\"status\":\"success\"}}");
+
+            await provider.ChargeAuthorization(new ChargeAuthorizationRequest("gbd_renew1", "fan@example.com",
+                "AUTH_abc", 2_000_000, "NGN", "ACCT_1", 200_000,
+                new Dictionary<string, string> {{"subscriptionId", "sub1"}}));
+
+            var (request, body) = handler.Calls.Single();
+            Assert.Equal("https://api.paystack.co/transaction/charge_authorization", request.RequestUri!.ToString());
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal(Key, request.Headers.Authorization!.Parameter);
+            using var json = System.Text.Json.JsonDocument.Parse(body);
+            var root = json.RootElement;
+            Assert.Equal("AUTH_abc", root.GetProperty("authorization_code").GetString());
+            Assert.Equal(2_000_000, root.GetProperty("amount").GetInt64());
+            Assert.Equal("gbd_renew1", root.GetProperty("reference").GetString());
+            Assert.Equal("ACCT_1", root.GetProperty("subaccount").GetString());
+            Assert.Equal(200_000, root.GetProperty("transaction_charge").GetInt64());
+            Assert.Equal("account", root.GetProperty("bearer").GetString());
+            Assert.DoesNotContain(Key, body);
+        }
+
+        [Theory]
+        [InlineData(HttpStatusCode.BadRequest)]
+        [InlineData(HttpStatusCode.Unauthorized)]
+        [InlineData(HttpStatusCode.InternalServerError)]
+        public async Task ChargeAuthorization_Refused_IsAProviderException(HttpStatusCode code)
+        {
+            var (provider, handler) = Create();
+            handler.Answer = _ => (code, "{\"status\":false,\"message\":\"Invalid authorization code\"}");
+
+            await Assert.ThrowsAsync<PaymentProviderException>(() => provider.ChargeAuthorization(
+                new ChargeAuthorizationRequest("r", "a@b.co", "AUTH_x", 1000, "NGN", "ACCT_1", 100,
+                    new Dictionary<string, string>())));
+        }
+
+        [Fact]
         public async Task VerifyTransaction_UnknownReference_IsNotFound()
         {
             var (provider, handler) = Create();

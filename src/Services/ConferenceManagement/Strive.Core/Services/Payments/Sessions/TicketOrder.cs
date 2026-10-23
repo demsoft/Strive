@@ -59,6 +59,15 @@ namespace Strive.Core.Services.Payments.Sessions
         /// <summary>What was bought. Older orders have no value and are tickets.</summary>
         public OrderKind Kind { get; set; } = OrderKind.Ticket;
 
+        /// <summary>
+        ///     Of a pass: the person agreed that it renews itself (the card is kept for it, if it can be charged again).
+        ///     Set at checkout, from the choice of the person.
+        /// </summary>
+        public bool AutoRenew { get; set; }
+
+        /// <summary>Of a pass: this order is a renewal that was charged without the person being there</summary>
+        public bool IsRenewal { get; set; }
+
         /// <summary>Of a pass: the creator it is for (a pass has no session, SessionId and ConferenceId are empty)</summary>
         public string? PassCreatorId { get; set; }
 
@@ -158,5 +167,72 @@ namespace Strive.Core.Services.Payments.Sessions
         public DateTimeOffset GrantedAt { get; init; }
 
         public DateTimeOffset ValidUntil { get; init; }
+    }
+
+    public enum SubscriptionStatus
+    {
+        /// <summary>Renews itself</summary>
+        Active,
+
+        /// <summary>Stopped by the person (the pass runs until its end)</summary>
+        Cancelled,
+
+        /// <summary>Stopped because the renewal did not work after all the tries, or the creator stopped selling it</summary>
+        Ended,
+    }
+
+    /// <summary>
+    ///     A pass that renews itself: the card token of the first payment and what was agreed (the price at that time:
+    ///     the creator cannot raise it for people who did not see the new one). The token is a secret, it is never sent
+    ///     to a browser.
+    /// </summary>
+    public class PassSubscription
+    {
+        public PassSubscription(string subscriptionId, string userId, string creatorId, string email,
+            string authorizationCode, long amountMinor, string currency, DateTimeOffset createdAt,
+            DateTimeOffset nextChargeAt)
+        {
+            SubscriptionId = subscriptionId;
+            UserId = userId;
+            CreatorId = creatorId;
+            Email = email;
+            AuthorizationCode = authorizationCode;
+            AmountMinor = amountMinor;
+            Currency = currency;
+            CreatedAt = createdAt;
+            NextChargeAt = nextChargeAt;
+        }
+
+        public string SubscriptionId { get; init; }
+
+        public string UserId { get; init; }
+
+        public string CreatorId { get; init; }
+
+        public string Email { get; set; }
+
+        public string AuthorizationCode { get; set; }
+
+        public long AmountMinor { get; set; }
+
+        public string Currency { get; init; }
+
+        public SubscriptionStatus Status { get; set; } = SubscriptionStatus.Active;
+
+        /// <summary>When the next renewal is charged (a little before the pass ends, so that nobody loses a day)</summary>
+        public DateTimeOffset NextChargeAt { get; set; }
+
+        /// <summary>How many renewals in a row did not work</summary>
+        public int FailedAttempts { get; set; }
+
+        /// <summary>A charge that was started and whose outcome is not known yet: it is looked at before anything else</summary>
+        public string? PendingReference { get; set; }
+
+        /// <summary>The renewal (its time) that the person was told about by mail</summary>
+        public DateTimeOffset? NoticeSentFor { get; set; }
+
+        public DateTimeOffset CreatedAt { get; init; }
+
+        public DateTimeOffset? EndedAt { get; set; }
     }
 }

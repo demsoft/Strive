@@ -1,4 +1,4 @@
-import { Alert, Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Checkbox, CircularProgress, FormControlLabel, TextField, Typography } from '@mui/material';
 import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined';
 import { DateTime } from 'luxon';
 import React, { useEffect, useRef, useState } from 'react';
@@ -52,6 +52,7 @@ export default function PassCard({ page, onPaid }: Props) {
    const { creator } = page;
 
    const [email, setEmail] = useState(() => (auth.user?.profile?.email as string | undefined) ?? rememberedEmail());
+   const [autoRenew, setAutoRenew] = useState(false);
    const [paying, setPaying] = useState(false);
    const [payError, setPayError] = useState<string | null>(null);
    const [payment, setPayment] = useState<Payment>(null);
@@ -97,7 +98,7 @@ export default function PassCard({ page, onPaid }: Props) {
       setPaying(true);
       setPayError(null);
       try {
-         const checkout = await api.startPassCheckout(creator.creatorId, email.trim(), accessToken);
+         const checkout = await api.startPassCheckout(creator.creatorId, email.trim(), accessToken, autoRenew);
          remember(email.trim());
          if (checkout.authorizationUrl) {
             window.location.assign(checkout.authorizationUrl);
@@ -157,6 +158,14 @@ export default function PassCard({ page, onPaid }: Props) {
          {page.hasPass && (
             <Alert severity="success" id="pass-active" sx={{ mb: 2 }}>
                {t('creator.pass_active', { date: until })}
+               {page.passRenewsAt && (
+                  <span id="pass-renews">
+                     {' '}
+                     {t('creator.pass_renews_on', {
+                        date: DateTime.fromISO(page.passRenewsAt).toLocaleString(DateTime.DATE_MED),
+                     })}
+                  </span>
+               )}
             </Alert>
          )}
 
@@ -181,6 +190,32 @@ export default function PassCard({ page, onPaid }: Props) {
                   onChange={(e) => setEmail(e.target.value)}
                   sx={{ mb: 2 }}
                />
+               {page.autoRenewAvailable && !page.passRenewsAt && (
+                  <FormControlLabel
+                     sx={{ mb: 2, alignItems: 'flex-start' }}
+                     control={
+                        <Checkbox
+                           id="pass-auto-renew"
+                           checked={autoRenew}
+                           onChange={(e) => setAutoRenew(e.target.checked)}
+                           sx={{ pt: 0.5 }}
+                        />
+                     }
+                     label={
+                        <span>
+                           <b>{t('creator.pass_auto_renew', { days: PASS_DAYS })}</b>
+                           <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              component="span"
+                              sx={{ display: 'block' }}
+                           >
+                              {t('creator.pass_auto_renew_hint')}
+                           </Typography>
+                        </span>
+                     }
+                  />
+               )}
                {payError && (
                   <Alert severity="error" sx={{ mb: 2 }} id="pass-pay-error">
                      {payError}

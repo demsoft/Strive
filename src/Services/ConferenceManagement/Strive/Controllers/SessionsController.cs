@@ -27,12 +27,17 @@ namespace Strive.Controllers
         private readonly IEntitlementRepo _entitlements;
         private readonly IOrderRepo _orders;
         private readonly IPassRepo _passes;
+        private readonly IPassSubscriptionRepo _subscriptions;
+        private readonly PaymentsOptions _paymentsOptions;
         private readonly IConfiguration _configuration;
 
         public SessionsController(IMediator mediator, ISessionRepo sessions, ICreatorRepo creators,
-            IEntitlementRepo entitlements, IOrderRepo orders, IPassRepo passes, IConfiguration configuration)
+            IEntitlementRepo entitlements, IOrderRepo orders, IPassRepo passes, IPassSubscriptionRepo subscriptions,
+            Microsoft.Extensions.Options.IOptions<PaymentsOptions> paymentsOptions, IConfiguration configuration)
         {
             _passes = passes;
+            _subscriptions = subscriptions;
+            _paymentsOptions = paymentsOptions.Value;
             _orders = orders;
             _mediator = mediator;
             _sessions = sessions;
@@ -153,9 +158,13 @@ namespace Strive.Controllers
             var passUntil = UserId == null
                 ? null
                 : await _passes.ActiveUntil(UserId, creator.CreatorId, DateTimeOffset.UtcNow);
+            var renewing = UserId == null
+                ? null
+                : (await _subscriptions.FindActiveOfUser(UserId)).FirstOrDefault(x => x.CreatorId == creator.CreatorId);
 
             Response.Headers.CacheControl = "no-store";
-            return new CreatorPageDto(PublicCreatorDto.From(creator), list.ToArray(), passUntil != null, passUntil);
+            return new CreatorPageDto(PublicCreatorDto.From(creator), list.ToArray(), passUntil != null, passUntil,
+                _paymentsOptions.AutoRenewEnabled, renewing?.NextChargeAt);
         }
 
         private async Task<DiscoverSessionDto> ToDiscoverDto(PaidSession session, CreatorProfile creator) =>
@@ -220,7 +229,7 @@ namespace Strive.Controllers
             if (UserId == null) return Forbid();
 
             var result = await _mediator.Send(new StartPassCheckoutRequest(UserId, creatorId, dto.Email,
-                CallbackUrl("u", creatorId)));
+                CallbackUrl("u", creatorId), dto.AutoRenew));
             if (!result.Success) return result.ToActionResult();
 
             Response.Headers.CacheControl = "no-store";
@@ -236,16 +245,30 @@ namespace Strive.Controllers
             if (UserId == null) return Forbid();
 
             var result = new List<PassDto>();
+            var renewing = (await _subscriptions.FindActiveOfUser(UserId)).ToList();
             // a person with two passes of one creator (bought early) is shown once, with the latest end
             foreach (var pass in (await _passes.FindActiveOfUser(UserId, DateTimeOffset.UtcNow))
                      .GroupBy(x => x.CreatorId).Select(g => g.OrderByDescending(x => x.ValidUntil).First()))
             {
                 var creator = await _creators.FindById(pass.CreatorId);
-                result.Add(new PassDto(pass.CreatorId, creator?.DisplayName ?? "", pass.ValidUntil));
+                var subscription = renewing.FirstOrDefault(x => x.CreatorId == pass.CreatorId);
+                result.Add(new PassDto(pass.CreatorId, creator?.DisplayName ?? "", pass.ValidUntil,
+                    subscription?.SubscriptionId, subscription?.NextChargeAt, creator?.Slug));
             }
 
             Response.Headers.CacheControl = "no-store";
             return result.ToArray();
+        }
+
+        // POST v1/passes/subscriptions/{subscriptionId}/cancel
+        [HttpPost("v1/passes/subscriptions/{subscriptionId}/cancel")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> CancelSubscription(string subscriptionId)
+        {
+            if (UserId == null) return Forbid();
+
+            return (await _mediator.Send(new CancelPassSubscriptionRequest(UserId, subscriptionId))).ToActionResult();
         }
 
         // POST v1/sessions/{sessionId}/cancel

@@ -63,6 +63,34 @@ namespace Strive.Core.Services.Payments.Gateways
         Task RecordRefundFailure(string reference, string reason);
     }
 
+    public interface IPassSubscriptionRepo
+    {
+        /// <summary>
+        ///     Stores the subscription of a person for a creator. A person has one that is active per creator: if there is
+        ///     one, it takes the new card, price and time and stays the same subscription.
+        /// </summary>
+        Task<PassSubscription> StartOrReplace(PassSubscription subscription);
+
+        Task<PassSubscription?> FindById(string subscriptionId);
+
+        /// <summary>The active subscriptions of a person</summary>
+        Task<IReadOnlyList<PassSubscription>> FindActiveOfUser(string userId);
+
+        /// <summary>Active subscriptions whose renewal is due</summary>
+        Task<IReadOnlyList<PassSubscription>> FindDue(System.DateTimeOffset now, int limit);
+
+        /// <summary>Active subscriptions whose renewal comes within the time and that were not told about it yet</summary>
+        Task<IReadOnlyList<PassSubscription>> FindDueForNotice(System.DateTimeOffset until, int limit);
+
+        /// <summary>
+        ///     Takes the renewal: only one caller gets true for a due subscription, the next charge time moves to
+        ///     <paramref name="leaseUntil" /> so that a second round (or server) does not charge again.
+        /// </summary>
+        Task<bool> TryStartCharge(string subscriptionId, System.DateTimeOffset now, System.DateTimeOffset leaseUntil);
+
+        Task Update(PassSubscription subscription);
+    }
+
     public interface IPassRepo
     {
         /// <summary>

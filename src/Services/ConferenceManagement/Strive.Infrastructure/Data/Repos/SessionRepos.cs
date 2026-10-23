@@ -284,4 +284,84 @@ namespace Strive.Infrastructure.Data.Repos
             await Collection.Find(x => x.UserId == userId && x.ValidUntil > now)
                 .SortByDescending(x => x.ValidUntil).Limit(100).ToListAsync();
     }
+
+    public class PassSubscriptionRepo : MongoRepo<PassSubscription>, IMongoIndexBuilder, IPassSubscriptionRepo
+    {
+        static PassSubscriptionRepo()
+        {
+            BsonClassMap.RegisterClassMap<PassSubscription>(config =>
+            {
+                config.AutoMap();
+                config.MapIdMember(x => x.SubscriptionId);
+                config.MapMember(x => x.Status).SetSerializer(new EnumSerializer<SubscriptionStatus>(BsonType.String));
+                config.MapMember(x => x.CreatedAt).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
+                config.MapMember(x => x.NextChargeAt).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
+                config.MapMember(x => x.NoticeSentFor).SetSerializer(
+                    new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
+                config.MapMember(x => x.EndedAt).SetSerializer(
+                    new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
+                config.SetIgnoreExtraElements(true);
+            });
+        }
+
+        public PassSubscriptionRepo(IOptions<MongoDbOptions> options) : base(options)
+        {
+        }
+
+        public async Task CreateIndexes()
+        {
+            await Collection.Indexes.CreateOneAsync(new CreateIndexModel<PassSubscription>(
+                Builders<PassSubscription>.IndexKeys.Ascending(x => x.Status).Ascending(x => x.NextChargeAt)));
+            await Collection.Indexes.CreateOneAsync(new CreateIndexModel<PassSubscription>(
+                Builders<PassSubscription>.IndexKeys.Ascending(x => x.UserId).Ascending(x => x.CreatorId)));
+        }
+
+        public async Task<PassSubscription> StartOrReplace(PassSubscription subscription)
+        {
+            var existing = await Collection.Find(x => x.UserId == subscription.UserId &&
+                                                       x.CreatorId == subscription.CreatorId &&
+                                                       x.Status == SubscriptionStatus.Active).FirstOrDefaultAsync();
+            if (existing == null)
+            {
+                await Collection.InsertOneAsync(subscription);
+                return subscription;
+            }
+
+            existing.Email = subscription.Email;
+            existing.AuthorizationCode = subscription.AuthorizationCode;
+            existing.AmountMinor = subscription.AmountMinor;
+            existing.NextChargeAt = subscription.NextChargeAt;
+            existing.FailedAttempts = 0;
+            existing.PendingReference = null;
+            await Collection.ReplaceOneAsync(x => x.SubscriptionId == existing.SubscriptionId, existing);
+            return existing;
+        }
+
+        public Task<PassSubscription?> FindById(string subscriptionId) =>
+            Collection.Find(x => x.SubscriptionId == subscriptionId).FirstOrDefaultAsync()!;
+
+        public async Task<IReadOnlyList<PassSubscription>> FindActiveOfUser(string userId) =>
+            await Collection.Find(x => x.UserId == userId && x.Status == SubscriptionStatus.Active).ToListAsync();
+
+        public async Task<IReadOnlyList<PassSubscription>> FindDue(DateTimeOffset now, int limit) =>
+            await Collection.Find(x => x.Status == SubscriptionStatus.Active && x.NextChargeAt <= now).Limit(limit)
+                .ToListAsync();
+
+        public async Task<IReadOnlyList<PassSubscription>> FindDueForNotice(DateTimeOffset until, int limit) =>
+            await Collection.Find(x => x.Status == SubscriptionStatus.Active && x.NextChargeAt <= until &&
+                                       (x.NoticeSentFor == null || x.NoticeSentFor != x.NextChargeAt))
+                .Limit(limit).ToListAsync();
+
+        public async Task<bool> TryStartCharge(string subscriptionId, DateTimeOffset now, DateTimeOffset leaseUntil)
+        {
+            var result = await Collection.UpdateOneAsync(
+                x => x.SubscriptionId == subscriptionId && x.Status == SubscriptionStatus.Active &&
+                     x.NextChargeAt <= now,
+                Builders<PassSubscription>.Update.Set(x => x.NextChargeAt, leaseUntil));
+            return result.ModifiedCount == 1;
+        }
+
+        public Task Update(PassSubscription subscription) =>
+            Collection.ReplaceOneAsync(x => x.SubscriptionId == subscription.SubscriptionId, subscription);
+    }
 }
