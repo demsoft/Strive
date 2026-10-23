@@ -101,9 +101,21 @@ export type CreatorPage = {
    /** the person has a running pass of this creator */
    hasPass: boolean;
    passValidUntil?: string | null;
+   /** the server renews passes by itself: the person may choose it */
+   autoRenewAvailable?: boolean;
+   /** the pass of the person renews on this day */
+   passRenewsAt?: string | null;
 };
 
-export type Pass = { creatorId: string; creatorName: string; validUntil: string };
+export type Pass = {
+   creatorId: string;
+   creatorName: string;
+   validUntil: string;
+   /** set if the pass renews itself */
+   subscriptionId?: string | null;
+   renewsAt?: string | null;
+   creatorSlug?: string | null;
+};
 
 const base = () => appSettings.conferenceUrl.replace(/\/+$/, '');
 const auth = (accessToken?: string) => (accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : {});
@@ -168,11 +180,12 @@ export async function startPassCheckout(
    creatorId: string,
    email: string,
    accessToken: string,
+   autoRenew = false,
 ): Promise<CheckoutResult> {
    return (
       await Axios.post<CheckoutResult>(
          `${base()}/v1/creators/${encodeURIComponent(creatorId)}/pass/checkout`,
-         { email },
+         { email, autoRenew },
          auth(accessToken),
       )
    ).data;
@@ -181,4 +194,9 @@ export async function startPassCheckout(
 /** The passes of the person that are running. */
 export async function fetchMyPasses(): Promise<Pass[]> {
    return (await Axios.get<Pass[]>(`${base()}/v1/passes/mine`)).data;
+}
+
+/** Stops a pass from renewing. The pass that was paid for runs until its end. */
+export async function cancelPassSubscription(subscriptionId: string): Promise<void> {
+   await Axios.post(`${base()}/v1/passes/subscriptions/${encodeURIComponent(subscriptionId)}/cancel`);
 }

@@ -179,6 +179,7 @@ namespace Strive
                     ? new UnavailableEmailSender()
                     : sp.GetRequiredService<BrevoEmailSender>());
             services.AddHostedService<SessionReminderService>();
+            services.AddHostedService<PassRenewalService>();
 
             // SignalR
             // Since .NET 7, hub and API parameters are bound from DI if the container can resolve their type. Autofac

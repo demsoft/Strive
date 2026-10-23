@@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({
    cancelSession: vi.fn(),
    fetchMyTickets: vi.fn(),
    fetchMyPasses: vi.fn(),
+   cancelPassSubscription: vi.fn(),
    sessionLink: (id: string) => `https://gbedu.test/s/${id}`,
 }));
 const push = vi.hoisted(() => vi.fn());
@@ -235,4 +236,42 @@ test('my tickets still works if the passes cannot be loaded', async () => {
 
    expect(document.querySelector('#no-tickets')).not.toBeNull();
    expect(document.querySelector('#my-passes')).toBeNull();
+});
+
+test('a pass that renews has a stop button, after it the passes are loaded again', async () => {
+   const renewing = {
+      creatorId: 'c1',
+      creatorName: 'Ada',
+      validUntil: '2030-01-15T10:00:00Z',
+      subscriptionId: 'sub1',
+      renewsAt: '2030-01-14T10:00:00Z',
+   };
+   api.fetchMyTickets.mockResolvedValue([]);
+   api.fetchMyPasses.mockResolvedValueOnce([renewing]).mockResolvedValueOnce([{ ...renewing, subscriptionId: null }]);
+   api.cancelPassSubscription.mockResolvedValue(undefined);
+   vi.spyOn(window, 'confirm').mockReturnValue(true);
+   await act(async () => createRoot(container).render(<MyTicketsPage />));
+   await settle();
+
+   expect(document.querySelector('.my-pass-renews')?.textContent).toContain('creator.pass_renews_on');
+   await act(async () => (document.querySelector('.stop-renewing') as HTMLElement).click());
+   await settle();
+
+   expect(api.cancelPassSubscription).toHaveBeenCalledWith('sub1');
+   expect(document.querySelector('.my-pass-renews')).toBeNull();
+});
+
+test('stopping is not done when the person does not confirm; a pass without renewal has no button', async () => {
+   api.fetchMyTickets.mockResolvedValue([]);
+   api.fetchMyPasses.mockResolvedValue([
+      { creatorId: 'c1', creatorName: 'Ada', validUntil: '2030-01-15T10:00:00Z', subscriptionId: 'sub1' },
+      { creatorId: 'c2', creatorName: 'Kofi', validUntil: '2030-01-15T10:00:00Z' },
+   ]);
+   vi.spyOn(window, 'confirm').mockReturnValue(false);
+   await act(async () => createRoot(container).render(<MyTicketsPage />));
+   await settle();
+
+   expect(document.querySelectorAll('.stop-renewing')).toHaveLength(1);
+   await act(async () => (document.querySelector('.stop-renewing') as HTMLElement).click());
+   expect(api.cancelPassSubscription).not.toHaveBeenCalled();
 });

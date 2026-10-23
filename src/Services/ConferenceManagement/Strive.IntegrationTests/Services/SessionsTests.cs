@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using Strive.Core.Services.Payments.Gateways;
+using Strive.Core.Services.Payments.Requests;
 using Strive.Core.Services.Payments.Sessions;
 using Strive.Hubs.Core;
 using Strive.Infrastructure.Serialization;
@@ -795,6 +797,325 @@ namespace Strive.IntegrationTests.Services
             var response = await SetSlug(NewUser("fan"), "somebody");
 
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+
+        // ---- passes that renew themselves
+
+        private IPassSubscriptionRepo Subscriptions => Factory.Services.GetRequiredService<IPassSubscriptionRepo>();
+
+        private async Task<(UserAccount fan, PassSubscription subscription)> RenewingFan(string creatorId,
+            string token = "AUTH_card1", UserAccount? existing = null)
+        {
+            var fan = existing ?? NewUser("fan");
+            var response = await Client(fan).PostAsync($"/v1/creators/{creatorId}/pass/checkout",
+                new JsonNetContent(new CheckoutDto("fan@example.com", true)));
+            var checkout = await Read<CheckoutResultDto>(response);
+            Provider.Pay(checkout.Reference!, PassPrice, cardToken: token);
+            Assert.Equal("paid", (await Status(fan, checkout.Reference!)).Status);
+            var subscription = (await Subscriptions.FindActiveOfUser(fan.Sub)).Single(x => x.CreatorId == creatorId);
+            return (fan, subscription);
+        }
+
+        private async Task<RenewalSummary> RunRenewals()
+        {
+            var result = await Factory.Services.GetRequiredService<MediatR.IMediator>()
+                .Send(new Strive.Core.Services.Payments.Requests.RenewPassSubscriptionsRequest());
+            AssertSuccess(result);
+            return result.Response!;
+        }
+
+        private async Task MakeDue(PassSubscription subscription)
+        {
+            var fresh = (await Subscriptions.FindById(subscription.SubscriptionId))!;
+            fresh.NextChargeAt = DateTimeOffset.UtcNow.AddMinutes(-1);
+            await Subscriptions.Update(fresh);
+        }
+
+        private Task<PassSubscription> Reload(PassSubscription subscription) =>
+            Subscriptions.FindById(subscription.SubscriptionId)!;
+
+        private IEnumerable<ChargeAuthorizationRequest> ChargesOf(PassSubscription subscription) =>
+            Provider.Charges.Where(x => x.Metadata.GetValueOrDefault("subscriptionId") == subscription.SubscriptionId);
+
+        [Fact]
+        public async Task Renew_PaidWithARenewingCard_StartsASubscriptionADayBeforeThePassEnds()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+
+            var (fan, subscription) = await RenewingFan(creatorId);
+
+            var until = (await PageOf(creatorId, fan)).PassValidUntil!.Value;
+            Assert.Equal("AUTH_card1", subscription.AuthorizationCode);
+            Assert.Equal(PassPrice, subscription.AmountMinor);
+            Assert.InRange((subscription.NextChargeAt - (until - TimeSpan.FromDays(1))).TotalSeconds, -5, 5);
+        }
+
+        [Fact]
+        public async Task Renew_NotAgreedOrCardCannotBeChargedAgain_NoSubscription()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+
+            // not ticked
+            var fan = await FanWithPass(creatorId);
+            Assert.Empty(await Subscriptions.FindActiveOfUser(fan.Sub));
+
+            // ticked, paid by bank transfer (no token)
+            var other = NewUser("fan");
+            var checkout = await Read<CheckoutResultDto>(await Client(other).PostAsync(
+                $"/v1/creators/{creatorId}/pass/checkout", new JsonNetContent(new CheckoutDto("fan@example.com", true))));
+            Provider.Pay(checkout.Reference!, PassPrice);
+            await Status(other, checkout.Reference!);
+
+            Assert.Empty(await Subscriptions.FindActiveOfUser(other.Sub));
+            Assert.True((await PageOf(creatorId, other)).HasPass);
+        }
+
+        [Fact]
+        public async Task Renew_TheCardTokenIsNeverSentToABrowser()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+            var (fan, _) = await RenewingFan(creatorId, "AUTH_secret_token");
+
+            var bodies = new[]
+            {
+                await Client(fan).GetStringAsync("/v1/passes/mine"),
+                await Client(fan).GetStringAsync($"/v1/creators/{creatorId}/page"),
+            };
+
+            Assert.All(bodies, body => Assert.DoesNotContain("AUTH_secret_token", body));
+            Assert.All(bodies, body => Assert.DoesNotContain("uthorizationCode", body));
+        }
+
+        [Fact]
+        public async Task Renew_Due_ChargesTheCardWithTheSameSplit_AndAddsThirtyDays()
+        {
+            var (host, creatorId) = await CreatorWithPass();
+            var (fan, subscription) = await RenewingFan(creatorId);
+            var before = (await PageOf(creatorId, fan)).PassValidUntil!.Value;
+            await MakeDue(subscription);
+
+            await RunRenewals();
+
+            var charge = Assert.Single(ChargesOf(subscription));
+            Assert.Equal("AUTH_card1", charge.AuthorizationCode);
+            Assert.Equal(PassPrice, charge.AmountMinor);
+            Assert.Equal(PassPrice / 10, charge.PlatformAmountMinor);
+            var page = await PageOf(creatorId, fan);
+            Assert.InRange((page.PassValidUntil!.Value - before).TotalDays, 29.9, 30.1);
+            var after = await Reload(subscription);
+            Assert.Equal(0, after.FailedAttempts);
+            Assert.Null(after.PendingReference);
+            Assert.InRange((after.NextChargeAt - (page.PassValidUntil.Value - TimeSpan.FromDays(1))).TotalSeconds, -5, 5);
+            // the creator earned from both payments
+            Assert.Equal(2, (await EarningsOf(host)).Totals.Passes);
+        }
+
+        [Fact]
+        public async Task Renew_NotDueYet_NothingIsCharged()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+            var (_, subscription) = await RenewingFan(creatorId);
+
+            await RunRenewals();
+
+            Assert.Empty(ChargesOf(subscription));
+        }
+
+        [Fact]
+        public async Task Renew_TwoRoundsAtTheSameTime_ChargeOnce()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+            var (_, subscription) = await RenewingFan(creatorId);
+            await MakeDue(subscription);
+
+            await Task.WhenAll(RunRenewals(), RunRenewals(), RunRenewals());
+
+            Assert.Single(ChargesOf(subscription));
+        }
+
+        [Theory]
+        [InlineData(FakePaymentProvider.ChargeResult.Decline)]
+        [InlineData(FakePaymentProvider.ChargeResult.Refuse)]
+        public async Task Renew_CardDeclined_IsTriedAgainTomorrow_ThenTheSubscriptionEnds(
+            FakePaymentProvider.ChargeResult result)
+        {
+            var (_, creatorId) = await CreatorWithPass();
+            var (fan, subscription) = await RenewingFan(creatorId);
+            var passUntil = (await PageOf(creatorId, fan)).PassValidUntil;
+            Provider.NextCharge = result;
+            try
+            {
+                // first failure: told, tried again in a day
+                await MakeDue(subscription);
+                var summary = await RunRenewals();
+                var once = await Reload(subscription);
+                Assert.True(summary.Failed >= 1);
+                Assert.Equal(SubscriptionStatus.Active, once.Status);
+                Assert.Equal(1, once.FailedAttempts);
+                Assert.InRange((once.NextChargeAt - DateTimeOffset.UtcNow).TotalHours, 23, 25);
+                Assert.Contains(Mail.Sent, x => x.To == "fan@example.com" && x.Subject.Contains("did not go through"));
+
+                // second and third failure: the subscription ends
+                await MakeDue(subscription);
+                await RunRenewals();
+                await MakeDue(subscription);
+                await RunRenewals();
+            }
+            finally
+            {
+                Provider.NextCharge = FakePaymentProvider.ChargeResult.Succeed;
+            }
+
+            var ended = await Reload(subscription);
+            Assert.Equal(SubscriptionStatus.Ended, ended.Status);
+            Assert.Equal(3, ChargesOf(subscription).Count());
+            Assert.Contains(Mail.Sent, x => x.To == "fan@example.com" && x.Subject.Contains("not renewed any more"));
+            // what was paid is still there
+            Assert.Equal(passUntil, (await PageOf(creatorId, fan)).PassValidUntil);
+        }
+
+        [Fact]
+        public async Task Renew_OutcomeNotKnown_IsNeverChargedTwice_AndSettlesWhenItIsKnown()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+            var (fan, subscription) = await RenewingFan(creatorId);
+            var before = (await PageOf(creatorId, fan)).PassValidUntil!.Value;
+            await MakeDue(subscription);
+            Provider.NextCharge = FakePaymentProvider.ChargeResult.Unknown;
+            try
+            {
+                await RunRenewals();
+            }
+            finally
+            {
+                Provider.NextCharge = FakePaymentProvider.ChargeResult.Succeed;
+            }
+
+            var waiting = await Reload(subscription);
+            Assert.NotNull(waiting.PendingReference);
+
+            // a later round: the provider still does not know -> no second charge
+            await MakeDue(subscription);
+            await RunRenewals();
+            Assert.Single(ChargesOf(subscription));
+
+            // the payment turns out to be paid
+            Provider.Pay(waiting.PendingReference!, PassPrice);
+            await MakeDue(subscription);
+            await RunRenewals();
+
+            Assert.Single(ChargesOf(subscription));
+            Assert.Null((await Reload(subscription)).PendingReference);
+            Assert.InRange(((await PageOf(creatorId, fan)).PassValidUntil!.Value - before).TotalDays, 29.9, 30.1);
+        }
+
+        [Fact]
+        public async Task Renew_CreatorStoppedSellingThePass_TheSubscriptionEndsWithoutACharge()
+        {
+            var (host, creatorId) = await CreatorWithPass();
+            var (_, subscription) = await RenewingFan(creatorId);
+            (await SetPassPrice(host, null)).EnsureSuccessStatusCode();
+            await MakeDue(subscription);
+
+            await RunRenewals();
+
+            Assert.Equal(SubscriptionStatus.Ended, (await Reload(subscription)).Status);
+            Assert.Empty(ChargesOf(subscription));
+        }
+
+        [Theory]
+        [InlineData(1_000_000L, 1_000_000L)] // the creator lowered the price: the person pays the lower price
+        [InlineData(5_000_000L, PassPrice)] // the creator raised it: the person pays what was agreed
+        public async Task Renew_AmountIsNeverMoreThanAgreed(long newPrice, long expectedCharge)
+        {
+            var (host, creatorId) = await CreatorWithPass();
+            var (_, subscription) = await RenewingFan(creatorId);
+            (await SetPassPrice(host, newPrice)).EnsureSuccessStatusCode();
+            await MakeDue(subscription);
+
+            await RunRenewals();
+
+            Assert.Equal(expectedCharge, Assert.Single(ChargesOf(subscription)).AmountMinor);
+        }
+
+        [Fact]
+        public async Task Cancel_StopsRenewing_ButThePassRuns()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+            var (fan, subscription) = await RenewingFan(creatorId);
+
+            var response = await Client(fan).PostAsync(
+                $"/v1/passes/subscriptions/{subscription.SubscriptionId}/cancel", null);
+            await MakeDue(subscription);
+            await RunRenewals();
+
+            response.EnsureSuccessStatusCode();
+            Assert.Equal(SubscriptionStatus.Cancelled, (await Reload(subscription)).Status);
+            Assert.Empty(ChargesOf(subscription));
+            Assert.True((await PageOf(creatorId, fan)).HasPass);
+            Assert.Null(Assert.Single(await Read<PassDto[]>(await Client(fan).GetAsync("/v1/passes/mine")))
+                .SubscriptionId);
+        }
+
+        [Fact]
+        public async Task Cancel_SomebodyElsesSubscription_NotFound_AndItKeepsRenewing()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+            var (_, subscription) = await RenewingFan(creatorId);
+
+            var response = await Client(NewUser("other")).PostAsync(
+                $"/v1/passes/subscriptions/{subscription.SubscriptionId}/cancel", null);
+
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            Assert.Equal(SubscriptionStatus.Active, (await Reload(subscription)).Status);
+        }
+
+        [Fact]
+        public async Task Renew_MyPassesAndThePageShowWhenItRenews()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+            var (fan, subscription) = await RenewingFan(creatorId);
+
+            var pass = Assert.Single(await Read<PassDto[]>(await Client(fan).GetAsync("/v1/passes/mine")));
+            var page = await PageOf(creatorId, fan);
+
+            Assert.Equal(subscription.SubscriptionId, pass.SubscriptionId);
+            Assert.Equal(subscription.NextChargeAt, pass.RenewsAt);
+            Assert.Equal(subscription.NextChargeAt, page.PassRenewsAt);
+            Assert.True(page.AutoRenewAvailable);
+        }
+
+        [Fact]
+        public async Task Renew_BuyingAgainWithRenewal_KeepsOneSubscription()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+            var (fan, first) = await RenewingFan(creatorId, "AUTH_old");
+
+            var (_, second) = await RenewingFan(creatorId, "AUTH_new", fan);
+
+            Assert.Equal(first.SubscriptionId, second.SubscriptionId);
+            Assert.Equal("AUTH_new", second.AuthorizationCode);
+            Assert.Single(await Subscriptions.FindActiveOfUser(fan.Sub));
+        }
+
+        [Fact]
+        public async Task Renew_ComingRenewal_ThePersonIsToldOnce()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+            var (_, subscription) = await RenewingFan(creatorId);
+            var soon = (await Subscriptions.FindById(subscription.SubscriptionId))!;
+            soon.NextChargeAt = DateTimeOffset.UtcNow.AddDays(2);
+            await Subscriptions.Update(soon);
+            var before = Mail.Sent.Count(x => x.Subject.Contains("renews soon"));
+
+            await RunRenewals();
+            await RunRenewals();
+
+            Assert.Equal(before + 1, Mail.Sent.Count(x => x.Subject.Contains("renews soon")));
+            var mail = Mail.Sent.Last(x => x.Subject.Contains("renews soon"));
+            Assert.Contains("/tickets", mail.Text);
+            Assert.Contains("20,000 NGN", mail.Text);
+            Assert.Empty(ChargesOf(subscription));
         }
 
         [Fact]

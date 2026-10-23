@@ -35,16 +35,19 @@ namespace Strive.Models.Response
 
     /// <summary>The page of a creator: who they are and what they have on</summary>
     public record CreatorPageDto(PublicCreatorDto Creator, DiscoverSessionDto[] Sessions, bool HasPass = false,
-        DateTimeOffset? PassValidUntil = null);
+        DateTimeOffset? PassValidUntil = null, bool AutoRenewAvailable = false, DateTimeOffset? PassRenewsAt = null);
 
     /// <summary>A pass of the person that is running</summary>
-    public record PassDto(string CreatorId, string CreatorName, DateTimeOffset ValidUntil);
+    /// <param name="SubscriptionId">Set if the pass renews itself: the person can stop it with this</param>
+    /// <param name="RenewsAt">When the card is charged for the next pass</param>
+    public record PassDto(string CreatorId, string CreatorName, DateTimeOffset ValidUntil,
+        string? SubscriptionId = null, DateTimeOffset? RenewsAt = null, string? CreatorSlug = null);
 
     /// <summary>What a creator earned: the totals, per session, and the latest sales</summary>
     public record EarningsDto(string Currency, EarningsTotals Totals, System.Collections.Generic.IReadOnlyList<SessionEarnings> Sessions,
         System.Collections.Generic.IReadOnlyList<SaleEntry> Recent);
 
-    public record CheckoutDto(string Email);
+    public record CheckoutDto(string Email, bool AutoRenew = false);
 
     public record CheckoutResultDto(string? AuthorizationUrl, string? Reference, bool AlreadyHasTicket);
 

@@ -30,9 +30,10 @@ namespace Strive.IntegrationTests._Helpers
         public const string SecretKey = "sk_test_integration";
 
         /// <summary>The person pays: the provider will confirm it</summary>
-        public void Pay(string reference, long amountMinor, string currency = "NGN") =>
+        /// <param name="cardToken">The person paid with a card that can be charged again: its token</param>
+        public void Pay(string reference, long amountMinor, string currency = "NGN", string? cardToken = null) =>
             Transactions[reference] = new VerifiedTransaction(reference, true, false, amountMinor, currency, "card",
-                "4099260516", DateTimeOffset.UtcNow);
+                "4099260516", DateTimeOffset.UtcNow, cardToken);
 
         public void Fail(string reference, long amountMinor) =>
             Transactions[reference] = new VerifiedTransaction(reference, false, true, amountMinor, "NGN", "card", null,
@@ -93,6 +94,39 @@ namespace Strive.IntegrationTests._Helpers
             if (!Transactions.TryGetValue(reference, out var transaction))
                 throw new TransactionNotFoundException("Transaction reference not found.");
             return Task.FromResult(transaction);
+        }
+
+        public enum ChargeResult
+        {
+            /// <summary>The card is charged: the payment exists and is paid</summary>
+            Succeed,
+
+            /// <summary>The bank declines: the payment exists and failed</summary>
+            Decline,
+
+            /// <summary>The provider refuses the request</summary>
+            Refuse,
+
+            /// <summary>The provider took it, and the outcome is not known yet</summary>
+            Unknown,
+        }
+
+        public ChargeResult NextCharge { get; set; } = ChargeResult.Succeed;
+
+        public ConcurrentQueue<ChargeAuthorizationRequest> Charges { get; } = new();
+
+        public Task ChargeAuthorization(ChargeAuthorizationRequest request, CancellationToken cancellationToken = default)
+        {
+            Check();
+            Charges.Enqueue(request);
+            switch (NextCharge)
+            {
+                case ChargeResult.Refuse: throw new PaymentProviderException("Invalid authorization code.");
+                case ChargeResult.Succeed: Pay(request.Reference, request.AmountMinor, request.Currency); break;
+                case ChargeResult.Decline: Fail(request.Reference, request.AmountMinor); break;
+            }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>The refunds the provider was asked for, as (reference, amount)</summary>

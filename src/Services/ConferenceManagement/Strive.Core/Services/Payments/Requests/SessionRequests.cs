@@ -15,8 +15,21 @@ namespace Strive.Core.Services.Payments.Requests
         : IRequest<SuccessOrError<CheckoutResult>>;
 
     /// <summary>Starts the payment of a pass: all sessions of a creator for <see cref="PassRules.Days" /> days</summary>
-    public record StartPassCheckoutRequest(string UserId, string CreatorId, string Email, string CallbackUrl)
-        : IRequest<SuccessOrError<CheckoutResult>>;
+    /// <param name="AutoRenew">The person agrees that the pass renews itself (the card is charged again)</param>
+    public record StartPassCheckoutRequest(string UserId, string CreatorId, string Email, string CallbackUrl,
+        bool AutoRenew = false) : IRequest<SuccessOrError<CheckoutResult>>;
+
+    /// <summary>The person stops a pass from renewing. The pass they paid for runs until its end.</summary>
+    public record CancelPassSubscriptionRequest(string UserId, string SubscriptionId) : IRequest<SuccessOrError<Unit>>;
+
+    /// <param name="Renewed">Passes renewed</param>
+    /// <param name="Failed">Renewals that did not work (they are tried again, or the subscription ends)</param>
+    /// <param name="Ended">Subscriptions that ended</param>
+    /// <param name="Notified">People told that their pass renews soon</param>
+    public record RenewalSummary(int Renewed, int Failed, int Ended, int Notified);
+
+    /// <summary>Charges the renewals that are due and tells people about the ones that are coming</summary>
+    public record RenewPassSubscriptionsRequest : IRequest<SuccessOrError<RenewalSummary>>;
 
     /// <summary>A creator chooses the short name in the link of their page, or goes back to the id (null)</summary>
     public record SetSlugRequest(string UserId, string? Slug) : IRequest<SuccessOrError<CreatorProfile>>;

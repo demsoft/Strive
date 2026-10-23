@@ -90,7 +90,7 @@ test('signed in: paying needs a valid email, then goes to the page of the provid
    expect(pay.disabled).toBe(false);
    await act(async () => pay.click());
 
-   expect(api.startPassCheckout).toHaveBeenCalledWith('c1', 'fan@example.com', 'tok');
+   expect(api.startPassCheckout).toHaveBeenCalledWith('c1', 'fan@example.com', 'tok', false);
    expect(assign).toHaveBeenCalledWith('about:blank#pay');
 });
 
@@ -137,4 +137,45 @@ test('back from the payment page: a failed payment is said clearly', async () =>
    await settle();
 
    expect(document.querySelector('#pass-failed')).not.toBeNull();
+});
+
+test('the renew choice is only offered while the server allows it', async () => {
+   state.user = { access_token: 'tok', profile: { email: 'fan@example.com' } };
+   await act(async () => createRoot(container).render(<PassCard page={page()} onPaid={vi.fn()} />));
+   expect(document.querySelector('#pass-auto-renew')).toBeNull();
+});
+
+test('paying without ticking the box does not ask for a renewal; with it, it does', async () => {
+   state.user = { access_token: 'tok', profile: { email: 'fan@example.com' } };
+   api.startPassCheckout.mockResolvedValue({ authorizationUrl: undefined, alreadyHasTicket: false });
+   await act(async () =>
+      createRoot(container).render(<PassCard page={page({ autoRenewAvailable: true })} onPaid={vi.fn()} />),
+   );
+
+   await act(async () => (document.querySelector('#pass-pay') as HTMLElement).click());
+   expect(api.startPassCheckout).toHaveBeenLastCalledWith('c1', 'fan@example.com', 'tok', false);
+
+   await act(async () => (document.querySelector('#pass-auto-renew') as HTMLElement).click());
+   await act(async () => (document.querySelector('#pass-pay') as HTMLElement).click());
+   expect(api.startPassCheckout).toHaveBeenLastCalledWith('c1', 'fan@example.com', 'tok', true);
+});
+
+test('a pass that renews says when, and offers no second renewal', async () => {
+   state.user = { access_token: 'tok', profile: { email: 'fan@example.com' } };
+   await act(async () =>
+      createRoot(container).render(
+         <PassCard
+            page={page({
+               hasPass: true,
+               passValidUntil: '2030-01-15T10:00:00Z',
+               passRenewsAt: '2030-01-14T10:00:00Z',
+               autoRenewAvailable: true,
+            })}
+            onPaid={vi.fn()}
+         />,
+      ),
+   );
+
+   expect(document.querySelector('#pass-renews')?.textContent).toContain('creator.pass_renews_on');
+   expect(document.querySelector('#pass-auto-renew')).toBeNull();
 });

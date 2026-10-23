@@ -56,6 +56,8 @@ services:
       - Payments__Enabled=${PAYMENTS_ENABLED:-false}
       - Payments__PlatformCommissionPercent=${PLATFORM_COMMISSION_PERCENT:-10}
       - Payments__Paystack__SecretKey=${PAYSTACK_SECRET_KEY:-}
+      # passes that renew themselves (the card of the first payment is charged again). Off until tried with test cards.
+      - Payments__AutoRenewEnabled=${PAYMENTS_AUTO_RENEW:-false}
       # reminder mails shortly before a session starts: through the Brevo API, nothing is sent without BREVO_API_KEY
       - Email__BrevoApiKey=${BREVO_API_KEY:-}
       - Email__From=${REMINDERS_FROM:-${SMTP_FROM:-Gbedu <no-reply@localhost>}}

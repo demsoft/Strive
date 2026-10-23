@@ -51,6 +51,12 @@ namespace Strive.Core.Services.Payments
         public static Error SlugTaken =>
             BadRequest("Another creator already has this name. Choose another one.", ServiceErrorCode.Payments_SlugTaken);
 
+        public static Error SubscriptionNotFound =>
+            NotFound("This subscription was not found.", ServiceErrorCode.Payments_SubscriptionNotFound);
+
+        public static Error AutoRenewUnavailable =>
+            BadRequest("Renewing a pass automatically is not available yet.", ServiceErrorCode.Payments_InvalidSession);
+
         public static Error OwnPass =>
             BadRequest("This is your own page: you do not need a pass.", ServiceErrorCode.Payments_HostCannotBuy);
 

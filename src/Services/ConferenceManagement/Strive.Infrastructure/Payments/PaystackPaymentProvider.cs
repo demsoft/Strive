@@ -149,7 +149,38 @@ namespace Strive.Infrastructure.Payments
                 status is "failed" or "reversed",
                 data.Amount, data.Currency ?? "", data.Channel,
                 data.Id == 0 ? null : data.Id.ToString(CultureInfo.InvariantCulture),
-                data.PaidAt);
+                data.PaidAt,
+                // only a reusable card can be charged again (bank transfer and USSD cannot)
+                data.Authorization is {Reusable: true, AuthorizationCode: { Length: > 0 } code} ? code : null);
+        }
+
+        public async Task ChargeAuthorization(ChargeAuthorizationRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            var body = new
+            {
+                email = request.Email,
+                amount = request.AmountMinor,
+                currency = request.Currency,
+                reference = request.Reference,
+                authorization_code = request.AuthorizationCode,
+                subaccount = request.SubaccountCode,
+                // the same split as at checkout: what stays with the platform, the rest to the creator
+                transaction_charge = request.PlatformAmountMinor,
+                bearer = "account",
+                metadata = request.Metadata,
+            };
+
+            try
+            {
+                // the outcome (paid or not) is read with VerifyTransaction: Paystack answers 200 for a declined card too
+                await Send<object>(HttpMethod.Post, "transaction/charge_authorization", JsonContent.Create(body),
+                    cancellationToken);
+            }
+            catch (ProviderRefusedException e)
+            {
+                throw new PaymentProviderException(e.Message, e);
+            }
         }
 
         public async Task<RefundResult> RefundTransaction(string reference, long amountMinor,
@@ -321,6 +352,15 @@ namespace Strive.Infrastructure.Payments
             [JsonPropertyName("channel")] public string? Channel { get; set; }
 
             [JsonPropertyName("paid_at")] public DateTimeOffset? PaidAt { get; set; }
+
+            [JsonPropertyName("authorization")] public AuthorizationDto? Authorization { get; set; }
+        }
+
+        private class AuthorizationDto
+        {
+            [JsonPropertyName("authorization_code")] public string? AuthorizationCode { get; set; }
+
+            [JsonPropertyName("reusable")] public bool Reusable { get; set; }
         }
 
         private class RefundDto
@@ -387,6 +427,9 @@ namespace Strive.Infrastructure.Payments
             CancellationToken cancellationToken = default) => throw NotSetUp;
 
         public Task<VerifiedTransaction> VerifyTransaction(string reference,
+            CancellationToken cancellationToken = default) => throw NotSetUp;
+
+        public Task ChargeAuthorization(ChargeAuthorizationRequest request,
             CancellationToken cancellationToken = default) => throw NotSetUp;
 
         public Task<RefundResult> RefundTransaction(string reference, long amountMinor,

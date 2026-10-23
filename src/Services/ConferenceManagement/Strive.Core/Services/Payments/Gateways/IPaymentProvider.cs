@@ -33,6 +33,13 @@ namespace Strive.Core.Services.Payments.Gateways
         Task<VerifiedTransaction> VerifyTransaction(string reference, CancellationToken cancellationToken = default);
 
         /// <summary>
+        ///     Charges the card of an earlier payment again (the person is not there). The answer of the provider is
+        ///     not trusted: the caller verifies the payment afterwards like any other. Throws
+        ///     <see cref="PaymentProviderException" /> if the provider did not take the request.
+        /// </summary>
+        Task ChargeAuthorization(ChargeAuthorizationRequest request, CancellationToken cancellationToken = default);
+
+        /// <summary>
         ///     Gives the whole payment back to the buyer. Throws <see cref="PaymentProviderException" /> if the provider
         ///     did not accept the refund (the caller tries again later).
         /// </summary>
@@ -48,12 +55,18 @@ namespace Strive.Core.Services.Payments.Gateways
     public record CheckoutRequest(string Reference, string Email, long AmountMinor, string Currency, string CallbackUrl,
         string SubaccountCode, long PlatformAmountMinor, IReadOnlyDictionary<string, string> Metadata);
 
+    /// <param name="AuthorizationCode">The token of the card, from the first payment</param>
+    public record ChargeAuthorizationRequest(string Reference, string Email, string AuthorizationCode,
+        long AmountMinor, string Currency, string SubaccountCode, long PlatformAmountMinor,
+        IReadOnlyDictionary<string, string> Metadata);
+
     public record CheckoutSession(string AuthorizationUrl, string AccessCode);
 
     /// <param name="Paid">The provider confirms the money was received</param>
     /// <param name="Failed">The provider says it did not work (not just: not paid yet)</param>
+    /// <param name="AuthorizationCode">The token of the card, if the card can be charged again (reusable)</param>
     public record VerifiedTransaction(string Reference, bool Paid, bool Failed, long AmountMinor, string Currency,
-        string? Channel, string? ProviderTransactionId, DateTimeOffset? PaidAt);
+        string? Channel, string? ProviderTransactionId, DateTimeOffset? PaidAt, string? AuthorizationCode = null);
 
     /// <param name="RefundId">The id at the provider, if it gave one</param>
     /// <param name="Status">What the provider says about the refund (pending, processing, processed)</param>
