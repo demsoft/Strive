@@ -10,7 +10,9 @@ async function measure(): Promise<ClockSample[]> {
    for (let i = 0; i < SAMPLES; i++) {
       const sentAtMs = Date.now();
       try {
-         const response = await fetch(`${appSettings.conferenceUrl.replace(/\/+$/, '')}/v1/time`, { cache: 'no-store' });
+         const response = await fetch(`${appSettings.conferenceUrl.replace(/\/+$/, '')}/v1/time`, {
+            cache: 'no-store',
+         });
          if (!response.ok) continue;
          const body = (await response.json()) as { utcMilliseconds: number };
          samples.push({ sentAtMs, receivedAtMs: Date.now(), serverMs: body.utcMilliseconds });

@@ -34,6 +34,7 @@ namespace Strive.Controllers
         private readonly IPassSubscriptionRepo _subscriptions;
         private readonly IOpenConferenceRepository _openConferences;
         private readonly IVideoRepo _videoRepo;
+        private readonly Strive.Core.Services.Social.IFollowRepo _follows;
         private readonly VideoPresenter _videoPresenter;
         private readonly VideoAccess _videoAccess;
         private readonly PaymentsOptions _paymentsOptions;
@@ -42,11 +43,12 @@ namespace Strive.Controllers
         public SessionsController(IMediator mediator, ISessionRepo sessions, ICreatorRepo creators,
             IEntitlementRepo entitlements, IOrderRepo orders, IPassRepo passes, IPassSubscriptionRepo subscriptions,
             IOpenConferenceRepository openConferences, IVideoRepo videoRepo, VideoPresenter videoPresenter,
-            VideoAccess videoAccess,
+            VideoAccess videoAccess, Strive.Core.Services.Social.IFollowRepo follows,
             Microsoft.Extensions.Options.IOptions<PaymentsOptions> paymentsOptions, IConfiguration configuration)
         {
             _openConferences = openConferences;
             _videoRepo = videoRepo;
+            _follows = follows;
             _videoPresenter = videoPresenter;
             _videoAccess = videoAccess;
             _passes = passes;
@@ -196,7 +198,10 @@ namespace Strive.Controllers
                     unlocked.Contains(x.VideoId), false))
                 .ToArray();
             return new CreatorPageDto(publicCreator, list.ToArray(), passUntil != null, passUntil,
-                _paymentsOptions.AutoRenewEnabled, renewing?.NextChargeAt, videos);
+                _paymentsOptions.AutoRenewEnabled, renewing?.NextChargeAt, videos,
+                await _follows.CountOfCreator(creator.CreatorId),
+                UserId != null && await _follows.Exists(UserId, creator.CreatorId),
+                UserId != null && creator.UserId == UserId);
         }
 
         /// <summary>The session in a list; null if it is over (it was meant to end and its room is not open)</summary>

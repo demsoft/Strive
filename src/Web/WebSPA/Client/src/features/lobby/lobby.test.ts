@@ -13,7 +13,7 @@ const participants = {
    b: { displayName: 'Bob', since: '2024-01-01T10:00:01Z' },
 };
 
-const toRoot = (lobby: ReturnType<typeof reducer>) => ({ lobby }) as unknown as RootState;
+const toRoot = (lobby: ReturnType<typeof reducer>) => ({ lobby } as unknown as RootState);
 
 test('no lobby status initially', () => {
    expect(selectLobbyStatus(toRoot(reducer(undefined, { type: 'init' })))).toBeNull();

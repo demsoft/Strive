@@ -13,6 +13,9 @@ const state = vi.hoisted(() => ({
    user: undefined as undefined | { access_token: string },
    isLoading: false,
    startId: undefined as undefined | string,
+   search: '',
+   following: new Set<string>(),
+   toggle: vi.fn(),
    signinRedirect: vi.fn(),
 }));
 
@@ -33,11 +36,14 @@ vi.mock('react-router-dom', () => ({
       ),
    ),
    useParams: () => ({ videoId: state.startId }),
-   useLocation: () => ({ pathname: '/reels', search: '' }),
+   useLocation: () => ({ pathname: '/reels', search: state.search }),
 }));
 vi.mock('./ReportVideoDialog', () => ({
    default: ({ open, videoId }: { open: boolean; videoId: string }) =>
       open ? <div id="report-dialog" data-video={videoId} /> : null,
+}));
+vi.mock('src/features/social/useFollowing', () => ({
+   default: () => ({ isFollowing: (id: string) => state.following.has(id), toggle: state.toggle }),
 }));
 vi.mock('src/services/api/videos', () => api);
 
@@ -76,6 +82,8 @@ beforeEach(() => {
    state.user = undefined;
    state.isLoading = false;
    state.startId = undefined;
+   state.search = '';
+   state.following = new Set();
    (globalThis as { IntersectionObserver?: unknown }).IntersectionObserver = class {
       constructor(callback: (entries: unknown[]) => void) {
          seen = callback;
@@ -181,7 +189,7 @@ test('near the end the next page of videos is asked for', async () => {
       .mockResolvedValueOnce({ items: [video('b'), video('c')], next: null });
    await render();
 
-   expect(api.fetchFeed).toHaveBeenLastCalledWith('2026-10-19T00:00:00Z');
+   expect(api.fetchFeed).toHaveBeenLastCalledWith('2026-10-19T00:00:00Z', 12, false);
    expect(reels().map((r) => r.querySelector('.reel-title')?.textContent)).toEqual(['Title a', 'Title b', 'Title c']);
 });
 
@@ -229,4 +237,38 @@ test('with no videos it says so, and when they cannot be loaded it says that', a
    api.fetchFeed.mockRejectedValue(new Error('down'));
    await render();
    expect(document.querySelector('#reels-failed')).not.toBeNull();
+});
+
+test('the follow button follows the creator, or asks for a sign in; the creator has none on their own video', async () => {
+   api.fetchFeed.mockResolvedValue({ items: [video('a'), video('mine', { isOwner: true })], next: null });
+   await render();
+   expect(document.querySelectorAll('.reel-follow')).toHaveLength(1);
+
+   await act(async () => document.querySelector<HTMLElement>('.reel-follow')?.click());
+   expect(state.signinRedirect).toHaveBeenCalledWith({ state: { url: '/reels' } });
+   expect(state.toggle).not.toHaveBeenCalled();
+
+   act(() => root.unmount());
+   root = createRoot(container);
+   state.user = { access_token: 'tok' };
+   await render();
+   await act(async () => document.querySelector<HTMLElement>('.reel-follow')?.click());
+   expect(state.toggle).toHaveBeenCalledWith('c1');
+});
+
+test('a creator who is followed shows as followed', async () => {
+   state.following = new Set(['c1']);
+   api.fetchFeed.mockResolvedValue({ items: [video('a')], next: null });
+   await render();
+
+   expect(document.querySelector('.reel-follow')?.getAttribute('aria-pressed')).toBe('true');
+});
+
+test('with ?following=1 only the videos of the followed creators are asked for, and an empty list says how to fill it', async () => {
+   state.search = '?following=1';
+   api.fetchFeed.mockResolvedValue({ items: [], next: null });
+   await render();
+
+   expect(api.fetchFeed).toHaveBeenCalledWith(undefined, 12, true);
+   expect(document.querySelector('#reels-empty')?.textContent).toBe('social.following_empty');
 });

@@ -16,7 +16,19 @@ vi.mock('react-i18next', () => ({
       t: (key: string, values?: Record<string, unknown>) => (values ? `${key} ${JSON.stringify(values)}` : key),
    }),
 }));
-vi.mock('react-oidc-context', () => ({ useAuth: () => ({ user: undefined, isLoading: false }) }));
+const auth = vi.hoisted(() => ({
+   user: undefined as undefined | { access_token: string },
+   signinRedirect: vi.fn(),
+   follow: vi.fn(),
+   unfollow: vi.fn(),
+}));
+vi.mock('react-oidc-context', () => ({
+   useAuth: () => ({ user: auth.user, isLoading: false, signinRedirect: auth.signinRedirect }),
+}));
+vi.mock('src/services/api/follows', () => ({
+   followCreator: (...a: unknown[]) => auth.follow(...a),
+   unfollowCreator: (...a: unknown[]) => auth.unfollow(...a),
+}));
 vi.mock('react-router-dom', () => ({
    Link: React.forwardRef<HTMLAnchorElement, { to: string; children: React.ReactNode }>(
       ({ to, children, ...rest }: any, ref) => (
@@ -50,6 +62,7 @@ const session = (id: string) => ({
 
 let container: HTMLDivElement;
 beforeEach(() => {
+   auth.user = undefined;
    container = document.createElement('div');
    document.body.appendChild(container);
 });
@@ -143,4 +156,65 @@ test('a creator without videos has no video section', async () => {
    await settle();
 
    expect(document.querySelector('#creator-videos')).toBeNull();
+});
+
+const followButton = () => document.querySelector<HTMLElement>('.creator-follow');
+const followersText = () => document.querySelector('#creator-followers')?.textContent;
+const pageOf = (over: Record<string, unknown> = {}) => ({
+   creator: { creatorId: 'c1', displayName: 'Ada' },
+   sessions: [],
+   hasPass: false,
+   followers: 4,
+   following: false,
+   ...over,
+});
+
+test('the page shows how many follow, and a visitor who follows is asked to sign in', async () => {
+   api.fetchCreatorPage.mockResolvedValue(pageOf());
+   await act(async () => createRoot(container).render(<CreatorPublicPage />));
+   await settle();
+
+   expect(followersText()).toContain('"count":4');
+   await act(async () => followButton()?.click());
+   expect(auth.signinRedirect).toHaveBeenCalledWith({ state: { url: '/u/c1' } });
+   expect(auth.follow).not.toHaveBeenCalled();
+});
+
+test('following adds one at once; stopping takes it away; a refusal goes back', async () => {
+   auth.user = { access_token: 'tok' };
+   api.fetchCreatorPage.mockResolvedValue(pageOf());
+   await act(async () => createRoot(container).render(<CreatorPublicPage />));
+   await settle();
+
+   await act(async () => followButton()?.click());
+   expect(auth.follow).toHaveBeenCalledWith('c1');
+   expect(followersText()).toContain('"count":5');
+   expect(followButton()?.getAttribute('aria-pressed')).toBe('true');
+
+   await act(async () => followButton()?.click());
+   expect(auth.unfollow).toHaveBeenCalledWith('c1');
+   expect(followersText()).toContain('"count":4');
+
+   auth.follow.mockRejectedValueOnce(new Error('down'));
+   await act(async () => followButton()?.click());
+   await settle();
+   expect(followersText()).toContain('"count":4');
+   expect(followButton()?.getAttribute('aria-pressed')).toBe('false');
+});
+
+test('a person who follows already sees it, and the creator has no follow button on their own page', async () => {
+   auth.user = { access_token: 'tok' };
+   api.fetchCreatorPage.mockResolvedValue(pageOf({ following: true }));
+   const root = createRoot(container);
+   await act(async () => root.render(<CreatorPublicPage />));
+   await settle();
+   expect(followButton()?.getAttribute('aria-pressed')).toBe('true');
+   act(() => root.unmount());
+
+   api.fetchCreatorPage.mockResolvedValue(pageOf({ isYou: true }));
+   const own = createRoot(container);
+   await act(async () => own.render(<CreatorPublicPage />));
+   await settle();
+   expect(followButton()).toBeNull();
+   act(() => own.unmount());
 });

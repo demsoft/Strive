@@ -64,9 +64,7 @@ describe('planSync', () => {
    });
 
    it('pauses a player that plays while the video is paused', () => {
-      expect(planSync(session({ state: 'paused' }), T0 + 9000, player({ position: 100 }))).toEqual([
-         { type: 'pause' },
-      ]);
+      expect(planSync(session({ state: 'paused' }), T0 + 9000, player({ position: 100 }))).toEqual([{ type: 'pause' }]);
    });
 
    it('moves a paused player to the position of the pause', () => {

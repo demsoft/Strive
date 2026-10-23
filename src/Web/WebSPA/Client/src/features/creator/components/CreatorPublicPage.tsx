@@ -3,7 +3,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useTranslation } from 'react-i18next';
-import { Link as RouterLink, useParams } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useParams } from 'react-router-dom';
 import BrandLogo from 'src/components/BrandLogo';
 import { SessionTile } from 'src/features/gbedu/DiscoverSessions';
 import VideoTile from 'src/features/videos/components/VideoTile';
@@ -11,6 +11,8 @@ import { creatorPhotoUrl } from '../photoUrl';
 import PassCard from './PassCard';
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import * as api from 'src/services/api/sessions';
+import * as follows from 'src/services/api/follows';
+import FollowButton from 'src/features/social/FollowButton';
 import { CreatorPage } from 'src/services/api/sessions';
 import { brand } from 'src/theme';
 
@@ -23,9 +25,12 @@ export default function CreatorPublicPage() {
    const { creatorId } = useParams<{ creatorId: string }>();
    const auth = useAuth();
    const token = auth.user?.access_token;
+   const location = useLocation();
    const [page, setPage] = useState<CreatorPage | null>(null);
    const [notFound, setNotFound] = useState(false);
    const [copied, setCopied] = useState(false);
+   // what the person did on this page; none: what the server said when the page was loaded
+   const [followed, setFollowed] = useState<boolean | null>(null);
 
    const load = useCallback(
       () => api.fetchCreatorPage(creatorId, token).then(setPage, () => setNotFound(true)),
@@ -36,6 +41,24 @@ export default function CreatorPublicPage() {
       if (auth.isLoading) return;
       load();
    }, [auth.isLoading, load]);
+
+   useEffect(() => setFollowed(null), [page]);
+
+   const serverFollowing = page?.following ?? false;
+   const following = followed ?? serverFollowing;
+   const followers = Math.max(0, (page?.followers ?? 0) + (following === serverFollowing ? 0 : following ? 1 : -1));
+
+   const toggleFollow = async () => {
+      if (!page) return;
+      if (!token) return auth.signinRedirect({ state: { url: location.pathname } });
+      const was = following;
+      setFollowed(!was);
+      try {
+         await (was ? follows.unfollowCreator(page.creator.creatorId) : follows.followCreator(page.creator.creatorId));
+      } catch {
+         setFollowed(was);
+      }
+   };
 
    const copy = async () => {
       const link = api.creatorPageLink(page?.creator.slug || creatorId);
@@ -78,12 +101,18 @@ export default function CreatorPublicPage() {
                         <Typography variant="h3" id="creator-name" sx={{ fontSize: { xs: '1.9rem', sm: '2.5rem' } }}>
                            {page.creator.displayName}
                         </Typography>
+                        <Typography color="text.secondary" sx={{ mt: 0.5 }} id="creator-followers">
+                           {t('social.followers', { count: followers })}
+                        </Typography>
                         {page.creator.bio && (
                            <Typography color="text.secondary" sx={{ mt: 0.5 }} id="creator-bio">
                               {page.creator.bio}
                            </Typography>
                         )}
                      </Box>
+                     {!page.isYou && (
+                        <FollowButton className="creator-follow" following={following} onClick={toggleFollow} />
+                     )}
                      <Button id="creator-share" variant="outlined" startIcon={<ContentCopyIcon />} onClick={copy}>
                         {copied ? t('sessions.copied') : t('creator.copy_page_link')}
                      </Button>

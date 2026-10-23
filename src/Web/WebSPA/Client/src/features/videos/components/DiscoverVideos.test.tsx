@@ -6,6 +6,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 const api = vi.hoisted(() => ({ fetchFeed: vi.fn() }));
 
+const auth = vi.hoisted(() => ({ user: undefined as undefined | { access_token: string } }));
+vi.mock('react-oidc-context', () => ({ useAuth: () => ({ user: auth.user }) }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock('./VideoTile', () => ({
    default: ({ video }: { video: { videoId: string } }) => <div className="tile" data-id={video.videoId} />,
@@ -36,6 +38,7 @@ const settle = () => act(async () => {});
 
 let container: HTMLDivElement;
 beforeEach(() => {
+   auth.user = undefined;
    container = document.createElement('div');
    document.body.appendChild(container);
 });
@@ -64,7 +67,7 @@ test('more videos are added below, and one that is already shown is not shown tw
    await act(async () => (document.querySelector('#discover-videos-more') as HTMLElement).click());
    await settle();
 
-   expect(api.fetchFeed).toHaveBeenLastCalledWith('2026-10-20T10:00:00Z');
+   expect(api.fetchFeed).toHaveBeenLastCalledWith('2026-10-20T10:00:00Z', 12, false);
    expect(ids()).toEqual(['a', 'b', 'c']);
    expect(document.querySelector('#discover-videos-more')).toBeNull();
 });
@@ -91,5 +94,49 @@ test('leads to the reels when there are videos, and shows no button when there a
    await act(async () => root.render(<DiscoverVideos />));
    await settle();
    expect(document.querySelector('#discover-videos-reels')?.getAttribute('href')).toBe('/reels');
+   act(() => root.unmount());
+});
+
+const tab = (name: 'all' | 'following') => document.querySelector<HTMLElement>(`#discover-videos-tab-${name}`);
+
+test('a visitor has no tabs; a signed in person can switch to the creators they follow', async () => {
+   api.fetchFeed.mockResolvedValue({ items: [video('a')], next: null });
+   const root = createRoot(container);
+   await act(async () => root.render(<DiscoverVideos />));
+   await settle();
+   expect(tab('following')).toBeNull();
+   act(() => root.unmount());
+
+   auth.user = { access_token: 'tok' };
+   const signedIn = createRoot(container);
+   await act(async () => signedIn.render(<DiscoverVideos />));
+   await settle();
+   api.fetchFeed.mockResolvedValue({ items: [video('x'), video('y')], next: null });
+   await act(async () => tab('following')?.click());
+   await settle();
+
+   expect(api.fetchFeed).toHaveBeenLastCalledWith(undefined, 12, true);
+   expect(ids()).toEqual(['x', 'y']);
+   // the reels follow the tab
+   expect(document.querySelector('#discover-videos-reels')?.getAttribute('href')).toBe('/reels?following=1');
+
+   await act(async () => tab('all')?.click());
+   await settle();
+   expect(api.fetchFeed).toHaveBeenLastCalledWith(undefined, 12, false);
+   act(() => signedIn.unmount());
+});
+
+test('when nobody the person follows has videos the tab says how to get some, and stays', async () => {
+   auth.user = { access_token: 'tok' };
+   api.fetchFeed.mockResolvedValueOnce({ items: [video('a')], next: null });
+   const root = createRoot(container);
+   await act(async () => root.render(<DiscoverVideos />));
+   await settle();
+   api.fetchFeed.mockResolvedValue({ items: [], next: null });
+   await act(async () => tab('following')?.click());
+   await settle();
+
+   expect(document.querySelector('#discover-videos-following-empty')).not.toBeNull();
+   expect(tab('all')).not.toBeNull();
    act(() => root.unmount());
 });

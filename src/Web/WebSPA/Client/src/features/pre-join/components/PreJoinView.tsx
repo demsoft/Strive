@@ -164,7 +164,14 @@ export default function PreJoinView({ onJoin }: Props) {
                <div className={classes.preview}>
                   <div className={classes.previewInner}>
                      {camera.stream ? (
-                        <video ref={videoRef} className={classes.video} autoPlay playsInline muted id="pre-join-video" />
+                        <video
+                           ref={videoRef}
+                           className={classes.video}
+                           autoPlay
+                           playsInline
+                           muted
+                           id="pre-join-video"
+                        />
                      ) : (
                         <div className={classes.avatar}>{initials}</div>
                      )}

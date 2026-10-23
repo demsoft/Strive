@@ -125,7 +125,13 @@ export default function SceneView({ hideControls }: Props) {
 
    return (
       <MediaControlsContext.Provider value={mediaControlsContextValue}>
-         <div className={classes.root} ref={contentRef} onMouseMove={handleMouseMove} onPointerDown={handleMouseMove} id="scene-view">
+         <div
+            className={classes.root}
+            ref={contentRef}
+            onMouseMove={handleMouseMove}
+            onPointerDown={handleMouseMove}
+            id="scene-view"
+         >
             <LayoutGroup>
                {dimensions && watchTogether ? (
                   // a video that everybody watches together takes the place of the scene until it is stopped

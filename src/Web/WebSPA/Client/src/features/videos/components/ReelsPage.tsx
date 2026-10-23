@@ -12,6 +12,8 @@ import { Link as RouterLink, useLocation, useParams } from 'react-router-dom';
 import { creatorPhotoUrl } from 'src/features/creator/photoUrl';
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import { formatMoney } from 'src/features/sessions/money';
+import FollowButton from 'src/features/social/FollowButton';
+import useFollowing from 'src/features/social/useFollowing';
 import * as api from 'src/services/api/videos';
 import { Video } from 'src/services/api/videos';
 import { brand } from 'src/theme';
@@ -29,13 +31,27 @@ type ReelProps = {
    active: boolean;
    muted: boolean;
    copied: boolean;
+   following: boolean;
+   onFollow: () => void;
    onToggleMute: () => void;
    onShare: () => void;
    onReport: () => void;
 };
 
 /** One video as tall as the screen: it plays while it is the one in view, and is a picture otherwise. */
-function Reel({ video, index, url, active, muted, copied, onToggleMute, onShare, onReport }: ReelProps) {
+function Reel({
+   video,
+   index,
+   url,
+   active,
+   muted,
+   copied,
+   following,
+   onFollow,
+   onToggleMute,
+   onShare,
+   onReport,
+}: ReelProps) {
    const { t } = useTranslation();
    const player = useRef<HTMLVideoElement>(null);
    const creator = video.creator;
@@ -169,6 +185,11 @@ function Reel({ video, index, url, active, muted, copied, onToggleMute, onShare,
                      <Typography sx={{ fontWeight: 700 }}>{creator.displayName}</Typography>
                   </Box>
                )}
+               {creator && !video.isOwner && (
+                  <Box component="span" sx={{ ml: 1.5, pointerEvents: 'auto' }}>
+                     <FollowButton className="reel-follow" size="small" following={following} onClick={onFollow} />
+                  </Box>
+               )}
                <Typography className="reel-title" sx={{ fontWeight: 700 }}>
                   {video.title}
                </Typography>
@@ -238,12 +259,13 @@ function Reel({ video, index, url, active, muted, copied, onToggleMute, onShare,
  */
 export default function ReelsPage() {
    const { t } = useTranslation();
+   const location = useLocation();
    const { videoId: startId } = useParams<{ videoId?: string }>();
    const auth = useAuth();
    const token = auth.user?.access_token;
-   const location = useLocation();
    const scroller = useRef<HTMLDivElement>(null);
    const asked = useRef(new Set<string>());
+   const onlyFollowed = new URLSearchParams(location.search).get('following') === '1';
 
    const [videos, setVideos] = useState<Video[] | null>(null);
    const [next, setNext] = useState<string | null>(null);
@@ -254,6 +276,7 @@ export default function ReelsPage() {
    const [muted, setMuted] = useState(true);
    const [copiedId, setCopiedId] = useState<string | null>(null);
    const [reporting, setReporting] = useState<string | null>(null);
+   const followed = useFollowing(token);
 
    // the first screen: the video of the link (if there is one), then the latest
    useEffect(() => {
@@ -261,7 +284,7 @@ export default function ReelsPage() {
       if (auth.isLoading) return;
       let cancelled = false;
       const start = startId ? api.fetchVideo(startId, token).catch(() => null) : Promise.resolve(null);
-      Promise.all([api.fetchFeed(), start]).then(
+      Promise.all([api.fetchFeed(undefined, 12, onlyFollowed), start]).then(
          ([feed, first]) => {
             if (cancelled) return;
             if (first?.playbackUrl) {
@@ -277,13 +300,13 @@ export default function ReelsPage() {
       return () => {
          cancelled = true;
       };
-   }, [auth.isLoading, token, startId]);
+   }, [auth.isLoading, token, startId, onlyFollowed]);
 
    const more = useCallback(async () => {
       if (!next || loadingMore) return;
       setLoadingMore(true);
       try {
-         const feed = await api.fetchFeed(next);
+         const feed = await api.fetchFeed(next, 12, onlyFollowed);
          setVideos((current) => {
             const known = new Set((current ?? []).map((x) => x.videoId));
             return [...(current ?? []), ...feed.items.filter((x) => !known.has(x.videoId))];
@@ -294,7 +317,7 @@ export default function ReelsPage() {
          setNext(null);
       }
       setLoadingMore(false);
-   }, [next, loadingMore]);
+   }, [next, loadingMore, onlyFollowed]);
 
    // the links that play are asked for the one in view and the next one, not for the whole list
    useEffect(() => {
@@ -350,6 +373,11 @@ export default function ReelsPage() {
       }
    };
 
+   const follow = (video: Video) =>
+      token
+         ? video.creator && followed.toggle(video.creator.creatorId)
+         : auth.signinRedirect({ state: { url: location.pathname + location.search } });
+
    const report = (video: Video) =>
       token ? setReporting(video.videoId) : auth.signinRedirect({ state: { url: location.pathname } });
 
@@ -384,7 +412,7 @@ export default function ReelsPage() {
          )}
          {videos?.length === 0 && (
             <Box id="reels-empty" sx={{ height: '100%', display: 'grid', placeItems: 'center', textAlign: 'center' }}>
-               <Typography>{t('videos.reels_empty')}</Typography>
+               <Typography>{onlyFollowed ? t('social.following_empty') : t('videos.reels_empty')}</Typography>
             </Box>
          )}
 
@@ -410,6 +438,8 @@ export default function ReelsPage() {
                      active={index === active}
                      muted={muted}
                      copied={copiedId === video.videoId}
+                     following={!!video.creator && followed.isFollowing(video.creator.creatorId)}
+                     onFollow={() => follow(video)}
                      onToggleMute={() => setMuted((m) => !m)}
                      onShare={() => share(video)}
                      onReport={() => report(video)}

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Strive.Core.Services.Payments;
 using Strive.Core.Services.Payments.Gateways;
+using Strive.Core.Services.Social;
 using Strive.Core.Services.Videos;
 using Strive.Extensions;
 using Strive.Models.Response;
@@ -28,11 +29,13 @@ namespace Strive.Controllers
         private readonly VideoAccess _access;
         private readonly VideoPresenter _presenter;
         private readonly IConfiguration _configuration;
+        private readonly IFollowRepo _follows;
 
         public VideosController(IMediator mediator, IVideoRepo videos, ICreatorRepo creators,
             IVideoEntitlementRepo entitlements, VideoAccess access, VideoPresenter presenter,
-            IConfiguration configuration)
+            IConfiguration configuration, IFollowRepo follows)
         {
+            _follows = follows;
             _mediator = mediator;
             _videos = videos;
             _creators = creators;
@@ -134,14 +137,25 @@ namespace Strive.Controllers
         }
 
         // GET v1/videos/feed?before=...&limit=...
-        /// <summary>The latest videos that are ready, for everybody, newest first. The next page starts where this one ended.</summary>
+        /// <summary>
+        ///     The latest videos that are ready, for everybody, newest first (or only those of the creators the person
+        ///     follows). The next page starts where this one ended.
+        /// </summary>
         [HttpGet("v1/videos/feed")]
         [AllowAnonymous]
         public async Task<ActionResult<VideoFeedDto>> Feed([FromQuery] DateTimeOffset? before = null,
-            [FromQuery] int limit = 12)
+            [FromQuery] int limit = 12, [FromQuery] bool following = false)
         {
             limit = Math.Clamp(limit, 1, 30);
-            var videos = await _videos.FindReady(before, limit);
+
+            // only the creators the person follows (nobody, if nobody is signed in)
+            IReadOnlyCollection<string>? only = null;
+            if (following)
+                only = UserId == null
+                    ? Array.Empty<string>()
+                    : (await _follows.CreatorIdsOfUser(UserId, 500)).ToList();
+
+            var videos = await _videos.FindReady(before, limit, only);
             var unlocked = await _access.Unlocked(videos.ToList(), UserId);
             var creators = new Dictionary<string, PublicCreatorDto?>();
             var items = new List<VideoDto>();

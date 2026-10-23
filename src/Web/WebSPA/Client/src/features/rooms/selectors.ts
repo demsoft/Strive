@@ -20,10 +20,12 @@ export const selectParticipantsOfCurrentRoom = createArrayEqualSelector(
    createSelector(selectParticipantRoom, selectRooms, (room, rooms) => {
       if (!rooms) return [];
 
-      return Object.entries(rooms.participants)
-         // the recorder is in the room to receive it, but is neither shown nor counted as a participant of the scene
-         .filter(([participantId, roomId]) => roomId === room && !isRecorderParticipant(participantId))
-         .map<string>(([participantId]) => participantId);
+      return (
+         Object.entries(rooms.participants)
+            // the recorder is in the room to receive it, but is neither shown nor counted as a participant of the scene
+            .filter(([participantId, roomId]) => roomId === room && !isRecorderParticipant(participantId))
+            .map<string>(([participantId]) => participantId)
+      );
    }),
    (x) => x,
 );

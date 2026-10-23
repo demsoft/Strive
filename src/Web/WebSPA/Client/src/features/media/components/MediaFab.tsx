@@ -81,12 +81,7 @@ export default function MediaFab({
             }
             {...fabProps}
          >
-            <Icon
-               activated={enabled && !paused}
-               color={theme.palette.common.white}
-               width={24}
-               height={24}
-            />
+            <Icon activated={enabled && !paused} color={theme.palette.common.white} width={24} height={24} />
          </Fab>
       </Tooltip>
    );

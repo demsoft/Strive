@@ -45,7 +45,7 @@ export default function ReactionPicker({ className, variants, size }: Props) {
                ref={anchorRef}
                color="default"
                className={className}
-            size={size}
+               size={size}
                onClick={() => setOpen((x) => !x)}
                component={motion.button}
                variants={variants}

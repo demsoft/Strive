@@ -47,11 +47,7 @@ const mediaSlice = createSlice({
    },
 });
 
-export const {
-   setParticipantAudio,
-   removeParticipantAudio,
-   patchParticipantAudio,
-   userInteractionMade,
-} = mediaSlice.actions;
+export const { setParticipantAudio, removeParticipantAudio, patchParticipantAudio, userInteractionMade } =
+   mediaSlice.actions;
 
 export default mediaSlice.reducer;

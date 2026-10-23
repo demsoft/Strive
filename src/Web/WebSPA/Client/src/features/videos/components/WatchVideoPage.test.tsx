@@ -13,6 +13,8 @@ const state = vi.hoisted(() => ({
    isLoading: false,
    search: '',
    signinRedirect: vi.fn(),
+   following: new Set<string>(),
+   toggle: vi.fn(),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -37,6 +39,9 @@ vi.mock('react-router-dom', () => ({
    ),
    useParams: () => ({ videoId: 'v1' }),
    useLocation: () => ({ pathname: '/v/v1', search: state.search }),
+}));
+vi.mock('src/features/social/useFollowing', () => ({
+   default: () => ({ isFollowing: (id: string) => state.following.has(id), toggle: state.toggle }),
 }));
 vi.mock('src/components/BrandLogo', () => ({ default: () => null }));
 vi.mock('./ReportVideoDialog', () => ({
@@ -70,6 +75,7 @@ beforeEach(() => {
    state.user = undefined;
    state.isLoading = false;
    state.search = '';
+   state.following = new Set();
 });
 afterEach(() => {
    container.remove();
@@ -225,4 +231,26 @@ test('it leads on to the reels, starting with this video', async () => {
    await render();
 
    expect(document.querySelector('#watch-more')?.getAttribute('href')).toBe('/reels/v1');
+});
+
+test('the creator can be followed from the video: a sign in is asked for first', async () => {
+   api.fetchVideo.mockResolvedValue(video());
+   await render();
+
+   await act(async () => document.querySelector<HTMLElement>('.watch-follow')?.click());
+   expect(state.signinRedirect).toHaveBeenCalledWith({ state: { url: '/v/v1' } });
+
+   state.user = { access_token: 'tok' };
+   state.following = new Set(['c1']);
+   await render();
+   await act(async () => document.querySelector<HTMLElement>('.watch-follow')?.click());
+   expect(document.querySelector('.watch-follow')?.getAttribute('aria-pressed')).toBe('true');
+   expect(state.toggle).toHaveBeenCalledWith('c1');
+});
+
+test('the creator has no follow button on their own video', async () => {
+   api.fetchVideo.mockResolvedValue(video({ isOwner: true }));
+   await render();
+
+   expect(document.querySelector('.watch-follow')).toBeNull();
 });

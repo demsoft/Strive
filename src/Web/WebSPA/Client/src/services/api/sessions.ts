@@ -127,6 +127,11 @@ export type CreatorPage = {
    passRenewsAt?: string | null;
    /** the ready videos of the creator, newest first */
    videos?: Video[];
+   followers?: number;
+   /** the person follows this creator */
+   following?: boolean;
+   /** the creator is the person who asks: no follow button */
+   isYou?: boolean;
 };
 
 export type Pass = {

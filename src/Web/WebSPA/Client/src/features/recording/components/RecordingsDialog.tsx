@@ -113,7 +113,12 @@ export default function RecordingsDialog() {
                   id="recording-ready-banner"
                   sx={{ mb: 2 }}
                   action={
-                     <Button color="inherit" size="small" id="recording-ready-copy" onClick={() => copyLink(recordings[0])}>
+                     <Button
+                        color="inherit"
+                        size="small"
+                        id="recording-ready-copy"
+                        onClick={() => copyLink(recordings[0])}
+                     >
                         {t('conference.recording.copy_link')}
                      </Button>
                   }
@@ -152,7 +157,10 @@ export default function RecordingsDialog() {
                         recording.status === 'ready' ? (
                            <>
                               <Tooltip title={t('conference.recording.copy_link')}>
-                                 <IconButton aria-label={t('conference.recording.copy_link')} onClick={() => copyLink(recording)}>
+                                 <IconButton
+                                    aria-label={t('conference.recording.copy_link')}
+                                    onClick={() => copyLink(recording)}
+                                 >
                                     <ContentCopyIcon fontSize="small" />
                                  </IconButton>
                               </Tooltip>
@@ -185,7 +193,11 @@ export default function RecordingsDialog() {
                               {DateTime.fromISO(recording.startedAt).toLocaleString(DateTime.DATETIME_MED)}
                               {statusChip(recording)}
                               {recording.kind === 'rehearsal' && (
-                                 <Chip size="small" variant="outlined" label={t('conference.recording.kind_rehearsal')} />
+                                 <Chip
+                                    size="small"
+                                    variant="outlined"
+                                    label={t('conference.recording.kind_rehearsal')}
+                                 />
                               )}
                            </Box>
                         }

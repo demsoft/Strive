@@ -17,7 +17,9 @@ namespace Strive.Core.Services.Videos
         Task<long> CountOfCreator(string creatorId);
 
         /// <summary>Ready videos, newest first. With a time: only the ones that became ready before it (the next page).</summary>
-        Task<IReadOnlyList<Video>> FindReady(DateTimeOffset? before, int limit);
+        /// <param name="creatorIds">Only the videos of these creators; none: everybody's</param>
+        Task<IReadOnlyList<Video>> FindReady(DateTimeOffset? before, int limit,
+            IReadOnlyCollection<string>? creatorIds = null);
 
         Task<IReadOnlyList<Video>> FindReadyOfCreator(string creatorId, int limit);
 

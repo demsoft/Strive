@@ -77,7 +77,12 @@ export default function WatchTogetherButton() {
             </DialogContent>
             <DialogActions>
                <Button onClick={() => setOpen(false)}>{t('common:cancel')}</Button>
-               <Button variant="contained" id="watch-together-start-button" disabled={!url.trim()} onClick={handleStart}>
+               <Button
+                  variant="contained"
+                  id="watch-together-start-button"
+                  disabled={!url.trim()}
+                  onClick={handleStart}
+               >
                   {t('conference.watch_together.start')}
                </Button>
             </DialogActions>
