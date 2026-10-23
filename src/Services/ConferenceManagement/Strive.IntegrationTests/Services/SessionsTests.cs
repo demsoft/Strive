@@ -1415,6 +1415,181 @@ namespace Strive.IntegrationTests.Services
             Assert.Equal(profile.PhotoVersion, ticket.CreatorPhotoVersion);
         }
 
+        // ---- the payments page of the administrators
+
+        private HttpClient AdminClient(string role = "serveradmin")
+        {
+            var client = Factory.CreateClient();
+            var claims = new List<System.Security.Claims.Claim>
+            {
+                new(System.Security.Claims.ClaimTypes.NameIdentifier, "admin-" + Guid.NewGuid().ToString("N")[..6]),
+                new("name", "Admin"), new("role", role),
+            };
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",
+                Factory.JwtTokens.GenerateJwtToken(claims));
+            return client;
+        }
+
+        private async Task<AdminPaymentsDto> AdminPayments() =>
+            await Read<AdminPaymentsDto>(await AdminClient().GetAsync("/v1/admin/payments"));
+
+        [Theory]
+        [InlineData("mod")]
+        [InlineData("admin")]
+        [InlineData("")]
+        public async Task AdminPayments_OtherRoles_AreForbidden(string role)
+        {
+            Assert.Equal(HttpStatusCode.Forbidden, (await AdminClient(role).GetAsync("/v1/admin/payments")).StatusCode);
+        }
+
+        [Fact]
+        public async Task AdminPayments_NotSignedIn_Unauthorized_AndACreatorIsNotAnAdmin()
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized, (await Client(null).GetAsync("/v1/admin/payments")).StatusCode);
+            var host = await NewCreator();
+            Assert.Equal(HttpStatusCode.Forbidden, (await Client(host).GetAsync("/v1/admin/payments")).StatusCode);
+        }
+
+        [Fact]
+        public async Task AdminPayments_TotalsGrowWithSales_AndTheCommissionIsTenPercent()
+        {
+            var before = await AdminPayments();
+            var (host, session) = await PublishedSession();
+            await FanWithTicket(session);
+            var (_, creatorId) = await CreatorWithPass();
+            await FanWithPass(creatorId);
+
+            var after = await AdminPayments();
+
+            Assert.Equal(Price + PassPrice, after.Month.GrossMinor - before.Month.GrossMinor);
+            Assert.Equal((Price + PassPrice) / 10, after.Month.PlatformMinor - before.Month.PlatformMinor);
+            Assert.Equal((Price + PassPrice) * 9 / 10, after.Month.CreatorsMinor - before.Month.CreatorsMinor);
+            Assert.Equal(1, after.Month.Tickets - before.Month.Tickets);
+            Assert.Equal(1, after.Month.Passes - before.Month.Passes);
+            Assert.Equal(1, after.Week.Tickets - before.Week.Tickets);
+            Assert.True(after.Creators >= before.Creators + 2);
+            Assert.Equal("NGN", after.Currency);
+        }
+
+        [Fact]
+        public async Task AdminPayments_RecentOrdersShowWhoSoldWhatAndOnlyAMaskedBuyer()
+        {
+            var (host, session) = await PublishedSession();
+            await FanWithTicket(session);
+
+            var response = await AdminClient().GetAsync("/v1/admin/payments");
+            var body = await response.Content.ReadAsStringAsync();
+            var overview = JsonConvert.DeserializeObject<AdminPaymentsDto>(body, JsonConfig.Default)!;
+
+            var row = overview.Recent.First(x => x.SessionTitle == session.Title);
+            Assert.Equal("ticket", row.Kind);
+            Assert.Equal("paid", row.Status);
+            Assert.Equal("Ada Lovelace", row.CreatorName);
+            Assert.Equal("f**@example.com", row.Buyer);
+            Assert.DoesNotContain("fan@example.com", body);
+        }
+
+        [Fact]
+        public async Task AdminPayments_AFailedPayment_ShowsInRecentWithItsProblem()
+        {
+            var (_, session) = await PublishedSession();
+            var fan = NewUser("fan");
+            var checkout = await Checkout(fan, session.SessionId);
+            Provider.Fail(checkout.Reference!, session.PriceMinor);
+            await Status(fan, checkout.Reference!);
+
+            var row = (await AdminPayments()).Recent.First(x => x.SessionTitle == session.Title);
+
+            Assert.Equal("failed", row.Status);
+            Assert.NotNull(row.Problem);
+        }
+
+        [Fact]
+        public async Task AdminPayments_RefundThatFailed_IsListedUntilItWorks()
+        {
+            // arrange: the provider refuses the refund
+            var (host, session) = await PublishedSession();
+            await FanWithTicket(session);
+            Provider.RefuseRefunds = true;
+            try
+            {
+                await Cancel(host, session.SessionId);
+            }
+            finally
+            {
+                Provider.RefuseRefunds = false;
+            }
+
+            // assert: an administrator sees it, with the reason
+            var problem = Assert.Single((await AdminPayments()).RefundProblems, x => x.SessionTitle == session.Title);
+            Assert.Equal(Price, problem.AmountMinor);
+            Assert.Contains("Insufficient balance", problem.Reason);
+
+            // the host tries again, it works: it is gone
+            await Cancel(host, session.SessionId);
+            Assert.DoesNotContain((await AdminPayments()).RefundProblems, x => x.SessionTitle == session.Title);
+        }
+
+        [Fact]
+        public async Task AdminPayments_FailingRenewal_IsListed_AndSoIsTheOneThatEnded()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+            var (_, subscription) = await RenewingFan(creatorId);
+            Provider.NextCharge = FakePaymentProvider.ChargeResult.Decline;
+            try
+            {
+                await MakeDue(subscription);
+                await RunRenewals();
+                var failing = Assert.Single((await AdminPayments()).SubscriptionProblems,
+                    x => x.SubscriptionId == subscription.SubscriptionId);
+                Assert.Equal("active", failing.Status);
+                Assert.Equal(1, failing.FailedAttempts);
+
+                await MakeDue(subscription);
+                await RunRenewals();
+                await MakeDue(subscription);
+                await RunRenewals();
+            }
+            finally
+            {
+                Provider.NextCharge = FakePaymentProvider.ChargeResult.Succeed;
+            }
+
+            var ended = Assert.Single((await AdminPayments()).SubscriptionProblems,
+                x => x.SubscriptionId == subscription.SubscriptionId);
+            Assert.Equal("ended", ended.Status);
+            Assert.NotNull(ended.EndedAt);
+        }
+
+        [Fact]
+        public async Task AdminPayments_ARenewalThatWorked_IsCountedAsARenewal()
+        {
+            var before = await AdminPayments();
+            var (_, creatorId) = await CreatorWithPass();
+            var (_, subscription) = await RenewingFan(creatorId);
+            await MakeDue(subscription);
+            await RunRenewals();
+
+            var after = await AdminPayments();
+
+            Assert.Equal(1, after.Month.Renewals - before.Month.Renewals);
+            Assert.Equal(2, after.Month.Passes - before.Month.Passes);
+            Assert.Contains(after.Recent, x => x.Kind == "renewal");
+            Assert.True(after.ActiveSubscriptions >= 1);
+        }
+
+        [Fact]
+        public async Task AdminPayments_NeverShowsACardToken()
+        {
+            var (_, creatorId) = await CreatorWithPass();
+            await RenewingFan(creatorId, "AUTH_very_secret");
+
+            var body = await AdminClient().GetStringAsync("/v1/admin/payments");
+
+            Assert.DoesNotContain("AUTH_very_secret", body);
+            Assert.DoesNotContain("uthorizationCode", body);
+        }
+
         [Fact]
         public async Task Discover_ListsPublishedSessionsForEverybody_NotCancelledOnes()
         {

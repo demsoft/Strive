@@ -67,7 +67,8 @@ function BigNumber({ value, label }: { value: React.ReactNode; label: string }) 
    );
 }
 
-const levelLabel = (level: AdminLevel) => (level === 'critical' ? 'Needs attention' : level === 'warning' ? 'Attention' : 'All good');
+const levelLabel = (level: AdminLevel) =>
+   level === 'critical' ? 'Needs attention' : level === 'warning' ? 'Attention' : 'All good';
 
 function StatusBanner({ overview }: { overview: AdminOverview }) {
    const { t } = useTranslation();
@@ -76,10 +77,7 @@ function StatusBanner({ overview }: { overview: AdminOverview }) {
    const color = toneColor(tone);
 
    return (
-      <Paper
-         id="admin-status"
-         sx={{ p: 2.5, mb: 3, border: `1px solid ${color}`, backgroundColor: `${color}1A` }}
-      >
+      <Paper id="admin-status" sx={{ p: 2.5, mb: 3, border: `1px solid ${color}`, backgroundColor: `${color}1A` }}>
          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
             <Box sx={{ width: 14, height: 14, borderRadius: '50%', backgroundColor: color, flexShrink: 0 }} />
             <Typography variant="h5" sx={{ fontWeight: 800 }}>
@@ -98,7 +96,12 @@ function StatusBanner({ overview }: { overview: AdminOverview }) {
          {overview.alerts.length > 0 && (
             <Box sx={{ mt: 1.5, display: 'grid', gap: 0.75 }}>
                {overview.alerts.map((alert, i) => (
-                  <Alert key={i} severity={alert.level === 'critical' ? 'error' : 'warning'} variant="outlined" sx={{ py: 0 }}>
+                  <Alert
+                     key={i}
+                     severity={alert.level === 'critical' ? 'error' : 'warning'}
+                     variant="outlined"
+                     sx={{ py: 0 }}
+                  >
                      {alert.message}
                   </Alert>
                ))}
@@ -116,7 +119,9 @@ function ServiceRow({ service }: { service: ServiceStatus }) {
             <Box sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: color }} />
          </TableCell>
          <TableCell sx={{ fontWeight: 600 }}>{service.name}</TableCell>
-         <TableCell color="text.secondary">{service.detail ?? (service.status === 'up' ? 'running' : service.status)}</TableCell>
+         <TableCell color="text.secondary">
+            {service.detail ?? (service.status === 'up' ? 'running' : service.status)}
+         </TableCell>
          <TableCell align="right">{service.latencyMs === null ? '' : `${service.latencyMs} ms`}</TableCell>
       </TableRow>
    );
@@ -135,12 +140,27 @@ export default function AdminPage() {
                {t('admin.title')}
             </Typography>
             <Box sx={{ flex: 1 }} />
+            <Button
+               size="small"
+               component={RouterLink}
+               to="/admin/payments"
+               id="admin-payments-link"
+               sx={compactButton}
+            >
+               {t('admin.pay_title')}
+            </Button>
             {loadedAt && (
                <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
                   {t('admin.updated', { time: agoText(loadedAt) })}
                </Typography>
             )}
-            <Button size="small" startIcon={<RefreshIcon />} onClick={refresh} aria-label={t('admin.refresh')} sx={compactButton}>
+            <Button
+               size="small"
+               startIcon={<RefreshIcon />}
+               onClick={refresh}
+               aria-label={t('admin.refresh')}
+               sx={compactButton}
+            >
                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
                   {t('admin.refresh')}
                </Box>
@@ -179,7 +199,11 @@ export default function AdminPage() {
          <>
             {header}
             <Container maxWidth="sm" sx={{ mt: 8 }}>
-               {error ? <Alert severity="error">{error}</Alert> : <Typography color="text.secondary">{t('admin.loading')}</Typography>}
+               {error ? (
+                  <Alert severity="error">{error}</Alert>
+               ) : (
+                  <Typography color="text.secondary">{t('admin.loading')}</Typography>
+               )}
             </Container>
          </>
       );
@@ -187,9 +211,15 @@ export default function AdminPage() {
 
    const th = overview.thresholds;
    const { capacity, sfu, accounts, recorder } = overview;
-   const diskFree = recorder?.disk && recorder.disk.totalBytes > 0 ? (100 * recorder.disk.freeBytes) / recorder.disk.totalBytes : null;
+   const diskFree =
+      recorder?.disk && recorder.disk.totalBytes > 0
+         ? (100 * recorder.disk.freeBytes) / recorder.disk.totalBytes
+         : null;
    const labels = history.length
-      ? [new Date(history[0].t).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' }), t('admin.now')]
+      ? [
+           new Date(history[0].t).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' }),
+           t('admin.now'),
+        ]
       : [undefined, undefined];
    const maxSignups = Math.max(1, ...(accounts?.signups.map((x) => x.count) ?? [1]));
 
@@ -213,8 +243,8 @@ export default function AdminPage() {
                   </Box>
                   {sfu && (
                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
-                        {sfu.totals.producers} {t('admin.streams_up')} · {sfu.totals.consumers} {t('admin.streams_down')} ·{' '}
-                        {t('admin.uptime')} {formatUptime(sfu.uptimeSeconds)}
+                        {sfu.totals.producers} {t('admin.streams_up')} · {sfu.totals.consumers}{' '}
+                        {t('admin.streams_down')} · {t('admin.uptime')} {formatUptime(sfu.uptimeSeconds)}
                      </Typography>
                   )}
                </Card>
@@ -246,13 +276,17 @@ export default function AdminPage() {
                            label={t('admin.memory')}
                            percent={capacity.memoryUsedPercent}
                            tone={toneFor(capacity.memoryUsedPercent, th.memoryWarningPercent, th.memoryCriticalPercent)}
-                           valueText={`${formatBytes(sfu.system.memoryTotalBytes - sfu.system.memoryAvailableBytes)} / ${formatBytes(sfu.system.memoryTotalBytes)}`}
+                           valueText={`${formatBytes(
+                              sfu.system.memoryTotalBytes - sfu.system.memoryAvailableBytes,
+                           )} / ${formatBytes(sfu.system.memoryTotalBytes)}`}
                         />
                         <Meter
                            label={t('admin.processor_load')}
                            percent={capacity.loadPerCore === null ? null : capacity.loadPerCore * 100}
                            tone={toneFor(capacity.loadPerCore, th.loadPerCoreWarning, th.loadPerCoreCritical)}
-                           valueText={`${sfu.system.loadAverage1m.toFixed(1)} / ${sfu.system.cpuCores} ${t('admin.cores')}`}
+                           valueText={`${sfu.system.loadAverage1m.toFixed(1)} / ${sfu.system.cpuCores} ${t(
+                              'admin.cores',
+                           )}`}
                         />
                         {recorder && diskFree !== null && recorder.disk && (
                            <Meter
@@ -294,7 +328,9 @@ export default function AdminPage() {
                         title={t('admin.people')}
                         values={history.map((x) => x.participants)}
                         color={brand.violet}
-                        currentText={`${history[history.length - 1].participants} · max ${Math.max(...history.map((x) => x.participants))}`}
+                        currentText={`${history[history.length - 1].participants} · max ${Math.max(
+                           ...history.map((x) => x.participants),
+                        )}`}
                         firstLabel={labels[0]}
                         lastLabel={labels[1]}
                      />
@@ -338,35 +374,39 @@ export default function AdminPage() {
                      <Typography color="text.secondary">{t('admin.no_conferences')}</Typography>
                   ) : (
                      <Box sx={{ overflowX: 'auto' }}>
-                     <Table size="small">
-                        <TableHead>
-                           <TableRow>
-                              <TableCell>{t('admin.conference')}</TableCell>
-                              <TableCell align="right">{t('admin.people')}</TableCell>
-                              <TableCell align="right">{t('admin.streams')}</TableCell>
-                              <TableCell align="right">{t('admin.open_for')}</TableCell>
-                           </TableRow>
-                        </TableHead>
-                        <TableBody>
-                           {overview.conferences.list.map((conference) => (
-                              <TableRow key={conference.conferenceId}>
-                                 <TableCell>
-                                    <Typography sx={{ fontWeight: 600 }}>{conference.name || conference.conferenceId}</Typography>
-                                    {conference.name && (
-                                       <Typography variant="caption" color="text.secondary">
-                                          {conference.conferenceId}
-                                       </Typography>
-                                    )}
-                                 </TableCell>
-                                 <TableCell align="right">{conference.participants}</TableCell>
-                                 <TableCell align="right">
-                                    {conference.producers === null ? '–' : `${conference.producers} / ${conference.consumers}`}
-                                 </TableCell>
-                                 <TableCell align="right">{formatAgo(conference.openedAt)}</TableCell>
+                        <Table size="small">
+                           <TableHead>
+                              <TableRow>
+                                 <TableCell>{t('admin.conference')}</TableCell>
+                                 <TableCell align="right">{t('admin.people')}</TableCell>
+                                 <TableCell align="right">{t('admin.streams')}</TableCell>
+                                 <TableCell align="right">{t('admin.open_for')}</TableCell>
                               </TableRow>
-                           ))}
-                        </TableBody>
-                     </Table>
+                           </TableHead>
+                           <TableBody>
+                              {overview.conferences.list.map((conference) => (
+                                 <TableRow key={conference.conferenceId}>
+                                    <TableCell>
+                                       <Typography sx={{ fontWeight: 600 }}>
+                                          {conference.name || conference.conferenceId}
+                                       </Typography>
+                                       {conference.name && (
+                                          <Typography variant="caption" color="text.secondary">
+                                             {conference.conferenceId}
+                                          </Typography>
+                                       )}
+                                    </TableCell>
+                                    <TableCell align="right">{conference.participants}</TableCell>
+                                    <TableCell align="right">
+                                       {conference.producers === null
+                                          ? '–'
+                                          : `${conference.producers} / ${conference.consumers}`}
+                                    </TableCell>
+                                    <TableCell align="right">{formatAgo(conference.openedAt)}</TableCell>
+                                 </TableRow>
+                              ))}
+                           </TableBody>
+                        </Table>
                      </Box>
                   )}
                </Card>
@@ -398,7 +438,11 @@ export default function AdminPage() {
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                      {t('admin.signups_14')}
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 0.5, height: 64 }} role="img" aria-label={t('admin.signups_14')}>
+                  <Box
+                     sx={{ display: 'flex', alignItems: 'flex-end', gap: 0.5, height: 64 }}
+                     role="img"
+                     aria-label={t('admin.signups_14')}
+                  >
                      {accounts.signups.map((day) => (
                         <Box
                            key={day.date}

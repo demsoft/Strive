@@ -147,6 +147,19 @@ namespace Strive.Infrastructure.Data.Repos
         public Task<TicketOrder?> FindById(string orderId) =>
             Collection.Find(x => x.OrderId == orderId).FirstOrDefaultAsync()!;
 
+        public async Task<IReadOnlyList<TicketOrder>> FindRecent(int limit) =>
+            await Collection.Find(FilterDefinition<TicketOrder>.Empty).SortByDescending(x => x.CreatedAt)
+                .Limit(limit).ToListAsync();
+
+        public async Task<IReadOnlyList<TicketOrder>> FindPaidSince(DateTimeOffset since, int limit) =>
+            await Collection.Find(x => x.CreatedAt >= since &&
+                                       (x.Status == OrderStatus.Paid || x.Status == OrderStatus.Refunded))
+                .SortByDescending(x => x.CreatedAt).Limit(limit).ToListAsync();
+
+        public async Task<IReadOnlyList<TicketOrder>> FindWithRefundFailure(int limit) =>
+            await Collection.Find(x => x.Status == OrderStatus.Paid && x.RefundFailure != null)
+                .SortByDescending(x => x.CreatedAt).Limit(limit).ToListAsync();
+
         public async Task<IReadOnlyList<TicketOrder>> FindPaidOfCreator(string creatorId, int limit) =>
             await Collection.Find(x => x.Shares.Any(s => s.CreatorId == creatorId) &&
                                        (x.Status == OrderStatus.Paid || x.Status == OrderStatus.Refunded))
@@ -339,6 +352,18 @@ namespace Strive.Infrastructure.Data.Repos
 
         public Task<PassSubscription?> FindById(string subscriptionId) =>
             Collection.Find(x => x.SubscriptionId == subscriptionId).FirstOrDefaultAsync()!;
+
+        public async Task<int> CountActive() =>
+            (int) await Collection.CountDocumentsAsync(x => x.Status == SubscriptionStatus.Active);
+
+        public async Task<IReadOnlyList<PassSubscription>> FindWithProblems(DateTimeOffset endedSince, int limit)
+        {
+            var list = await Collection.Find(x =>
+                    (x.Status == SubscriptionStatus.Active && x.FailedAttempts > 0) ||
+                    (x.Status == SubscriptionStatus.Ended && x.EndedAt >= endedSince))
+                .SortByDescending(x => x.NextChargeAt).Limit(limit).ToListAsync();
+            return list;
+        }
 
         public async Task<IReadOnlyList<PassSubscription>> FindActiveOfUser(string userId) =>
             await Collection.Find(x => x.UserId == userId && x.Status == SubscriptionStatus.Active).ToListAsync();

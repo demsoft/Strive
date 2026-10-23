@@ -51,6 +51,15 @@ namespace Strive.Core.Services.Payments.Gateways
 
         Task<TicketOrder?> FindById(string orderId);
 
+        /// <summary>The latest orders of every status, newest first (for the administrators)</summary>
+        Task<IReadOnlyList<TicketOrder>> FindRecent(int limit);
+
+        /// <summary>Paid and refunded orders made since the time, newest first (for the administrators)</summary>
+        Task<IReadOnlyList<TicketOrder>> FindPaidSince(System.DateTimeOffset since, int limit);
+
+        /// <summary>Paid orders whose refund did not work: the money is still with the platform, the person wants it back</summary>
+        Task<IReadOnlyList<TicketOrder>> FindWithRefundFailure(int limit);
+
         /// <summary>The paid (and refunded) orders that include a share of the creator, newest first</summary>
         Task<IReadOnlyList<TicketOrder>> FindPaidOfCreator(string creatorId, int limit);
 
@@ -75,6 +84,11 @@ namespace Strive.Core.Services.Payments.Gateways
 
         /// <summary>The active subscriptions of a person</summary>
         Task<IReadOnlyList<PassSubscription>> FindActiveOfUser(string userId);
+
+        Task<int> CountActive();
+
+        /// <summary>Subscriptions that need a look: renewals that fail, and ones that ended since the time</summary>
+        Task<IReadOnlyList<PassSubscription>> FindWithProblems(System.DateTimeOffset endedSince, int limit);
 
         /// <summary>Active subscriptions whose renewal is due</summary>
         Task<IReadOnlyList<PassSubscription>> FindDue(System.DateTimeOffset now, int limit);
