@@ -42,6 +42,8 @@ using Strive.Core.Services.Payments;
 using Strive.Core.Services.Payments.Gateways;
 using Strive.Core.Services.Recording;
 using Strive.Core.Services.Recording.Gateways;
+using Strive.Core.Services.Reminders;
+using Strive.Infrastructure.Email;
 using Strive.Infrastructure.Payments;
 using Strive.Infrastructure.Recording;
 using Strive.Recording;
@@ -156,6 +158,27 @@ namespace Strive
                 string.IsNullOrWhiteSpace(sp.GetRequiredService<IOptions<PaymentsOptions>>().Value.Paystack.SecretKey)
                     ? new UnavailablePaymentProvider()
                     : sp.GetRequiredService<PaystackPaymentProvider>());
+
+            // Reminders: a mail shortly before a session starts. Without a Brevo key nothing is sent.
+            services.Configure<EmailOptions>(Configuration.GetSection(EmailOptions.Section));
+            services.Configure<RemindersOptions>(Configuration.GetSection(RemindersOptions.Section));
+            services.PostConfigure<RemindersOptions>(options =>
+            {
+                // the link goes to the first extra host (Gbedu), else to the main address of the app
+                if (!string.IsNullOrWhiteSpace(options.LinkBaseUrl)) return;
+                var host = (Configuration["App:ExtraHosts"] ?? "")
+                    .Split(new[] {',', ';', ' '}, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+                options.LinkBaseUrl = host != null
+                    ? (host.StartsWith("http") ? host : "https://" + host)
+                    : Configuration["App:FrontendUrl"] ?? "";
+            });
+            services.AddHttpClient<BrevoEmailSender>(client => client.Timeout = TimeSpan.FromSeconds(15));
+            // TryAdd: the tests bring their own sender
+            services.TryAddTransient<IEmailSender>(sp =>
+                string.IsNullOrWhiteSpace(sp.GetRequiredService<IOptions<EmailOptions>>().Value.BrevoApiKey)
+                    ? new UnavailableEmailSender()
+                    : sp.GetRequiredService<BrevoEmailSender>());
+            services.AddHostedService<SessionReminderService>();
 
             // SignalR
             // Since .NET 7, hub and API parameters are bound from DI if the container can resolve their type. Autofac

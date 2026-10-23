@@ -21,6 +21,15 @@ namespace Strive.Core.Services.Payments.Gateways
         Task<IReadOnlyList<PaidSession>> FindForSaleOfCreator(string creatorId, System.DateTimeOffset notBefore,
             int limit);
 
+        /// <summary>Published sessions that start between the two times and have not been reminded yet</summary>
+        Task<IReadOnlyList<PaidSession>> FindDueForReminder(System.DateTimeOffset from, System.DateTimeOffset until);
+
+        /// <summary>Marks the reminder as taken. Only the first call for a session returns true.</summary>
+        Task<bool> TryClaimReminder(string sessionId, System.DateTimeOffset at);
+
+        /// <summary>Gives the reminder back (nobody could be reached), so that it is tried again</summary>
+        Task ReleaseReminder(string sessionId);
+
         Task Update(PaidSession session);
     }
 

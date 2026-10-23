@@ -69,6 +69,8 @@ namespace Strive.IntegrationTests
                 // application, which only add their implementations if nothing is registered yet.
                 services.AddSingleton<FakeRecorderClient>();
                 services.AddSingleton<IRecorderClient>(sp => sp.GetRequiredService<FakeRecorderClient>());
+                services.AddSingleton<FakeEmailSender>();
+                services.AddSingleton<Strive.Core.Services.Reminders.IEmailSender>(sp => sp.GetRequiredService<FakeEmailSender>());
                 services.AddSingleton<FakePaymentProvider>();
                 services.AddSingleton<IPaymentProvider>(sp => sp.GetRequiredService<FakePaymentProvider>());
                 services.AddSingleton<FakeRecordingStorage>();

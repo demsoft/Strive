@@ -56,6 +56,11 @@ services:
       - Payments__Enabled=${PAYMENTS_ENABLED:-false}
       - Payments__PlatformCommissionPercent=${PLATFORM_COMMISSION_PERCENT:-10}
       - Payments__Paystack__SecretKey=${PAYSTACK_SECRET_KEY:-}
+      # reminder mails shortly before a session starts: through the Brevo API, nothing is sent without BREVO_API_KEY
+      - Email__BrevoApiKey=${BREVO_API_KEY:-}
+      - Email__From=${REMINDERS_FROM:-${SMTP_FROM:-Gbedu <no-reply@localhost>}}
+      - Reminders__Enabled=${REMINDERS_ENABLED:-true}
+      - Reminders__LeadMinutes=${REMINDERS_LEAD_MINUTES:-60}
       - Recording__Recorder__SharedSecret=${RECORDER_SHARED_SECRET}
       - Recording__Recorder__TokenSecret=${RECORDER_TOKEN_SECRET}
 
