@@ -122,7 +122,7 @@ namespace Strive.Controllers
             foreach (var entitlement in await _entitlements.FindOfUser(UserId, 100))
             {
                 var video = await _videos.FindById(entitlement.VideoId);
-                if (video == null || video.Status != VideoStatus.Ready) continue;
+                if (video == null || !video.IsPublic) continue;
 
                 var creator = await _creators.FindById(video.CreatorId);
                 result.Add(_presenter.ToDto(video, creator == null ? null : PublicCreatorDto.From(creator), false, true,
@@ -176,7 +176,7 @@ namespace Strive.Controllers
             if (video == null) return VideosError.NotFound.ToActionResult();
 
             var isOwner = UserId != null && video.CreatorUserId == UserId;
-            if (!isOwner && video.Status != VideoStatus.Ready) return VideosError.NotFound.ToActionResult();
+            if (!isOwner && !video.IsPublic) return VideosError.NotFound.ToActionResult();
 
             var creator = await _creators.FindById(video.CreatorId);
             var canWatch = await _access.CanWatch(video, UserId);
@@ -203,6 +203,22 @@ namespace Strive.Controllers
             Response.Headers.CacheControl = "no-store";
             return new CheckoutResultDto(result.Response!.AuthorizationUrl, result.Response.Reference,
                 result.Response.AlreadyHasTicket);
+        }
+
+        // POST v1/videos/{videoId}/report
+        /// <summary>A person reports a video. Enough different people hide it until a moderator has looked at it.</summary>
+        [HttpPost("v1/videos/{videoId}/report")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> Report(string videoId, [FromBody] ReportVideoDto dto)
+        {
+            if (UserId == null) return Forbid();
+
+            if (!Enum.TryParse<ReportReason>(dto.Reason, true, out var reason))
+                return VideosError.Invalid("Choose what is wrong with the video.").ToActionResult();
+
+            return (await _mediator.Send(new ReportVideoRequest(UserId, videoId, reason, dto.Details))).ToActionResult();
         }
 
         // DELETE v1/videos/{videoId}

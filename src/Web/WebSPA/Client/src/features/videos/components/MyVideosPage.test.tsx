@@ -343,3 +343,19 @@ test('an edit the server refuses shows its message and keeps the dialog open', a
    expect(document.querySelector('#edit-error')?.textContent).toContain('bank account');
    expect(document.querySelector('#edit-title')).not.toBeNull();
 });
+
+test('the creator is told when a video is hidden for review, and when a moderator removed it and why', async () => {
+   api.fetchMyVideos.mockResolvedValue([
+      video({ videoId: 'a', moderation: 'hidden' }),
+      video({ videoId: 'b', moderation: 'removed', moderationNote: 'Not your own work.' }),
+      video({ videoId: 'c', moderation: 'none' }),
+   ]);
+   await render();
+
+   const rows = document.querySelectorAll('.my-video');
+   expect(rows[0].querySelector('.video-moderation')?.textContent).toContain('videos.hidden_notice');
+   expect(rows[0].querySelector('.video-watch')).not.toBeNull(); // the creator may still watch a hidden video
+   expect(rows[1].querySelector('.video-moderation')?.textContent).toContain('Not your own work.');
+   expect(rows[1].querySelector('.video-watch')).toBeNull(); // its files are gone
+   expect(rows[2].querySelector('.video-moderation')).toBeNull();
+});

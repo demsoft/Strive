@@ -385,13 +385,24 @@ export default function MyVideosPage() {
                         <Typography variant="body2" color="text.secondary">
                            {DateTime.fromISO(video.createdAt).toLocaleString(DateTime.DATETIME_MED)}
                         </Typography>
+                        {video.moderation === 'hidden' && (
+                           <Typography variant="body2" color="warning.main" className="video-moderation">
+                              {t('videos.hidden_notice')}
+                           </Typography>
+                        )}
+                        {video.moderation === 'removed' && (
+                           <Typography variant="body2" color="error" className="video-moderation">
+                              {t('videos.removed_notice')}
+                              {video.moderationNote ? ` ${video.moderationNote}` : ''}
+                           </Typography>
+                        )}
                         {video.status === 'failed' && video.failureReason && (
                            <Typography variant="body2" color="error" className="video-failure">
                               {video.failureReason}
                            </Typography>
                         )}
                         <Box sx={{ mt: 0.5, display: 'flex', gap: 1 }}>
-                           {video.status === 'ready' && (
+                           {video.status === 'ready' && video.moderation !== 'removed' && (
                               <Button size="small" className="video-watch" onClick={() => watch(video)}>
                                  {t('videos.watch')}
                               </Button>

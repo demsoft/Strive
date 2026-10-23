@@ -10,6 +10,7 @@ using Strive.Admin;
 using Strive.Core.Services.Payments;
 using Strive.Core.Services.Payments.Gateways;
 using Strive.Core.Services.Payments.Sessions;
+using Strive.Extensions;
 using Strive.Models.Response;
 
 namespace Strive.Controllers
@@ -30,11 +31,17 @@ namespace Strive.Controllers
         private readonly ICreatorRepo _creators;
         private readonly IPassSubscriptionRepo _subscriptions;
         private readonly Strive.Core.Services.Videos.IVideoRepo _videoRepo;
+        private readonly Strive.Core.Services.Videos.IVideoReportRepo _videoReports;
+        private readonly Strive.Core.Services.Videos.IVideoEntitlementRepo _videoEntitlements;
+        private readonly Strive.Presenters.VideoPresenter _videoPresenter;
+        private readonly MediatR.IMediator _mediator;
         private readonly PaymentsOptions _payments;
 
         public AdminController(AdminOverviewService overview, IAdminMetricsStore history, IOrderRepo orders,
             ISessionRepo sessions, ICreatorRepo creators, IPassSubscriptionRepo subscriptions,
-            Strive.Core.Services.Videos.IVideoRepo videoRepo,
+            Strive.Core.Services.Videos.IVideoRepo videoRepo, Strive.Core.Services.Videos.IVideoReportRepo videoReports,
+            Strive.Core.Services.Videos.IVideoEntitlementRepo videoEntitlements, Strive.Presenters.VideoPresenter videoPresenter,
+            MediatR.IMediator mediator,
             IOptions<PaymentsOptions> payments)
         {
             _overview = overview;
@@ -44,7 +51,61 @@ namespace Strive.Controllers
             _creators = creators;
             _subscriptions = subscriptions;
             _videoRepo = videoRepo;
+            _videoReports = videoReports;
+            _videoEntitlements = videoEntitlements;
+            _videoPresenter = videoPresenter;
+            _mediator = mediator;
             _payments = payments.Value;
+        }
+
+        /// <summary>Videos that people reported, and the ones that are hidden until somebody looks at them</summary>
+        [HttpGet("videos/reports")]
+        public async Task<ActionResult<AdminVideoReportDto[]>> GetVideoReports()
+        {
+            var open = await _videoReports.FindOpen(500);
+            var hidden = (await _videoRepo.FindModerated(50))
+                .Where(x => x.Moderation == Strive.Core.Services.Videos.VideoModeration.Hidden).ToList();
+            var videos = (await _videoRepo.FindByIds(open.Select(x => x.VideoId).Concat(hidden.Select(x => x.VideoId))))
+                // what a moderator already removed needs no more looking at
+                .Where(x => x.Moderation != Strive.Core.Services.Videos.VideoModeration.Removed).ToList();
+            var names = await _creators.FindNames(videos.Select(x => x.CreatorId));
+
+            var result = new List<AdminVideoReportDto>();
+            foreach (var video in videos)
+            {
+                var reports = open.Where(x => x.VideoId == video.VideoId).ToList();
+                var shown = _videoPresenter.ToDto(video, null, false, true, true);
+                result.Add(new AdminVideoReportDto(video.VideoId, video.Title, names.GetValueOrDefault(video.CreatorId, ""),
+                    video.Moderation.ToString().ToLowerInvariant(), video.PriceMinor,
+                    await _videoEntitlements.CountOfVideo(video.VideoId), reports.Count,
+                    reports.GroupBy(x => x.Reason.ToString().ToLowerInvariant()).ToDictionary(g => g.Key, g => g.Count()),
+                    reports.Where(x => !string.IsNullOrEmpty(x.Details)).Take(5)
+                        .Select(x => new ReportDetailDto(x.Reason.ToString().ToLowerInvariant(), x.Details, x.CreatedAt))
+                        .ToList(),
+                    reports.Count == 0 ? null : reports.Max(x => x.CreatedAt), shown.PosterUrl, shown.PlaybackUrl));
+            }
+
+            Response.Headers.CacheControl = "no-store";
+            return result.OrderByDescending(x => x.OpenReports).ThenByDescending(x => x.LatestReportAt).ToArray();
+        }
+
+        /// <summary>The video is fine: shown again, the reports are put aside</summary>
+        [HttpPost("videos/{videoId}/keep")]
+        public async Task<ActionResult> KeepVideo(string videoId)
+        {
+            var result = await _mediator.Send(new Strive.Core.Services.Videos.ModerateVideoRequest(videoId,
+                Strive.Core.Services.Videos.ModerationDecision.Keep, null));
+            // nothing of the video itself goes back, the page asks for the list again
+            return result.Success ? NoContent() : result.ToActionResult();
+        }
+
+        /// <summary>The video goes: its files are deleted and the creator is told why</summary>
+        [HttpPost("videos/{videoId}/remove")]
+        public async Task<ActionResult> RemoveVideo(string videoId, [FromBody] ModerateVideoDto dto)
+        {
+            var result = await _mediator.Send(new Strive.Core.Services.Videos.ModerateVideoRequest(videoId,
+                Strive.Core.Services.Videos.ModerationDecision.Remove, dto.Note));
+            return result.Success ? NoContent() : result.ToActionResult();
         }
 
         /// <summary>Money: what was sold and paid, and what needs a person (refunds that failed, renewals that fail)</summary>

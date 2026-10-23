@@ -21,12 +21,33 @@ namespace Strive.Core.Services.Videos
 
         Task<IReadOnlyList<Video>> FindReadyOfCreator(string creatorId, int limit);
 
+        Task<IReadOnlyList<Video>> FindByIds(IEnumerable<string> videoIds);
+
+        /// <summary>Videos that are hidden or removed (for the moderators), newest first</summary>
+        Task<IReadOnlyList<Video>> FindModerated(int limit);
+
         /// <summary>Videos in this state, the oldest first (for the background work)</summary>
         Task<IReadOnlyList<Video>> FindByStatus(VideoStatus status, int limit);
 
         Task Update(Video video);
 
         Task Delete(string videoId);
+    }
+
+    public interface IVideoReportRepo
+    {
+        /// <summary>Stores the report. A person reports a video once: false if they already had.</summary>
+        Task<bool> TryAdd(VideoReport report);
+
+        /// <summary>How many different people reported the video and it has not been decided yet</summary>
+        Task<int> CountOpen(string videoId);
+
+        Task<IReadOnlyList<VideoReport>> FindOpen(int limit);
+
+        Task<IReadOnlyList<VideoReport>> FindOpenOfVideo(string videoId);
+
+        /// <summary>A moderator decided: the open reports of the video no longer count</summary>
+        Task ResolveOpen(string videoId, DateTimeOffset at);
     }
 
     /// <summary>The right of a person to watch a video they bought. One per paid order.</summary>

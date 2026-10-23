@@ -169,3 +169,34 @@ export type AdminPayments = {
 export async function fetchAdminPayments(): Promise<AdminPayments> {
    return (await Axios.get<AdminPayments>(adminUrl('payments'))).data;
 }
+
+export type ReportDetail = { reason: string; text?: string | null; at: string };
+
+export type VideoReportItem = {
+   videoId: string;
+   title: string;
+   creatorName: string;
+   moderation: 'none' | 'hidden' | 'removed';
+   priceMinor: number;
+   /** how many people bought it: removing it is then for the moderators to make right */
+   buyers: number;
+   openReports: number;
+   reasons: Record<string, number>;
+   details: ReportDetail[];
+   latestReportAt?: string | null;
+   posterUrl?: string | null;
+   /** a temporary link to watch it, also while it is hidden */
+   playbackUrl?: string | null;
+};
+
+export async function fetchVideoReports(): Promise<VideoReportItem[]> {
+   return (await Axios.get<VideoReportItem[]>(adminUrl('videos/reports'))).data;
+}
+
+export async function keepVideo(videoId: string): Promise<void> {
+   await Axios.post(adminUrl(`videos/${encodeURIComponent(videoId)}/keep`));
+}
+
+export async function removeVideo(videoId: string, note: string): Promise<void> {
+   await Axios.post(adminUrl(`videos/${encodeURIComponent(videoId)}/remove`), { note: note || undefined });
+}

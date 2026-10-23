@@ -19,6 +19,18 @@ namespace Strive.Core.Services.Videos
         Failed,
     }
 
+    /// <summary>Whether the moderators have taken a video out of sight</summary>
+    public enum VideoModeration
+    {
+        None,
+
+        /// <summary>Several people reported it: out of sight for everybody but the creator until a moderator has looked at it</summary>
+        Hidden,
+
+        /// <summary>A moderator removed it: the files are gone, the creator is told why</summary>
+        Removed,
+    }
+
     /// <summary>
     ///     A video of a creator (a reel or a lesson). The creator sends the file to the converter (Cloudinary), the server
     ///     copies the converted file to the storage (Cloudflare R2) and plays it from there.
@@ -54,6 +66,16 @@ namespace Strive.Core.Services.Videos
         public int? Width { get; set; }
 
         public int? Height { get; set; }
+
+        public VideoModeration Moderation { get; set; } = VideoModeration.None;
+
+        /// <summary>Everybody may find and watch it: converted, and not taken out of sight</summary>
+        public bool IsPublic => Status == VideoStatus.Ready && Moderation == VideoModeration.None;
+
+        /// <summary>What a moderator told the creator (why it was removed)</summary>
+        public string? ModerationNote { get; set; }
+
+        public DateTimeOffset? ModeratedAt { get; set; }
 
         /// <summary>The cover picture was made and stored</summary>
         public bool HasPoster { get; set; }

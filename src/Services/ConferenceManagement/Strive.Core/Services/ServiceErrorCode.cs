@@ -68,6 +68,7 @@ namespace Strive.Core.Services
         Videos_UploadNotFound,
         Videos_HasBuyers,
         Videos_NotForSale,
+        Videos_InvalidReport,
         Payments_SubscriptionNotFound,
         Payments_SlugTaken,
 

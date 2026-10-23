@@ -39,6 +39,9 @@ vi.mock('react-router-dom', () => ({
    useLocation: () => ({ pathname: '/v/v1', search: state.search }),
 }));
 vi.mock('src/components/BrandLogo', () => ({ default: () => null }));
+vi.mock('./ReportVideoDialog', () => ({
+   default: ({ open }: { open: boolean }) => (open ? <div id="report-dialog" /> : null),
+}));
 vi.mock('src/services/api/videos', () => api);
 
 import WatchVideoPage from './WatchVideoPage';
@@ -186,4 +189,33 @@ test('back from the payment page: a failed payment is said clearly and the video
 
    expect(document.querySelector('#video-payment-failed')).not.toBeNull();
    expect(document.querySelector('#video-locked')).not.toBeNull();
+});
+
+test('a signed in person can report the video: the dialog opens', async () => {
+   state.user = { access_token: 'tok', profile: {} };
+   api.fetchVideo.mockResolvedValue(video());
+   await render();
+
+   expect(document.querySelector('#report-dialog')).toBeNull();
+   await act(async () => (document.querySelector('#watch-report') as HTMLElement).click());
+
+   expect(document.querySelector('#report-dialog')).not.toBeNull();
+});
+
+test('somebody who is signed out is asked to sign in first, and comes back to this video', async () => {
+   api.fetchVideo.mockResolvedValue(video());
+   await render();
+
+   await act(async () => (document.querySelector('#watch-report') as HTMLElement).click());
+
+   expect(state.signinRedirect).toHaveBeenCalledWith({ state: { url: '/v/v1' } });
+   expect(document.querySelector('#report-dialog')).toBeNull();
+});
+
+test('the creator has no button to report their own video', async () => {
+   state.user = { access_token: 'tok', profile: {} };
+   api.fetchVideo.mockResolvedValue(video({ isOwner: true }));
+   await render();
+
+   expect(document.querySelector('#watch-report')).toBeNull();
 });

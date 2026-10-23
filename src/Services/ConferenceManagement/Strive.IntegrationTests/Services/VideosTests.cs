@@ -925,6 +925,223 @@ namespace Strive.IntegrationTests.Services
             Assert.Equal("Ada Lovelace", row.CreatorName);
         }
 
+        // ---- reports and moderation
+
+        private HttpClient AdminApi(string role = "serveradmin")
+        {
+            var client = Factory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",
+                Factory.JwtTokens.GenerateJwtToken(new System.Collections.Generic.List<System.Security.Claims.Claim>
+                {
+                    new(System.Security.Claims.ClaimTypes.NameIdentifier, "admin-" + Guid.NewGuid().ToString("N")[..6]),
+                    new("name", "Admin"), new("role", role),
+                }));
+            return client;
+        }
+
+        private Task<HttpResponseMessage> Report(UserAccount? user, string id, string reason = "spam", string? details = null) =>
+            Api(user).PostAsync($"/v1/videos/{id}/report", new JsonNetContent(new ReportVideoDto(reason, details)));
+
+        private async Task ReportBy(int people, string id, string reason = "spam")
+        {
+            for (var i = 0; i < people; i++)
+                (await Report(Factory.CreateUser("reporter" + i + Guid.NewGuid().ToString("N")[..4], false), id, reason))
+                    .EnsureSuccessStatusCode();
+        }
+
+        private async Task<AdminVideoReportDto[]> AdminReports() =>
+            await Read<AdminVideoReportDto[]>(await AdminApi().GetAsync("/v1/admin/videos/reports"));
+
+        private async Task<bool> InFeed(string id) =>
+            (await Feed("?limit=30")).Items.Any(x => x.VideoId == id);
+
+        [Fact]
+        public async Task Report_NeedsASignIn_AndAReason_AndAVideoThatIsThere()
+        {
+            var (_, id) = await ReadyVideo();
+            var fan = Factory.CreateUser("fan", false);
+
+            Assert.Equal(HttpStatusCode.Unauthorized, (await Report(null, id)).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await Report(fan, id, "nonsense")).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await Report(fan, id, "other", new string('x', 501))).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await Report(fan, "nope")).StatusCode);
+            (await Report(fan, id, "Copyright", "It is not theirs")).EnsureSuccessStatusCode();
+        }
+
+        [Fact]
+        public async Task Report_YourOwnVideo_OrOneThatIsNotPublic_IsRefused()
+        {
+            var (host, ready) = await ReadyVideo();
+            var processing = (await Created(host)).Video.VideoId;
+            Converter.Receive(processing);
+            await Complete(host, processing);
+
+            Assert.Equal(HttpStatusCode.BadRequest, (await Report(host, ready)).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await Report(Factory.CreateUser("fan", false), processing)).StatusCode);
+        }
+
+        [Fact]
+        public async Task Report_OnePersonCannotHideAVideoAlone_EvenByReportingManyTimes()
+        {
+            var (_, id) = await ReadyVideo();
+            var fan = Factory.CreateUser("fan", false);
+
+            for (var i = 0; i < 6; i++) (await Report(fan, id)).EnsureSuccessStatusCode();
+
+            Assert.True(await InFeed(id));
+            Assert.Equal(1, Assert.Single(await AdminReports(), x => x.VideoId == id).OpenReports);
+        }
+
+        [Fact]
+        public async Task Report_EnoughDifferentPeople_HideItUntilAModeratorHasLooked()
+        {
+            var (host, id) = await ReadyVideo();
+            var creatorId = (await Read<CreatorProfileDto>(await Api(host).GetAsync("/v1/creators/me"))).CreatorId;
+
+            await ReportBy(2, id);
+            Assert.True(await InFeed(id));
+            Assert.Equal("none", (await View(host, id)).Moderation);
+
+            await ReportBy(1, id);
+
+            Assert.False(await InFeed(id));
+            Assert.Equal(HttpStatusCode.NotFound, (await Api(null).GetAsync($"/v1/videos/{id}")).StatusCode);
+            Assert.DoesNotContain((await Read<CreatorPageDto>(await Api(null).GetAsync($"/v1/creators/{creatorId}/page"))).Videos!,
+                x => x.VideoId == id);
+            // the creator still sees it, and why it is not shown
+            var mine = await View(host, id);
+            Assert.Equal("hidden", mine.Moderation);
+            Assert.NotNull(mine.PlaybackUrl);
+            Assert.Equal("hidden", Assert.Single(await Read<VideoDto[]>(await Api(host).GetAsync("/v1/videos/mine")),
+                x => x.VideoId == id).Moderation);
+        }
+
+        [Fact]
+        public async Task Report_AHiddenVideo_CannotBeBoughtOrReportedAgain_AndIsNotInThePurchasedList()
+        {
+            var (host, id) = await PaidVideo();
+            var buyer = Factory.CreateUser("buyer", false);
+            await PayFor(buyer, id);
+            await ReportBy(3, id);
+
+            Assert.Equal(HttpStatusCode.NotFound, (await Api(Factory.CreateUser("late", false)).PostAsync(
+                $"/v1/videos/{id}/checkout", new JsonNetContent(new CheckoutDto("late@example.com")))).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await Report(Factory.CreateUser("late2", false), id)).StatusCode);
+            Assert.DoesNotContain(await Read<VideoDto[]>(await Api(buyer).GetAsync("/v1/videos/purchased")),
+                x => x.VideoId == id);
+            Assert.Equal(HttpStatusCode.NotFound, (await Api(buyer).GetAsync($"/v1/videos/{id}")).StatusCode);
+        }
+
+        [Fact]
+        public async Task Admin_SeesWhatWasReported_WithReasonsDetailsBuyersAndAPreview()
+        {
+            var (_, id) = await PaidVideo();
+            await PayFor(Factory.CreateUser("buyer", false), id);
+            (await Report(Factory.CreateUser("r1", false), id, "copyright", "Stolen from another channel")).EnsureSuccessStatusCode();
+            (await Report(Factory.CreateUser("r2", false), id, "copyright")).EnsureSuccessStatusCode();
+            (await Report(Factory.CreateUser("r3", false), id, "spam")).EnsureSuccessStatusCode();
+
+            var item = Assert.Single(await AdminReports(), x => x.VideoId == id);
+
+            Assert.Equal("hidden", item.Moderation);
+            Assert.Equal(3, item.OpenReports);
+            Assert.Equal(2, item.Reasons["copyright"]);
+            Assert.Equal(1, item.Reasons["spam"]);
+            Assert.Equal("Stolen from another channel", Assert.Single(item.Details).Text);
+            Assert.Equal(1, item.Buyers);
+            Assert.Equal("Ada Lovelace", item.CreatorName);
+            Assert.StartsWith($"https://r2.test/videos/{id}/video.mp4", item.PlaybackUrl); // to look at it while hidden
+            Assert.NotNull(item.PosterUrl);
+        }
+
+        [Fact]
+        public async Task Admin_Keep_ShowsItAgain_AndStartsTheCountFromZero()
+        {
+            var (host, id) = await ReadyVideo();
+            await ReportBy(3, id);
+
+            var keep = await AdminApi().PostAsync($"/v1/admin/videos/{id}/keep", null);
+
+            Assert.Equal(HttpStatusCode.NoContent, keep.StatusCode);
+            Assert.True(await InFeed(id));
+            Assert.Equal("none", (await View(host, id)).Moderation);
+            Assert.DoesNotContain(await AdminReports(), x => x.VideoId == id);
+            // the old reports were decided: two new ones are not enough
+            await ReportBy(2, id);
+            Assert.True(await InFeed(id));
+        }
+
+        [Fact]
+        public async Task Admin_Remove_DeletesTheFiles_TellsTheCreator_AndTakesItOutOfEverything()
+        {
+            var (host, id) = await ReadyVideo();
+            await ReportBy(3, id);
+
+            var remove = await AdminApi().PostAsync($"/v1/admin/videos/{id}/remove",
+                new JsonNetContent(new ModerateVideoDto("  Not your own work.  ")));
+
+            Assert.Equal(HttpStatusCode.NoContent, remove.StatusCode);
+            Assert.DoesNotContain($"videos/{id}/video.mp4", Storage.Objects.Keys);
+            Assert.DoesNotContain($"videos/{id}/poster.jpg", Storage.Objects.Keys);
+            Assert.Contains(id, Converter.Deleted);
+            var mine = await View(host, id);
+            Assert.Equal("removed", mine.Moderation);
+            Assert.Equal("Not your own work.", mine.ModerationNote);
+            Assert.Null(mine.PlaybackUrl);
+            Assert.Null(mine.PosterUrl);
+            Assert.Equal(HttpStatusCode.NotFound, (await Api(null).GetAsync($"/v1/videos/{id}")).StatusCode);
+            Assert.False(await InFeed(id));
+            Assert.DoesNotContain(await AdminReports(), x => x.VideoId == id);
+        }
+
+        [Fact]
+        public async Task Admin_RemoveEvenWhenPeopleBoughtIt_AndKeepingARemovedVideoIsRefused()
+        {
+            var (_, id) = await PaidVideo();
+            await PayFor(Factory.CreateUser("buyer", false), id);
+
+            (await AdminApi().PostAsync($"/v1/admin/videos/{id}/remove", new JsonNetContent(new ModerateVideoDto(null))))
+                .EnsureSuccessStatusCode();
+
+            Assert.NotNull(await Videos.FindById(id)); // the record stays: the creator is told
+            var keep = await AdminApi().PostAsync($"/v1/admin/videos/{id}/keep", null);
+            Assert.Equal(HttpStatusCode.BadRequest, keep.StatusCode);
+        }
+
+        [Fact]
+        public async Task Admin_UnknownVideo_NotFound_NoteTooLong_BadRequest()
+        {
+            var (_, id) = await ReadyVideo();
+
+            Assert.Equal(HttpStatusCode.NotFound, (await AdminApi().PostAsync("/v1/admin/videos/nope/keep", null)).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await AdminApi().PostAsync("/v1/admin/videos/nope/remove",
+                new JsonNetContent(new ModerateVideoDto("x")))).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await AdminApi().PostAsync($"/v1/admin/videos/{id}/remove",
+                new JsonNetContent(new ModerateVideoDto(new string('x', 501))))).StatusCode);
+            Assert.Contains($"videos/{id}/video.mp4", Storage.Objects.Keys);
+        }
+
+        [Fact]
+        public async Task Admin_OnlyServerAdministrators_MayDecide()
+        {
+            var (host, id) = await ReadyVideo();
+            await ReportBy(3, id);
+
+            foreach (var client in new[] {Api(null), Api(host), AdminApi("mod"), AdminApi("admin")})
+            {
+                var statuses = new[]
+                {
+                    (await client.GetAsync("/v1/admin/videos/reports")).StatusCode,
+                    (await client.PostAsync($"/v1/admin/videos/{id}/keep", null)).StatusCode,
+                    (await client.PostAsync($"/v1/admin/videos/{id}/remove", new JsonNetContent(new ModerateVideoDto("x")))).StatusCode,
+                };
+                Assert.All(statuses, x => Assert.Contains(x, new[] {HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden}));
+            }
+
+            Assert.Equal("hidden", (await View(host, id)).Moderation); // nothing changed
+            Assert.Contains($"videos/{id}/video.mp4", Storage.Objects.Keys);
+        }
+
         // ---- deleting, and other people's videos
 
         [Fact]

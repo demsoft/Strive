@@ -11,6 +11,7 @@ import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import * as api from 'src/services/api/videos';
 import { Video } from 'src/services/api/videos';
 import usePaymentReturn from 'src/features/payments/usePaymentReturn';
+import ReportVideoDialog from './ReportVideoDialog';
 import VideoBuyBox from './VideoBuyBox';
 import { brand } from 'src/theme';
 
@@ -24,6 +25,7 @@ export default function WatchVideoPage() {
    const [video, setVideo] = useState<Video | null>(null);
    const [notFound, setNotFound] = useState(false);
    const [copied, setCopied] = useState(false);
+   const [reporting, setReporting] = useState(false);
 
    const load = useCallback(
       () => api.fetchVideo(videoId, token).then(setVideo, () => setNotFound(true)),
@@ -146,6 +148,21 @@ export default function WatchVideoPage() {
                         {video.description}
                      </Typography>
                   )}
+
+                  {!video.isOwner && (
+                     <Button
+                        id="watch-report"
+                        color="inherit"
+                        size="small"
+                        onClick={() =>
+                           token ? setReporting(true) : auth.signinRedirect({ state: { url: location.pathname } })
+                        }
+                        sx={{ mt: 2, ml: 1 }}
+                     >
+                        {t('videos.report')}
+                     </Button>
+                  )}
+                  <ReportVideoDialog videoId={video.videoId} open={reporting} onClose={() => setReporting(false)} />
 
                   <Button
                      id="watch-share"
