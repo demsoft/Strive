@@ -1,9 +1,10 @@
-import { Alert, Box, Chip, CircularProgress, Typography } from '@mui/material';
+import { Alert, Box, Chip, CircularProgress, InputAdornment, TextField, Typography } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 import { DateTime } from 'luxon';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router-dom';
-import { formatMoney } from 'src/features/sessions/money';
+import { formatMoney, SESSION_CATEGORIES } from 'src/features/sessions/money';
 import * as api from 'src/services/api/sessions';
 import { DiscoverSession } from 'src/services/api/sessions';
 import { brand } from 'src/theme';
@@ -14,6 +15,25 @@ import HostAvatar from './ui/HostAvatar';
 /** Started and not over (the server drops sessions that started long ago) */
 export const isLiveNow = (session: DiscoverSession, now = DateTime.now()) =>
    session.startsAt != null && DateTime.fromISO(session.startsAt) <= now;
+
+/**
+ * The sessions that match what the person typed (in the title, the text, or the name of the host: no capitals, no
+ * accents, every word has to be found) and the chosen category (none: all).
+ */
+export function filterSessions(sessions: DiscoverSession[], query: string, category: string | null) {
+   const normalize = (text: string) =>
+      text
+         .normalize('NFD')
+         .replace(/[\u0300-\u036f]/g, '')
+         .toLowerCase();
+   const words = normalize(query).split(/\s+/).filter(Boolean);
+
+   return sessions.filter((session) => {
+      if (category && session.category !== category) return false;
+      const haystack = normalize(`${session.title} ${session.description ?? ''} ${session.creatorName}`);
+      return words.every((word) => haystack.includes(word));
+   });
+}
 
 export function SessionTile({ session }: { session: DiscoverSession }) {
    const { t } = useTranslation();
@@ -92,13 +112,15 @@ export default function DiscoverSessions() {
    const { t } = useTranslation();
    const [sessions, setSessions] = useState<DiscoverSession[] | null>(null);
    const [failed, setFailed] = useState(false);
+   const [query, setQuery] = useState('');
+   const [category, setCategory] = useState<string | null>(null);
 
    useEffect(() => {
       api.fetchDiscover().then(setSessions, () => setFailed(true));
    }, []);
 
    // live ones first, then by start
-   const sorted = [...(sessions ?? [])].sort(
+   const sorted = filterSessions(sessions ?? [], query, category).sort(
       (a, b) =>
          Number(isLiveNow(b)) - Number(isLiveNow(a)) || (a.startsAt ?? '9999').localeCompare(b.startsAt ?? '9999'),
    );
@@ -121,6 +143,50 @@ export default function DiscoverSessions() {
          {sessions?.length === 0 && (
             <Typography color="text.secondary" id="discover-empty">
                {t('sessions.discover_none')}
+            </Typography>
+         )}
+         {sessions && sessions.length > 0 && (
+            <Box sx={{ mb: 3 }} id="discover-filters">
+               <TextField
+                  id="discover-search"
+                  fullWidth
+                  size="small"
+                  placeholder={t('sessions.search')}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  slotProps={{
+                     input: {
+                        startAdornment: (
+                           <InputAdornment position="start">
+                              <SearchIcon fontSize="small" />
+                           </InputAdornment>
+                        ),
+                     },
+                  }}
+                  sx={{ mb: 1.5, maxWidth: 480 }}
+               />
+               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Chip
+                     id="discover-cat-all"
+                     label={t('sessions.filter_all')}
+                     color={category === null ? 'primary' : 'default'}
+                     onClick={() => setCategory(null)}
+                  />
+                  {SESSION_CATEGORIES.map((c) => (
+                     <Chip
+                        key={c}
+                        id={`discover-cat-${c}`}
+                        label={t(`sessions.category_${c}`)}
+                        color={category === c ? 'primary' : 'default'}
+                        onClick={() => setCategory(category === c ? null : c)}
+                     />
+                  ))}
+               </Box>
+            </Box>
+         )}
+         {sessions && sessions.length > 0 && sorted.length === 0 && (
+            <Typography color="text.secondary" id="discover-no-match">
+               {t('sessions.no_match')}
             </Typography>
          )}
          {sorted.length > 0 && (
