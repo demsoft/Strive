@@ -78,5 +78,8 @@ namespace Strive.Core.Services.Payments.Sessions
         public DateTimeOffset? StartsAt { get; set; }
 
         public DateTimeOffset CreatedAt { get; init; }
+
+        /// <summary>When the mail that reminds the ticket holders was claimed; null: not sent yet</summary>
+        public DateTimeOffset? ReminderSentAt { get; set; }
     }
 }

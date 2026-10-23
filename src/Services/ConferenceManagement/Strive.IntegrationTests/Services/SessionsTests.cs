@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -548,6 +549,146 @@ namespace Strive.IntegrationTests.Services
                 (await Client(NewUser("fan")).GetAsync("/v1/creators/me/earnings")).StatusCode);
             Assert.Equal(HttpStatusCode.Unauthorized,
                 (await Client(null).GetAsync("/v1/creators/me/earnings")).StatusCode);
+        }
+
+        // ---- reminders
+
+        private FakeEmailSender Mail => Factory.Services.GetRequiredService<FakeEmailSender>();
+
+        private async Task<int> RunReminders()
+        {
+            var result = await Factory.Services.GetRequiredService<MediatR.IMediator>()
+                .Send(new Strive.Core.Services.Reminders.SendSessionRemindersRequest());
+            AssertSuccess(result);
+            return result.Response;
+        }
+
+        private async Task<SessionDto> PublishAt(UserAccount host, DateTimeOffset? startsAt, string title = "Starting soon")
+        {
+            return await Read<SessionDto>(await Client(host).PostAsync("/v1/sessions",
+                new JsonNetContent(new CreateSessionDto(title, "Learn", "music", Price, startsAt))));
+        }
+
+        private async Task BuyTicket(SessionDto session, string email)
+        {
+            var fan = NewUser("fan");
+            var checkout = await Checkout(fan, session.SessionId, email);
+            Provider.Pay(checkout.Reference!, session.PriceMinor);
+            await Status(fan, checkout.Reference!);
+        }
+
+        private IEnumerable<FakeEmailSender.Mail> MailsAbout(SessionDto session) =>
+            Mail.Sent.Where(x => x.Text.Contains("/s/" + session.SessionId));
+
+        [Fact]
+        public async Task Reminder_SessionStartsSoon_EveryTicketHolderGetsOneMail()
+        {
+            // arrange: two fans, one of them with two tickets (the same address is mailed once)
+            var host = await NewCreator();
+            var session = await PublishAt(host, DateTimeOffset.UtcNow.AddMinutes(30));
+            await BuyTicket(session, "ada@example.com");
+            await BuyTicket(session, "kofi@example.com");
+            await BuyTicket(session, "ADA@example.com");
+
+            // act
+            await RunReminders();
+
+            // assert
+            var mails = MailsAbout(session).ToList();
+            Assert.Equal(new[] {"ada@example.com", "kofi@example.com"},
+                mails.Select(x => x.To.ToLowerInvariant()).OrderBy(x => x));
+            Assert.All(mails, mail =>
+            {
+                Assert.Contains("Starting soon", mail.Subject);
+                Assert.Contains("Ada Lovelace", mail.Text);
+                Assert.Contains("WAT", mail.Text);
+            });
+        }
+
+        [Fact]
+        public async Task Reminder_IsSentOnlyOnce()
+        {
+            var host = await NewCreator();
+            var session = await PublishAt(host, DateTimeOffset.UtcNow.AddMinutes(30));
+            await BuyTicket(session, "ada@example.com");
+
+            await RunReminders();
+            await RunReminders();
+
+            Assert.Single(MailsAbout(session));
+        }
+
+        [Fact]
+        public async Task Reminder_TooEarlyStartedCancelledOrUndated_NoMail()
+        {
+            // arrange
+            var host = await NewCreator();
+            var later = await PublishAt(host, DateTimeOffset.UtcNow.AddHours(5));
+            var started = await PublishAt(host, DateTimeOffset.UtcNow.AddMinutes(-5));
+            var undated = await PublishAt(host, null);
+            var cancelled = await PublishAt(host, DateTimeOffset.UtcNow.AddMinutes(30));
+            foreach (var session in new[] {later, started, undated, cancelled}) await BuyTicket(session, "ada@example.com");
+            await Cancel(host, cancelled.SessionId);
+            // act
+            await RunReminders();
+
+            // assert
+            foreach (var session in new[] {later, started, undated, cancelled}) Assert.Empty(MailsAbout(session));
+        }
+
+        [Fact]
+        public async Task Reminder_PendingAndRefundedOrders_GetNoMail()
+        {
+            var host = await NewCreator();
+            var session = await PublishAt(host, DateTimeOffset.UtcNow.AddMinutes(30));
+            await Checkout(NewUser("fan"), session.SessionId, "unpaid@example.com"); // never paid
+
+            await RunReminders();
+
+            Assert.Empty(MailsAbout(session));
+        }
+
+        [Fact]
+        public async Task Reminder_MailsNotSetUp_NothingIsUsedUp_ItGoesOutLater()
+        {
+            var host = await NewCreator();
+            var session = await PublishAt(host, DateTimeOffset.UtcNow.AddMinutes(30));
+            await BuyTicket(session, "ada@example.com");
+            Mail.Configured = false;
+            try
+            {
+                await RunReminders();
+                Assert.Empty(MailsAbout(session));
+            }
+            finally
+            {
+                Mail.Configured = true;
+            }
+
+            await RunReminders();
+
+            Assert.Single(MailsAbout(session));
+        }
+
+        [Fact]
+        public async Task Reminder_MailServiceDown_IsTriedAgainAtTheNextRound()
+        {
+            var host = await NewCreator();
+            var session = await PublishAt(host, DateTimeOffset.UtcNow.AddMinutes(30));
+            await BuyTicket(session, "ada@example.com");
+            Mail.Failing = true;
+            try
+            {
+                Assert.Equal(0, await RunReminders());
+            }
+            finally
+            {
+                Mail.Failing = false;
+            }
+
+            await RunReminders();
+
+            Assert.Single(MailsAbout(session));
         }
 
         [Fact]

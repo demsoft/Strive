@@ -24,6 +24,8 @@ namespace Strive.Infrastructure.Data.Repos
                 config.MapMember(x => x.CreatedAt).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
                 config.MapMember(x => x.StartsAt).SetSerializer(
                     new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
+                config.MapMember(x => x.ReminderSentAt).SetSerializer(
+                    new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
                 config.SetIgnoreExtraElements(true);
             });
             BsonClassMap.RegisterClassMap<RevenueShare>(config =>
@@ -67,6 +69,21 @@ namespace Strive.Infrastructure.Data.Repos
             await Collection.Find(x => x.CreatorId == creatorId && x.Status == SessionStatus.Published &&
                                        (x.StartsAt == null || x.StartsAt >= notBefore))
                 .SortByDescending(x => x.CreatedAt).Limit(limit).ToListAsync();
+
+        public async Task<IReadOnlyList<PaidSession>> FindDueForReminder(DateTimeOffset from, DateTimeOffset until) =>
+            await Collection.Find(x => x.Status == SessionStatus.Published && x.ReminderSentAt == null &&
+                                       x.StartsAt > from && x.StartsAt <= until).Limit(200).ToListAsync();
+
+        public async Task<bool> TryClaimReminder(string sessionId, DateTimeOffset at)
+        {
+            var result = await Collection.UpdateOneAsync(x => x.SessionId == sessionId && x.ReminderSentAt == null,
+                Builders<PaidSession>.Update.Set(x => x.ReminderSentAt, at));
+            return result.ModifiedCount == 1;
+        }
+
+        public Task ReleaseReminder(string sessionId) =>
+            Collection.UpdateOneAsync(x => x.SessionId == sessionId,
+                Builders<PaidSession>.Update.Set(x => x.ReminderSentAt, null));
 
         public Task Update(PaidSession session) =>
             Collection.ReplaceOneAsync(x => x.SessionId == session.SessionId, session);
