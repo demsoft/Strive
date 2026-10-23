@@ -514,6 +514,106 @@ namespace Strive.IntegrationTests.Services
             Assert.Equal(HttpStatusCode.Unauthorized, (await Api(null).GetAsync("/v1/videos/mine")).StatusCode);
         }
 
+        // ---- the feed and the page of the creator
+
+        private async Task<VideoFeedDto> Feed(string query = "") =>
+            await Read<VideoFeedDto>(await Api(null).GetAsync("/v1/videos/feed" + query));
+
+        [Fact]
+        public async Task Feed_ListsReadyVideosOnly_ForEverybody_WithTheCreatorAndTheCover()
+        {
+            var (host, ready) = await ReadyVideo();
+            var processing = (await Created(host)).Video.VideoId;
+            Converter.Receive(processing);
+            await Complete(host, processing);
+            var uploading = (await Created(host)).Video.VideoId;
+            var failed = (await Created(host)).Video.VideoId;
+            Converter.Receive(failed, 999);
+            await Complete(host, failed);
+
+            var feed = await Feed();
+
+            var item = Assert.Single(feed.Items, x => x.VideoId == ready);
+            Assert.Equal("ready", item.Status);
+            Assert.Equal("Ada Lovelace", item.Creator!.DisplayName);
+            Assert.StartsWith($"https://r2.test/videos/{ready}/poster.jpg", item.PosterUrl);
+            Assert.Null(item.PlaybackUrl); // watching asks for the video itself
+            Assert.Null(item.FailureReason);
+            Assert.DoesNotContain(feed.Items, x => new[] {processing, uploading, failed}.Contains(x.VideoId));
+        }
+
+        [Fact]
+        public async Task Feed_NewestFirst_AndPagesDoNotRepeatOrSkip()
+        {
+            var host = await NewCreator();
+            var ids = new System.Collections.Generic.List<string>();
+            for (var i = 0; i < 5; i++)
+            {
+                var id = (await Created(host)).Video.VideoId;
+                Converter.Receive(id);
+                await Complete(host, id);
+                Converter.Finish(id);
+                await Process(id);
+                ids.Add(id);
+                await Task.Delay(5); // a different moment for each
+            }
+
+            var seen = new System.Collections.Generic.List<string>();
+            var page = await Feed("?limit=2");
+            Assert.True(page.Items.Length <= 2);
+            seen.AddRange(page.Items.Select(x => x.VideoId));
+            for (var guard = 0; page.Next != null && guard < 200; guard++)
+            {
+                page = await Feed($"?limit=2&before={Uri.EscapeDataString(page.Next.Value.UtcDateTime.ToString("o"))}");
+                seen.AddRange(page.Items.Select(x => x.VideoId));
+            }
+
+            Assert.Equal(seen.Count, seen.Distinct().Count());
+            Assert.Equal(ids.AsEnumerable().Reverse(), seen.Where(ids.Contains)); // all five, newest first
+            Assert.Null(page.Next);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-4)]
+        [InlineData(100000)]
+        public async Task Feed_AbsurdPageSizes_AreHeld_ToTheLimits(int limit)
+        {
+            await ReadyVideo();
+
+            var feed = await Feed($"?limit={limit}");
+
+            Assert.InRange(feed.Items.Length, 1, 30);
+        }
+
+        [Fact]
+        public async Task CreatorPage_ShowsTheReadyVideosOfThatCreatorOnly()
+        {
+            var (host, ready) = await ReadyVideo();
+            var processing = (await Created(host)).Video.VideoId;
+            Converter.Receive(processing);
+            await Complete(host, processing);
+            var (_, othersVideo) = await ReadyVideo();
+            var creatorId = (await Read<CreatorProfileDto>(await Api(host).GetAsync("/v1/creators/me"))).CreatorId;
+
+            var page = await Read<CreatorPageDto>(await Api(null).GetAsync($"/v1/creators/{creatorId}/page"));
+
+            Assert.Equal(new[] {ready}, page.Videos!.Select(x => x.VideoId));
+            Assert.NotEmpty(page.Videos![0].PosterUrl!);
+            Assert.DoesNotContain(page.Videos, x => x.VideoId == othersVideo || x.VideoId == processing);
+        }
+
+        [Fact]
+        public async Task CreatorPage_WithoutVideos_HasAnEmptyList()
+        {
+            var host = await NewCreator();
+            var creatorId = (await Read<CreatorProfileDto>(await Api(host).GetAsync("/v1/creators/me"))).CreatorId;
+
+            var page = await Read<CreatorPageDto>(await Api(null).GetAsync($"/v1/creators/{creatorId}/page"));
+
+            Assert.Empty(page.Videos!);
+        }
+
         // ---- deleting, and other people's videos
 
         [Fact]

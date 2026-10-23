@@ -1,5 +1,6 @@
 import Axios from 'axios';
 import appSettings from 'src/config';
+import type { Video } from './videos';
 
 export type SessionStatus = 'published' | 'cancelled';
 
@@ -123,6 +124,8 @@ export type CreatorPage = {
    autoRenewAvailable?: boolean;
    /** the pass of the person renews on this day */
    passRenewsAt?: string | null;
+   /** the ready videos of the creator, newest first */
+   videos?: Video[];
 };
 
 export type Pass = {

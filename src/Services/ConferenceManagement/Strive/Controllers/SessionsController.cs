@@ -14,6 +14,8 @@ using Strive.Core.Services.Payments.Gateways;
 using Strive.Core.Services.Payments.Requests;
 using Strive.Core.Services.Payments.Sessions;
 using Strive.Core.Services.Payments.UseCases;
+using Strive.Core.Services.Videos;
+using Strive.Presenters;
 using Strive.Extensions;
 using Strive.Models.Response;
 
@@ -31,15 +33,19 @@ namespace Strive.Controllers
         private readonly IPassRepo _passes;
         private readonly IPassSubscriptionRepo _subscriptions;
         private readonly IOpenConferenceRepository _openConferences;
+        private readonly IVideoRepo _videoRepo;
+        private readonly VideoPresenter _videoPresenter;
         private readonly PaymentsOptions _paymentsOptions;
         private readonly IConfiguration _configuration;
 
         public SessionsController(IMediator mediator, ISessionRepo sessions, ICreatorRepo creators,
             IEntitlementRepo entitlements, IOrderRepo orders, IPassRepo passes, IPassSubscriptionRepo subscriptions,
-            IOpenConferenceRepository openConferences,
+            IOpenConferenceRepository openConferences, IVideoRepo videoRepo, VideoPresenter videoPresenter,
             Microsoft.Extensions.Options.IOptions<PaymentsOptions> paymentsOptions, IConfiguration configuration)
         {
             _openConferences = openConferences;
+            _videoRepo = videoRepo;
+            _videoPresenter = videoPresenter;
             _passes = passes;
             _subscriptions = subscriptions;
             _paymentsOptions = paymentsOptions.Value;
@@ -171,8 +177,12 @@ namespace Strive.Controllers
                 : (await _subscriptions.FindActiveOfUser(UserId)).FirstOrDefault(x => x.CreatorId == creator.CreatorId);
 
             Response.Headers.CacheControl = "no-store";
-            return new CreatorPageDto(PublicCreatorDto.From(creator), list.ToArray(), passUntil != null, passUntil,
-                _paymentsOptions.AutoRenewEnabled, renewing?.NextChargeAt);
+            var publicCreator = PublicCreatorDto.From(creator);
+            var videos = (await _videoRepo.FindReadyOfCreator(creator.CreatorId, 24))
+                .Select(x => _videoPresenter.ToDto(x, publicCreator, UserId != null && x.CreatorUserId == UserId, false))
+                .ToArray();
+            return new CreatorPageDto(publicCreator, list.ToArray(), passUntil != null, passUntil,
+                _paymentsOptions.AutoRenewEnabled, renewing?.NextChargeAt, videos);
         }
 
         /// <summary>The session in a list; null if it is over (it was meant to end and its room is not open)</summary>

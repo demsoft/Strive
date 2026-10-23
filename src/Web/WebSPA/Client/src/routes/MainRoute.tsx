@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { isGbedu } from 'src/brand-id';
 import DiscoverSessions from 'src/features/gbedu/DiscoverSessions';
+import DiscoverVideos from 'src/features/videos/components/DiscoverVideos';
 import GbeduRoles from 'src/features/gbedu/GbeduRoles';
 import BrandLogo from 'src/components/BrandLogo';
 import MyConferencesList from 'src/features/conference/components/MyConferencesList';
@@ -260,6 +261,7 @@ export default function MainRoute() {
          </main>
 
          {isGbedu && <DiscoverSessions />}
+         {isGbedu && <DiscoverVideos />}
       </div>
    );
 }

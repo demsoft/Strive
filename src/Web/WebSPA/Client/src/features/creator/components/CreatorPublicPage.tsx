@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import BrandLogo from 'src/components/BrandLogo';
 import { SessionTile } from 'src/features/gbedu/DiscoverSessions';
+import VideoTile from 'src/features/videos/components/VideoTile';
 import { creatorPhotoUrl } from '../photoUrl';
 import PassCard from './PassCard';
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
@@ -89,6 +90,25 @@ export default function CreatorPublicPage() {
                   </Box>
 
                   <PassCard page={page} onPaid={load} />
+
+                  {page.videos && page.videos.length > 0 && (
+                     <Box id="creator-videos" sx={{ mb: 4 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 800, mb: 2 }}>
+                           {t('videos.feed_title')}
+                        </Typography>
+                        <Box
+                           sx={{
+                              display: 'grid',
+                              gap: 2,
+                              gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)' },
+                           }}
+                        >
+                           {page.videos.map((video) => (
+                              <VideoTile key={video.videoId} video={video} />
+                           ))}
+                        </Box>
+                     </Box>
+                  )}
 
                   <Typography variant="h5" sx={{ fontWeight: 800, mb: 2 }}>
                      {t('creator.page_sessions')}

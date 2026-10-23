@@ -36,7 +36,8 @@ namespace Strive.Models.Response
 
     /// <summary>The page of a creator: who they are and what they have on</summary>
     public record CreatorPageDto(PublicCreatorDto Creator, DiscoverSessionDto[] Sessions, bool HasPass = false,
-        DateTimeOffset? PassValidUntil = null, bool AutoRenewAvailable = false, DateTimeOffset? PassRenewsAt = null);
+        DateTimeOffset? PassValidUntil = null, bool AutoRenewAvailable = false, DateTimeOffset? PassRenewsAt = null,
+        VideoDto[]? Videos = null);
 
     /// <summary>A pass of the person that is running</summary>
     /// <param name="SubscriptionId">Set if the pass renews itself: the person can stop it with this</param>

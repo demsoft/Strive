@@ -112,3 +112,35 @@ test('the share button copies the link of the page', async () => {
 
    expect(writeText).toHaveBeenCalledWith('https://gbedu.test/u/c1');
 });
+
+test('the videos of the creator are shown above the sessions', async () => {
+   api.fetchCreatorPage.mockResolvedValue({
+      creator: { creatorId: 'c1', displayName: 'Ada' },
+      sessions: [],
+      hasPass: false,
+      videos: [
+         { videoId: 'v1', title: 'First reel', status: 'ready', priceMinor: 0, createdAt: '', isOwner: false },
+         { videoId: 'v2', title: 'Second reel', status: 'ready', priceMinor: 0, createdAt: '', isOwner: false },
+      ],
+   });
+   await act(async () => createRoot(container).render(<CreatorPublicPage />));
+   await settle();
+
+   expect([...document.querySelectorAll('#creator-videos .video-tile')].map((x) => x.getAttribute('href'))).toEqual([
+      '/v/v1',
+      '/v/v2',
+   ]);
+});
+
+test('a creator without videos has no video section', async () => {
+   api.fetchCreatorPage.mockResolvedValue({
+      creator: { creatorId: 'c1', displayName: 'Ada' },
+      sessions: [],
+      hasPass: false,
+      videos: [],
+   });
+   await act(async () => createRoot(container).render(<CreatorPublicPage />));
+   await settle();
+
+   expect(document.querySelector('#creator-videos')).toBeNull();
+});
