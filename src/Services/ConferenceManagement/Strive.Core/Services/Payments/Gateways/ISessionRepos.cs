@@ -42,6 +42,9 @@ namespace Strive.Core.Services.Payments.Gateways
 
         Task<TicketOrder?> FindById(string orderId);
 
+        /// <summary>The paid (and refunded) orders that include a share of the creator, newest first</summary>
+        Task<IReadOnlyList<TicketOrder>> FindPaidOfCreator(string creatorId, int limit);
+
         /// <summary>The orders of a session that were paid (and maybe given back since)</summary>
         Task<IReadOnlyList<TicketOrder>> FindPaidOfSession(string sessionId);
 

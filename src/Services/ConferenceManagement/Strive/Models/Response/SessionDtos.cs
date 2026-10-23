@@ -40,6 +40,10 @@ namespace Strive.Models.Response
     /// <summary>A pass of the person that is running</summary>
     public record PassDto(string CreatorId, string CreatorName, DateTimeOffset ValidUntil);
 
+    /// <summary>What a creator earned: the totals, per session, and the latest sales</summary>
+    public record EarningsDto(string Currency, EarningsTotals Totals, System.Collections.Generic.IReadOnlyList<SessionEarnings> Sessions,
+        System.Collections.Generic.IReadOnlyList<SaleEntry> Recent);
+
     public record CheckoutDto(string Email);
 
     public record CheckoutResultDto(string? AuthorizationUrl, string? Reference, bool AlreadyHasTicket);

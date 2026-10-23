@@ -254,6 +254,20 @@ export default function CreatorPage() {
                      </Alert>
                   )}
 
+                  {profile?.canSell && (
+                     <Button
+                        id="creator-earnings-link"
+                        component={RouterLink}
+                        to="/creator/earnings"
+                        variant="outlined"
+                        size="large"
+                        fullWidth
+                        sx={{ mt: 3 }}
+                     >
+                        {t('creator.earnings_title')}
+                     </Button>
+                  )}
+
                   {profile?.canSell && <PassSetup profile={profile} onSaved={setProfile} />}
 
                   {profile?.canSell && (

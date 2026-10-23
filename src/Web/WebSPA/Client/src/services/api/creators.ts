@@ -71,3 +71,43 @@ export async function saveMyCreatorProfile(request: SaveCreatorRequest): Promise
 export async function setPassPrice(priceMinor: number | null): Promise<CreatorProfile> {
    return (await Axios.put<CreatorProfile>(`${base()}/me/pass`, { priceMinor })).data;
 }
+
+export type EarningsTotals = {
+   grossMinor: number;
+   platformMinor: number;
+   netMinor: number;
+   refundedMinor: number;
+   tickets: number;
+   passes: number;
+   refunds: number;
+};
+
+export type SessionEarnings = {
+   sessionId: string;
+   title: string;
+   tickets: number;
+   grossMinor: number;
+   netMinor: number;
+};
+
+export type SaleEntry = {
+   at: string;
+   kind: 'ticket' | 'pass';
+   sessionTitle?: string | null;
+   amountMinor: number;
+   netMinor: number;
+   buyer: string;
+   refunded: boolean;
+};
+
+export type Earnings = {
+   currency: string;
+   totals: EarningsTotals;
+   sessions: SessionEarnings[];
+   recent: SaleEntry[];
+};
+
+/** What the creator earned: totals, per session, and the latest sales. */
+export async function fetchMyEarnings(): Promise<Earnings> {
+   return (await Axios.get<Earnings>(`${base()}/me/earnings`)).data;
+}

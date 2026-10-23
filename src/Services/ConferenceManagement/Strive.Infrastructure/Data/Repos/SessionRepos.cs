@@ -130,6 +130,11 @@ namespace Strive.Infrastructure.Data.Repos
         public Task<TicketOrder?> FindById(string orderId) =>
             Collection.Find(x => x.OrderId == orderId).FirstOrDefaultAsync()!;
 
+        public async Task<IReadOnlyList<TicketOrder>> FindPaidOfCreator(string creatorId, int limit) =>
+            await Collection.Find(x => x.Shares.Any(s => s.CreatorId == creatorId) &&
+                                       (x.Status == OrderStatus.Paid || x.Status == OrderStatus.Refunded))
+                .SortByDescending(x => x.CreatedAt).Limit(limit).ToListAsync();
+
         public async Task<IReadOnlyList<TicketOrder>> FindPaidOfSession(string sessionId) =>
             await Collection.Find(x => x.SessionId == sessionId &&
                                        (x.Status == OrderStatus.Paid || x.Status == OrderStatus.Refunded))

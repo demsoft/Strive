@@ -461,6 +461,95 @@ namespace Strive.IntegrationTests.Services
                 .HasTicket);
         }
 
+        // ---- earnings
+
+        private async Task<EarningsDto> EarningsOf(UserAccount host) =>
+            await Read<EarningsDto>(await Client(host).GetAsync("/v1/creators/me/earnings"));
+
+        [Fact]
+        public async Task Earnings_ShowTicketSalesWithCommissionTakenOff()
+        {
+            // arrange: two fans buy one session
+            var (host, session) = await PublishedSession();
+            await FanWithTicket(session);
+            await FanWithTicket(session);
+
+            // act
+            var earnings = await EarningsOf(host);
+
+            // assert: 10% commission of ₦10,000
+            Assert.Equal("NGN", earnings.Currency);
+            Assert.Equal(2 * Price, earnings.Totals.GrossMinor);
+            Assert.Equal(2 * Price / 10, earnings.Totals.PlatformMinor);
+            Assert.Equal(2 * Price * 9 / 10, earnings.Totals.NetMinor);
+            Assert.Equal(2, earnings.Totals.Tickets);
+            var row = Assert.Single(earnings.Sessions);
+            Assert.Equal(session.Title, row.Title);
+            Assert.Equal(2, row.Tickets);
+            Assert.Equal(2, earnings.Recent.Count);
+        }
+
+        [Fact]
+        public async Task Earnings_PassSalesAreIncluded()
+        {
+            var (host, creatorId) = await CreatorWithPass();
+            await FanWithPass(creatorId);
+
+            var earnings = await EarningsOf(host);
+
+            Assert.Equal(1, earnings.Totals.Passes);
+            Assert.Equal(PassPrice * 9 / 10, earnings.Totals.NetMinor);
+            Assert.Equal("pass", Assert.Single(earnings.Recent).Kind);
+        }
+
+        [Fact]
+        public async Task Earnings_RefundedTicketsLeaveTheTotals()
+        {
+            var (host, session) = await PublishedSession();
+            await FanWithTicket(session);
+            await Cancel(host, session.SessionId);
+
+            var earnings = await EarningsOf(host);
+
+            Assert.Equal(0, earnings.Totals.NetMinor);
+            Assert.Equal(Price, earnings.Totals.RefundedMinor);
+            Assert.True(Assert.Single(earnings.Recent).Refunded);
+        }
+
+        [Fact]
+        public async Task Earnings_OnlyContainTheSalesOfThatCreator()
+        {
+            var (host, session) = await PublishedSession();
+            await FanWithTicket(session);
+            var (other, otherSession) = await PublishedSession();
+
+            var earnings = await EarningsOf(other);
+
+            Assert.Equal(0, earnings.Totals.GrossMinor);
+            Assert.Empty(earnings.Recent);
+            Assert.Equal(1, (await EarningsOf(host)).Totals.Tickets);
+        }
+
+        [Fact]
+        public async Task Earnings_BuyerIsMasked()
+        {
+            var (host, session) = await PublishedSession();
+            await FanWithTicket(session);
+
+            var earnings = await EarningsOf(host);
+
+            Assert.Equal("f**@example.com", Assert.Single(earnings.Recent).Buyer);
+        }
+
+        [Fact]
+        public async Task Earnings_NotACreator_NotFound_AndNotSignedIn_Unauthorized()
+        {
+            Assert.Equal(HttpStatusCode.NotFound,
+                (await Client(NewUser("fan")).GetAsync("/v1/creators/me/earnings")).StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized,
+                (await Client(null).GetAsync("/v1/creators/me/earnings")).StatusCode);
+        }
+
         [Fact]
         public async Task Discover_ListsPublishedSessionsForEverybody_NotCancelledOnes()
         {
