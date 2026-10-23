@@ -4,7 +4,9 @@ using Strive.Core.Services.Videos;
 
 namespace Strive.Models.Response
 {
-    public record CreateVideoDto(string Title, string? Description, long SizeBytes);
+    public record CreateVideoDto(string Title, string? Description, long SizeBytes, long PriceMinor = 0);
+
+    public record UpdateVideoDto(string Title, string? Description, long PriceMinor);
 
     /// <summary>The form the page sends the file with: every field before the file, all of them unchanged</summary>
     public record UploadTicketDto(string Url, IReadOnlyDictionary<string, string> Fields);
@@ -17,8 +19,9 @@ namespace Strive.Models.Response
     /// <param name="Status">uploading, processing, ready or failed</param>
     /// <param name="FailureReason">Only the creator sees why it failed</param>
     /// <param name="PosterUrl">A temporary link to the cover picture</param>
+    /// <param name="Locked">It costs money and the person has not paid (and has no pass): there is no playback link</param>
     /// <param name="PlaybackUrl">A temporary link that plays the video: only in the answer for a single video, and only for people who may watch it</param>
     public record VideoDto(string VideoId, string Title, string? Description, string Status, string? FailureReason,
         double? DurationSeconds, int? Width, int? Height, long PriceMinor, DateTimeOffset CreatedAt, bool IsOwner,
-        string? PosterUrl, string? PlaybackUrl, PublicCreatorDto? Creator);
+        string? PosterUrl, string? PlaybackUrl, PublicCreatorDto? Creator, bool Locked = false);
 }

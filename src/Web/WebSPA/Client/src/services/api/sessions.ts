@@ -73,7 +73,8 @@ export type PaymentStatus = {
    hasTicket: boolean;
    conferenceId?: string | null;
    failureReason?: string | null;
-   kind?: 'ticket' | 'pass';
+   kind?: 'ticket' | 'pass' | 'video';
+   videoId?: string | null;
    creatorId?: string | null;
 };
 

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
+const videos = vi.hoisted(() => ({ fetchPurchasedVideos: vi.fn() }));
 const api = vi.hoisted(() => ({
    fetchMySessions: vi.fn(),
    createSession: vi.fn(),
@@ -30,6 +31,9 @@ vi.mock('react-router-dom', () => ({
 }));
 vi.mock('src/components/BrandLogo', () => ({ default: () => null }));
 vi.mock('src/services/api/sessions', () => api);
+vi.mock('src/services/api/videos', () => ({
+   fetchPurchasedVideos: (...a: unknown[]) => videos.fetchPurchasedVideos(...a),
+}));
 vi.mock('src/features/creator/errors', () => ({
    requestErrorMessage: (e: unknown) => String((e as Error).message ?? e),
 }));
@@ -55,6 +59,7 @@ beforeEach(() => {
       (fn) => typeof fn === 'function' && 'mockReset' in fn && (fn as ReturnType<typeof vi.fn>).mockReset(),
    );
    api.fetchMyPasses.mockResolvedValue([]);
+   videos.fetchPurchasedVideos.mockResolvedValue([]);
    push.mockReset();
    container = document.createElement('div');
    document.body.appendChild(container);
@@ -314,4 +319,27 @@ test('a ticket of a session that is live shows it, and a ticket of one that is n
    const cards = document.querySelectorAll('.my-ticket');
    expect(cards[0].querySelector('.ticket-live')).not.toBeNull();
    expect(cards[1].querySelector('.ticket-live')).toBeNull();
+});
+
+test('my tickets shows the videos that were bought, each leading to its page', async () => {
+   api.fetchMyTickets.mockResolvedValue([]);
+   videos.fetchPurchasedVideos.mockResolvedValue([
+      { videoId: 'v1', title: 'Piano lesson', status: 'ready', priceMinor: 300000, createdAt: '', isOwner: false },
+   ]);
+   await act(async () => createRoot(container).render(<MyTicketsPage />));
+   await settle();
+
+   const tiles = document.querySelectorAll('#my-bought-videos .video-tile');
+   expect(tiles).toHaveLength(1);
+   expect(tiles[0].getAttribute('href')).toBe('/v/v1');
+});
+
+test('my tickets still works if the videos cannot be loaded', async () => {
+   api.fetchMyTickets.mockResolvedValue([]);
+   videos.fetchPurchasedVideos.mockRejectedValue(new Error('down'));
+   await act(async () => createRoot(container).render(<MyTicketsPage />));
+   await settle();
+
+   expect(document.querySelector('#no-tickets')).not.toBeNull();
+   expect(document.querySelector('#my-bought-videos')).toBeNull();
 });

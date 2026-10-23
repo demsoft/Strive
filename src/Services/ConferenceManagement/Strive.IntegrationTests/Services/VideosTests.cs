@@ -450,7 +450,7 @@ namespace Strive.IntegrationTests.Services
         }
 
         [Fact]
-        public async Task Watch_NotReadyOrNotFree_IsHiddenFromOthers_ButNotFromTheOwner()
+        public async Task Watch_NotReady_IsHiddenFromOthers_ButNotFromTheOwner()
         {
             var host = await NewCreator();
             var fan = Factory.CreateUser("fan", false);
@@ -461,19 +461,6 @@ namespace Strive.IntegrationTests.Services
             Converter.Receive(failed, 999);
             await Complete(host, failed);
             var (owner, paid) = await ReadyVideo();
-            var stored = (await Videos.FindById(paid))!;
-            stored.PriceMinor = 500_000;
-            await Videos.Update(stored);
-
-            foreach (var id in new[] {processing, failed})
-            {
-                Assert.Equal(HttpStatusCode.NotFound, (await Api(null).GetAsync($"/v1/videos/{id}")).StatusCode);
-                Assert.Equal(HttpStatusCode.NotFound, (await Api(fan).GetAsync($"/v1/videos/{id}")).StatusCode);
-                Assert.Equal(HttpStatusCode.OK, (await Api(host).GetAsync($"/v1/videos/{id}")).StatusCode);
-            }
-
-            Assert.Equal(HttpStatusCode.NotFound, (await Api(fan).GetAsync($"/v1/videos/{paid}")).StatusCode);
-            Assert.Equal(HttpStatusCode.OK, (await Api(owner).GetAsync($"/v1/videos/{paid}")).StatusCode);
             Assert.Equal(HttpStatusCode.NotFound, (await Api(null).GetAsync("/v1/videos/does-not-exist")).StatusCode);
         }
 
@@ -612,6 +599,330 @@ namespace Strive.IntegrationTests.Services
             var page = await Read<CreatorPageDto>(await Api(null).GetAsync($"/v1/creators/{creatorId}/page"));
 
             Assert.Empty(page.Videos!);
+        }
+
+        // ---- prices, buying, and who may watch
+
+        private FakePaymentProvider Provider => Factory.Services.GetRequiredService<FakePaymentProvider>();
+
+        private const long VideoPrice = 300_000; // ₦3,000
+
+        private Task<HttpResponseMessage> Update(UserAccount host, string id, long price, string title = "Renamed reel",
+            string? description = "New text") =>
+            Api(host).PutAsync($"/v1/videos/{id}", new JsonNetContent(new UpdateVideoDto(title, description, price)));
+
+        private async Task<(UserAccount host, string id)> PaidVideo(long price = VideoPrice)
+        {
+            var (host, id) = await ReadyVideo();
+            (await Update(host, id, price)).EnsureSuccessStatusCode();
+            return (host, id);
+        }
+
+        private async Task<VideoDto> View(UserAccount? user, string id) =>
+            await Read<VideoDto>(await Api(user).GetAsync($"/v1/videos/{id}"));
+
+        private async Task<string> StartCheckout(UserAccount fan, string id, string email = "fan@example.com")
+        {
+            var checkout = await Read<CheckoutResultDto>(await Api(fan).PostAsync($"/v1/videos/{id}/checkout",
+                new JsonNetContent(new CheckoutDto(email))));
+            return checkout.Reference!;
+        }
+
+        private async Task<PaymentStatusDto> PayFor(UserAccount fan, string id)
+        {
+            var reference = await StartCheckout(fan, id);
+            Provider.Pay(reference, VideoPrice);
+            return await Read<PaymentStatusDto>(await Api(fan).GetAsync($"/v1/payments/{reference}"));
+        }
+
+        [Fact]
+        public async Task Price_CanBeSetWhenAnnouncing_AndChangedLater_ButOnlyToSomethingSensible()
+        {
+            var host = await NewCreator();
+            var created = await Read<CreatedVideoDto>(await Api(host).PostAsync("/v1/videos",
+                new JsonNetContent(new CreateVideoDto("A paid lesson", "Learn", 1000, VideoPrice))));
+            Assert.Equal(VideoPrice, created.Video.PriceMinor);
+
+            (await Update(host, created.Video.VideoId, 0)).EnsureSuccessStatusCode();
+            var mine = await Read<VideoDto[]>(await Api(host).GetAsync("/v1/videos/mine"));
+            Assert.Equal(0, Assert.Single(mine, x => x.VideoId == created.Video.VideoId).PriceMinor);
+        }
+
+        [Theory]
+        [InlineData(50L)]
+        [InlineData(9_999L)]
+        [InlineData(100_000_001L)]
+        [InlineData(-5L)]
+        public async Task Price_OutOfRange_BadRequest(long price)
+        {
+            var (host, id) = await ReadyVideo();
+            var create = await Api(host).PostAsync("/v1/videos",
+                new JsonNetContent(new CreateVideoDto("A paid lesson", null, 1000, price)));
+            Assert.Equal(HttpStatusCode.BadRequest, create.StatusCode);
+
+            Assert.Equal(HttpStatusCode.BadRequest, (await Update(host, id, price)).StatusCode);
+        }
+
+        [Fact]
+        public async Task Update_ChangesTitleTextAndPrice_ForTheOwnerOnly()
+        {
+            var (host, id) = await ReadyVideo();
+
+            var updated = await Read<VideoDto>(await Update(host, id, VideoPrice, "  Better title  ", "More text"));
+
+            Assert.Equal("Better title", updated.Title);
+            Assert.Equal("More text", updated.Description);
+            Assert.Equal(VideoPrice, updated.PriceMinor);
+            Assert.Equal(HttpStatusCode.NotFound, (await Update(await NewCreator(), id, 0)).StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await Update(null!, id, 0)).StatusCode);
+            Assert.Equal("Better title", (await View(null, id)).Title);
+        }
+
+        [Theory]
+        [InlineData("ab")]
+        [InlineData("   ")]
+        public async Task Update_TitleTooShort_BadRequest(string title)
+        {
+            var (host, id) = await ReadyVideo();
+
+            Assert.Equal(HttpStatusCode.BadRequest, (await Update(host, id, 0, title)).StatusCode);
+        }
+
+        [Fact]
+        public async Task Locked_APaidVideoIsShownWithItsPriceAndCover_ButDoesNotPlayWithoutPaying()
+        {
+            var (host, id) = await PaidVideo();
+            var fan = Factory.CreateUser("fan", false);
+
+            foreach (var viewer in new UserAccount?[] {null, fan})
+            {
+                var video = await View(viewer, id);
+                Assert.True(video.Locked);
+                Assert.Equal(VideoPrice, video.PriceMinor);
+                Assert.NotNull(video.PosterUrl);
+                Assert.Null(video.PlaybackUrl);
+            }
+
+            var owner = await View(host, id);
+            Assert.False(owner.Locked);
+            Assert.NotNull(owner.PlaybackUrl);
+        }
+
+        [Fact]
+        public async Task Locked_FreeVideosAreNeverLocked()
+        {
+            var (_, id) = await ReadyVideo();
+
+            var video = await View(null, id);
+
+            Assert.False(video.Locked);
+            Assert.NotNull(video.PlaybackUrl);
+        }
+
+        [Fact]
+        public async Task Buying_UnlocksTheVideoForThatPersonOnly()
+        {
+            var (_, id) = await PaidVideo();
+            var buyer = Factory.CreateUser("buyer", false);
+            var other = Factory.CreateUser("other", false);
+
+            var status = await PayFor(buyer, id);
+
+            Assert.Equal("paid", status.Status);
+            Assert.Equal("video", status.Kind);
+            Assert.Equal(id, status.VideoId);
+            Assert.Null(status.ConferenceId);
+            var bought = await View(buyer, id);
+            Assert.False(bought.Locked);
+            Assert.NotNull(bought.PlaybackUrl);
+            Assert.True((await View(other, id)).Locked);
+            Assert.True((await View(null, id)).Locked);
+        }
+
+        [Fact]
+        public async Task Buying_TheCheckoutUsesThePriceAndTheSplitOfAnyOtherSale()
+        {
+            var (_, id) = await PaidVideo();
+
+            await StartCheckout(Factory.CreateUser("buyer", false), id);
+
+            var request = Provider.Checkouts.Last();
+            Assert.Equal(VideoPrice, request.AmountMinor);
+            Assert.Equal(VideoPrice / 10, request.PlatformAmountMinor);
+            Assert.Equal("video", request.Metadata["kind"]);
+            Assert.Equal(id, request.Metadata["videoId"]);
+            Assert.EndsWith($"/v/{id}", request.CallbackUrl);
+        }
+
+        [Fact]
+        public async Task Buying_NotPaid_OrFailed_UnlocksNothing()
+        {
+            var (_, id) = await PaidVideo();
+            var unpaid = Factory.CreateUser("unpaid", false);
+            await StartCheckout(unpaid, id);
+            var failed = Factory.CreateUser("failed", false);
+            var reference = await StartCheckout(failed, id);
+            Provider.Fail(reference, VideoPrice);
+            await Api(failed).GetAsync($"/v1/payments/{reference}");
+
+            Assert.True((await View(unpaid, id)).Locked);
+            Assert.True((await View(failed, id)).Locked);
+        }
+
+        [Fact]
+        public async Task Buying_Twice_IsNotNeeded_AndSettlingTwiceGrantsOnce()
+        {
+            var (_, id) = await PaidVideo();
+            var buyer = Factory.CreateUser("buyer", false);
+            var reference = await StartCheckout(buyer, id);
+            Provider.Pay(reference, VideoPrice);
+            await Api(buyer).GetAsync($"/v1/payments/{reference}");
+            await Api(buyer).GetAsync($"/v1/payments/{reference}");
+
+            var again = await Read<CheckoutResultDto>(await Api(buyer).PostAsync($"/v1/videos/{id}/checkout",
+                new JsonNetContent(new CheckoutDto("fan@example.com"))));
+
+            Assert.True(again.AlreadyHasTicket);
+            Assert.Null(again.AuthorizationUrl);
+            Assert.Equal(1, await Factory.Services.GetRequiredService<IVideoEntitlementRepo>().CountOfVideo(id));
+            Assert.Single(await Read<VideoDto[]>(await Api(buyer).GetAsync("/v1/videos/purchased")), x => x.VideoId == id);
+        }
+
+        [Fact]
+        public async Task Checkout_FreeNotReadyOwnOrUnknown_IsRefused()
+        {
+            var fan = Factory.CreateUser("fan", false);
+            var (host, free) = await ReadyVideo();
+            var processing = (await Created(host)).Video.VideoId;
+            var (owner, paid) = await PaidVideo();
+
+            Assert.Equal(HttpStatusCode.BadRequest, (await Api(fan).PostAsync($"/v1/videos/{free}/checkout",
+                new JsonNetContent(new CheckoutDto("fan@example.com")))).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await Api(fan).PostAsync($"/v1/videos/{processing}/checkout",
+                new JsonNetContent(new CheckoutDto("fan@example.com")))).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await Api(fan).PostAsync("/v1/videos/nope/checkout",
+                new JsonNetContent(new CheckoutDto("fan@example.com")))).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await Api(owner).PostAsync($"/v1/videos/{paid}/checkout",
+                new JsonNetContent(new CheckoutDto("owner@example.com")))).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await Api(fan).PostAsync($"/v1/videos/{paid}/checkout",
+                new JsonNetContent(new CheckoutDto("not-an-email")))).StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await Api(null).PostAsync($"/v1/videos/{paid}/checkout",
+                new JsonNetContent(new CheckoutDto("fan@example.com")))).StatusCode);
+        }
+
+        [Fact]
+        public async Task Pass_OfTheCreator_UnlocksTheirVideos_ButNotThoseOfOthers()
+        {
+            var (host, id) = await PaidVideo();
+            var (_, otherId) = await PaidVideo();
+            var creatorId = (await Read<CreatorProfileDto>(await Api(host).GetAsync("/v1/creators/me"))).CreatorId;
+            (await Api(host).PutAsync("/v1/creators/me/pass", new JsonNetContent(new SetPassPriceDto(2_000_000))))
+                .EnsureSuccessStatusCode();
+            var fan = Factory.CreateUser("passfan", false);
+            var checkout = await Read<CheckoutResultDto>(await Api(fan).PostAsync($"/v1/creators/{creatorId}/pass/checkout",
+                new JsonNetContent(new CheckoutDto("fan@example.com"))));
+            Provider.Pay(checkout.Reference!, 2_000_000);
+            await Api(fan).GetAsync($"/v1/payments/{checkout.Reference}");
+
+            Assert.False((await View(fan, id)).Locked);
+            Assert.NotNull((await View(fan, id)).PlaybackUrl);
+            Assert.True((await View(fan, otherId)).Locked);
+            // a person with a pass does not pay for a video of that creator
+            Assert.True((await Read<CheckoutResultDto>(await Api(fan).PostAsync($"/v1/videos/{id}/checkout",
+                new JsonNetContent(new CheckoutDto("fan@example.com"))))).AlreadyHasTicket);
+        }
+
+        [Fact]
+        public async Task Feed_ShowsPaidVideosLocked_AndUnlockedForTheBuyer()
+        {
+            var (_, id) = await PaidVideo();
+            var buyer = Factory.CreateUser("buyer", false);
+            await PayFor(buyer, id);
+
+            var anonymous = (await Read<VideoFeedDto>(await Api(null).GetAsync("/v1/videos/feed?limit=30"))).Items
+                .Single(x => x.VideoId == id);
+            var bought = (await Read<VideoFeedDto>(await Api(buyer).GetAsync("/v1/videos/feed?limit=30"))).Items
+                .Single(x => x.VideoId == id);
+
+            Assert.True(anonymous.Locked);
+            Assert.Equal(VideoPrice, anonymous.PriceMinor);
+            Assert.False(bought.Locked);
+            Assert.Null(bought.PlaybackUrl); // lists never carry the video, only the page of the video does
+        }
+
+        [Fact]
+        public async Task Purchased_ListsOnlyWhatThePersonBought()
+        {
+            var (_, bought) = await PaidVideo();
+            var (_, notBought) = await PaidVideo();
+            var buyer = Factory.CreateUser("buyer", false);
+            await PayFor(buyer, bought);
+
+            var list = await Read<VideoDto[]>(await Api(buyer).GetAsync("/v1/videos/purchased"));
+
+            Assert.Equal(new[] {bought}, list.Select(x => x.VideoId));
+            Assert.DoesNotContain(list, x => x.VideoId == notBought);
+            Assert.Empty(await Read<VideoDto[]>(await Api(Factory.CreateUser("nobody", false)).GetAsync("/v1/videos/purchased")));
+            Assert.Equal(HttpStatusCode.Unauthorized, (await Api(null).GetAsync("/v1/videos/purchased")).StatusCode);
+        }
+
+        [Fact]
+        public async Task Delete_ABoughtVideo_IsRefused_ButAVideoNobodyBoughtCanGo()
+        {
+            var (host, bought) = await PaidVideo();
+            await PayFor(Factory.CreateUser("buyer", false), bought);
+            var (host2, unbought) = await PaidVideo();
+
+            var refused = await Api(host).DeleteAsync($"/v1/videos/{bought}");
+            var allowed = await Api(host2).DeleteAsync($"/v1/videos/{unbought}");
+
+            Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
+            Assert.Contains("Videos_HasBuyers", await refused.Content.ReadAsStringAsync());
+            Assert.Contains($"videos/{bought}/video.mp4", Storage.Objects.Keys);
+            allowed.EnsureSuccessStatusCode();
+            Assert.Equal(HttpStatusCode.NotFound, (await Api(null).GetAsync($"/v1/videos/{unbought}")).StatusCode);
+        }
+
+        [Fact]
+        public async Task Earnings_VideoSalesAreCountedWithTheCommissionTakenOff()
+        {
+            var (host, id) = await PaidVideo();
+            await Update(host, id, VideoPrice, "Piano lesson");
+            await PayFor(Factory.CreateUser("buyer1", false), id);
+            await PayFor(Factory.CreateUser("buyer2", false), id);
+
+            var earnings = await Read<EarningsDto>(await Api(host).GetAsync("/v1/creators/me/earnings"));
+
+            Assert.Equal(2, earnings.Totals.Videos);
+            Assert.Equal(2 * VideoPrice * 9 / 10, earnings.Totals.NetMinor);
+            var row = Assert.Single(earnings.Videos!);
+            Assert.Equal("Piano lesson", row.Title);
+            Assert.Equal(2, row.Sales);
+            Assert.All(earnings.Recent, x => Assert.Equal("video", x.Kind));
+            Assert.All(earnings.Recent, x => Assert.Equal("Piano lesson", x.SessionTitle));
+        }
+
+        [Fact]
+        public async Task AdminPayments_ShowVideoSales()
+        {
+            var (host, id) = await PaidVideo();
+            await Update(host, id, VideoPrice, "Drum lesson");
+            var admin = Factory.CreateClient();
+            admin.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",
+                Factory.JwtTokens.GenerateJwtToken(new System.Collections.Generic.List<System.Security.Claims.Claim>
+                {
+                    new(System.Security.Claims.ClaimTypes.NameIdentifier, "admin1"), new("name", "Admin"),
+                    new("role", "serveradmin"),
+                }));
+            var before = await Read<AdminPaymentsDto>(await admin.GetAsync("/v1/admin/payments"));
+
+            await PayFor(Factory.CreateUser("buyer", false), id);
+            var after = await Read<AdminPaymentsDto>(await admin.GetAsync("/v1/admin/payments"));
+
+            Assert.Equal(1, after.Month.Videos - before.Month.Videos);
+            var row = after.Recent.First(x => x.Kind == "video");
+            Assert.Equal("Drum lesson", row.SessionTitle);
+            Assert.Equal("Ada Lovelace", row.CreatorName);
         }
 
         // ---- deleting, and other people's videos

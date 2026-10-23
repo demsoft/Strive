@@ -59,10 +59,10 @@ namespace Strive.Controllers
             var order = result.Response!;
             var paid = order.Status == OrderStatus.Paid;
             Response.Headers.CacheControl = "no-store";
-            var isPass = order.Kind == OrderKind.Pass;
+            var kind = order.Kind switch {OrderKind.Pass => "pass", OrderKind.Video => "video", _ => "ticket"};
             return new PaymentStatusDto(order.Reference, order.Status.ToString().ToLowerInvariant(), order.SessionId,
-                paid, paid && !isPass ? order.ConferenceId : null, order.FailureReason,
-                isPass ? "pass" : "ticket", order.PassCreatorId);
+                paid, paid && order.Kind == OrderKind.Ticket ? order.ConferenceId : null, order.FailureReason, kind,
+                order.PassCreatorId, order.VideoId);
         }
 
         // POST webhooks/paystack

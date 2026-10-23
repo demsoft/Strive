@@ -84,6 +84,7 @@ export type EarningsTotals = {
    tickets: number;
    passes: number;
    refunds: number;
+   videos?: number;
 };
 
 export type SessionEarnings = {
@@ -94,9 +95,11 @@ export type SessionEarnings = {
    netMinor: number;
 };
 
+export type VideoEarnings = { videoId: string; title: string; sales: number; grossMinor: number; netMinor: number };
+
 export type SaleEntry = {
    at: string;
-   kind: 'ticket' | 'pass';
+   kind: 'ticket' | 'pass' | 'video';
    sessionTitle?: string | null;
    amountMinor: number;
    netMinor: number;
@@ -109,6 +112,7 @@ export type Earnings = {
    totals: EarningsTotals;
    sessions: SessionEarnings[];
    recent: SaleEntry[];
+   videos?: VideoEarnings[];
 };
 
 /** What the creator earned: totals, per session, and the latest sales. */

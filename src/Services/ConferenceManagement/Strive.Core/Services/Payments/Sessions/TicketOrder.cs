@@ -25,6 +25,9 @@ namespace Strive.Core.Services.Payments.Sessions
 
         /// <summary>A pass: all sessions of one creator for a while</summary>
         Pass,
+
+        /// <summary>One video of a creator, kept for good</summary>
+        Video,
     }
 
     /// <summary>Who gets how much of a paid order, in minor units. The parts add up to the amount.</summary>
@@ -67,6 +70,9 @@ namespace Strive.Core.Services.Payments.Sessions
 
         /// <summary>Of a pass: this order is a renewal that was charged without the person being there</summary>
         public bool IsRenewal { get; set; }
+
+        /// <summary>Of a video: which one (a video order has no session, SessionId and ConferenceId are empty)</summary>
+        public string? VideoId { get; set; }
 
         /// <summary>Of a pass: the creator it is for (a pass has no session, SessionId and ConferenceId are empty)</summary>
         public string? PassCreatorId { get; set; }

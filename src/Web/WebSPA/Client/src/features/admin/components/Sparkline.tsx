@@ -19,7 +19,16 @@ const WIDTH = 320;
 const HEIGHT = 80;
 
 /** A small line chart in SVG: no library, the numbers are few. */
-export default function Sparkline({ title, values, max, color, currentText, lines = [], firstLabel, lastLabel }: Props) {
+export default function Sparkline({
+   title,
+   values,
+   max,
+   color,
+   currentText,
+   lines = [],
+   firstLabel,
+   lastLabel,
+}: Props) {
    const numbers = values.filter((x): x is number => x !== null);
    const top = max ?? Math.max(1, ...numbers);
 
@@ -78,7 +87,14 @@ export default function Sparkline({ title, values, max, color, currentText, line
             ))}
             {area && <path d={area} fill={color} fillOpacity={0.15} />}
             {path && (
-               <path d={path} fill="none" stroke={color} strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+               <path
+                  d={path}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={2}
+                  vectorEffect="non-scaling-stroke"
+                  strokeLinejoin="round"
+               />
             )}
          </svg>
          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>

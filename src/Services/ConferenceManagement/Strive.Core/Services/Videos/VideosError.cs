@@ -12,6 +12,13 @@ namespace Strive.Core.Services.Videos
 
         public static Error NotFound => NotFound("This video was not found.", ServiceErrorCode.Videos_NotFound);
 
+        public static Error HasBuyers =>
+            BadRequest("People bought this video, so it cannot be deleted. Make it free instead if you do not want to sell it any more.",
+                ServiceErrorCode.Videos_HasBuyers);
+
+        public static Error NotForSale =>
+            BadRequest("This video is not for sale.", ServiceErrorCode.Videos_NotForSale);
+
         public static Error UploadNotFound =>
             BadRequest("The video has not arrived yet. Wait until the upload is finished.",
                 ServiceErrorCode.Videos_UploadNotFound);

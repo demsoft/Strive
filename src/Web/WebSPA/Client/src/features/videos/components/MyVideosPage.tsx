@@ -20,6 +20,8 @@ import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router-dom';
 import BrandLogo from 'src/components/BrandLogo';
 import { requestErrorMessage } from 'src/features/creator/errors';
+import { formatMoney, isPriceInRange, parsePriceToMinor } from 'src/features/sessions/money';
+import { fetchMyCreatorProfile } from 'src/services/api/creators';
 import * as api from 'src/services/api/videos';
 import { UploadError, Video } from 'src/services/api/videos';
 import { brand } from 'src/theme';
@@ -48,6 +50,14 @@ export default function MyVideosPage() {
    const abort = useRef<(() => void) | null>(null);
    const [watching, setWatching] = useState<Video | null>(null);
 
+   // a price needs a creator who can be paid (a bank account); everybody can put up free videos
+   const [canSell, setCanSell] = useState(false);
+   const [price, setPrice] = useState('');
+   const [editing, setEditing] = useState<{ video: Video; title: string; description: string; price: string } | null>(
+      null,
+   );
+   const [editError, setEditError] = useState<string | null>(null);
+
    const load = useCallback(async () => {
       try {
          setVideos(await api.fetchMyVideos());
@@ -59,6 +69,10 @@ export default function MyVideosPage() {
 
    useEffect(() => {
       load();
+      fetchMyCreatorProfile().then(
+         (profile) => setCanSell(profile?.canSell === true),
+         () => setCanSell(false),
+      );
    }, [load]);
 
    // something is on its way: look again until it is done
@@ -102,7 +116,7 @@ export default function MyVideosPage() {
       setStep({ state: 'sending', fraction: 0 });
 
       try {
-         const created = await api.createVideo(title.trim(), description.trim(), file.size);
+         const created = await api.createVideo(title.trim(), description.trim(), file.size, priceMinor ?? 0);
          const upload = api.uploadToConverter(created.ticket, file, (fraction) =>
             setStep({ state: 'sending', fraction }),
          );
@@ -115,6 +129,7 @@ export default function MyVideosPage() {
 
          setTitle('');
          setDescription('');
+         setPrice('');
          setFile(null);
          setDuration(null);
       } catch (e) {
@@ -146,7 +161,38 @@ export default function MyVideosPage() {
    };
 
    const sending = step.state !== 'idle';
-   const canSend = !sending && file !== null && title.trim().length >= 3;
+   // empty: free. Otherwise an amount between the smallest and the biggest price.
+   const priceMinor = price.trim() === '' ? 0 : parsePriceToMinor(price);
+   const priceOk = priceMinor !== null && (priceMinor === 0 || isPriceInRange(priceMinor));
+   const canSend = !sending && file !== null && title.trim().length >= 3 && priceOk;
+
+   const startEdit = (video: Video) => {
+      setEditError(null);
+      setEditing({
+         video,
+         title: video.title,
+         description: video.description ?? '',
+         price: video.priceMinor > 0 ? String(video.priceMinor / 100) : '',
+      });
+   };
+
+   const editedPrice = editing ? (editing.price.trim() === '' ? 0 : parsePriceToMinor(editing.price)) : 0;
+   const editedPriceOk = editedPrice !== null && (editedPrice === 0 || isPriceInRange(editedPrice));
+
+   const saveEdit = async () => {
+      if (!editing || editedPrice === null) return;
+      try {
+         await api.updateVideo(editing.video.videoId, {
+            title: editing.title.trim(),
+            description: editing.description.trim() || null,
+            priceMinor: editedPrice,
+         });
+         setEditing(null);
+         await load();
+      } catch (e) {
+         setEditError(requestErrorMessage(e));
+      }
+   };
 
    return (
       <Box sx={{ minHeight: '100%' }}>
@@ -210,6 +256,31 @@ export default function MyVideosPage() {
                   disabled={sending}
                   sx={{ mt: 2 }}
                />
+
+               {canSell ? (
+                  <TextField
+                     id="video-price"
+                     fullWidth
+                     label={t('videos.price')}
+                     helperText={price && !priceOk ? t('sessions.price_range') : t('videos.price_hint')}
+                     error={Boolean(price) && !priceOk}
+                     value={price}
+                     onChange={(e) => setPrice(e.target.value)}
+                     disabled={sending}
+                     slotProps={{ htmlInput: { inputMode: 'decimal' } }}
+                     sx={{ mt: 2 }}
+                  />
+               ) : (
+                  <Typography
+                     variant="caption"
+                     color="text.secondary"
+                     component="p"
+                     sx={{ mt: 2 }}
+                     id="video-price-locked"
+                  >
+                     {t('videos.price_needs_bank')}
+                  </Typography>
+               )}
 
                {step.state === 'sending' && (
                   <Box sx={{ mt: 2 }} id="video-progress">
@@ -307,6 +378,9 @@ export default function MyVideosPage() {
                                  {formatDuration(video.durationSeconds)}
                               </Typography>
                            ) : null}
+                           <Typography variant="body2" color="text.secondary" className="video-price-label">
+                              {video.priceMinor > 0 ? formatMoney(video.priceMinor, 'NGN') : t('videos.free')}
+                           </Typography>
                         </Box>
                         <Typography variant="body2" color="text.secondary">
                            {DateTime.fromISO(video.createdAt).toLocaleString(DateTime.DATETIME_MED)}
@@ -322,6 +396,9 @@ export default function MyVideosPage() {
                                  {t('videos.watch')}
                               </Button>
                            )}
+                           <Button size="small" color="inherit" className="video-edit" onClick={() => startEdit(video)}>
+                              {t('videos.edit')}
+                           </Button>
                            <Button size="small" color="inherit" className="video-delete" onClick={() => remove(video)}>
                               {t('videos.delete')}
                            </Button>
@@ -331,6 +408,63 @@ export default function MyVideosPage() {
                ))}
             </Box>
          </Container>
+
+         <Dialog open={editing !== null} onClose={() => setEditing(null)} maxWidth="sm" fullWidth>
+            <DialogTitle>{t('videos.edit')}</DialogTitle>
+            <DialogContent>
+               {editing && (
+                  <Box sx={{ pt: 1 }}>
+                     <TextField
+                        id="edit-title"
+                        fullWidth
+                        label={t('videos.video_title')}
+                        value={editing.title}
+                        onChange={(e) => setEditing({ ...editing, title: e.target.value })}
+                     />
+                     <TextField
+                        id="edit-description"
+                        fullWidth
+                        multiline
+                        minRows={2}
+                        label={t('videos.video_description')}
+                        value={editing.description}
+                        onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+                        sx={{ mt: 2 }}
+                     />
+                     {(canSell || editing.video.priceMinor > 0) && (
+                        <TextField
+                           id="edit-price"
+                           fullWidth
+                           label={t('videos.price')}
+                           helperText={
+                              editing.price && !editedPriceOk ? t('sessions.price_range') : t('videos.price_hint')
+                           }
+                           error={Boolean(editing.price) && !editedPriceOk}
+                           value={editing.price}
+                           onChange={(e) => setEditing({ ...editing, price: e.target.value })}
+                           slotProps={{ htmlInput: { inputMode: 'decimal' } }}
+                           sx={{ mt: 2 }}
+                        />
+                     )}
+                     {editError && (
+                        <Alert severity="error" sx={{ mt: 2 }} id="edit-error">
+                           {editError}
+                        </Alert>
+                     )}
+                     <Button
+                        id="edit-save"
+                        variant="contained"
+                        fullWidth
+                        sx={{ mt: 2 }}
+                        disabled={editing.title.trim().length < 3 || !editedPriceOk}
+                        onClick={saveEdit}
+                     >
+                        {t('videos.save')}
+                     </Button>
+                  </Box>
+               )}
+            </DialogContent>
+         </Dialog>
 
          <Dialog open={watching !== null} onClose={() => setWatching(null)} maxWidth="sm" fullWidth>
             <DialogTitle>{watching?.title}</DialogTitle>

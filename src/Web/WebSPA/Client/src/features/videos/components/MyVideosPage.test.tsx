@@ -14,9 +14,11 @@ const api = vi.hoisted(() => {
       fetchMyVideos: vi.fn(),
       fetchVideo: vi.fn(),
       deleteVideo: vi.fn(),
+      updateVideo: vi.fn(),
    };
 });
 const file = vi.hoisted(() => ({ readDuration: vi.fn() }));
+const creators = vi.hoisted(() => ({ fetchMyCreatorProfile: vi.fn() }));
 
 vi.mock('react-i18next', () => ({
    useTranslation: () => ({
@@ -25,7 +27,8 @@ vi.mock('react-i18next', () => ({
 }));
 vi.mock('react-router-dom', () => ({ Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a> }));
 vi.mock('src/components/BrandLogo', () => ({ default: () => null }));
-vi.mock('src/services/api/videos', () => api);
+vi.mock('src/services/api/videos', () => ({ ...api, updateVideo: api.updateVideo }));
+vi.mock('src/services/api/creators', () => creators);
 vi.mock('src/features/creator/errors', () => ({
    requestErrorMessage: (e: unknown) => String((e as Error).message ?? e),
 }));
@@ -66,13 +69,18 @@ const sendButton = () => document.querySelector('#video-send') as HTMLButtonElem
 const mp4 = (size = 5_000_000) => new File([new Uint8Array(10)], 'my-first_reel.mp4', { type: 'video/mp4' });
 
 let container: HTMLDivElement;
+let root: ReturnType<typeof createRoot> | null = null;
 beforeEach(() => {
    container = document.createElement('div');
    document.body.appendChild(container);
    api.fetchMyVideos.mockResolvedValue([]);
    file.readDuration.mockResolvedValue(60);
+   creators.fetchMyCreatorProfile.mockResolvedValue({ canSell: true });
 });
-afterEach(() => {
+afterEach(async () => {
+   // unmount first: a dialog lives in a portal that React has to remove itself
+   await act(async () => root?.unmount());
+   root = null;
    container.remove();
    document.body.innerHTML = '';
    vi.clearAllMocks();
@@ -80,7 +88,8 @@ afterEach(() => {
 });
 
 const render = async () => {
-   await act(async () => createRoot(container).render(<MyVideosPage />));
+   root = createRoot(container);
+   await act(async () => root!.render(<MyVideosPage />));
    await settle();
 };
 
@@ -135,7 +144,7 @@ test('sending: announce, send the file with progress, then say that it arrived',
    await settle();
 
    expect(order).toEqual(['create', 'upload', 'complete']);
-   expect(api.createVideo).toHaveBeenCalledWith('My reel', 'About piano', chosen.size);
+   expect(api.createVideo).toHaveBeenCalledWith('My reel', 'About piano', chosen.size, 0);
    expect(api.uploadToConverter).toHaveBeenCalledWith(ticket, chosen, expect.any(Function));
    expect((document.querySelector('#video-title') as HTMLInputElement).value).toBe('');
    expect(document.querySelector('#video-error')).toBeNull();
@@ -251,4 +260,86 @@ test('the list cannot be loaded: the error is shown, not an empty list', async (
 
    expect(document.querySelector('#my-videos-page')?.textContent).toContain('down');
    expect(document.querySelector('#no-videos')).toBeNull();
+});
+
+test('a creator who can be paid may set a price: it is sent in kobo, empty means free', async () => {
+   api.createVideo.mockResolvedValue({ video: video({ status: 'uploading' }), ticket: { url: 'u', fields: {} } });
+   api.uploadToConverter.mockImplementation(() => ({ promise: Promise.resolve(), abort: vi.fn() }));
+   api.completeUpload.mockResolvedValue(video({ status: 'processing' }));
+   await render();
+   const chosen = mp4();
+   await choose(chosen);
+   await type('#video-title', 'Paid lesson');
+   await type('#video-price', '3,000');
+
+   await act(async () => sendButton().click());
+   await settle();
+
+   expect(api.createVideo).toHaveBeenCalledWith('Paid lesson', '', chosen.size, 300000);
+});
+
+test('a price that is no amount or out of range blocks sending and says why', async () => {
+   await render();
+   await choose(mp4());
+   await type('#video-title', 'Paid lesson');
+
+   await type('#video-price', 'a lot');
+   expect(sendButton().disabled).toBe(true);
+   await type('#video-price', '50');
+   expect(sendButton().disabled).toBe(true);
+   expect(document.querySelector('#video-price')?.closest('.MuiFormControl-root')?.textContent).toContain(
+      'sessions.price_range',
+   );
+   await type('#video-price', '');
+   expect(sendButton().disabled).toBe(false);
+});
+
+test('a creator without a bank account sees no price field, only why', async () => {
+   creators.fetchMyCreatorProfile.mockResolvedValue({ canSell: false });
+   await render();
+
+   expect(document.querySelector('#video-price')).toBeNull();
+   expect(document.querySelector('#video-price-locked')).not.toBeNull();
+});
+
+test('every video shows its price or that it is free', async () => {
+   api.fetchMyVideos.mockResolvedValue([
+      video({ videoId: 'a', priceMinor: 0 }),
+      video({ videoId: 'b', priceMinor: 300000 }),
+   ]);
+   await render();
+
+   const labels = [...document.querySelectorAll('.video-price-label')].map((x) => x.textContent);
+   expect(labels).toEqual(['videos.free', '₦3,000']);
+});
+
+test('editing changes title, text and price, then the list is loaded again', async () => {
+   api.fetchMyVideos.mockResolvedValue([video({ title: 'Old title', priceMinor: 300000 })]);
+   api.updateVideo.mockResolvedValue(video());
+   await render();
+
+   await act(async () => (document.querySelector('.video-edit') as HTMLElement).click());
+   expect((document.querySelector('#edit-title') as HTMLInputElement).value).toBe('Old title');
+   expect((document.querySelector('#edit-price') as HTMLInputElement).value).toBe('3000');
+   await type('#edit-title', 'New title');
+   await type('#edit-price', '');
+   await act(async () => (document.querySelector('#edit-save') as HTMLElement).click());
+   await settle();
+
+   expect(api.updateVideo).toHaveBeenCalledWith('v1', { title: 'New title', description: null, priceMinor: 0 });
+   expect(api.fetchMyVideos).toHaveBeenCalledTimes(2);
+});
+
+test('an edit the server refuses shows its message and keeps the dialog open', async () => {
+   api.fetchMyVideos.mockResolvedValue([video()]);
+   api.updateVideo.mockRejectedValue(new Error('Add and verify your bank account before you sell tickets.'));
+   await render();
+
+   await act(async () => (document.querySelector('.video-edit') as HTMLElement).click());
+   await type('#edit-price', '2000');
+   await act(async () => (document.querySelector('#edit-save') as HTMLElement).click());
+   await settle();
+
+   expect(document.querySelector('#edit-error')?.textContent).toContain('bank account');
+   expect(document.querySelector('#edit-title')).not.toBeNull();
 });

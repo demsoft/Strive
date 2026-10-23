@@ -8,6 +8,8 @@ import BrandLogo from 'src/components/BrandLogo';
 import { requestErrorMessage } from 'src/features/creator/errors';
 import * as api from 'src/services/api/sessions';
 import { Pass, Ticket } from 'src/services/api/sessions';
+import { fetchPurchasedVideos, Video } from 'src/services/api/videos';
+import VideoTile from 'src/features/videos/components/VideoTile';
 import { brand } from 'src/theme';
 import TicketCard from './TicketCard';
 
@@ -39,11 +41,13 @@ export default function MyTicketsPage() {
    const [error, setError] = useState<string | null>(null);
    const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
    const [passes, setPasses] = useState<Pass[]>([]);
+   const [bought, setBought] = useState<Video[]>([]);
 
    useEffect(() => {
       api.fetchMyTickets().then(setTickets, (e) => setError(requestErrorMessage(e)));
       // the passes are a plus: the page works without them
       api.fetchMyPasses().then(setPasses, () => undefined);
+      fetchPurchasedVideos().then(setBought, () => undefined);
    }, []);
 
    const stopRenewing = async (pass: Pass) => {
@@ -151,6 +155,25 @@ export default function MyTicketsPage() {
                               </Box>
                            )}
                         </Box>
+                     ))}
+                  </Box>
+               </Box>
+            )}
+
+            {bought.length > 0 && (
+               <Box id="my-bought-videos" sx={{ mb: 3 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                     {t('videos.bought_title')}
+                  </Typography>
+                  <Box
+                     sx={{
+                        display: 'grid',
+                        gap: 2,
+                        gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)' },
+                     }}
+                  >
+                     {bought.map((video) => (
+                        <VideoTile key={video.videoId} video={video} />
                      ))}
                   </Box>
                </Box>

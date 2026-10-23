@@ -17,6 +17,7 @@ using Strive.Core.Services.Payments.Gateways;
 using Strive.Core.Services.Payments.Requests;
 using Strive.Core.Services.Payments.Sessions;
 using Strive.Core.Services.Reminders;
+using Strive.Core.Services.Videos;
 
 namespace Strive.Core.Services.Payments.UseCases
 {
@@ -221,15 +222,18 @@ namespace Strive.Core.Services.Payments.UseCases
         private readonly IEntitlementRepo _entitlements;
         private readonly IPassRepo _passes;
         private readonly IPassSubscriptionRepo _subscriptions;
+        private readonly IVideoEntitlementRepo _videoEntitlements;
         private readonly PaymentsOptions _options;
         private readonly ISessionRepo _sessions;
         private readonly TimeProvider _timeProvider;
         private readonly ILogger<SettleOrderUseCase> _logger;
 
         public SettleOrderUseCase(IPaymentProvider provider, IOrderRepo orders, IEntitlementRepo entitlements,
-            IPassRepo passes, IPassSubscriptionRepo subscriptions, IOptions<PaymentsOptions> options,
-            ISessionRepo sessions, TimeProvider timeProvider, ILogger<SettleOrderUseCase> logger)
+            IPassRepo passes, IPassSubscriptionRepo subscriptions, IVideoEntitlementRepo videoEntitlements,
+            IOptions<PaymentsOptions> options, ISessionRepo sessions, TimeProvider timeProvider,
+            ILogger<SettleOrderUseCase> logger)
         {
+            _videoEntitlements = videoEntitlements;
             _passes = passes;
             _subscriptions = subscriptions;
             _options = options.Value;
@@ -333,6 +337,14 @@ namespace Strive.Core.Services.Payments.UseCases
 
         private async Task GrantTicket(TicketOrder order)
         {
+            if (order.Kind == OrderKind.Video)
+            {
+                await _videoEntitlements.GrantOnce(new Strive.Core.Services.Videos.VideoEntitlement(
+                    Guid.NewGuid().ToString("N"), order.BuyerUserId, order.VideoId!, order.OrderId,
+                    _timeProvider.GetUtcNow()));
+                return;
+            }
+
             if (order.Kind == OrderKind.Pass)
             {
                 await _passes.GrantOnce(order.BuyerUserId, order.PassCreatorId!, order.OrderId,

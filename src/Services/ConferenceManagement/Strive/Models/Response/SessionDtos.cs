@@ -47,7 +47,8 @@ namespace Strive.Models.Response
 
     /// <summary>What a creator earned: the totals, per session, and the latest sales</summary>
     public record EarningsDto(string Currency, EarningsTotals Totals, System.Collections.Generic.IReadOnlyList<SessionEarnings> Sessions,
-        System.Collections.Generic.IReadOnlyList<SaleEntry> Recent);
+        System.Collections.Generic.IReadOnlyList<SaleEntry> Recent,
+        System.Collections.Generic.IReadOnlyList<VideoEarnings>? Videos = null);
 
     /// <summary>The payments as the administrators of the server see them</summary>
     public record AdminPaymentsDto(string Currency, bool PaymentsEnabled, bool AutoRenewEnabled, long Creators,
@@ -62,7 +63,8 @@ namespace Strive.Models.Response
 
     /// <summary>The state of a payment, for the page the person comes back to after paying</summary>
     public record PaymentStatusDto(string Reference, string Status, string SessionId, bool HasTicket,
-        string? ConferenceId, string? FailureReason, string Kind = "ticket", string? CreatorId = null);
+        string? ConferenceId, string? FailureReason, string Kind = "ticket", string? CreatorId = null,
+        string? VideoId = null);
 
     public record TicketDto(string SessionId, string ConferenceId, string Title, string Category,
         DateTimeOffset? StartsAt, string CreatorName, DateTimeOffset GrantedAt, SessionStatus Status,

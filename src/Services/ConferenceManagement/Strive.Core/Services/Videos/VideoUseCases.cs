@@ -5,17 +5,31 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Strive.Core.Dto;
 using Strive.Core.Interfaces;
 using Strive.Core.Services.Payments;
 using Strive.Core.Services.Payments.Gateways;
+using Strive.Core.Services.Payments.Requests;
+using Strive.Core.Services.Payments.Sessions;
+using Strive.Core.Services.Payments.UseCases;
+using Microsoft.Extensions.Options;
 
 namespace Strive.Core.Services.Videos
 {
     public record CreatedVideo(Video Video, UploadTicket Ticket);
 
     /// <summary>A creator announces a video: it gets a form to send the file straight to the converter</summary>
-    public record CreateVideoRequest(string UserId, string Title, string? Description, long SizeBytes)
-        : IRequest<SuccessOrError<CreatedVideo>>;
+    /// <param name="PriceMinor">0: free</param>
+    public record CreateVideoRequest(string UserId, string Title, string? Description, long SizeBytes,
+        long PriceMinor = 0) : IRequest<SuccessOrError<CreatedVideo>>;
+
+    /// <summary>The creator changes the title, the text or the price of a video (a new price is for the next buyers)</summary>
+    public record UpdateVideoRequest(string UserId, string VideoId, string Title, string? Description, long PriceMinor)
+        : IRequest<SuccessOrError<Video>>;
+
+    /// <summary>Starts the payment of a video. The person is sent to the returned address to pay.</summary>
+    public record StartVideoCheckoutRequest(string UserId, string VideoId, string Email, string CallbackUrl)
+        : IRequest<SuccessOrError<CheckoutResult>>;
 
     /// <summary>The creator says the file was sent: the server checks that it arrived and is not too long, then conversion starts</summary>
     public record CompleteVideoUploadRequest(string UserId, string VideoId) : IRequest<SuccessOrError<Video>>;
@@ -33,11 +47,13 @@ namespace Strive.Core.Services.Videos
         private readonly IVideoRepo _videos;
         private readonly IVideoConverter _converter;
         private readonly IVideoStorage _storage;
+        private readonly PaymentsOptions _payments;
         private readonly TimeProvider _timeProvider;
 
         public CreateVideoUseCase(ICreatorRepo creators, IVideoRepo videos, IVideoConverter converter,
-            IVideoStorage storage, TimeProvider timeProvider)
+            IVideoStorage storage, IOptions<PaymentsOptions> payments, TimeProvider timeProvider)
         {
+            _payments = payments.Value;
             _creators = creators;
             _videos = videos;
             _converter = converter;
@@ -66,11 +82,14 @@ namespace Strive.Core.Services.Videos
             if (request.SizeBytes is <= 0 or > VideoRules.MaxUploadBytes)
                 return VideosError.Invalid($"The video file can be {VideoRules.MaxUploadBytes / (1024 * 1024)} MB at most.");
 
+            var priceError = VideoPrices.Problem(request.PriceMinor, creator, _payments);
+            if (priceError != null) return priceError;
+
             if (await _videos.CountOfCreator(creator.CreatorId) >= VideoRules.MaxVideosPerCreator)
                 return VideosError.Invalid("You have reached the number of videos you can keep. Delete one first.");
 
             var video = new Video(Guid.NewGuid().ToString("N"), creator.CreatorId, request.UserId, title,
-                _timeProvider.GetUtcNow()) {Description = description};
+                _timeProvider.GetUtcNow()) {Description = description, PriceMinor = request.PriceMinor};
             await _videos.Create(video);
             return new CreatedVideo(video, _converter.CreateUploadTicket(video.VideoId));
         }
@@ -151,11 +170,13 @@ namespace Strive.Core.Services.Videos
         private readonly IVideoRepo _videos;
         private readonly IVideoConverter _converter;
         private readonly IVideoStorage _storage;
+        private readonly IVideoEntitlementRepo _entitlements;
         private readonly ILogger<DeleteVideoUseCase> _logger;
 
         public DeleteVideoUseCase(IVideoRepo videos, IVideoConverter converter, IVideoStorage storage,
-            ILogger<DeleteVideoUseCase> logger)
+            IVideoEntitlementRepo entitlements, ILogger<DeleteVideoUseCase> logger)
         {
+            _entitlements = entitlements;
             _videos = videos;
             _converter = converter;
             _storage = storage;
@@ -166,6 +187,9 @@ namespace Strive.Core.Services.Videos
         {
             var video = await _videos.FindById(request.VideoId);
             if (video == null || video.CreatorUserId != request.UserId) return VideosError.NotFound;
+
+            // people paid for it: it stays (the creator may make it free)
+            if (await _entitlements.CountOfVideo(video.VideoId) > 0) return VideosError.HasBuyers;
 
             // the files go first: a video that is gone from the list must not stay in the storage
             await Cleanup(video.VideoId, cancellationToken);
@@ -322,6 +346,141 @@ namespace Strive.Core.Services.Videos
             catch (VideoServiceException e)
             {
                 _logger.LogWarning(e, "Failed video {videoId} could not be deleted at the converter", video.VideoId);
+            }
+        }
+    }
+
+    public static class VideoPrices
+    {
+        /// <summary>Why this price cannot be set (null: it can). A price needs a creator who can be paid.</summary>
+        public static Error? Problem(long priceMinor, CreatorProfile creator, PaymentsOptions payments)
+        {
+            if (!VideoRules.IsValidPrice(priceMinor))
+                return VideosError.Invalid(
+                    $"The price must be free, or between {SessionRules.MinPriceMinor / 100} and {SessionRules.MaxPriceMinor / 100} {creator.Currency}.");
+
+            if (priceMinor > 0 && (!payments.Enabled || !creator.CanSell))
+                return PaymentsError.CreatorCannotSell;
+
+            return null;
+        }
+    }
+
+    public class UpdateVideoUseCase : IRequestHandler<UpdateVideoRequest, SuccessOrError<Video>>
+    {
+        private readonly IVideoRepo _videos;
+        private readonly ICreatorRepo _creators;
+        private readonly PaymentsOptions _payments;
+
+        public UpdateVideoUseCase(IVideoRepo videos, ICreatorRepo creators, IOptions<PaymentsOptions> payments)
+        {
+            _videos = videos;
+            _creators = creators;
+            _payments = payments.Value;
+        }
+
+        public async Task<SuccessOrError<Video>> Handle(UpdateVideoRequest request, CancellationToken cancellationToken)
+        {
+            var video = await _videos.FindById(request.VideoId);
+            if (video == null || video.CreatorUserId != request.UserId) return VideosError.NotFound;
+
+            var creator = await _creators.FindById(video.CreatorId);
+            if (creator == null) return PaymentsError.CreatorNotFound;
+
+            var title = request.Title?.Trim() ?? "";
+            if (title.Length is < VideoRules.MinTitleLength or > VideoRules.MaxTitleLength)
+                return VideosError.Invalid(
+                    $"The title must have {VideoRules.MinTitleLength} to {VideoRules.MaxTitleLength} characters.");
+
+            var description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
+            if (description is {Length: > VideoRules.MaxDescriptionLength})
+                return VideosError.Invalid(
+                    $"The description can have {VideoRules.MaxDescriptionLength} characters at most.");
+
+            // keeping the price as it is needs no check: a creator who cannot be paid any more can still edit the text
+            if (request.PriceMinor != video.PriceMinor)
+            {
+                var priceError = VideoPrices.Problem(request.PriceMinor, creator, _payments);
+                if (priceError != null) return priceError;
+            }
+
+            video.Title = title;
+            video.Description = description;
+            video.PriceMinor = request.PriceMinor;
+            await _videos.Update(video);
+            return video;
+        }
+    }
+
+    public class StartVideoCheckoutUseCase : IRequestHandler<StartVideoCheckoutRequest, SuccessOrError<CheckoutResult>>
+    {
+        private readonly IPaymentProvider _provider;
+        private readonly ICreatorRepo _creators;
+        private readonly IVideoRepo _videos;
+        private readonly IOrderRepo _orders;
+        private readonly VideoAccess _access;
+        private readonly PaymentsOptions _options;
+        private readonly TimeProvider _timeProvider;
+        private readonly ILogger<StartVideoCheckoutUseCase> _logger;
+
+        public StartVideoCheckoutUseCase(IPaymentProvider provider, ICreatorRepo creators, IVideoRepo videos,
+            IOrderRepo orders, VideoAccess access, IOptions<PaymentsOptions> options, TimeProvider timeProvider,
+            ILogger<StartVideoCheckoutUseCase> logger)
+        {
+            _provider = provider;
+            _creators = creators;
+            _videos = videos;
+            _orders = orders;
+            _access = access;
+            _options = options.Value;
+            _timeProvider = timeProvider;
+            _logger = logger;
+        }
+
+        public async Task<SuccessOrError<CheckoutResult>> Handle(StartVideoCheckoutRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (!_options.Enabled) return PaymentsError.NotEnabled;
+            if (!SessionRules.IsValidEmail(request.Email)) return PaymentsError.InvalidEmail;
+
+            var video = await _videos.FindById(request.VideoId);
+            if (video == null || video.Status != VideoStatus.Ready) return VideosError.NotFound;
+            if (video.PriceMinor <= 0) return VideosError.NotForSale;
+            if (video.CreatorUserId == request.UserId) return PaymentsError.OwnPass;
+
+            // bought already, or covered by a running pass of the creator: nobody pays twice
+            if (await _access.CanWatch(video, request.UserId)) return new CheckoutResult(null, null, true);
+
+            var creator = await _creators.FindById(video.CreatorId);
+            if (creator == null || !creator.CanSell) return PaymentsError.CreatorCannotSell;
+
+            var order = new TicketOrder(Guid.NewGuid().ToString("N"), SessionRules.NewReference(), "", "",
+                request.UserId, request.Email.Trim(), video.PriceMinor, creator.Currency,
+                _options.PlatformCommissionPercent, _timeProvider.GetUtcNow())
+            {
+                Kind = OrderKind.Video,
+                VideoId = video.VideoId,
+                Shares = new System.Collections.Generic.List<RevenueShare>
+                {
+                    new(creator.CreatorId, creator.ProviderSubaccountCode!, 100),
+                },
+            };
+            await _orders.Create(order);
+
+            try
+            {
+                var checkout = await _provider.InitializeCheckout(new CheckoutRequest(order.Reference, order.Email,
+                    order.AmountMinor, order.Currency, request.CallbackUrl, creator.ProviderSubaccountCode!,
+                    PriceSplit.PlatformAmount(order.AmountMinor, order.CommissionPercent),
+                    new System.Collections.Generic.Dictionary<string, string>
+                        {{"kind", "video"}, {"videoId", video.VideoId}, {"orderId", order.OrderId}}), cancellationToken);
+                return new CheckoutResult(checkout.AuthorizationUrl, order.Reference, false);
+            }
+            catch (PaymentProviderException e)
+            {
+                _logger.LogWarning(e, "The checkout of video order {orderId} could not be started", order.OrderId);
+                await _orders.MarkFailed(order.Reference, "The checkout could not be started.");
+                return PaymentsError.ProviderUnavailable;
             }
         }
     }

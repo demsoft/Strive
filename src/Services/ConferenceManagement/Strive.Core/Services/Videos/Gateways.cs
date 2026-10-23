@@ -29,6 +29,46 @@ namespace Strive.Core.Services.Videos
         Task Delete(string videoId);
     }
 
+    /// <summary>The right of a person to watch a video they bought. One per paid order.</summary>
+    public class VideoEntitlement
+    {
+        public VideoEntitlement(string entitlementId, string userId, string videoId, string orderId,
+            DateTimeOffset grantedAt)
+        {
+            EntitlementId = entitlementId;
+            UserId = userId;
+            VideoId = videoId;
+            OrderId = orderId;
+            GrantedAt = grantedAt;
+        }
+
+        public string EntitlementId { get; init; }
+
+        public string UserId { get; init; }
+
+        public string VideoId { get; init; }
+
+        public string OrderId { get; init; }
+
+        public DateTimeOffset GrantedAt { get; init; }
+    }
+
+    public interface IVideoEntitlementRepo
+    {
+        /// <summary>Grants the right once per order: a second call with the same order changes nothing</summary>
+        /// <returns>True if the right was new</returns>
+        Task<bool> GrantOnce(VideoEntitlement entitlement);
+
+        Task<bool> Holds(string userId, string videoId);
+
+        /// <summary>Which of these videos the person bought</summary>
+        Task<IReadOnlyList<string>> HeldAmong(string userId, IEnumerable<string> videoIds);
+
+        Task<IReadOnlyList<VideoEntitlement>> FindOfUser(string userId, int limit);
+
+        Task<long> CountOfVideo(string videoId);
+    }
+
     /// <summary>The converter (Cloudinary): takes the file the creator sends and makes a video every browser plays</summary>
     public interface IVideoConverter
     {

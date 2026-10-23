@@ -10,17 +10,19 @@ namespace Strive.Core.Services.Payments
     /// <param name="NetMinor">What is for the creator (paid out by the provider to the bank account)</param>
     /// <param name="RefundedMinor">What was given back (whole orders)</param>
     public record EarningsTotals(long GrossMinor, long PlatformMinor, long NetMinor, long RefundedMinor, int Tickets,
-        int Passes, int Refunds);
+        int Passes, int Refunds, int Videos = 0);
 
     public record SessionEarnings(string SessionId, string Title, int Tickets, long GrossMinor, long NetMinor);
 
-    /// <param name="Kind">ticket or pass</param>
+    public record VideoEarnings(string VideoId, string Title, int Sales, long GrossMinor, long NetMinor);
+
+    /// <param name="Kind">ticket, pass or video</param>
     /// <param name="Buyer">A masked email: the creator sees that somebody bought, not who</param>
     public record SaleEntry(DateTimeOffset At, string Kind, string? SessionTitle, long AmountMinor, long NetMinor,
         string Buyer, bool Refunded);
 
     public record EarningsReport(EarningsTotals Totals, IReadOnlyList<SessionEarnings> Sessions,
-        IReadOnlyList<SaleEntry> Recent)
+        IReadOnlyList<SaleEntry> Recent, IReadOnlyList<VideoEarnings>? Videos = null)
     {
         public const int RecentCount = 20;
 
@@ -29,9 +31,11 @@ namespace Strive.Core.Services.Payments
         ///     totals, they are counted on their own.
         /// </summary>
         /// <param name="sessionTitles">The titles of the sessions of the orders, by session id</param>
+        /// <param name="videoTitles">The titles of the videos of the orders, by video id</param>
         public static EarningsReport Build(string creatorId, IEnumerable<TicketOrder> orders,
-            IReadOnlyDictionary<string, string> sessionTitles)
+            IReadOnlyDictionary<string, string> sessionTitles, IReadOnlyDictionary<string, string>? videoTitles = null)
         {
+            videoTitles ??= new Dictionary<string, string>();
             var list = orders.Where(x => x.Status is OrderStatus.Paid or OrderStatus.Refunded).ToList();
 
             long Net(TicketOrder order) => order.Allocations.Where(x => x.Recipient == creatorId).Sum(x => x.AmountMinor);
@@ -43,7 +47,7 @@ namespace Strive.Core.Services.Payments
 
             var totals = new EarningsTotals(kept.Sum(x => x.AmountMinor), kept.Sum(Platform), kept.Sum(Net),
                 refunded.Sum(x => x.AmountMinor), kept.Count(x => x.Kind == OrderKind.Ticket),
-                kept.Count(x => x.Kind == OrderKind.Pass), refunded.Count);
+                kept.Count(x => x.Kind == OrderKind.Pass), refunded.Count, kept.Count(x => x.Kind == OrderKind.Video));
 
             var sessions = kept.Where(x => x.Kind == OrderKind.Ticket)
                 .GroupBy(x => x.SessionId)
@@ -52,14 +56,28 @@ namespace Strive.Core.Services.Payments
                 .OrderByDescending(x => x.NetMinor)
                 .ToList();
 
-            var recent = list.OrderByDescending(x => x.PaidAt ?? x.CreatedAt)
-                .Take(RecentCount)
-                .Select(x => new SaleEntry(x.PaidAt ?? x.CreatedAt, x.Kind == OrderKind.Pass ? "pass" : "ticket",
-                    x.Kind == OrderKind.Ticket ? sessionTitles.GetValueOrDefault(x.SessionId) : null, x.AmountMinor,
-                    Net(x), MaskEmail(x.Email), x.Status == OrderStatus.Refunded))
+            var videos = kept.Where(x => x.Kind == OrderKind.Video && x.VideoId != null)
+                .GroupBy(x => x.VideoId!)
+                .Select(g => new VideoEarnings(g.Key, videoTitles.GetValueOrDefault(g.Key, ""), g.Count(),
+                    g.Sum(x => x.AmountMinor), g.Sum(Net)))
+                .OrderByDescending(x => x.NetMinor)
                 .ToList();
 
-            return new EarningsReport(totals, sessions, recent);
+            string? TitleOf(TicketOrder x) => x.Kind switch
+            {
+                OrderKind.Ticket => sessionTitles.GetValueOrDefault(x.SessionId),
+                OrderKind.Video => x.VideoId == null ? null : videoTitles.GetValueOrDefault(x.VideoId),
+                _ => null,
+            };
+
+            var recent = list.OrderByDescending(x => x.PaidAt ?? x.CreatedAt)
+                .Take(RecentCount)
+                .Select(x => new SaleEntry(x.PaidAt ?? x.CreatedAt,
+                    x.Kind switch {OrderKind.Pass => "pass", OrderKind.Video => "video", _ => "ticket"}, TitleOf(x),
+                    x.AmountMinor, Net(x), MaskEmail(x.Email), x.Status == OrderStatus.Refunded))
+                .ToList();
+
+            return new EarningsReport(totals, sessions, recent, videos);
         }
 
         /// <summary>ada@example.com becomes a**@example.com</summary>

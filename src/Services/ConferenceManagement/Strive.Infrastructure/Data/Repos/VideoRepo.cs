@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -68,5 +69,60 @@ namespace Strive.Infrastructure.Data.Repos
         public Task Update(Video video) => Collection.ReplaceOneAsync(x => x.VideoId == video.VideoId, video);
 
         public Task Delete(string videoId) => Collection.DeleteOneAsync(x => x.VideoId == videoId);
+    }
+
+    public class VideoEntitlementRepo : MongoRepo<VideoEntitlement>, IMongoIndexBuilder, IVideoEntitlementRepo
+    {
+        static VideoEntitlementRepo()
+        {
+            BsonClassMap.RegisterClassMap<VideoEntitlement>(config =>
+            {
+                config.AutoMap();
+                config.MapIdMember(x => x.EntitlementId);
+                config.MapMember(x => x.GrantedAt).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
+                config.SetIgnoreExtraElements(true);
+            });
+        }
+
+        public VideoEntitlementRepo(IOptions<MongoDbOptions> options) : base(options)
+        {
+        }
+
+        public async Task CreateIndexes()
+        {
+            // one right per paid order: this is what makes granting safe to repeat
+            await Collection.Indexes.CreateOneAsync(new CreateIndexModel<VideoEntitlement>(
+                Builders<VideoEntitlement>.IndexKeys.Ascending(x => x.OrderId), new CreateIndexOptions {Unique = true}));
+            await Collection.Indexes.CreateOneAsync(new CreateIndexModel<VideoEntitlement>(
+                Builders<VideoEntitlement>.IndexKeys.Ascending(x => x.UserId).Ascending(x => x.VideoId)));
+        }
+
+        public async Task<bool> GrantOnce(VideoEntitlement entitlement)
+        {
+            try
+            {
+                await Collection.InsertOneAsync(entitlement);
+                return true;
+            }
+            catch (MongoWriteException e) when (e.WriteError.Category == ServerErrorCategory.DuplicateKey)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> Holds(string userId, string videoId) =>
+            await Collection.Find(x => x.UserId == userId && x.VideoId == videoId).AnyAsync();
+
+        public async Task<IReadOnlyList<string>> HeldAmong(string userId, IEnumerable<string> videoIds)
+        {
+            var ids = videoIds.ToList();
+            return (await Collection.Find(x => x.UserId == userId && ids.Contains(x.VideoId)).ToListAsync())
+                .Select(x => x.VideoId).Distinct().ToList();
+        }
+
+        public async Task<IReadOnlyList<VideoEntitlement>> FindOfUser(string userId, int limit) =>
+            await Collection.Find(x => x.UserId == userId).SortByDescending(x => x.GrantedAt).Limit(limit).ToListAsync();
+
+        public Task<long> CountOfVideo(string videoId) => Collection.CountDocumentsAsync(x => x.VideoId == videoId);
     }
 }

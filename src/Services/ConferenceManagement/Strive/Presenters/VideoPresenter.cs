@@ -19,7 +19,8 @@ namespace Strive.Presenters
             _storage = storage;
         }
 
-        public VideoDto ToDto(Video video, PublicCreatorDto? creator, bool isOwner, bool withPlayback)
+        /// <param name="canWatch">The person may watch it: it is free, theirs, bought, or covered by a pass</param>
+        public VideoDto ToDto(Video video, PublicCreatorDto? creator, bool isOwner, bool canWatch, bool withPlayback)
         {
             var ready = video.Status == VideoStatus.Ready && _storage.IsConfigured;
             return new VideoDto(video.VideoId, video.Title, video.Description, video.Status.ToString().ToLowerInvariant(),
@@ -29,11 +30,11 @@ namespace Strive.Presenters
                     ? _storage.GetPlaybackUrl(VideoRules.PosterKey(video.VideoId), PosterLinkValidFor, "image/jpeg")
                         .ToString()
                     : null,
-                ready && withPlayback
+                ready && withPlayback && canWatch
                     ? _storage.GetPlaybackUrl(VideoRules.VideoKey(video.VideoId), PlaybackLinkValidFor, "video/mp4")
                         .ToString()
                     : null,
-                creator);
+                creator, video.PriceMinor > 0 && !canWatch);
         }
     }
 }

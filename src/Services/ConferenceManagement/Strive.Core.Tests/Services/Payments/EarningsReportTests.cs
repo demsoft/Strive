@@ -115,6 +115,42 @@ namespace Strive.Core.Tests.Services.Payments
             Assert.Equal(360_000, report.Totals.NetMinor);
         }
 
+        [Fact]
+        public void Build_VideoSales_AreCountedGroupedByVideoAndNamedInTheRecentList()
+        {
+            var video1 = Order("v1", 300_000, kind: OrderKind.Video);
+            video1.VideoId = "vid1";
+            var video2 = Order("v2", 300_000, kind: OrderKind.Video, minutes: 5);
+            video2.VideoId = "vid1";
+            var video3 = Order("v3", 100_000, kind: OrderKind.Video, minutes: 9);
+            video3.VideoId = "vid2";
+
+            var report = EarningsReport.Build("c1", new[] {video1, video2, video3, Order("t", 100_000)}, Titles,
+                new Dictionary<string, string> {{"vid1", "Piano lesson"}, {"vid2", "Drum lesson"}});
+
+            Assert.Equal(3, report.Totals.Videos);
+            Assert.Equal(1, report.Totals.Tickets);
+            Assert.Equal(3, report.Videos!.Sum(x => x.Sales));
+            var best = report.Videos![0];
+            Assert.Equal(("vid1", "Piano lesson", 2, 540_000), (best.VideoId, best.Title, best.Sales, best.NetMinor));
+            var recent = report.Recent.First(x => x.Kind == "video");
+            Assert.Equal("Drum lesson", recent.SessionTitle);
+            // video sales are no session rows
+            Assert.DoesNotContain(report.Sessions, x => x.SessionId == "");
+        }
+
+        [Fact]
+        public void Build_ARefundedVideoOrder_IsNotASale()
+        {
+            var order = Order("v1", 300_000, OrderStatus.Refunded, kind: OrderKind.Video);
+            order.VideoId = "vid1";
+
+            var report = EarningsReport.Build("c1", new[] {order}, Titles);
+
+            Assert.Equal(0, report.Totals.Videos);
+            Assert.Empty(report.Videos!);
+        }
+
         [Theory]
         [InlineData("ada@example.com", "a**@example.com")]
         [InlineData("a@example.com", "a@example.com")]
