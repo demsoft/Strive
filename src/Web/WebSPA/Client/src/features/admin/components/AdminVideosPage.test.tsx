@@ -145,3 +145,36 @@ test('somebody who is no administrator sees the notice, not the reports', async 
    expect(document.querySelector('#admin-videos-forbidden')).not.toBeNull();
    expect(document.querySelector('#admin-videos-page')).toBeNull();
 });
+
+test('removing a video with buyers says how many got their money back, and warns about the refunds that failed', async () => {
+   api.fetchVideoReports.mockResolvedValueOnce([item({ buyers: 3 })]).mockResolvedValue([]);
+   api.removeVideo.mockResolvedValue({ refunded: 2, refundsFailed: 1 });
+   await render();
+
+   await act(async () => (document.querySelector('.report-remove') as HTMLElement).click());
+   await act(async () => (document.querySelector('#remove-confirm') as HTMLElement).click());
+   await settle();
+
+   const text = document.querySelector('#admin-videos-refunds')?.textContent ?? '';
+   expect(text).toContain('admin.videos_refunded {"count":2}');
+   expect(text).toContain('admin.videos_refunds_failed {"count":1}');
+});
+
+test('a removed video whose refunds did not work stays on the list and can be tried again', async () => {
+   api.fetchVideoReports
+      .mockResolvedValueOnce([item({ moderation: 'removed', buyers: 2, refundsPending: 2 })])
+      .mockResolvedValue([]);
+   api.removeVideo.mockResolvedValue({ refunded: 2, refundsFailed: 0 });
+   await render();
+
+   expect(document.querySelector('.report-refunds-open')?.textContent).toContain('"count":2');
+   expect(document.querySelector('.report-keep')).toBeNull();
+   expect(document.querySelector('.report-remove')).toBeNull();
+
+   await act(async () => (document.querySelector('.report-retry') as HTMLElement).click());
+   await settle();
+
+   expect(api.removeVideo).toHaveBeenCalledWith('v1', '');
+   expect(document.querySelector('.reported-video')).toBeNull();
+   expect(document.querySelector('#admin-videos-refunds')?.className).toContain('Success');
+});

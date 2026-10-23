@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router-dom';
 import BrandLogo from 'src/components/BrandLogo';
 import { formatMoney } from 'src/features/sessions/money';
-import { fetchVideoReports, keepVideo, removeVideo, VideoReportItem } from '../api';
+import { fetchVideoReports, keepVideo, removeVideo, RemovedVideo, VideoReportItem } from '../api';
 
 /** The videos that people reported: watch them, then keep them or remove them (with a word for the creator). */
 export default function AdminVideosPage() {
@@ -30,6 +30,7 @@ export default function AdminVideosPage() {
    const [forbidden, setForbidden] = useState(false);
    const [failed, setFailed] = useState(false);
    const [watching, setWatching] = useState<VideoReportItem | null>(null);
+   const [refunds, setRefunds] = useState<RemovedVideo | null>(null);
    const [removing, setRemoving] = useState<VideoReportItem | null>(null);
    const [note, setNote] = useState('');
    const [actionError, setActionError] = useState<string | null>(null);
@@ -52,10 +53,12 @@ export default function AdminVideosPage() {
       load();
    }, [load]);
 
-   const decide = async (action: () => Promise<void>) => {
+   const decide = async (action: () => Promise<void | RemovedVideo>) => {
       setActionError(null);
       try {
-         await action();
+         const done = await action();
+         // removing says how the refunds went
+         setRefunds(done ?? null);
          setRemoving(null);
          setNote('');
          load();
@@ -107,6 +110,19 @@ export default function AdminVideosPage() {
             {items?.length === 0 && (
                <Alert severity="success" id="admin-videos-none">
                   {t('admin.videos_none')}
+               </Alert>
+            )}
+
+            {refunds && (refunds.refunded > 0 || refunds.refundsFailed > 0) && (
+               <Alert
+                  id="admin-videos-refunds"
+                  severity={refunds.refundsFailed > 0 ? 'warning' : 'success'}
+                  sx={{ mb: 2 }}
+                  onClose={() => setRefunds(null)}
+               >
+                  {t('admin.videos_refunded', { count: refunds.refunded })}
+                  {refunds.refundsFailed > 0 &&
+                     ` ${t('admin.videos_refunds_failed', { count: refunds.refundsFailed })}`}
                </Alert>
             )}
 
@@ -170,10 +186,16 @@ export default function AdminVideosPage() {
                            “{detail.text}”
                         </Typography>
                      ))}
-                     {item.buyers > 0 && (
-                        <Alert severity="warning" icon={false} sx={{ mt: 1 }} className="report-buyers">
-                           {t('admin.videos_buyers', { count: item.buyers })}
+                     {item.moderation === 'removed' ? (
+                        <Alert severity="warning" icon={false} sx={{ mt: 1 }} className="report-refunds-open">
+                           {t('admin.videos_refunds_open', { count: item.refundsPending ?? 0 })}
                         </Alert>
+                     ) : (
+                        item.buyers > 0 && (
+                           <Alert severity="warning" icon={false} sx={{ mt: 1 }} className="report-buyers">
+                              {t('admin.videos_buyers', { count: item.buyers })}
+                           </Alert>
+                        )
                      )}
                      <Box sx={{ display: 'flex', gap: 1, mt: 1.5, flexWrap: 'wrap' }}>
                         {item.playbackUrl && (
@@ -186,24 +208,37 @@ export default function AdminVideosPage() {
                               {t('admin.videos_watch')}
                            </Button>
                         )}
-                        <Button
-                           size="small"
-                           variant="contained"
-                           color="success"
-                           className="report-keep"
-                           onClick={() => decide(() => keepVideo(item.videoId))}
-                        >
-                           {t('admin.videos_keep')}
-                        </Button>
-                        <Button
-                           size="small"
-                           variant="contained"
-                           color="error"
-                           className="report-remove"
-                           onClick={() => setRemoving(item)}
-                        >
-                           {t('admin.videos_remove')}
-                        </Button>
+                        {item.moderation === 'removed' ? (
+                           <Button
+                              size="small"
+                              variant="contained"
+                              className="report-retry"
+                              onClick={() => decide(() => removeVideo(item.videoId, ''))}
+                           >
+                              {t('admin.videos_retry_refunds')}
+                           </Button>
+                        ) : (
+                           <>
+                              <Button
+                                 size="small"
+                                 variant="contained"
+                                 color="success"
+                                 className="report-keep"
+                                 onClick={() => decide(() => keepVideo(item.videoId))}
+                              >
+                                 {t('admin.videos_keep')}
+                              </Button>
+                              <Button
+                                 size="small"
+                                 variant="contained"
+                                 color="error"
+                                 className="report-remove"
+                                 onClick={() => setRemoving(item)}
+                              >
+                                 {t('admin.videos_remove')}
+                              </Button>
+                           </>
+                        )}
                      </Box>
                   </Box>
                </Paper>

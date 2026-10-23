@@ -63,11 +63,23 @@ namespace Strive.Controllers
         public async Task<ActionResult<AdminVideoReportDto[]>> GetVideoReports()
         {
             var open = await _videoReports.FindOpen(500);
-            var hidden = (await _videoRepo.FindModerated(50))
-                .Where(x => x.Moderation == Strive.Core.Services.Videos.VideoModeration.Hidden).ToList();
-            var videos = (await _videoRepo.FindByIds(open.Select(x => x.VideoId).Concat(hidden.Select(x => x.VideoId))))
-                // what a moderator already removed needs no more looking at
-                .Where(x => x.Moderation != Strive.Core.Services.Videos.VideoModeration.Removed).ToList();
+            var moderated = await _videoRepo.FindModerated(50);
+            var hidden = moderated.Where(x => x.Moderation == Strive.Core.Services.Videos.VideoModeration.Hidden)
+                .ToList();
+
+            // what a moderator already removed needs no more looking at, unless a refund did not work
+            var stuck = new Dictionary<string, int>();
+            foreach (var removed in moderated.Where(x =>
+                         x.Moderation == Strive.Core.Services.Videos.VideoModeration.Removed))
+            {
+                var pending = (await _orders.FindPaidOfVideo(removed.VideoId)).Count(x => x.Status == OrderStatus.Paid);
+                if (pending > 0) stuck[removed.VideoId] = pending;
+            }
+
+            var videos = (await _videoRepo.FindByIds(open.Select(x => x.VideoId).Concat(hidden.Select(x => x.VideoId))
+                    .Concat(stuck.Keys)))
+                .Where(x => x.Moderation != Strive.Core.Services.Videos.VideoModeration.Removed ||
+                            stuck.ContainsKey(x.VideoId)).ToList();
             var names = await _creators.FindNames(videos.Select(x => x.CreatorId));
 
             var result = new List<AdminVideoReportDto>();
@@ -82,7 +94,8 @@ namespace Strive.Controllers
                     reports.Where(x => !string.IsNullOrEmpty(x.Details)).Take(5)
                         .Select(x => new ReportDetailDto(x.Reason.ToString().ToLowerInvariant(), x.Details, x.CreatedAt))
                         .ToList(),
-                    reports.Count == 0 ? null : reports.Max(x => x.CreatedAt), shown.PosterUrl, shown.PlaybackUrl));
+                    reports.Count == 0 ? null : reports.Max(x => x.CreatedAt), shown.PosterUrl, shown.PlaybackUrl,
+                    stuck.GetValueOrDefault(video.VideoId)));
             }
 
             Response.Headers.CacheControl = "no-store";
@@ -101,11 +114,16 @@ namespace Strive.Controllers
 
         /// <summary>The video goes: its files are deleted and the creator is told why</summary>
         [HttpPost("videos/{videoId}/remove")]
-        public async Task<ActionResult> RemoveVideo(string videoId, [FromBody] ModerateVideoDto dto)
+        public async Task<ActionResult<RemovedVideoDto>> RemoveVideo(string videoId, [FromBody] ModerateVideoDto dto)
         {
             var result = await _mediator.Send(new Strive.Core.Services.Videos.ModerateVideoRequest(videoId,
                 Strive.Core.Services.Videos.ModerationDecision.Remove, dto.Note));
-            return result.Success ? NoContent() : result.ToActionResult();
+            if (!result.Success) return result.ToActionResult();
+
+            // the buyers were refunded on the way: say how it went (a refund that failed is tried again by removing again)
+            var orders = await _orders.FindPaidOfVideo(videoId);
+            return new RemovedVideoDto(orders.Count(x => x.Status == OrderStatus.Refunded),
+                orders.Count(x => x.Status == OrderStatus.Paid));
         }
 
         /// <summary>Money: what was sold and paid, and what needs a person (refunds that failed, renewals that fail)</summary>
