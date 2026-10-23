@@ -10,6 +10,11 @@ namespace Strive.Core.Services.Payments.Gateways
 
         Task<CreatorProfile?> FindBySlug(string slug);
 
+        Task<long> Count();
+
+        /// <summary>The names of creators by id (for lists)</summary>
+        Task<System.Collections.Generic.IReadOnlyDictionary<string, string>> FindNames(System.Collections.Generic.IEnumerable<string> creatorIds);
+
         /// <summary>
         ///     Stores a new profile or replaces the one with the same id. Throws <see cref="SlugTakenException" /> if another
         ///     creator has the slug (two requests at the same time cannot both get it).

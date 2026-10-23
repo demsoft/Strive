@@ -108,3 +108,63 @@ export async function fetchHistory(hours: number): Promise<AdminSample[]> {
    const response = await Axios.get<{ samples: AdminSample[] }>(adminUrl('history'), { params: { hours } });
    return response.data.samples;
 }
+
+export type PaymentsPeriod = {
+   days: number;
+   grossMinor: number;
+   platformMinor: number;
+   creatorsMinor: number;
+   refundedMinor: number;
+   tickets: number;
+   passes: number;
+   renewals: number;
+   refunds: number;
+};
+
+export type OrderRow = {
+   at: string;
+   kind: 'ticket' | 'pass' | 'renewal';
+   status: string;
+   creatorName: string;
+   sessionTitle?: string | null;
+   amountMinor: number;
+   buyer: string;
+   problem?: string | null;
+};
+
+export type RefundProblem = {
+   reference: string;
+   creatorName: string;
+   sessionTitle?: string | null;
+   amountMinor: number;
+   buyer: string;
+   reason?: string | null;
+   at: string;
+};
+
+export type SubscriptionProblem = {
+   subscriptionId: string;
+   creatorName: string;
+   buyer: string;
+   status: string;
+   failedAttempts: number;
+   nextChargeAt: string;
+   endedAt?: string | null;
+};
+
+export type AdminPayments = {
+   currency: string;
+   paymentsEnabled: boolean;
+   autoRenewEnabled: boolean;
+   creators: number;
+   activeSubscriptions: number;
+   week: PaymentsPeriod;
+   month: PaymentsPeriod;
+   recent: OrderRow[];
+   refundProblems: RefundProblem[];
+   subscriptionProblems: SubscriptionProblem[];
+};
+
+export async function fetchAdminPayments(): Promise<AdminPayments> {
+   return (await Axios.get<AdminPayments>(adminUrl('payments'))).data;
+}

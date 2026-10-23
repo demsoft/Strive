@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -42,6 +43,16 @@ namespace Strive.Infrastructure.Data.Repos
                     Unique = true,
                     PartialFilterExpression = Builders<CreatorProfile>.Filter.Type(x => x.Slug, BsonType.String),
                 }));
+        }
+
+        public Task<long> Count() => Collection.CountDocumentsAsync(FilterDefinition<CreatorProfile>.Empty);
+
+        public async Task<System.Collections.Generic.IReadOnlyDictionary<string, string>> FindNames(
+            System.Collections.Generic.IEnumerable<string> creatorIds)
+        {
+            var ids = creatorIds.Distinct().ToList();
+            var found = await Collection.Find(x => ids.Contains(x.CreatorId)).ToListAsync();
+            return found.ToDictionary(x => x.CreatorId, x => x.DisplayName);
         }
 
         public Task<CreatorProfile?> FindBySlug(string slug)

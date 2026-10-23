@@ -47,6 +47,13 @@ namespace Strive.Models.Response
     public record EarningsDto(string Currency, EarningsTotals Totals, System.Collections.Generic.IReadOnlyList<SessionEarnings> Sessions,
         System.Collections.Generic.IReadOnlyList<SaleEntry> Recent);
 
+    /// <summary>The payments as the administrators of the server see them</summary>
+    public record AdminPaymentsDto(string Currency, bool PaymentsEnabled, bool AutoRenewEnabled, long Creators,
+        int ActiveSubscriptions, PaymentsPeriod Week, PaymentsPeriod Month,
+        System.Collections.Generic.IReadOnlyList<OrderRow> Recent,
+        System.Collections.Generic.IReadOnlyList<RefundProblem> RefundProblems,
+        System.Collections.Generic.IReadOnlyList<SubscriptionProblem> SubscriptionProblems);
+
     public record CheckoutDto(string Email, bool AutoRenew = false);
 
     public record CheckoutResultDto(string? AuthorizationUrl, string? Reference, bool AlreadyHasTicket);
