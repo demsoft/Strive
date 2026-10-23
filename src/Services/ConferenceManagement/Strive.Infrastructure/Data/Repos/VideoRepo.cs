@@ -38,6 +38,8 @@ namespace Strive.Infrastructure.Data.Repos
                 Builders<Video>.IndexKeys.Ascending(x => x.CreatorId).Descending(x => x.CreatedAt)));
             await Collection.Indexes.CreateOneAsync(new CreateIndexModel<Video>(
                 Builders<Video>.IndexKeys.Ascending(x => x.Status).Ascending(x => x.CreatedAt)));
+            await Collection.Indexes.CreateOneAsync(new CreateIndexModel<Video>(
+                Builders<Video>.IndexKeys.Ascending(x => x.Status).Descending(x => x.ReadyAt)));
         }
 
         public Task Create(Video video) => Collection.InsertOneAsync(video);
@@ -51,6 +53,14 @@ namespace Strive.Infrastructure.Data.Repos
 
         public Task<long> CountOfCreator(string creatorId) =>
             Collection.CountDocumentsAsync(x => x.CreatorId == creatorId);
+
+        public async Task<IReadOnlyList<Video>> FindReady(DateTimeOffset? before, int limit) =>
+            await Collection.Find(x => x.Status == VideoStatus.Ready && (before == null || x.ReadyAt < before))
+                .SortByDescending(x => x.ReadyAt).Limit(limit).ToListAsync();
+
+        public async Task<IReadOnlyList<Video>> FindReadyOfCreator(string creatorId, int limit) =>
+            await Collection.Find(x => x.CreatorId == creatorId && x.Status == VideoStatus.Ready)
+                .SortByDescending(x => x.ReadyAt).Limit(limit).ToListAsync();
 
         public async Task<IReadOnlyList<Video>> FindByStatus(VideoStatus status, int limit) =>
             await Collection.Find(x => x.Status == status).SortBy(x => x.CreatedAt).Limit(limit).ToListAsync();

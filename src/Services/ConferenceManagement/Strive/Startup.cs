@@ -196,6 +196,7 @@ namespace Strive
             // TryAdd: the tests bring their own converter and storage
             services.TryAddTransient<IVideoConverter>(sp => sp.GetRequiredService<CloudinaryVideoConverter>());
             services.TryAddSingleton<IVideoStorage, S3VideoStorage>();
+            services.AddTransient<Strive.Presenters.VideoPresenter>();
             // The background jobs of the payments side (reminders, renewals, videos). A setting switches them off, for a
             // second server that must not do the same work, and for the tests, which call the use cases themselves.
             if (Configuration.GetValue("BackgroundJobs:Enabled", true))

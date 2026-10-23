@@ -11,6 +11,9 @@ namespace Strive.Models.Response
 
     public record CreatedVideoDto(VideoDto Video, UploadTicketDto Ticket);
 
+    /// <param name="Next">Ask for the videos before this time to get the next page; null: that was all</param>
+    public record VideoFeedDto(VideoDto[] Items, DateTimeOffset? Next);
+
     /// <param name="Status">uploading, processing, ready or failed</param>
     /// <param name="FailureReason">Only the creator sees why it failed</param>
     /// <param name="PosterUrl">A temporary link to the cover picture</param>

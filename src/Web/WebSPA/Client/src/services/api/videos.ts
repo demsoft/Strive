@@ -25,6 +25,11 @@ export type Video = {
    creator?: PublicCreator | null;
 };
 
+export type VideoFeed = {
+   items: Video[];
+   /** ask for the videos before this time to get the next page */ next?: string | null;
+};
+
 /** The form the file is sent to the converter with: every field before the file, none changed. */
 export type UploadTicket = { url: string; fields: Record<string, string> };
 
@@ -98,3 +103,11 @@ export function uploadToConverter(
 
    return { promise, abort: () => request.abort() };
 }
+
+/** The latest videos that are ready, newest first. Pass `next` of the last answer for the following page. */
+export async function fetchFeed(before?: string | null, limit = 12): Promise<VideoFeed> {
+   return (await Axios.get<VideoFeed>(`${base()}/feed`, { params: { before: before ?? undefined, limit } })).data;
+}
+
+/** The address a video is shared with. */
+export const videoLink = (videoId: string) => new URL('/v/' + videoId, document.baseURI).href;

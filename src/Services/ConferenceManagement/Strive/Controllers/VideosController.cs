@@ -12,6 +12,7 @@ using Strive.Core.Services.Payments.Gateways;
 using Strive.Core.Services.Videos;
 using Strive.Extensions;
 using Strive.Models.Response;
+using Strive.Presenters;
 
 namespace Strive.Controllers
 {
@@ -19,22 +20,17 @@ namespace Strive.Controllers
     [ApiController]
     public class VideosController : Controller
     {
-        /// <summary>A link plays a video for this long (the page asks for a new one when a person comes back)</summary>
-        private static readonly TimeSpan PlaybackLinkValidFor = TimeSpan.FromHours(2);
-
-        private static readonly TimeSpan PosterLinkValidFor = TimeSpan.FromHours(6);
-
         private readonly IMediator _mediator;
         private readonly IVideoRepo _videos;
         private readonly ICreatorRepo _creators;
-        private readonly IVideoStorage _storage;
+        private readonly VideoPresenter _presenter;
 
-        public VideosController(IMediator mediator, IVideoRepo videos, ICreatorRepo creators, IVideoStorage storage)
+        public VideosController(IMediator mediator, IVideoRepo videos, ICreatorRepo creators, VideoPresenter presenter)
         {
             _mediator = mediator;
             _videos = videos;
             _creators = creators;
-            _storage = storage;
+            _presenter = presenter;
         }
 
         private string? UserId => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -52,7 +48,7 @@ namespace Strive.Controllers
 
             Response.Headers.CacheControl = "no-store";
             var created = result.Response!;
-            return new CreatedVideoDto(ToDto(created.Video, null, true, false),
+            return new CreatedVideoDto(_presenter.ToDto(created.Video, null, true, false),
                 new UploadTicketDto(created.Ticket.Url, created.Ticket.Fields));
         }
 
@@ -69,7 +65,7 @@ namespace Strive.Controllers
             if (!result.Success) return result.ToActionResult();
 
             Response.Headers.CacheControl = "no-store";
-            return ToDto(result.Response!, null, true, false);
+            return _presenter.ToDto(result.Response!, null, true, false);
         }
 
         // GET v1/videos/mine
@@ -83,8 +79,35 @@ namespace Strive.Controllers
             if (creator == null) return Array.Empty<VideoDto>();
 
             Response.Headers.CacheControl = "no-store";
-            return (await _videos.FindOfCreator(creator.CreatorId, 200)).Select(x => ToDto(x, null, true, false))
+            return (await _videos.FindOfCreator(creator.CreatorId, 200)).Select(x => _presenter.ToDto(x, null, true, false))
                 .ToArray();
+        }
+
+        // GET v1/videos/feed?before=...&limit=...
+        /// <summary>The latest videos that are ready, for everybody, newest first. The next page starts where this one ended.</summary>
+        [HttpGet("v1/videos/feed")]
+        [AllowAnonymous]
+        public async Task<ActionResult<VideoFeedDto>> Feed([FromQuery] DateTimeOffset? before = null,
+            [FromQuery] int limit = 12)
+        {
+            limit = Math.Clamp(limit, 1, 30);
+            var videos = await _videos.FindReady(before, limit);
+            var creators = new Dictionary<string, PublicCreatorDto?>();
+            var items = new List<VideoDto>();
+            foreach (var video in videos)
+            {
+                if (!creators.TryGetValue(video.CreatorId, out var creator))
+                {
+                    var profile = await _creators.FindById(video.CreatorId);
+                    creators[video.CreatorId] = creator = profile == null ? null : PublicCreatorDto.From(profile);
+                }
+
+                items.Add(_presenter.ToDto(video, creator, UserId != null && video.CreatorUserId == UserId, false));
+            }
+
+            // a full page: there may be more, after the oldest of these
+            Response.Headers.CacheControl = "no-store";
+            return new VideoFeedDto(items.ToArray(), videos.Count == limit ? videos[^1].ReadyAt : null);
         }
 
         // GET v1/videos/{videoId}
@@ -105,7 +128,7 @@ namespace Strive.Controllers
 
             // the answer depends on who asks, and the links run out
             Response.Headers.CacheControl = "no-store";
-            return ToDto(video, creator == null ? null : PublicCreatorDto.From(creator), isOwner, true);
+            return _presenter.ToDto(video, creator == null ? null : PublicCreatorDto.From(creator), isOwner, true);
         }
 
         // DELETE v1/videos/{videoId}
@@ -117,23 +140,6 @@ namespace Strive.Controllers
             if (UserId == null) return Forbid();
 
             return (await _mediator.Send(new DeleteVideoRequest(UserId, videoId))).ToActionResult();
-        }
-
-        private VideoDto ToDto(Video video, PublicCreatorDto? creator, bool isOwner, bool withPlayback)
-        {
-            var ready = video.Status == VideoStatus.Ready && _storage.IsConfigured;
-            return new VideoDto(video.VideoId, video.Title, video.Description, video.Status.ToString().ToLowerInvariant(),
-                isOwner ? video.FailureReason : null, video.DurationSeconds, video.Width, video.Height, video.PriceMinor,
-                video.CreatedAt, isOwner,
-                ready && video.HasPoster
-                    ? _storage.GetPlaybackUrl(VideoRules.PosterKey(video.VideoId), PosterLinkValidFor, "image/jpeg")
-                        .ToString()
-                    : null,
-                ready && withPlayback
-                    ? _storage.GetPlaybackUrl(VideoRules.VideoKey(video.VideoId), PlaybackLinkValidFor, "video/mp4")
-                        .ToString()
-                    : null,
-                creator);
         }
     }
 }
