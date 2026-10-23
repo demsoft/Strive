@@ -516,4 +516,46 @@ namespace Strive.Core.Services.Payments.UseCases
             return creator;
         }
     }
+
+    public class SetSlugUseCase : IRequestHandler<SetSlugRequest, SuccessOrError<CreatorProfile>>
+    {
+        private readonly ICreatorRepo _creators;
+        private readonly TimeProvider _timeProvider;
+
+        public SetSlugUseCase(ICreatorRepo creators, TimeProvider timeProvider)
+        {
+            _creators = creators;
+            _timeProvider = timeProvider;
+        }
+
+        public async Task<SuccessOrError<CreatorProfile>> Handle(SetSlugRequest request,
+            CancellationToken cancellationToken)
+        {
+            var creator = await _creators.FindByUserId(request.UserId);
+            if (creator == null) return PaymentsError.CreatorNotFound;
+
+            var slug = string.IsNullOrWhiteSpace(request.Slug) ? null : SlugRules.Normalize(request.Slug);
+            if (slug != null)
+            {
+                var problem = SlugRules.Problem(slug);
+                if (problem != null) return PaymentsError.InvalidSlug(problem);
+
+                var owner = await _creators.FindBySlug(slug);
+                if (owner != null && owner.CreatorId != creator.CreatorId) return PaymentsError.SlugTaken;
+            }
+
+            creator.Slug = slug;
+            creator.UpdatedAt = _timeProvider.GetUtcNow();
+            try
+            {
+                await _creators.Save(creator);
+            }
+            catch (SlugTakenException)
+            {
+                return PaymentsError.SlugTaken;
+            }
+
+            return creator;
+        }
+    }
 }

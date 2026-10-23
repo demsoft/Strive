@@ -223,7 +223,7 @@ export default function SessionPage() {
                            <Box sx={{ minWidth: 0 }}>
                               <Typography
                                  component={RouterLink}
-                                 to={`/u/${session.creator.creatorId}`}
+                                 to={`/u/${session.creator.slug || session.creator.creatorId}`}
                                  id="session-host-link"
                                  sx={{
                                     fontWeight: 700,
@@ -327,7 +327,10 @@ export default function SessionPage() {
                      <Box id="session-buy">
                         {session.creator.passPriceMinor != null && (
                            <Alert severity="info" icon={false} id="session-pass-hint" sx={{ mb: 2 }}>
-                              <RouterLink to={`/u/${session.creator.creatorId}`} style={{ color: 'inherit' }}>
+                              <RouterLink
+                                 to={`/u/${session.creator.slug || session.creator.creatorId}`}
+                                 style={{ color: 'inherit' }}
+                              >
                                  {t('creator.pass_or', {
                                     name: session.creator.displayName,
                                     days: PASS_DAYS,

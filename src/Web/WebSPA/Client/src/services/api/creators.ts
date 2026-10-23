@@ -23,6 +23,8 @@ export type CreatorProfile = {
    createdAt: string;
    /** what the 30-day pass costs, in minor units; none: no pass is sold */
    passPriceMinor?: number | null;
+   /** the short name in the link of the public page: /u/ada */
+   slug?: string | null;
 };
 
 export type Bank = { code: string; name: string };
@@ -110,4 +112,9 @@ export type Earnings = {
 /** What the creator earned: totals, per session, and the latest sales. */
 export async function fetchMyEarnings(): Promise<Earnings> {
    return (await Axios.get<Earnings>(`${base()}/me/earnings`)).data;
+}
+
+/** Sets the short name in the link of the public page, or goes back to the id (null). */
+export async function setSlug(slug: string | null): Promise<CreatorProfile> {
+   return (await Axios.put<CreatorProfile>(`${base()}/me/slug`, { slug })).data;
 }

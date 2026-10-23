@@ -45,6 +45,12 @@ namespace Strive.Core.Services.Payments
         public static Error PassNotOffered =>
             BadRequest("This creator does not sell a pass.", ServiceErrorCode.Payments_PassNotOffered);
 
+        public static Error InvalidSlug(string message) =>
+            BadRequest(message, ServiceErrorCode.Payments_InvalidSlug);
+
+        public static Error SlugTaken =>
+            BadRequest("Another creator already has this name. Choose another one.", ServiceErrorCode.Payments_SlugTaken);
+
         public static Error OwnPass =>
             BadRequest("This is your own page: you do not need a pass.", ServiceErrorCode.Payments_HostCannotBuy);
 

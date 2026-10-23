@@ -60,6 +60,8 @@ namespace Strive.Core.Services
         Payments_HostCannotBuy,
         Payments_OrderNotFound,
         Payments_PassNotOffered,
+        Payments_InvalidSlug,
+        Payments_SlugTaken,
 
         // Permissions
         Permissions_PermissionKeyNotFound,

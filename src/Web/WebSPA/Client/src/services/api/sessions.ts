@@ -27,6 +27,8 @@ export type PublicCreator = {
    /** what the 30-day pass of this creator costs; none if the creator does not sell one */
    passPriceMinor?: number | null;
    currency?: string | null;
+   /** the short name of the page: /u/ada */
+   slug?: string | null;
 };
 
 export type PublicSession = {
@@ -156,7 +158,11 @@ export async function fetchCreatorPage(creatorId: string, accessToken?: string):
    ).data;
 }
 
-export const creatorPageLink = (creatorId: string) => new URL('/u/' + creatorId, document.baseURI).href;
+/** The address of the page of a creator: the short name if there is one, else the id. */
+export const creatorPageLink = (creatorIdOrSlug: string) => new URL('/u/' + creatorIdOrSlug, document.baseURI).href;
+
+/** What comes after /u/ in the link of a creator. */
+export const creatorPath = (creator: { creatorId: string; slug?: string | null }) => creator.slug || creator.creatorId;
 
 export async function startPassCheckout(
    creatorId: string,

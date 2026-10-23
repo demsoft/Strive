@@ -139,7 +139,9 @@ namespace Strive.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<CreatorPageDto>> GetCreatorPage(string creatorId)
         {
-            var creator = await _creators.FindById(creatorId);
+            // the link has the id or the short name (an id has 32 characters, a name at most 30: they cannot be mixed up)
+            var creator = await _creators.FindById(creatorId) ??
+                          await _creators.FindBySlug(SlugRules.Normalize(creatorId));
             if (creator == null) return PaymentsError.SessionNotFound.ToActionResult();
 
             var sessions = await _sessions.FindForSaleOfCreator(creator.CreatorId,

@@ -36,7 +36,7 @@ export default function CreatorPublicPage() {
    }, [auth.isLoading, load]);
 
    const copy = async () => {
-      const link = api.creatorPageLink(creatorId);
+      const link = api.creatorPageLink(page?.creator.slug || creatorId);
       try {
          await navigator.clipboard.writeText(link);
          setCopied(true);
