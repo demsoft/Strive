@@ -31,6 +31,9 @@ namespace Strive.Core.Services.Payments.Requests
     /// <summary>Charges the renewals that are due and tells people about the ones that are coming</summary>
     public record RenewPassSubscriptionsRequest : IRequest<SuccessOrError<RenewalSummary>>;
 
+    /// <summary>A creator sets their photo, or removes it (null)</summary>
+    public record SetCreatorPhotoRequest(string UserId, byte[]? Data) : IRequest<SuccessOrError<CreatorProfile>>;
+
     /// <summary>A creator chooses the short name in the link of their page, or goes back to the id (null)</summary>
     public record SetSlugRequest(string UserId, string? Slug) : IRequest<SuccessOrError<CreatorProfile>>;
 

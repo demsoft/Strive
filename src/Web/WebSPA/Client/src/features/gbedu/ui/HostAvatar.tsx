@@ -15,13 +15,17 @@ type Props = {
    size?: number;
    /** the colour of the circle, for example the gradient of the category */
    background?: string;
+   /** the photo of the host; if it is missing or cannot be loaded, the initials are shown */
+   photoUrl?: string;
 };
 
 /** A round badge with the initials of the host (there are no profile photos yet). */
-export default function HostAvatar({ name, size = 36, background }: Props) {
+export default function HostAvatar({ name, size = 36, background, photoUrl }: Props) {
    return (
       <Avatar
          aria-label={name}
+         src={photoUrl}
+         slotProps={{ img: { referrerPolicy: 'no-referrer', loading: 'lazy' } }}
          sx={{
             width: size,
             height: size,

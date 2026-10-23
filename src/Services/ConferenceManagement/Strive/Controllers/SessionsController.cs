@@ -184,7 +184,8 @@ namespace Strive.Controllers
             return new DiscoverSessionDto(session.SessionId, session.Title, session.Description, session.Category,
                 session.PriceMinor, session.Currency, session.StartsAt, creator.DisplayName,
                 UserId != null && session.CreatorUserId == UserId,
-                UserId != null && await CanJoin(session), session.DurationMinutes, live);
+                UserId != null && await CanJoin(session), session.DurationMinutes, live, creator.CreatorId,
+                creator.PhotoVersion);
         }
 
         /// <summary>Whether the host has opened the room and not closed it again</summary>
@@ -316,7 +317,8 @@ namespace Strive.Controllers
                 var order = await _orders.FindById(entitlement.OrderId);
                 tickets.Add(new TicketDto(session.SessionId, session.ConferenceId, session.Title, session.Category,
                     session.StartsAt, creator?.DisplayName ?? "", entitlement.GrantedAt, session.Status,
-                    order?.Status == OrderStatus.Refunded, session.DurationMinutes, await IsLive(session)));
+                    order?.Status == OrderStatus.Refunded, session.DurationMinutes, await IsLive(session), creator?.CreatorId,
+                    creator?.PhotoVersion));
             }
 
             Response.Headers.CacheControl = "no-store";

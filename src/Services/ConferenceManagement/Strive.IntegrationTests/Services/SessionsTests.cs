@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using Strive.Core.Services.Payments;
 using Strive.Core.Services.Payments.Gateways;
 using Strive.Core.Services.Payments.Requests;
 using Strive.Core.Services.Payments.Sessions;
@@ -1226,6 +1227,192 @@ namespace Strive.IntegrationTests.Services
             var connection = await ConnectUserToConference(host, Room(session));
             AssertSuccess(await OpenConference(connection));
             Assert.True((await TicketOf(fan, session.SessionId)).IsLive);
+        }
+
+        // ---- the photo of a creator
+
+        private static byte[] Jpeg(int size = 2000, byte fill = 7) =>
+            new byte[] {0xFF, 0xD8, 0xFF, 0xE0, 0, 0x10, (byte) 'J', (byte) 'F', (byte) 'I', (byte) 'F', 0, 1}
+                .Concat(Enumerable.Repeat(fill, size)).ToArray();
+
+        private static byte[] Png() =>
+            new byte[] {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 13, 1, 2, 3}
+                .Concat(Enumerable.Repeat((byte) 9, 500)).ToArray();
+
+        private static byte[] WebP() =>
+            Encoding.ASCII.GetBytes("RIFF").Concat(new byte[] {0x10, 0, 0, 0}).Concat(Encoding.ASCII.GetBytes("WEBP"))
+                .Concat(Enumerable.Repeat((byte) 5, 500)).ToArray();
+
+        private Task<HttpResponseMessage> PutPhoto(UserAccount? user, byte[] bytes, string contentType = "image/jpeg")
+        {
+            var content = new ByteArrayContent(bytes);
+            content.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            return Client(user).PutAsync("/v1/creators/me/photo", content);
+        }
+
+        [Fact]
+        public async Task Photo_Uploaded_IsShownToEverybodyWithItsVersion()
+        {
+            var host = await NewCreator();
+            var creatorId = await CreatorIdOf(host);
+            var bytes = Jpeg();
+
+            var profile = await Read<CreatorProfileDto>(await PutPhoto(host, bytes));
+
+            Assert.NotNull(profile.PhotoVersion);
+            var response = await Client(null).GetAsync($"/v1/creators/{creatorId}/photo?v={profile.PhotoVersion}");
+            response.EnsureSuccessStatusCode();
+            Assert.Equal("image/jpeg", response.Content.Headers.ContentType!.MediaType);
+            Assert.Equal(bytes, await response.Content.ReadAsByteArrayAsync());
+            Assert.Equal("nosniff", response.Headers.GetValues("X-Content-Type-Options").Single());
+            Assert.Contains("max-age", response.Headers.CacheControl!.ToString());
+            Assert.Equal(profile.PhotoVersion, (await PageOf(creatorId, null)).Creator.PhotoVersion);
+        }
+
+        [Fact]
+        public async Task Photo_IsFoundByTheNameOfTheCreatorToo()
+        {
+            var host = await NewCreator();
+            var name = "pic" + Guid.NewGuid().ToString("N")[..8];
+            (await SetSlug(host, name)).EnsureSuccessStatusCode();
+            (await PutPhoto(host, Jpeg())).EnsureSuccessStatusCode();
+
+            Assert.Equal(HttpStatusCode.OK, (await Client(null).GetAsync($"/v1/creators/{name}/photo")).StatusCode);
+        }
+
+        [Fact]
+        public async Task Photo_PngAndWebp_AreAccepted_AndKeepTheirType()
+        {
+            var host = await NewCreator();
+            var creatorId = await CreatorIdOf(host);
+
+            (await PutPhoto(host, Png(), "image/png")).EnsureSuccessStatusCode();
+            Assert.Equal("image/png",
+                (await Client(null).GetAsync($"/v1/creators/{creatorId}/photo")).Content.Headers.ContentType!.MediaType);
+
+            (await PutPhoto(host, WebP(), "image/webp")).EnsureSuccessStatusCode();
+            Assert.Equal("image/webp",
+                (await Client(null).GetAsync($"/v1/creators/{creatorId}/photo")).Content.Headers.ContentType!.MediaType);
+        }
+
+        [Fact]
+        public async Task Photo_WhatTheBytesSayCountsNotWhatTheSenderSays()
+        {
+            var host = await NewCreator();
+            var svg = Encoding.UTF8.GetBytes("<svg xmlns=\"http://www.w3.org/2000/svg\"><script>alert(1)</script></svg>");
+            var html = Encoding.UTF8.GetBytes("<html><script>alert(1)</script></html>");
+            var exe = new byte[] {0x4D, 0x5A, 0x90, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0xFF, 0xFF};
+
+            foreach (var (bytes, claimed) in new[] {(svg, "image/svg+xml"), (html, "image/jpeg"), (exe, "image/png"), (svg, "image/jpeg")})
+            {
+                var response = await PutPhoto(host, bytes, claimed);
+
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Contains("Payments_InvalidPhoto", await response.Content.ReadAsStringAsync());
+            }
+
+            Assert.Null((await Read<CreatorProfileDto>(await Client(host).GetAsync("/v1/creators/me"))).PhotoVersion);
+        }
+
+        [Fact]
+        public async Task Photo_EmptyOrTooBig_IsRefused_AndTheOldOneStays()
+        {
+            var host = await NewCreator();
+            var creatorId = await CreatorIdOf(host);
+            (await PutPhoto(host, Jpeg())).EnsureSuccessStatusCode();
+
+            var empty = await PutPhoto(host, Array.Empty<byte>());
+            var big = await PutPhoto(host, Jpeg(PhotoRules.MaxBytes + 10));
+            var huge = await PutPhoto(host, Jpeg(2_000_000));
+
+            Assert.Equal(HttpStatusCode.BadRequest, empty.StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, big.StatusCode);
+            Assert.Contains(huge.StatusCode, new[] {HttpStatusCode.BadRequest, HttpStatusCode.RequestEntityTooLarge});
+            Assert.Equal(Jpeg(),
+                await (await Client(null).GetAsync($"/v1/creators/{creatorId}/photo")).Content.ReadAsByteArrayAsync());
+        }
+
+        [Fact]
+        public async Task Photo_Biggest_IsAccepted()
+        {
+            var host = await NewCreator();
+
+            var response = await PutPhoto(host, Jpeg(PhotoRules.MaxBytes - 12));
+
+            response.EnsureSuccessStatusCode();
+        }
+
+        [Fact]
+        public async Task Photo_SameVersionAsked_IsNotSentAgain()
+        {
+            var host = await NewCreator();
+            var creatorId = await CreatorIdOf(host);
+            var profile = await Read<CreatorProfileDto>(await PutPhoto(host, Jpeg()));
+            var first = await Client(null).GetAsync($"/v1/creators/{creatorId}/photo");
+
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/v1/creators/{creatorId}/photo");
+            request.Headers.TryAddWithoutValidation("If-None-Match", first.Headers.ETag!.ToString());
+            var again = await Client(null).SendAsync(request);
+
+            Assert.Equal(HttpStatusCode.NotModified, again.StatusCode);
+            Assert.Contains(profile.PhotoVersion!, first.Headers.ETag!.Tag);
+        }
+
+        [Fact]
+        public async Task Photo_Replaced_GetsANewVersion()
+        {
+            var host = await NewCreator();
+            var first = await Read<CreatorProfileDto>(await PutPhoto(host, Jpeg()));
+            await Task.Delay(20);
+
+            var second = await Read<CreatorProfileDto>(await PutPhoto(host, Jpeg(fill: 9)));
+
+            Assert.NotEqual(first.PhotoVersion, second.PhotoVersion);
+        }
+
+        [Fact]
+        public async Task Photo_Removed_IsGone()
+        {
+            var host = await NewCreator();
+            var creatorId = await CreatorIdOf(host);
+            (await PutPhoto(host, Jpeg())).EnsureSuccessStatusCode();
+
+            var response = await Client(host).DeleteAsync("/v1/creators/me/photo");
+
+            response.EnsureSuccessStatusCode();
+            Assert.Null((await Read<CreatorProfileDto>(response)).PhotoVersion);
+            Assert.Equal(HttpStatusCode.NotFound,
+                (await Client(null).GetAsync($"/v1/creators/{creatorId}/photo")).StatusCode);
+            Assert.Null((await PageOf(creatorId, null)).Creator.PhotoVersion);
+        }
+
+        [Fact]
+        public async Task Photo_NoPhoto_UnknownCreator_NotACreator_NotSignedIn()
+        {
+            var host = await NewCreator();
+
+            Assert.Equal(HttpStatusCode.NotFound,
+                (await Client(null).GetAsync($"/v1/creators/{await CreatorIdOf(host)}/photo")).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await Client(null).GetAsync("/v1/creators/nobody/photo")).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await PutPhoto(NewUser("fan"), Jpeg())).StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await PutPhoto(null, Jpeg())).StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await Client(null).DeleteAsync("/v1/creators/me/photo")).StatusCode);
+        }
+
+        [Fact]
+        public async Task Photo_TheVersionTravelsWithTheSessionListsAndTickets()
+        {
+            var (host, session) = await PublishedSession();
+            var profile = await Read<CreatorProfileDto>(await PutPhoto(host, Jpeg()));
+            var fan = await FanWithTicket(session);
+
+            var tile = Assert.Single(await Discover(), x => x.SessionId == session.SessionId);
+            var ticket = await TicketOf(fan, session.SessionId);
+
+            Assert.Equal(profile.CreatorId, tile.CreatorId);
+            Assert.Equal(profile.PhotoVersion, tile.CreatorPhotoVersion);
+            Assert.Equal(profile.CreatorId, ticket.CreatorId);
+            Assert.Equal(profile.PhotoVersion, ticket.CreatorPhotoVersion);
         }
 
         [Fact]

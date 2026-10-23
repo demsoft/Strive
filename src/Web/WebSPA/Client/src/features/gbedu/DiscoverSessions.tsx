@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router-dom';
 import { formatMoney, SESSION_CATEGORIES } from 'src/features/sessions/money';
 import * as api from 'src/services/api/sessions';
+import { creatorPhotoUrl } from 'src/features/creator/photoUrl';
 import { DiscoverSession } from 'src/services/api/sessions';
 import { brand } from 'src/theme';
 import { categoryGradient, categoryStyle } from './ui/categories';
@@ -77,7 +78,12 @@ export function SessionTile({ session }: { session: DiscoverSession }) {
                {session.title}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-               <HostAvatar name={session.creatorName} size={22} background={categoryGradient(session.category)} />
+               <HostAvatar
+                  name={session.creatorName}
+                  size={22}
+                  background={categoryGradient(session.category)}
+                  photoUrl={creatorPhotoUrl(session.creatorId, session.creatorPhotoVersion)}
+               />
                <Typography variant="body2" color="text.secondary">
                   {t('sessions.with', { name: session.creatorName })}
                </Typography>

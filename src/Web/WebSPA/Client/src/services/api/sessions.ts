@@ -31,6 +31,8 @@ export type PublicCreator = {
    currency?: string | null;
    /** the short name of the page: /u/ada */
    slug?: string | null;
+   /** changes when the photo does; none: no photo */
+   photoVersion?: string | null;
 };
 
 export type PublicSession = {
@@ -88,6 +90,8 @@ export type Ticket = {
    durationMinutes: number;
    /** the host has the room open right now */
    isLive: boolean;
+   creatorId?: string | null;
+   creatorPhotoVersion?: string | null;
 };
 
 /** A session in the list of what is on */
@@ -105,6 +109,8 @@ export type DiscoverSession = {
    durationMinutes: number;
    /** the host has the room open right now (not just: the start time has passed) */
    isLive: boolean;
+   creatorId?: string | null;
+   creatorPhotoVersion?: string | null;
 };
 
 export type CreatorPage = {

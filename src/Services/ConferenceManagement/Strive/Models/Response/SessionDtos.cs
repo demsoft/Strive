@@ -32,7 +32,7 @@ namespace Strive.Models.Response
     /// <summary>A session in the list of what is on, for everybody to see (the room is not part of it)</summary>
     public record DiscoverSessionDto(string SessionId, string Title, string? Description, string Category,
         long PriceMinor, string Currency, DateTimeOffset? StartsAt, string CreatorName, bool IsHost, bool HasTicket,
-        int DurationMinutes = 60, bool IsLive = false);
+        int DurationMinutes = 60, bool IsLive = false, string? CreatorId = null, string? CreatorPhotoVersion = null);
 
     /// <summary>The page of a creator: who they are and what they have on</summary>
     public record CreatorPageDto(PublicCreatorDto Creator, DiscoverSessionDto[] Sessions, bool HasPass = false,
@@ -58,5 +58,6 @@ namespace Strive.Models.Response
 
     public record TicketDto(string SessionId, string ConferenceId, string Title, string Category,
         DateTimeOffset? StartsAt, string CreatorName, DateTimeOffset GrantedAt, SessionStatus Status,
-        bool Refunded = false, int DurationMinutes = 60, bool IsLive = false);
+        bool Refunded = false, int DurationMinutes = 60, bool IsLive = false, string? CreatorId = null,
+        string? CreatorPhotoVersion = null);
 }

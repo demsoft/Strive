@@ -61,6 +61,7 @@ namespace Strive.Core.Services
         Payments_OrderNotFound,
         Payments_PassNotOffered,
         Payments_InvalidSlug,
+        Payments_InvalidPhoto,
         Payments_SubscriptionNotFound,
         Payments_SlugTaken,
 

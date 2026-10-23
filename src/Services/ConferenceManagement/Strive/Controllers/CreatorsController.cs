@@ -24,9 +24,12 @@ namespace Strive.Controllers
         private readonly IMediator _mediator;
         private readonly ICreatorRepo _creators;
         private readonly PaymentsOptions _options;
+        private readonly ICreatorPhotoRepo _photos;
 
-        public CreatorsController(IMediator mediator, ICreatorRepo creators, IOptions<PaymentsOptions> options)
+        public CreatorsController(IMediator mediator, ICreatorRepo creators, ICreatorPhotoRepo photos,
+            IOptions<PaymentsOptions> options)
         {
+            _photos = photos;
             _mediator = mediator;
             _creators = creators;
             _options = options.Value;
@@ -123,6 +126,66 @@ namespace Strive.Controllers
             if (!result.Success) return result.ToActionResult();
 
             return CreatorProfileDto.From(result.Response!);
+        }
+
+        // PUT v1/creators/me/photo
+        /// <summary>The body is the picture itself (jpeg, png or webp). What it is is decided by its bytes.</summary>
+        [HttpPut("v1/creators/me/photo")]
+        [RequestSizeLimit(PhotoRules.MaxBytes + 4096)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<CreatorProfileDto>> SetPhoto()
+        {
+            if (UserId == null) return Forbid();
+
+            // read one byte more than allowed: that is how a too big picture is noticed without reading it all
+            using var buffer = new System.IO.MemoryStream();
+            var chunk = new byte[16 * 1024];
+            int read;
+            while (buffer.Length <= PhotoRules.MaxBytes &&
+                   (read = await Request.Body.ReadAsync(chunk, HttpContext.RequestAborted)) > 0)
+                buffer.Write(chunk, 0, read);
+
+            var result = await _mediator.Send(new SetCreatorPhotoRequest(UserId, buffer.ToArray()));
+            if (!result.Success) return result.ToActionResult();
+
+            return CreatorProfileDto.From(result.Response!);
+        }
+
+        // DELETE v1/creators/me/photo
+        [HttpDelete("v1/creators/me/photo")]
+        public async Task<ActionResult<CreatorProfileDto>> RemovePhoto()
+        {
+            if (UserId == null) return Forbid();
+
+            var result = await _mediator.Send(new SetCreatorPhotoRequest(UserId, null));
+            if (!result.Success) return result.ToActionResult();
+
+            return CreatorProfileDto.From(result.Response!);
+        }
+
+        // GET v1/creators/{creatorIdOrSlug}/photo
+        /// <summary>The picture of a creator, for everybody. The address carries the version, so it may be cached.</summary>
+        [HttpGet("v1/creators/{creatorId}/photo")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetPhoto(string creatorId)
+        {
+            var creator = await _creators.FindById(creatorId) ??
+                          await _creators.FindBySlug(Strive.Core.Services.Payments.SlugRules.Normalize(creatorId));
+            if (creator?.PhotoVersion == null) return NotFound();
+
+            var etag = $"\"{creator.PhotoVersion}\"";
+            if (Request.Headers.IfNoneMatch.ToString() == etag) return StatusCode(StatusCodes.Status304NotModified);
+
+            var photo = await _photos.Find(creator.CreatorId);
+            if (photo == null) return NotFound();
+
+            Response.Headers.ETag = etag;
+            Response.Headers.CacheControl = "public, max-age=3600";
+            // it is a picture and nothing else, whatever the browser would like to make of it
+            Response.Headers["X-Content-Type-Options"] = "nosniff";
+            Response.Headers.ContentSecurityPolicy = "default-src 'none'; sandbox";
+            return File(photo.Data, photo.ContentType);
         }
 
         // GET v1/creators/{creatorId}
