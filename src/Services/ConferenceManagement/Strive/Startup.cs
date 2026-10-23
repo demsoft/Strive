@@ -197,6 +197,7 @@ namespace Strive
             services.TryAddTransient<IVideoConverter>(sp => sp.GetRequiredService<CloudinaryVideoConverter>());
             services.TryAddSingleton<IVideoStorage, S3VideoStorage>();
             services.AddTransient<Strive.Presenters.VideoPresenter>();
+            services.AddTransient<Strive.Presenters.EngagementPresenter>();
             services.AddTransient<VideoAccess>();
             // The background jobs of the payments side (reminders, renewals, videos). A setting switches them off, for a
             // second server that must not do the same work, and for the tests, which call the use cases themselves.

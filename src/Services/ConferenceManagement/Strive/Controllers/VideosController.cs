@@ -30,12 +30,16 @@ namespace Strive.Controllers
         private readonly VideoPresenter _presenter;
         private readonly IConfiguration _configuration;
         private readonly IFollowRepo _follows;
+        private readonly EngagementPresenter _engagement;
+        private readonly IVideoLikeRepo _likes;
 
         public VideosController(IMediator mediator, IVideoRepo videos, ICreatorRepo creators,
             IVideoEntitlementRepo entitlements, VideoAccess access, VideoPresenter presenter,
-            IConfiguration configuration, IFollowRepo follows)
+            IConfiguration configuration, IFollowRepo follows, EngagementPresenter engagement, IVideoLikeRepo likes)
         {
             _follows = follows;
+            _engagement = engagement;
+            _likes = likes;
             _mediator = mediator;
             _videos = videos;
             _creators = creators;
@@ -79,7 +83,7 @@ namespace Strive.Controllers
             if (!result.Success) return result.ToActionResult();
 
             Response.Headers.CacheControl = "no-store";
-            return _presenter.ToDto(result.Response!, null, true, true, false);
+            return await _engagement.Apply(_presenter.ToDto(result.Response!, null, true, true, false), UserId);
         }
 
         // POST v1/videos/{videoId}/uploaded
@@ -109,8 +113,9 @@ namespace Strive.Controllers
             if (creator == null) return Array.Empty<VideoDto>();
 
             Response.Headers.CacheControl = "no-store";
-            return (await _videos.FindOfCreator(creator.CreatorId, 200))
-                .Select(x => _presenter.ToDto(x, null, true, true, false)).ToArray();
+            return await _engagement.Apply(
+                (await _videos.FindOfCreator(creator.CreatorId, 200))
+                .Select(x => _presenter.ToDto(x, null, true, true, false)).ToList(), UserId);
         }
 
         // GET v1/videos/purchased
@@ -133,7 +138,7 @@ namespace Strive.Controllers
             }
 
             Response.Headers.CacheControl = "no-store";
-            return result.ToArray();
+            return await _engagement.Apply(result, UserId);
         }
 
         // GET v1/videos/feed?before=...&limit=...
@@ -173,7 +178,7 @@ namespace Strive.Controllers
 
             // a full page: there may be more, after the oldest of these
             Response.Headers.CacheControl = "no-store";
-            return new VideoFeedDto(items.ToArray(), videos.Count == limit ? videos[^1].ReadyAt : null);
+            return new VideoFeedDto(await _engagement.Apply(items, UserId), videos.Count == limit ? videos[^1].ReadyAt : null);
         }
 
         // GET v1/videos/{videoId}
@@ -197,8 +202,9 @@ namespace Strive.Controllers
 
             // the answer depends on who asks, and the links run out
             Response.Headers.CacheControl = "no-store";
-            return _presenter.ToDto(video, creator == null ? null : PublicCreatorDto.From(creator), isOwner, canWatch,
-                true);
+            return await _engagement.Apply(
+                _presenter.ToDto(video, creator == null ? null : PublicCreatorDto.From(creator), isOwner, canWatch,
+                    true), UserId);
         }
 
         // POST v1/videos/{videoId}/checkout
@@ -233,6 +239,38 @@ namespace Strive.Controllers
                 return VideosError.Invalid("Choose what is wrong with the video.").ToActionResult();
 
             return (await _mediator.Send(new ReportVideoRequest(UserId, videoId, reason, dto.Details))).ToActionResult();
+        }
+
+        // PUT v1/videos/{videoId}/like
+        [HttpPut("v1/videos/{videoId}/like")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<LikeStateDto>> Like(string videoId)
+        {
+            if (UserId == null) return Forbid();
+
+            var result = await _mediator.Send(new LikeVideoRequest(UserId, videoId));
+            if (!result.Success) return result.ToActionResult();
+
+            return await LikeState(videoId, true);
+        }
+
+        // DELETE v1/videos/{videoId}/like
+        [HttpDelete("v1/videos/{videoId}/like")]
+        [Authorize]
+        public async Task<ActionResult<LikeStateDto>> Unlike(string videoId)
+        {
+            if (UserId == null) return Forbid();
+
+            await _mediator.Send(new UnlikeVideoRequest(UserId, videoId));
+            return await LikeState(videoId, false);
+        }
+
+        private async Task<LikeStateDto> LikeState(string videoId, bool liked)
+        {
+            Response.Headers.CacheControl = "no-store";
+            var counts = await _likes.CountsOf(new[] {videoId});
+            return new LikeStateDto(counts.TryGetValue(videoId, out var count) ? count : 0, liked);
         }
 
         // DELETE v1/videos/{videoId}

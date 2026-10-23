@@ -6,6 +6,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 const api = vi.hoisted(() => ({
    fetchVideo: vi.fn(),
+   likeVideo: vi.fn(),
+   unlikeVideo: vi.fn(),
    videoLink: (id: string) => `https://gbedu.test/v/${id}`,
 }));
 const state = vi.hoisted(() => ({
@@ -253,4 +255,22 @@ test('the creator has no follow button on their own video', async () => {
    await render();
 
    expect(document.querySelector('.watch-follow')).toBeNull();
+});
+
+test('the video shows its likes and can be liked; signed out the person is asked to sign in first', async () => {
+   api.fetchVideo.mockResolvedValue(video({ likes: 8, liked: false }));
+   await render();
+   expect(document.querySelector('.like-count')?.textContent).toBe('8');
+
+   await act(async () => document.querySelector<HTMLElement>('.like-button')?.click());
+   expect(state.signinRedirect).toHaveBeenCalledWith({ state: { url: '/v/v1' } });
+   expect(api.likeVideo).not.toHaveBeenCalled();
+
+   state.user = { access_token: 'tok' };
+   api.likeVideo.mockResolvedValue({ likes: 9, liked: true });
+   await render();
+   await act(async () => document.querySelector<HTMLElement>('.like-button')?.click());
+   await settle();
+   expect(api.likeVideo).toHaveBeenCalledWith('v1');
+   expect(document.querySelector('.like-count')?.textContent).toBe('9');
 });

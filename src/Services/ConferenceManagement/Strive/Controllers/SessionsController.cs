@@ -35,6 +35,7 @@ namespace Strive.Controllers
         private readonly IOpenConferenceRepository _openConferences;
         private readonly IVideoRepo _videoRepo;
         private readonly Strive.Core.Services.Social.IFollowRepo _follows;
+        private readonly EngagementPresenter _engagement;
         private readonly VideoPresenter _videoPresenter;
         private readonly VideoAccess _videoAccess;
         private readonly PaymentsOptions _paymentsOptions;
@@ -43,12 +44,13 @@ namespace Strive.Controllers
         public SessionsController(IMediator mediator, ISessionRepo sessions, ICreatorRepo creators,
             IEntitlementRepo entitlements, IOrderRepo orders, IPassRepo passes, IPassSubscriptionRepo subscriptions,
             IOpenConferenceRepository openConferences, IVideoRepo videoRepo, VideoPresenter videoPresenter,
-            VideoAccess videoAccess, Strive.Core.Services.Social.IFollowRepo follows,
+            VideoAccess videoAccess, Strive.Core.Services.Social.IFollowRepo follows, EngagementPresenter engagement,
             Microsoft.Extensions.Options.IOptions<PaymentsOptions> paymentsOptions, IConfiguration configuration)
         {
             _openConferences = openConferences;
             _videoRepo = videoRepo;
             _follows = follows;
+            _engagement = engagement;
             _videoPresenter = videoPresenter;
             _videoAccess = videoAccess;
             _passes = passes;
@@ -193,10 +195,10 @@ namespace Strive.Controllers
             var publicCreator = PublicCreatorDto.From(creator);
             var readyVideos = await _videoRepo.FindReadyOfCreator(creator.CreatorId, 24);
             var unlocked = await _videoAccess.Unlocked(readyVideos.ToList(), UserId);
-            var videos = readyVideos
+            var videos = await _engagement.Apply(readyVideos
                 .Select(x => _videoPresenter.ToDto(x, publicCreator, UserId != null && x.CreatorUserId == UserId,
                     unlocked.Contains(x.VideoId), false))
-                .ToArray();
+                .ToList(), UserId);
             return new CreatorPageDto(publicCreator, list.ToArray(), passUntil != null, passUntil,
                 _paymentsOptions.AutoRenewEnabled, renewing?.NextChargeAt, videos,
                 await _follows.CountOfCreator(creator.CreatorId),

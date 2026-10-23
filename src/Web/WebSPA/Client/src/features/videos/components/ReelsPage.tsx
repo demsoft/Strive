@@ -13,6 +13,8 @@ import { creatorPhotoUrl } from 'src/features/creator/photoUrl';
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import { formatMoney } from 'src/features/sessions/money';
 import FollowButton from 'src/features/social/FollowButton';
+import LikeButton from 'src/features/social/LikeButton';
+import useVideoLike from 'src/features/social/useVideoLike';
 import useFollowing from 'src/features/social/useFollowing';
 import * as api from 'src/services/api/videos';
 import { Video } from 'src/services/api/videos';
@@ -32,6 +34,8 @@ type ReelProps = {
    muted: boolean;
    copied: boolean;
    following: boolean;
+   signedIn: boolean;
+   onSignIn: () => void;
    onFollow: () => void;
    onToggleMute: () => void;
    onShare: () => void;
@@ -47,6 +51,8 @@ function Reel({
    muted,
    copied,
    following,
+   signedIn,
+   onSignIn,
    onFollow,
    onToggleMute,
    onShare,
@@ -55,6 +61,7 @@ function Reel({
    const { t } = useTranslation();
    const player = useRef<HTMLVideoElement>(null);
    const creator = video.creator;
+   const like = useVideoLike(video.videoId, video, signedIn, onSignIn);
 
    // playing is the business of the one in view; the others do not even have a player
    useEffect(() => {
@@ -221,6 +228,7 @@ function Reel({
                   alignItems: 'center',
                }}
             >
+               <LikeButton compact liked={like.liked} count={like.likes} onClick={like.toggle} />
                <IconButton
                   className="reel-mute"
                   aria-label={muted ? t('videos.reels_unmute') : t('videos.reels_mute')}
@@ -373,6 +381,11 @@ export default function ReelsPage() {
       }
    };
 
+   const signIn = useCallback(
+      () => auth.signinRedirect({ state: { url: location.pathname + location.search } }),
+      [auth, location.pathname, location.search],
+   );
+
    const follow = (video: Video) =>
       token
          ? video.creator && followed.toggle(video.creator.creatorId)
@@ -439,6 +452,8 @@ export default function ReelsPage() {
                      muted={muted}
                      copied={copiedId === video.videoId}
                      following={!!video.creator && followed.isFollowing(video.creator.creatorId)}
+                     signedIn={!!token}
+                     onSignIn={signIn}
                      onFollow={() => follow(video)}
                      onToggleMute={() => setMuted((m) => !m)}
                      onShare={() => share(video)}

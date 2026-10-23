@@ -188,11 +188,13 @@ namespace Strive.Core.Services.Videos
         private readonly IVideoConverter _converter;
         private readonly IVideoStorage _storage;
         private readonly IVideoEntitlementRepo _entitlements;
+        private readonly Social.IVideoLikeRepo _likes;
         private readonly ILogger<DeleteVideoUseCase> _logger;
 
         public DeleteVideoUseCase(IVideoRepo videos, IVideoConverter converter, IVideoStorage storage,
-            IVideoEntitlementRepo entitlements, ILogger<DeleteVideoUseCase> logger)
+            IVideoEntitlementRepo entitlements, Social.IVideoLikeRepo likes, ILogger<DeleteVideoUseCase> logger)
         {
+            _likes = likes;
             _entitlements = entitlements;
             _videos = videos;
             _converter = converter;
@@ -211,6 +213,7 @@ namespace Strive.Core.Services.Videos
             // the files go first: a video that is gone from the list must not stay in the storage
             await Cleanup(video.VideoId, cancellationToken);
             await _videos.Delete(video.VideoId);
+            await _likes.DeleteOfVideo(video.VideoId);
             return Unit.Value;
         }
 

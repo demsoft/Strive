@@ -87,3 +87,13 @@ test('a video that was bought still shows what it cost, without the lock; free a
    await act(async () => createRoot(third).render(<VideoTile video={video({ priceMinor: 300000, isOwner: true })} />));
    expect(third.querySelector('.video-price')).toBeNull();
 });
+
+test('shows how many people like the video, and nothing when none do', async () => {
+   const root = createRoot(container);
+   await act(async () => root.render(<VideoTile video={video({ likes: 12 })} />));
+   expect(container.querySelector('.video-likes')?.textContent).toBe('12');
+
+   await act(async () => root.render(<VideoTile video={video({ likes: 0 })} />));
+   expect(container.querySelector('.video-likes')).toBeNull();
+   act(() => root.unmount());
+});

@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
@@ -107,9 +108,18 @@ export default function VideoTile({ video }: { video: Video }) {
                      background={brand.gradient}
                      photoUrl={creatorPhotoUrl(creator.creatorId, creator.photoVersion, 22)}
                   />
-                  <Typography variant="body2" color="text.secondary" noWrap>
+                  <Typography variant="body2" color="text.secondary" noWrap sx={{ flex: 1, minWidth: 0 }}>
                      {creator.displayName}
                   </Typography>
+                  {video.likes ? (
+                     <Box
+                        className="video-likes"
+                        sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', fontSize: 13 }}
+                     >
+                        <FavoriteIcon sx={{ fontSize: 14, color: '#ff4d6d' }} />
+                        {video.likes}
+                     </Box>
+                  ) : null}
                </Box>
             )}
          </Box>

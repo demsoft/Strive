@@ -39,5 +39,8 @@ namespace Strive.Models.Response
     public record VideoDto(string VideoId, string Title, string? Description, string Status, string? FailureReason,
         double? DurationSeconds, int? Width, int? Height, long PriceMinor, DateTimeOffset CreatedAt, bool IsOwner,
         string? PosterUrl, string? PlaybackUrl, PublicCreatorDto? Creator, bool Locked = false,
-        string Moderation = "none", string? ModerationNote = null);
+        string Moderation = "none", string? ModerationNote = null, long Likes = 0, bool Liked = false);
+
+    /// <summary>How many people like a video, and whether the person who asks does</summary>
+    public record LikeStateDto(long Likes, bool Liked);
 }
