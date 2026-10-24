@@ -335,7 +335,8 @@ export default function CreatorPage() {
 
    return (
       <Box sx={{ minHeight: '100%' }}>
-         <SiteHeader />
+         {/* the dashboard has its own card for the followers */}
+         <SiteHeader withoutConnections />
 
          <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }} id="creator-page">
             {loadError && <Alert severity="error">{loadError}</Alert>}

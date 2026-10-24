@@ -30,6 +30,9 @@ vi.mock('react-router-dom', () => ({
    useLocation: () => ({ pathname: '/connections', search: state.search }),
    useHistory: () => ({ replace: state.replace }),
 }));
+vi.mock('src/components/BackButton', () => ({
+   default: ({ fallback }: { fallback: string }) => <a id="back-button" href={fallback} />,
+}));
 vi.mock('src/features/creators/SiteHeader', () => ({ default: () => null }));
 vi.mock('src/features/creator/errors', () => ({
    requestErrorMessage: (e: unknown) => String((e as Error).message ?? e),
@@ -152,4 +155,10 @@ test('the tabs switch by the address', async () => {
    await click('#connections-tab-followers');
 
    expect(state.replace).toHaveBeenCalledWith('/connections?tab=followers');
+});
+
+test('there is a way back', async () => {
+   await render();
+
+   expect(document.querySelector('#back-button')?.getAttribute('href')).toBe('/');
 });

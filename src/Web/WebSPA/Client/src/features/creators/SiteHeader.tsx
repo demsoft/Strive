@@ -9,8 +9,11 @@ import { Link as RouterLink, useLocation } from 'react-router-dom';
 import BrandLogo from 'src/components/BrandLogo';
 import { brand } from 'src/theme';
 
-/** The top of the public pages: the logo, the two ways to look around (reels, creators), and the way in or home. */
-export default function SiteHeader() {
+/**
+ * The top of the public pages: the logo, the two ways to look around (reels, creators), the people the person follows
+ * (unless the page has its own way there), and the way in or home.
+ */
+export default function SiteHeader({ withoutConnections }: { withoutConnections?: boolean }) {
    const { t } = useTranslation();
    const auth = useAuth();
    const location = useLocation();
@@ -58,7 +61,9 @@ export default function SiteHeader() {
             <Box sx={{ flex: 1 }} />
             {link('/reels', t('creators.nav_reels'), <SlideshowOutlinedIcon />, 'nav-reels')}
             {link('/creators', t('creators.nav_creators'), <ExploreOutlinedIcon />, 'nav-creators')}
-            {auth.user && link('/connections', t('social.connections_nav'), <PeopleOutlinedIcon />, 'nav-connections')}
+            {auth.user &&
+               !withoutConnections &&
+               link('/connections', t('social.connections_nav'), <PeopleOutlinedIcon />, 'nav-connections')}
             {auth.user ? (
                <Button id="nav-home" component={RouterLink} to="/" variant="outlined" color="inherit" sx={{ ml: 1 }}>
                   {t('creators.nav_home')}

@@ -26,6 +26,9 @@ vi.mock('react-i18next', () => ({
    }),
 }));
 vi.mock('react-router-dom', () => ({ Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a> }));
+vi.mock('src/components/BackButton', () => ({
+   default: ({ fallback }: { fallback: string }) => <a id="back-button" href={fallback} />,
+}));
 vi.mock('src/components/BrandLogo', () => ({ default: () => null }));
 vi.mock('src/services/api/videos', () => ({ ...api, updateVideo: api.updateVideo }));
 vi.mock('src/services/api/creators', () => creators);
@@ -358,4 +361,10 @@ test('the creator is told when a video is hidden for review, and when a moderato
    expect(rows[1].querySelector('.video-moderation')?.textContent).toContain('Not your own work.');
    expect(rows[1].querySelector('.video-watch')).toBeNull(); // its files are gone
    expect(rows[2].querySelector('.video-moderation')).toBeNull();
+});
+
+test('there is a way back to the dashboard', async () => {
+   await render();
+
+   expect(document.querySelector('#back-button')?.getAttribute('href')).toBe('/creator');
 });

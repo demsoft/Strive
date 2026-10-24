@@ -26,7 +26,11 @@ vi.mock('react-router-dom', () => ({
       ),
    ),
 }));
-vi.mock('src/features/creators/SiteHeader', () => ({ default: () => null }));
+vi.mock('src/features/creators/SiteHeader', () => ({
+   default: ({ withoutConnections }: { withoutConnections?: boolean }) => (
+      <div id="site-header" data-without-connections={String(!!withoutConnections)} />
+   ),
+}));
 const dashboard = vi.hoisted(() => ({
    data: { loading: false } as Record<string, unknown>,
 }));
@@ -228,4 +232,12 @@ test('a new creator sees only the way in, no dashboard', async () => {
 
    expect(document.querySelector('#creator-onboarding')).not.toBeNull();
    expect(document.querySelector('#creator-dashboard')).toBeNull();
+});
+
+test('the top menu of the dashboard has no link to the followers: the dashboard has its own card for them', async () => {
+   api.fetchMyCreatorProfile.mockResolvedValue(savedProfile());
+
+   await render();
+
+   expect(document.querySelector('#site-header')?.getAttribute('data-without-connections')).toBe('true');
 });

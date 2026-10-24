@@ -3,6 +3,7 @@ import { DateTime } from 'luxon';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router-dom';
+import BackButton from 'src/components/BackButton';
 import BrandLogo from 'src/components/BrandLogo';
 import { formatMoney } from 'src/features/sessions/money';
 import * as api from 'src/services/api/creators';
@@ -53,6 +54,7 @@ export default function EarningsPage() {
       <Box sx={{ minHeight: '100%' }}>
          <AppBar position="static" color="transparent" elevation={0}>
             <Toolbar sx={{ gap: 2 }}>
+               <BackButton fallback="/creator" />
                <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
                   <BrandLogo size={30} />
                </RouterLink>

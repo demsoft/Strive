@@ -16,6 +16,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useHistory, useLocation } from 'react-router-dom';
+import BackButton from 'src/components/BackButton';
 import { requestErrorMessage } from 'src/features/creator/errors';
 import CreatorCard from 'src/features/creators/CreatorCard';
 import SiteHeader from 'src/features/creators/SiteHeader';
@@ -113,6 +114,9 @@ export default function ConnectionsPage() {
             }}
          >
             <Container maxWidth="md">
+               <Box sx={{ mb: 2 }}>
+                  <BackButton fallback="/" />
+               </Box>
                <Typography variant="h3" sx={{ fontSize: { xs: '1.9rem', md: '2.5rem' } }} id="connections-title">
                   {t('social.connections_title')}
                </Typography>
