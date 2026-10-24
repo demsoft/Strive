@@ -30,6 +30,9 @@ vi.mock('react-router-dom', () => ({
    useLocation: () => ({ pathname: '/creators', search: '' }),
 }));
 vi.mock('./SiteHeader', () => ({ default: () => null }));
+vi.mock('src/features/creator/errors', () => ({
+   requestErrorMessage: (e: unknown) => String((e as Error).message ?? e),
+}));
 vi.mock('src/services/api/follows', () => api);
 
 import CreatorsPage from './CreatorsPage';
@@ -156,6 +159,17 @@ test('when the server refuses, the button goes back', async () => {
    await settle();
 
    expect(document.querySelector('.creator-card-follow')?.getAttribute('aria-pressed')).toBe('false');
+});
+
+test('when it does not work the person is told why, not left guessing', async () => {
+   state.user = { access_token: 'tok' };
+   api.followCreator.mockRejectedValue(new Error('You cannot follow yourself.'));
+   await render();
+
+   await click('.creator-card-follow');
+   await settle();
+
+   expect(document.body.textContent).toContain('You cannot follow yourself.');
 });
 
 test('signed out, Follow asks for a sign in and sends nothing', async () => {

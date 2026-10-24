@@ -266,3 +266,17 @@ test('stopping to follow ends the mail on the page as well', async () => {
    await act(async () => followButton()?.click());
    expect(document.querySelector('#notice-stub')?.getAttribute('data-state')).toBe('off');
 });
+
+test('when following does not work the person is told why, and the button goes back', async () => {
+   auth.user = { access_token: 'tok' };
+   auth.follow.mockRejectedValue(new Error('You cannot follow yourself.'));
+   api.fetchCreatorPage.mockResolvedValue(pageOf());
+   await act(async () => createRoot(container).render(<CreatorPublicPage />));
+   await settle();
+
+   await act(async () => followButton()?.click());
+   await settle();
+
+   expect(document.querySelector('#follow-error')?.textContent).toContain('You cannot follow yourself.');
+   expect(followButton()?.getAttribute('aria-pressed')).toBe('false');
+});
