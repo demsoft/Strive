@@ -55,6 +55,10 @@ namespace Strive.Infrastructure.Data.Repos
             return found.ToDictionary(x => x.CreatorId, x => x.DisplayName);
         }
 
+        public async Task<System.Collections.Generic.IReadOnlyList<CreatorProfile>> FindAll(int limit) =>
+            await Collection.Find(FilterDefinition<CreatorProfile>.Empty).SortByDescending(x => x.CreatedAt).Limit(limit)
+                .ToListAsync();
+
         public async Task<System.Collections.Generic.IReadOnlyList<CreatorProfile>> FindByIds(
             System.Collections.Generic.IEnumerable<string> creatorIds)
         {
