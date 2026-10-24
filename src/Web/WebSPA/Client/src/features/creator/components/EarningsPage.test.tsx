@@ -14,6 +14,9 @@ vi.mock('react-i18next', () => ({
 vi.mock('react-router-dom', () => ({
    Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
 }));
+vi.mock('src/components/BackButton', () => ({
+   default: ({ fallback }: { fallback: string }) => <a id="back-button" href={fallback} />,
+}));
 vi.mock('src/components/BrandLogo', () => ({ default: () => null }));
 vi.mock('src/services/api/creators', () => api);
 vi.mock('../errors', () => ({ requestErrorMessage: (e: unknown) => String((e as Error).message ?? e) }));
@@ -165,4 +168,11 @@ test('video sales are listed on their own, and the latest sales name the video',
    expect(rows[0].textContent).toContain('Piano lesson');
    expect(rows[0].textContent).toContain('₦5,400');
    expect(document.querySelector('.earn-sale')?.textContent).toContain('Piano lesson');
+});
+
+test('there is a way back to the dashboard', async () => {
+   api.fetchMyEarnings.mockResolvedValue(earnings());
+   await act(async () => createRoot(container).render(<EarningsPage />));
+
+   expect(document.querySelector('#back-button')?.getAttribute('href')).toBe('/creator');
 });

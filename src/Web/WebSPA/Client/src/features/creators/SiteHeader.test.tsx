@@ -67,3 +67,15 @@ test('somebody who is signed in gets a way home instead', async () => {
    expect(document.querySelector('#nav-home')?.getAttribute('href')).toBe('/');
    expect(document.querySelector('#nav-sign-in')).toBeNull();
 });
+
+test('the link to the followers is there for somebody who is signed in, unless the page has its own way there', async () => {
+   state.user = { access_token: 'tok' };
+   await render();
+   expect(document.querySelector('#nav-connections')?.getAttribute('href')).toBe('/connections');
+
+   act(() => root.unmount());
+   root = createRoot(container);
+   await act(async () => root.render(<SiteHeader withoutConnections />));
+   expect(document.querySelector('#nav-connections')).toBeNull();
+   expect(document.querySelector('#nav-reels')).not.toBeNull();
+});

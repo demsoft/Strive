@@ -29,6 +29,9 @@ vi.mock('react-router-dom', () => ({
    ),
    useHistory: () => ({ push }),
 }));
+vi.mock('src/components/BackButton', () => ({
+   default: ({ fallback }: { fallback: string }) => <a id="back-button" href={fallback} />,
+}));
 vi.mock('src/components/BrandLogo', () => ({ default: () => null }));
 vi.mock('src/services/api/sessions', () => api);
 vi.mock('src/services/api/videos', () => ({
