@@ -17,8 +17,20 @@ vi.mock('react-i18next', () => ({
       t: (key: string, values?: Record<string, unknown>) => (values ? `${key} ${JSON.stringify(values)}` : key),
    }),
 }));
-vi.mock('react-router-dom', () => ({ Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a> }));
-vi.mock('src/components/BrandLogo', () => ({ default: () => null }));
+vi.mock('react-router-dom', () => ({
+   Link: React.forwardRef<HTMLAnchorElement, { to: string; children: React.ReactNode; id?: string }>(
+      ({ to, children, id }, ref) => (
+         <a ref={ref} href={to} id={id}>
+            {children}
+         </a>
+      ),
+   ),
+}));
+vi.mock('src/features/creators/SiteHeader', () => ({ default: () => null }));
+const dashboard = vi.hoisted(() => ({
+   data: { loading: false } as Record<string, unknown>,
+}));
+vi.mock('../dashboard/useDashboardData', () => ({ default: () => dashboard.data }));
 vi.mock('src/services/api/creators', () => api);
 vi.mock('../errors', () => ({ requestErrorMessage: (e: unknown) => String((e as Error).message ?? e) }));
 
@@ -44,6 +56,7 @@ const typeInto = async (selector: string, value: string) => {
 
 beforeEach(() => {
    Object.values(api).forEach((fn) => fn.mockReset());
+   dashboard.data = { loading: false };
    api.fetchPaymentsConfig.mockResolvedValue({
       enabled: true,
       country: 'NG',
@@ -134,4 +147,85 @@ test('the page shows the error of the server when saving fails', async () => {
    await settle();
 
    expect(document.querySelector('#creator-save-error')?.textContent).toContain('did not answer');
+});
+
+const savedProfile = (over: Record<string, unknown> = {}) => ({
+   creatorId: 'c1',
+   displayName: 'Ada Lovelace',
+   bio: 'Piano',
+   country: 'NG',
+   currency: 'NGN',
+   bankCode: '058',
+   bankName: 'Guaranty Trust Bank',
+   accountLast4: '6789',
+   accountName: 'ADA LOVELACE',
+   canSell: true,
+   createdAt: '2026-10-01T10:00:00Z',
+   ...over,
+});
+const text = (selector: string) => document.querySelector(selector)?.textContent ?? '';
+
+test('a creator who can sell gets the dashboard: the numbers, the places to go and the settings', async () => {
+   api.fetchMyCreatorProfile.mockResolvedValue(savedProfile());
+   dashboard.data = {
+      loading: false,
+      followers: 2400,
+      videos: { ready: 2, total: 3 },
+      sessions: { active: 1, total: 4 },
+      earnings: { netMinor: 1665000, grossMinor: 1850000, sales: 14, currency: 'NGN' },
+   };
+
+   await render();
+
+   expect(document.querySelector('#creator-dashboard')).not.toBeNull();
+   expect(text('#creator-hero-name')).toBe('Ada Lovelace');
+   expect(text('#creator-status')).toContain('dashboard.status_ready');
+   expect(text('#stat-followers .stat-value')).toMatch(/2\.4/);
+   expect(text('#stat-videos .stat-value')).toBe('2');
+   expect(text('#stat-videos .stat-hint')).toContain('"count":1');
+   expect(text('#stat-sessions .stat-value')).toBe('1');
+   expect(text('#stat-earnings .stat-value')).toContain('16,650');
+   expect(document.querySelector('#creator-sessions-link')?.getAttribute('href')).toBe('/creator/sessions');
+   expect(document.querySelector('#creator-videos-link')?.getAttribute('href')).toBe('/creator/videos');
+   expect(document.querySelector('#creator-earnings-link')?.getAttribute('href')).toBe('/creator/earnings');
+   expect(document.querySelector('#creator-followers-link')?.getAttribute('href')).toBe('/connections?tab=followers');
+   expect(document.querySelector('#creator-public-link')?.getAttribute('href')).toBe('/u/c1');
+   expect(document.querySelector('#photo-setup')).not.toBeNull();
+   expect(document.querySelector('#slug-setup')).not.toBeNull();
+   expect(document.querySelector('#pass-setup')).not.toBeNull();
+});
+
+test('somebody without a verified bank account sees sessions and earnings as locked, no sales settings and no earnings number', async () => {
+   api.fetchMyCreatorProfile.mockResolvedValue(savedProfile({ canSell: false, bankName: null }));
+   dashboard.data = { loading: false, videos: { ready: 0, total: 0 } };
+
+   await render();
+
+   expect(text('#creator-status')).toContain('dashboard.status_setup');
+   // locked cards are buttons, not links
+   expect(document.querySelector('#creator-sessions-link')?.tagName).toBe('BUTTON');
+   expect(document.querySelector('#creator-earnings-link')?.tagName).toBe('BUTTON');
+   expect(document.querySelector('#creator-videos-link')?.tagName).toBe('A');
+   expect(document.querySelector('#creator-public-link')).toBeNull();
+   expect(document.querySelector('#slug-setup')).toBeNull();
+   expect(document.querySelector('#pass-setup')).toBeNull();
+   expect(text('#stat-earnings .stat-value')).toBe('—');
+});
+
+test('the checklist counts what is done and leads to what is left', async () => {
+   api.fetchMyCreatorProfile.mockResolvedValue(savedProfile());
+   dashboard.data = { loading: false, videos: { ready: 0, total: 0 }, sessions: { active: 0, total: 0 } };
+
+   await render();
+
+   const open = [...document.querySelectorAll('.setup-step.open')].length;
+   expect(open).toBeGreaterThanOrEqual(3); // photo, video, session, link, pass
+   expect(document.querySelectorAll('.setup-step.done')).toHaveLength(1); // the bank account
+});
+
+test('a new creator sees only the way in, no dashboard', async () => {
+   await render();
+
+   expect(document.querySelector('#creator-onboarding')).not.toBeNull();
+   expect(document.querySelector('#creator-dashboard')).toBeNull();
 });
