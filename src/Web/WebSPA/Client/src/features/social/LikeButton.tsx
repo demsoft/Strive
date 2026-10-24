@@ -1,4 +1,4 @@
-import { Button, IconButton, Typography } from '@mui/material';
+import { Box, Button, IconButton, Typography } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import React from 'react';
@@ -20,20 +20,34 @@ export default function LikeButton({ liked, count, onClick, compact }: Props) {
 
    if (compact)
       return (
-         <>
+         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.25 }}>
             <IconButton
                className="like-button"
                aria-label={label}
                aria-pressed={liked}
                onClick={onClick}
-               sx={{ color: '#fff', backgroundColor: 'rgba(0,0,0,0.4)' }}
+               sx={{
+                  width: 48,
+                  height: 48,
+                  color: '#fff',
+                  backgroundColor: 'rgba(255,255,255,0.14)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  transition: 'transform 120ms ease, background-color 120ms ease',
+                  '&:hover': { backgroundColor: 'rgba(255,255,255,0.26)' },
+                  '&:active': { transform: 'scale(0.88)' },
+               }}
             >
                {icon}
             </IconButton>
-            <Typography className="like-count" variant="caption" sx={{ color: '#fff', mt: -0.5 }}>
+            <Typography
+               className="like-count"
+               variant="caption"
+               sx={{ color: '#fff', fontWeight: 700, textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}
+            >
                {count}
             </Typography>
-         </>
+         </Box>
       );
 
    return (

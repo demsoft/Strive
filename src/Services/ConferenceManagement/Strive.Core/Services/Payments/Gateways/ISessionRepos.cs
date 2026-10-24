@@ -17,6 +17,13 @@ namespace Strive.Core.Services.Payments.Gateways
         /// <summary>Published sessions that are not over: no start time, or one that is not before <paramref name="notBefore" /></summary>
         Task<IReadOnlyList<PaidSession>> FindForSale(System.DateTimeOffset notBefore, int limit);
 
+        /// <summary>The creators who have a session for sale (see <see cref="FindForSale" />)</summary>
+        Task<IReadOnlyList<string>> CreatorIdsForSale(System.DateTimeOffset notBefore);
+
+        /// <summary>How many sessions for sale each of these creators has (none: not in the answer)</summary>
+        Task<IReadOnlyDictionary<string, int>> CountForSaleOfCreators(IEnumerable<string> creatorIds,
+            System.DateTimeOffset notBefore);
+
         /// <summary>The same as <see cref="FindForSale" />, for one creator</summary>
         Task<IReadOnlyList<PaidSession>> FindForSaleOfCreator(string creatorId, System.DateTimeOffset notBefore,
             int limit);

@@ -99,6 +99,15 @@ export default function GbeduLanding() {
                </Button>
             </Typography>
 
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap', mt: 1 }}>
+               <Button id="landing-reels" color="inherit" href="/reels">
+                  {t('landing.watch_reels')}
+               </Button>
+               <Button id="landing-creators" color="inherit" href="/creators">
+                  {t('landing.find_creators')}
+               </Button>
+            </Box>
+
             <div className={classes.steps}>
                <div className={classes.step}>
                   <ConfirmationNumberOutlinedIcon color="primary" />

@@ -1,296 +1,61 @@
-import { Alert, Box, Button, CircularProgress, Drawer, IconButton, Typography } from '@mui/material';
-import ChatBubbleOutlinedIcon from '@mui/icons-material/ChatBubbleOutlined';
+import {
+   Alert,
+   Box,
+   Button,
+   CircularProgress,
+   Drawer,
+   IconButton,
+   Skeleton,
+   Snackbar,
+   Typography,
+   useMediaQuery,
+} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import ShareIcon from '@mui/icons-material/Share';
-import VolumeOffIcon from '@mui/icons-material/VolumeOff';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useTranslation } from 'react-i18next';
-import { Link as RouterLink, useLocation, useParams } from 'react-router-dom';
-import { creatorPhotoUrl } from 'src/features/creator/photoUrl';
-import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
-import { formatMoney } from 'src/features/sessions/money';
-import FollowButton from 'src/features/social/FollowButton';
-import LikeButton from 'src/features/social/LikeButton';
-import VideoComments from 'src/features/social/VideoComments';
-import useVideoLike from 'src/features/social/useVideoLike';
+import { Link as RouterLink, useHistory, useLocation, useParams } from 'react-router-dom';
 import useFollowing from 'src/features/social/useFollowing';
+import VideoComments from 'src/features/social/VideoComments';
 import * as api from 'src/services/api/videos';
 import { Video } from 'src/services/api/videos';
+import { cssUrl } from 'src/features/videos/cssUrl';
 import { brand } from 'src/theme';
+import ReelSlide from './reels/ReelSlide';
 import ReportVideoDialog from './ReportVideoDialog';
 
 /** The next video is made ready this many videos ahead, and more are asked for when this few are left. */
 const PRELOAD = 1;
 const LOAD_MORE_WHEN_LEFT = 3;
 
-type ReelProps = {
-   video: Video;
-   index: number;
-   /** the link that plays it, once known */
-   url?: string;
-   active: boolean;
-   muted: boolean;
-   copied: boolean;
-   following: boolean;
-   comments: number;
-   onComments: () => void;
-   signedIn: boolean;
-   onSignIn: () => void;
-   onFollow: () => void;
-   onToggleMute: () => void;
-   onShare: () => void;
-   onReport: () => void;
-};
-
-/** One video as tall as the screen: it plays while it is the one in view, and is a picture otherwise. */
-function Reel({
-   video,
-   index,
-   url,
-   active,
-   muted,
-   copied,
-   following,
-   comments,
-   onComments,
-   signedIn,
-   onSignIn,
-   onFollow,
-   onToggleMute,
-   onShare,
-   onReport,
-}: ReelProps) {
-   const { t } = useTranslation();
-   const player = useRef<HTMLVideoElement>(null);
-   const creator = video.creator;
-   const like = useVideoLike(video.videoId, video, signedIn, onSignIn);
-
-   // playing is the business of the one in view; the others do not even have a player
-   useEffect(() => {
-      const element = player.current;
-      if (!element || !active) return;
-      // the browser may refuse to start without a tap, then the person taps
-      Promise.resolve(element.play?.()).catch(() => undefined);
-   }, [active, url]);
-
-   const tapPlayer = () => {
-      const element = player.current;
-      if (!element) return;
-      if (element.paused) Promise.resolve(element.play?.()).catch(() => undefined);
-      else element.pause?.();
-   };
-
-   return (
-      <Box
-         className="reel"
-         data-reel={index}
-         sx={{
-            position: 'relative',
-            height: '100%',
-            scrollSnapAlign: 'start',
-            scrollSnapStop: 'always',
-            display: 'flex',
-            justifyContent: 'center',
-            backgroundColor: '#000',
-         }}
-      >
-         <Box
-            sx={{
-               position: 'relative',
-               width: '100%',
-               maxWidth: 'calc(100dvh * 9 / 16)',
-               height: '100%',
-               backgroundColor: '#000',
-               backgroundImage: video.posterUrl ? `url(${video.posterUrl})` : brand.gradient,
-               backgroundSize: 'contain',
-               backgroundRepeat: 'no-repeat',
-               backgroundPosition: 'center',
-               overflow: 'hidden',
-            }}
-         >
-            {active && url && !video.locked && (
-               <video
-                  ref={player}
-                  className="reel-player"
-                  src={url}
-                  poster={video.posterUrl ?? undefined}
-                  autoPlay
-                  loop
-                  muted={muted}
-                  playsInline
-                  onClick={tapPlayer}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
-               />
-            )}
-
-            {video.locked && (
-               <Box
-                  className="reel-locked"
-                  sx={{
-                     position: 'absolute',
-                     inset: 0,
-                     display: 'flex',
-                     flexDirection: 'column',
-                     alignItems: 'center',
-                     justifyContent: 'center',
-                     gap: 1.5,
-                     background: 'rgba(0,0,0,0.55)',
-                     color: '#fff',
-                     textAlign: 'center',
-                     px: 3,
-                  }}
-               >
-                  <LockOutlinedIcon sx={{ fontSize: 48 }} />
-                  <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                     {t('videos.locked_title')}
-                  </Typography>
-                  <Button
-                     className="reel-unlock"
-                     variant="contained"
-                     component={RouterLink}
-                     to={`/v/${video.videoId}`}
-                     sx={{ background: brand.gradient }}
-                  >
-                     {t('videos.reels_unlock', { price: formatMoney(video.priceMinor, 'NGN') })}
-                  </Button>
-               </Box>
-            )}
-
-            <Box
-               sx={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  p: 2,
-                  pr: 8,
-                  pb: 3,
-                  color: '#fff',
-                  pointerEvents: 'none',
-                  background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 100%)',
-               }}
-            >
-               {creator && (
-                  <Box
-                     className="reel-creator"
-                     component={RouterLink}
-                     to={`/u/${creator.slug || creator.creatorId}`}
-                     sx={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        mb: 1,
-                        color: 'inherit',
-                        textDecoration: 'none',
-                        pointerEvents: 'auto',
-                     }}
-                  >
-                     <HostAvatar
-                        name={creator.displayName}
-                        size={36}
-                        background={brand.gradient}
-                        photoUrl={creatorPhotoUrl(creator.creatorId, creator.photoVersion, 36)}
-                     />
-                     <Typography sx={{ fontWeight: 700 }}>{creator.displayName}</Typography>
-                  </Box>
-               )}
-               {creator && !video.isOwner && (
-                  <Box component="span" sx={{ ml: 1.5, pointerEvents: 'auto' }}>
-                     <FollowButton className="reel-follow" size="small" following={following} onClick={onFollow} />
-                  </Box>
-               )}
-               <Typography className="reel-title" sx={{ fontWeight: 700 }}>
-                  {video.title}
-               </Typography>
-               {video.description && (
-                  <Typography
-                     className="reel-description"
-                     variant="body2"
-                     sx={{
-                        opacity: 0.9,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                     }}
-                  >
-                     {video.description}
-                  </Typography>
-               )}
-            </Box>
-
-            <Box
-               sx={{
-                  position: 'absolute',
-                  right: 8,
-                  bottom: 24,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 1,
-                  alignItems: 'center',
-               }}
-            >
-               <LikeButton compact liked={like.liked} count={like.likes} onClick={like.toggle} />
-               <IconButton
-                  className="reel-comments"
-                  aria-label={t('social.comments_title')}
-                  onClick={onComments}
-                  sx={{ color: '#fff', backgroundColor: 'rgba(0,0,0,0.4)' }}
-               >
-                  <ChatBubbleOutlinedIcon />
-               </IconButton>
-               <Typography className="reel-comments-count" variant="caption" sx={{ color: '#fff', mt: -0.5 }}>
-                  {comments}
-               </Typography>
-               <IconButton
-                  className="reel-mute"
-                  aria-label={muted ? t('videos.reels_unmute') : t('videos.reels_mute')}
-                  onClick={onToggleMute}
-                  sx={{ color: '#fff', backgroundColor: 'rgba(0,0,0,0.4)' }}
-               >
-                  {muted ? <VolumeOffIcon /> : <VolumeUpIcon />}
-               </IconButton>
-               <IconButton
-                  className="reel-share"
-                  aria-label={copied ? t('sessions.copied') : t('videos.share')}
-                  onClick={onShare}
-                  sx={{ color: '#fff', backgroundColor: 'rgba(0,0,0,0.4)' }}
-               >
-                  <ShareIcon />
-               </IconButton>
-               {!video.isOwner && (
-                  <IconButton
-                     className="reel-report"
-                     aria-label={t('videos.report')}
-                     onClick={onReport}
-                     sx={{ color: '#fff', backgroundColor: 'rgba(0,0,0,0.4)' }}
-                  >
-                     <FlagOutlinedIcon />
-                  </IconButton>
-               )}
-            </Box>
-         </Box>
-      </Box>
-   );
-}
+const glass = {
+   color: '#fff',
+   backgroundColor: 'rgba(255,255,255,0.14)',
+   backdropFilter: 'blur(12px)',
+   border: '1px solid rgba(255,255,255,0.12)',
+   '&:hover': { backgroundColor: 'rgba(255,255,255,0.26)' },
+} as const;
 
 /**
- * The videos one after the other, each as tall as the screen: swipe (or scroll, or press the arrow keys) to the next.
- * `/reels/:videoId` starts with that video, then goes on with the latest.
+ * The videos one after the other, each as tall as the screen: swipe, scroll or press the arrow keys for the next. The
+ * tabs choose between everybody's videos and those of the creators the person follows. `/reels/:videoId` starts with
+ * that video, then goes on with the latest. Double tap a video to like it.
  */
 export default function ReelsPage() {
    const { t } = useTranslation();
    const location = useLocation();
+   const history = useHistory();
    const { videoId: startId } = useParams<{ videoId?: string }>();
    const auth = useAuth();
    const token = auth.user?.access_token;
    const scroller = useRef<HTMLDivElement>(null);
    const asked = useRef(new Set<string>());
    const onlyFollowed = new URLSearchParams(location.search).get('following') === '1';
+   const bigScreen = useMediaQuery('(min-width:900px)');
 
    const [videos, setVideos] = useState<Video[] | null>(null);
    const [next, setNext] = useState<string | null>(null);
@@ -299,7 +64,7 @@ export default function ReelsPage() {
    const [links, setLinks] = useState<Record<string, string>>({});
    const [active, setActive] = useState(0);
    const [muted, setMuted] = useState(true);
-   const [copiedId, setCopiedId] = useState<string | null>(null);
+   const [message, setMessage] = useState<string | null>(null);
    const [reporting, setReporting] = useState<string | null>(null);
    const [commenting, setCommenting] = useState<Video | null>(null);
    // the numbers the person changed by writing or deleting, over what the list said
@@ -311,6 +76,11 @@ export default function ReelsPage() {
       // wait until it is known whether the person is signed in: what is locked depends on it
       if (auth.isLoading) return;
       let cancelled = false;
+      setVideos(null);
+      setFailed(false);
+      setActive(0);
+      asked.current = new Set();
+      scroller.current?.scrollTo?.({ top: 0 });
       const start = startId ? api.fetchVideo(startId, token).catch(() => null) : Promise.resolve(null);
       Promise.all([api.fetchFeed(undefined, 12, onlyFollowed), start]).then(
          ([feed, first]) => {
@@ -379,73 +149,206 @@ export default function ReelsPage() {
       return () => observer.disconnect();
    }, [count]);
 
-   // arrow keys for people with a keyboard
+   const go = useCallback((direction: 1 | -1) => {
+      const root = scroller.current;
+      root?.scrollBy?.({ top: direction * root.clientHeight, behavior: 'smooth' });
+   }, []);
+
+   // arrow keys for people with a keyboard, M for the sound
    useEffect(() => {
       const onKey = (event: KeyboardEvent) => {
-         const root = scroller.current;
-         if (!root || (event.key !== 'ArrowDown' && event.key !== 'ArrowUp')) return;
-         event.preventDefault();
-         root.scrollBy({ top: (event.key === 'ArrowDown' ? 1 : -1) * root.clientHeight, behavior: 'smooth' });
+         if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            go(event.key === 'ArrowDown' ? 1 : -1);
+         } else if (event.key === 'm' || event.key === 'M') {
+            if (!(event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLInputElement))
+               setMuted((m) => !m);
+         }
       };
       window.addEventListener('keydown', onKey);
       return () => window.removeEventListener('keydown', onKey);
-   }, []);
+   }, [go]);
+
+   const signIn = useCallback(
+      (returnTo?: string) => auth.signinRedirect({ state: { url: returnTo ?? location.pathname + location.search } }),
+      [auth, location.pathname, location.search],
+   );
 
    const share = async (video: Video) => {
       const link = api.videoLink(video.videoId);
+      if (typeof navigator.share === 'function') {
+         try {
+            await navigator.share({ title: video.title, text: video.creator?.displayName ?? '', url: link });
+            return;
+         } catch (e) {
+            // closing the share sheet is not a failure; anything else falls back to copying
+            if ((e as Error)?.name === 'AbortError') return;
+         }
+      }
       try {
          await navigator.clipboard.writeText(link);
-         setCopiedId(video.videoId);
+         setMessage(t('videos.link_copied'));
       } catch {
          window.prompt(t('sessions.copy_manually'), link);
       }
    };
 
-   const signIn = useCallback(
-      () => auth.signinRedirect({ state: { url: location.pathname + location.search } }),
-      [auth, location.pathname, location.search],
-   );
+   const follow = (video: Video) => (token ? video.creator && followed.toggle(video.creator.creatorId) : signIn());
 
-   const follow = (video: Video) =>
-      token
-         ? video.creator && followed.toggle(video.creator.creatorId)
-         : auth.signinRedirect({ state: { url: location.pathname + location.search } });
+   const report = (video: Video) => (token ? setReporting(video.videoId) : signIn());
 
-   const report = (video: Video) =>
-      token ? setReporting(video.videoId) : auth.signinRedirect({ state: { url: location.pathname } });
+   const choose = (following: boolean) => {
+      if (following && !token) return signIn('/reels?following=1');
+      history.replace(following ? '/reels?following=1' : '/reels');
+   };
 
-   return (
-      <Box id="reels-page" sx={{ position: 'fixed', inset: 0, backgroundColor: '#000', color: '#fff', zIndex: 1200 }}>
-         <IconButton
-            id="reels-close"
-            component={RouterLink}
-            to="/"
-            aria-label={t('videos.reels_close')}
+   const tab = (following: boolean, label: string, id: string) => {
+      const selected = onlyFollowed === following;
+      return (
+         <Button
+            id={id}
+            onClick={() => choose(following)}
+            aria-pressed={selected}
             sx={{
-               position: 'absolute',
-               top: 8,
-               left: 8,
-               zIndex: 2,
                color: '#fff',
-               backgroundColor: 'rgba(0,0,0,0.4)',
+               borderRadius: '999px',
+               px: 2,
+               py: 0.5,
+               minWidth: 0,
+               opacity: selected ? 1 : 0.65,
+               backgroundColor: selected ? 'rgba(255,255,255,0.2)' : 'transparent',
+               '&:hover': { backgroundColor: 'rgba(255,255,255,0.14)', opacity: 1 },
             }}
          >
-            <CloseIcon />
-         </IconButton>
+            {label}
+         </Button>
+      );
+   };
+
+   const poster = videos?.[active]?.posterUrl;
+
+   return (
+      <Box
+         id="reels-page"
+         sx={{ position: 'fixed', inset: 0, backgroundColor: '#0a0706', color: '#fff', zIndex: 1200 }}
+      >
+         {/* the picture of the video in view, blurred, fills the sides of the frame */}
+         <Box
+            className="reels-backdrop"
+            sx={{
+               position: 'absolute',
+               inset: -60,
+               backgroundImage: poster ? cssUrl(poster) : brand.gradientSoft,
+               backgroundSize: 'cover',
+               backgroundPosition: 'center',
+               filter: 'blur(60px) saturate(1.5) brightness(0.45)',
+               transition: 'background-image 400ms ease',
+            }}
+         />
+
+         <Box
+            sx={{
+               position: 'absolute',
+               top: 0,
+               left: 0,
+               right: 0,
+               zIndex: 6,
+               p: 1.25,
+               display: 'flex',
+               alignItems: 'center',
+               justifyContent: 'space-between',
+               background: 'linear-gradient(180deg, rgba(0,0,0,0.5), transparent)',
+               pointerEvents: 'none',
+               '& > *': { pointerEvents: 'auto' },
+            }}
+         >
+            <IconButton id="reels-close" component={RouterLink} to="/" aria-label={t('videos.reels_close')} sx={glass}>
+               <CloseIcon />
+            </IconButton>
+
+            <Box
+               id="reels-tabs"
+               sx={{ display: 'flex', gap: 0.25, p: 0.5, borderRadius: '999px', ...glass, '&:hover': undefined }}
+            >
+               {tab(false, t('social.tab_for_you'), 'reels-tab-all')}
+               {tab(true, t('social.tab_following'), 'reels-tab-following')}
+            </Box>
+
+            <Button
+               id="reels-creators"
+               component={RouterLink}
+               to="/creators"
+               aria-label={t('creators.nav_creators')}
+               startIcon={<ExploreOutlinedIcon />}
+               sx={{
+                  ...glass,
+                  borderRadius: '999px',
+                  px: { xs: 1.25, sm: 2 },
+                  minWidth: 0,
+                  '& .MuiButton-startIcon': { mr: { xs: 0, sm: 1 }, ml: { xs: 0, sm: -0.5 } },
+               }}
+            >
+               <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                  {t('creators.nav_creators')}
+               </Box>
+            </Button>
+         </Box>
 
          {failed && (
-            <Alert severity="error" id="reels-failed" sx={{ m: 8, mt: 10 }}>
+            <Alert severity="error" id="reels-failed" sx={{ position: 'relative', m: 8, mt: 10 }}>
                {t('videos.feed_failed')}
             </Alert>
          )}
+
          {videos === null && !failed && (
-            <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-               <CircularProgress color="inherit" />
+            <Box
+               id="reels-loading"
+               sx={{ position: 'relative', height: '100%', display: 'grid', placeItems: 'center' }}
+            >
+               <Skeleton
+                  variant="rounded"
+                  animation="wave"
+                  sx={{
+                     width: { xs: '100%', md: 'auto' },
+                     height: { xs: '100%', md: 'min(calc(100dvh - 48px), 880px)' },
+                     aspectRatio: { md: '9 / 16' },
+                     borderRadius: { xs: 0, md: '26px' },
+                     bgcolor: 'rgba(255,255,255,0.08)',
+                  }}
+               />
             </Box>
          )}
+
          {videos?.length === 0 && (
-            <Box id="reels-empty" sx={{ height: '100%', display: 'grid', placeItems: 'center', textAlign: 'center' }}>
-               <Typography>{onlyFollowed ? t('social.following_empty') : t('videos.reels_empty')}</Typography>
+            <Box
+               id="reels-empty"
+               sx={{
+                  position: 'relative',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  gap: 2,
+                  px: 3,
+               }}
+            >
+               <PeopleOutlinedIcon sx={{ fontSize: 64, opacity: 0.6 }} />
+               <Typography sx={{ maxWidth: 360, opacity: 0.85 }}>
+                  {onlyFollowed ? t('social.following_empty') : t('videos.reels_empty')}
+               </Typography>
+               {onlyFollowed && (
+                  <Button
+                     id="reels-find-creators"
+                     variant="contained"
+                     component={RouterLink}
+                     to="/creators"
+                     sx={{ background: brand.gradient, borderRadius: '999px', px: 3 }}
+                  >
+                     {t('creators.find')}
+                  </Button>
+               )}
             </Box>
          )}
 
@@ -454,6 +357,7 @@ export default function ReelsPage() {
                ref={scroller}
                id="reels-scroller"
                sx={{
+                  position: 'relative',
                   height: '100%',
                   overflowY: 'scroll',
                   scrollSnapType: 'y mandatory',
@@ -463,20 +367,19 @@ export default function ReelsPage() {
                }}
             >
                {videos.map((video, index) => (
-                  <Reel
+                  <ReelSlide
                      key={video.videoId}
                      video={video}
                      index={index}
                      url={links[video.videoId]}
                      active={index === active}
                      muted={muted}
-                     copied={copiedId === video.videoId}
                      following={!!video.creator && followed.isFollowing(video.creator.creatorId)}
                      comments={commentTotals[video.videoId] ?? video.comments ?? 0}
-                     onComments={() => setCommenting(video)}
                      signedIn={!!token}
                      onSignIn={signIn}
                      onFollow={() => follow(video)}
+                     onComments={() => setCommenting(video)}
                      onToggleMute={() => setMuted((m) => !m)}
                      onShare={() => share(video)}
                      onReport={() => report(video)}
@@ -490,21 +393,58 @@ export default function ReelsPage() {
             </Box>
          )}
 
+         {videos && videos.length > 1 && bigScreen && (
+            <Box
+               className="reels-arrows"
+               sx={{
+                  position: 'absolute',
+                  right: 24,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  zIndex: 6,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1.5,
+               }}
+            >
+               <IconButton
+                  id="reels-up"
+                  aria-label={t('videos.reels_previous')}
+                  disabled={active === 0}
+                  onClick={() => go(-1)}
+                  sx={{ ...glass, '&.Mui-disabled': { opacity: 0.3, color: '#fff' } }}
+               >
+                  <KeyboardArrowUpIcon />
+               </IconButton>
+               <IconButton
+                  id="reels-down"
+                  aria-label={t('videos.reels_next')}
+                  disabled={active >= videos.length - 1}
+                  onClick={() => go(1)}
+                  sx={{ ...glass, '&.Mui-disabled': { opacity: 0.3, color: '#fff' } }}
+               >
+                  <KeyboardArrowDownIcon />
+               </IconButton>
+            </Box>
+         )}
+
          <Drawer
-            anchor="bottom"
+            anchor={bigScreen ? 'right' : 'bottom'}
             open={!!commenting}
             onClose={() => setCommenting(null)}
             sx={{ zIndex: 1300 }}
             slotProps={{
                paper: {
-                  sx: {
-                     maxHeight: '75vh',
-                     borderRadius: '16px 16px 0 0',
-                     p: 2,
-                     mx: 'auto',
-                     width: '100%',
-                     maxWidth: 560,
-                  },
+                  sx: bigScreen
+                     ? { width: 420, maxWidth: '100%', p: 2.5 }
+                     : {
+                          maxHeight: '75vh',
+                          borderRadius: '18px 18px 0 0',
+                          p: 2,
+                          mx: 'auto',
+                          width: '100%',
+                          maxWidth: 560,
+                       },
                },
             }}
          >
@@ -524,7 +464,7 @@ export default function ReelsPage() {
                      key={commenting.videoId}
                      videoId={commenting.videoId}
                      signedIn={!!token}
-                     onSignIn={signIn}
+                     onSignIn={() => signIn()}
                      locked={commenting.locked}
                      onTotal={(total) => setCommentTotals((current) => ({ ...current, [commenting.videoId]: total }))}
                   />
@@ -537,6 +477,14 @@ export default function ReelsPage() {
             videoId={reporting ?? ''}
             open={!!reporting}
             onClose={() => setReporting(null)}
+         />
+
+         <Snackbar
+            open={!!message}
+            autoHideDuration={2200}
+            onClose={() => setMessage(null)}
+            message={message}
+            sx={{ zIndex: 1400 }}
          />
       </Box>
    );

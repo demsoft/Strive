@@ -70,6 +70,12 @@ namespace Strive.Core.Services.Social
 
         Task<long> CountOfCreator(string creatorId);
 
+        /// <summary>How many people follow each creator (none: not in the answer)</summary>
+        Task<IReadOnlyDictionary<string, long>> CountsOfCreators(IEnumerable<string> creatorIds);
+
+        /// <summary>Of these creators, the ones the person follows</summary>
+        Task<IReadOnlySet<string>> FollowedAmong(string userId, IEnumerable<string> creatorIds);
+
         /// <summary>The creators the person follows, the latest follow first</summary>
         Task<IReadOnlyList<string>> CreatorIdsOfUser(string userId, int limit);
     }

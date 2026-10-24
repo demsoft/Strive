@@ -66,6 +66,25 @@ namespace Strive.Infrastructure.Data.Repos
                                        (x.StartsAt == null || x.StartsAt >= notBefore))
                 .SortByDescending(x => x.CreatedAt).Limit(limit).ToListAsync();
 
+        public async Task<IReadOnlyList<string>> CreatorIdsForSale(DateTimeOffset notBefore) =>
+            await Collection.Distinct(x => x.CreatorId,
+                Builders<PaidSession>.Filter.Where(x => x.Status == SessionStatus.Published &&
+                                                        (x.StartsAt == null || x.StartsAt >= notBefore))).ToListAsync();
+
+        public async Task<IReadOnlyDictionary<string, int>> CountForSaleOfCreators(IEnumerable<string> creatorIds,
+            DateTimeOffset notBefore)
+        {
+            var ids = creatorIds.Distinct().ToList();
+            if (ids.Count == 0) return new Dictionary<string, int>();
+
+            var groups = await Collection.Aggregate()
+                .Match(Builders<PaidSession>.Filter.Where(x => x.Status == SessionStatus.Published &&
+                                                               (x.StartsAt == null || x.StartsAt >= notBefore)) &
+                       Builders<PaidSession>.Filter.In(x => x.CreatorId, ids))
+                .Group(x => x.CreatorId, g => new {CreatorId = g.Key, Count = g.Count()}).ToListAsync();
+            return groups.ToDictionary(x => x.CreatorId, x => x.Count);
+        }
+
         public async Task<IReadOnlyList<PaidSession>> FindForSaleOfCreator(string creatorId, DateTimeOffset notBefore,
             int limit) =>
             await Collection.Find(x => x.CreatorId == creatorId && x.Status == SessionStatus.Published &&

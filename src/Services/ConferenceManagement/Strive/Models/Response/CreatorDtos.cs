@@ -42,4 +42,11 @@ namespace Strive.Models.Response
     public record ResolvedAccountDto(string AccountName);
 
     public record SaveCreatorDto(string DisplayName, string? Bio, string? BankCode, string? AccountNumber);
+
+    /// <summary>A creator in the list for fans to find</summary>
+    /// <param name="CoverUrl">A temporary link to the cover of the latest video, if there is one</param>
+    public record CreatorCardDto(PublicCreatorDto Creator, long Followers, bool Following, bool IsYou, int Videos,
+        int Sessions, string? CoverUrl);
+
+    public record CreatorCardListDto(CreatorCardDto[] Items, int Total);
 }

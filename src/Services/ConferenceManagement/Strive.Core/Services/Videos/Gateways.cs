@@ -16,6 +16,12 @@ namespace Strive.Core.Services.Videos
 
         Task<long> CountOfCreator(string creatorId);
 
+        /// <summary>The creators who have at least one video that is shown</summary>
+        Task<IReadOnlyList<string>> CreatorIdsWithReadyVideos();
+
+        /// <summary>How many videos that are shown each of these creators has (none: not in the answer)</summary>
+        Task<IReadOnlyDictionary<string, int>> CountReadyOfCreators(IEnumerable<string> creatorIds);
+
         /// <summary>Ready videos, newest first. With a time: only the ones that became ready before it (the next page).</summary>
         /// <param name="creatorIds">Only the videos of these creators; none: everybody's</param>
         Task<IReadOnlyList<Video>> FindReady(DateTimeOffset? before, int limit,
