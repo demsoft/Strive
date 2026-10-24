@@ -98,6 +98,24 @@ namespace Strive.Infrastructure.Data.Repos
 
         public Task<long> CountOfCreator(string creatorId) => Collection.CountDocumentsAsync(x => x.CreatorId == creatorId);
 
+        public async Task<IReadOnlyDictionary<string, long>> CountsOfCreators(IEnumerable<string> creatorIds)
+        {
+            var ids = creatorIds.Distinct().ToList();
+            if (ids.Count == 0) return new Dictionary<string, long>();
+
+            var groups = await Collection.Aggregate().Match(Builders<Follow>.Filter.In(x => x.CreatorId, ids))
+                .Group(x => x.CreatorId, g => new {CreatorId = g.Key, Count = g.LongCount()}).ToListAsync();
+            return groups.ToDictionary(x => x.CreatorId, x => x.Count);
+        }
+
+        public async Task<IReadOnlySet<string>> FollowedAmong(string userId, IEnumerable<string> creatorIds)
+        {
+            var ids = creatorIds.Distinct().ToList();
+            var found = await Collection.Find(Builders<Follow>.Filter.And(Builders<Follow>.Filter.Eq(x => x.UserId, userId),
+                Builders<Follow>.Filter.In(x => x.CreatorId, ids))).ToListAsync();
+            return found.Select(x => x.CreatorId).ToHashSet();
+        }
+
         public async Task<IReadOnlyList<string>> CreatorIdsOfUser(string userId, int limit) =>
             (await Collection.Find(x => x.UserId == userId).SortByDescending(x => x.CreatedAt).Limit(limit)
                 .ToListAsync()).Select(x => x.CreatorId).ToList();

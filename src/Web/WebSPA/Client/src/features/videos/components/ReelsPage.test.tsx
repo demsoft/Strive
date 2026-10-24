@@ -18,6 +18,7 @@ const state = vi.hoisted(() => ({
    search: '',
    following: new Set<string>(),
    toggle: vi.fn(),
+   replace: vi.fn(),
    signinRedirect: vi.fn(),
 }));
 
@@ -30,14 +31,16 @@ vi.mock('react-oidc-context', () => ({
    useAuth: () => ({ user: state.user, isLoading: state.isLoading, signinRedirect: state.signinRedirect }),
 }));
 vi.mock('react-router-dom', () => ({
-   Link: React.forwardRef<HTMLAnchorElement, { to: string; children: React.ReactNode; className?: string }>(
-      ({ to, children, className }, ref) => (
-         <a ref={ref} href={to} className={className}>
-            {children}
-         </a>
-      ),
-   ),
+   Link: React.forwardRef<
+      HTMLAnchorElement,
+      { to: string; children: React.ReactNode; className?: string; id?: string }
+   >(({ to, children, className, id }, ref) => (
+      <a ref={ref} href={to} className={className} id={id}>
+         {children}
+      </a>
+   )),
    useParams: () => ({ videoId: state.startId }),
+   useHistory: () => ({ replace: state.replace }),
    useLocation: () => ({ pathname: '/reels', search: state.search }),
 }));
 vi.mock('./ReportVideoDialog', () => ({
@@ -187,14 +190,61 @@ test('the sound is off to start with and the button turns it on for the videos t
    expect(players()[0].muted).toBe(false);
 });
 
-test('tapping the video pauses it and plays it again', async () => {
+const wait = (ms: number) => act(async () => new Promise((resolve) => setTimeout(resolve, ms)));
+
+test('one tap pauses the video (and a tap on a paused video plays it again)', async () => {
    api.fetchFeed.mockResolvedValue({ items: [video('a')], next: null });
    await render();
    const player = players()[0];
    Object.defineProperty(player, 'paused', { value: false, configurable: true });
 
    await act(async () => player.click());
-   expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
+   // it waits a moment in case the second tap of a double tap follows
+   expect(HTMLMediaElement.prototype.pause).not.toHaveBeenCalled();
+   await wait(300);
+
+   expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledTimes(1);
+});
+
+test('a double tap likes the video, with the heart, and does not pause it', async () => {
+   state.user = { access_token: 'tok' };
+   api.likeVideo.mockResolvedValue({ likes: 6, liked: true });
+   api.fetchFeed.mockResolvedValue({ items: [video('a', { likes: 5, liked: false })], next: null });
+   await render();
+   const player = players()[0];
+   Object.defineProperty(player, 'paused', { value: false, configurable: true });
+
+   await act(async () => player.click());
+   await act(async () => player.click());
+   await wait(350);
+
+   expect(api.likeVideo).toHaveBeenCalledWith('a');
+   expect(document.querySelector('.reel-heart')).not.toBeNull();
+   expect(HTMLMediaElement.prototype.pause).not.toHaveBeenCalled();
+});
+
+test('a double tap on a video that is liked already does not take the like back', async () => {
+   state.user = { access_token: 'tok' };
+   api.fetchFeed.mockResolvedValue({ items: [video('a', { likes: 5, liked: true })], next: null });
+   await render();
+
+   await act(async () => players()[0].click());
+   await act(async () => players()[0].click());
+   await wait(350);
+
+   expect(api.likeVideo).not.toHaveBeenCalled();
+   expect(api.unlikeVideo).not.toHaveBeenCalled();
+});
+
+test('a double tap signed out asks for a sign in', async () => {
+   api.fetchFeed.mockResolvedValue({ items: [video('a')], next: null });
+   await render();
+
+   await act(async () => players()[0].click());
+   await act(async () => players()[0].click());
+   await wait(350);
+
+   expect(state.signinRedirect).toHaveBeenCalledWith({ state: { url: '/reels' } });
 });
 
 test('near the end the next page of videos is asked for', async () => {
@@ -284,7 +334,8 @@ test('with ?following=1 only the videos of the followed creators are asked for, 
    await render();
 
    expect(api.fetchFeed).toHaveBeenCalledWith(undefined, 12, true);
-   expect(document.querySelector('#reels-empty')?.textContent).toBe('social.following_empty');
+   expect(document.querySelector('#reels-empty')?.textContent).toContain('social.following_empty');
+   expect(document.querySelector('#reels-find-creators')?.getAttribute('href')).toBe('/creators');
 });
 
 test('the heart shows the likes; pressing it likes the video, or asks for a sign in', async () => {
@@ -322,4 +373,85 @@ test('the comment button shows the number and opens the comments of that video; 
 
    await act(async () => document.querySelector<HTMLElement>('#reels-comments-close')?.click());
    await settle();
+});
+
+test('the tabs switch between everybody and the creators that are followed; the second needs a sign in', async () => {
+   api.fetchFeed.mockResolvedValue({ items: [video('a')], next: null });
+   await render();
+   expect(document.querySelector('#reels-tab-all')?.getAttribute('aria-pressed')).toBe('true');
+
+   await act(async () => document.querySelector<HTMLElement>('#reels-tab-following')?.click());
+   expect(state.signinRedirect).toHaveBeenCalledWith({ state: { url: '/reels?following=1' } });
+   expect(state.replace).not.toHaveBeenCalled();
+
+   act(() => root.unmount());
+   root = createRoot(container);
+   state.user = { access_token: 'tok' };
+   await render();
+   await act(async () => document.querySelector<HTMLElement>('#reels-tab-following')?.click());
+   expect(state.replace).toHaveBeenCalledWith('/reels?following=1');
+
+   state.search = '?following=1';
+   act(() => root.unmount());
+   root = createRoot(container);
+   await render();
+   expect(document.querySelector('#reels-tab-following')?.getAttribute('aria-pressed')).toBe('true');
+   await act(async () => document.querySelector<HTMLElement>('#reels-tab-all')?.click());
+   expect(state.replace).toHaveBeenLastCalledWith('/reels');
+});
+
+test('sharing uses the share sheet of the device when there is one, and does not copy', async () => {
+   const share = vi.fn(() => Promise.resolve());
+   const writeText = vi.fn(() => Promise.resolve());
+   Object.defineProperty(navigator, 'share', { value: share, configurable: true });
+   Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+   api.fetchFeed.mockResolvedValue({ items: [video('a')], next: null });
+   try {
+      await render();
+
+      await act(async () => document.querySelector<HTMLElement>('.reel-share')?.click());
+
+      expect(share).toHaveBeenCalledWith(expect.objectContaining({ url: 'https://gbedu.test/v/a' }));
+      expect(writeText).not.toHaveBeenCalled();
+   } finally {
+      Reflect.deleteProperty(navigator, 'share');
+   }
+});
+
+test('closing the share sheet is not a failure: nothing is copied; copying says so', async () => {
+   const abort = Object.assign(new Error('closed'), { name: 'AbortError' });
+   const writeText = vi.fn(() => Promise.resolve());
+   Object.defineProperty(navigator, 'share', { value: vi.fn(() => Promise.reject(abort)), configurable: true });
+   Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+   api.fetchFeed.mockResolvedValue({ items: [video('a')], next: null });
+   try {
+      await render();
+      await act(async () => document.querySelector<HTMLElement>('.reel-share')?.click());
+      expect(writeText).not.toHaveBeenCalled();
+   } finally {
+      Reflect.deleteProperty(navigator, 'share');
+   }
+
+   await act(async () => document.querySelector<HTMLElement>('.reel-share')?.click());
+   await act(async () => undefined);
+   expect(writeText).toHaveBeenCalledWith('https://gbedu.test/v/a');
+   expect(document.body.textContent).toContain('videos.link_copied');
+});
+
+test('the arrow keys and the buttons go to the next and the previous video; M turns the sound on', async () => {
+   api.fetchFeed.mockResolvedValue({ items: [video('a'), video('b')], next: null });
+   await render();
+
+   await act(async () => void window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' })));
+   expect(Element.prototype.scrollBy).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth' }));
+   expect(players()[0].muted).toBe(true);
+   await act(async () => void window.dispatchEvent(new KeyboardEvent('keydown', { key: 'm' })));
+   expect(players()[0].muted).toBe(false);
+});
+
+test('the creators page is one tap away', async () => {
+   api.fetchFeed.mockResolvedValue({ items: [video('a')], next: null });
+   await render();
+
+   expect(document.querySelector('#reels-creators')?.getAttribute('href')).toBe('/creators');
 });

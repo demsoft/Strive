@@ -12,6 +12,10 @@ namespace Strive.Core.Services.Payments.Gateways
 
         Task<long> Count();
 
+        /// <summary>The profiles with these ids (any that are not there are left out)</summary>
+        Task<System.Collections.Generic.IReadOnlyList<CreatorProfile>> FindByIds(
+            System.Collections.Generic.IEnumerable<string> creatorIds);
+
         /// <summary>The names of creators by id (for lists)</summary>
         Task<System.Collections.Generic.IReadOnlyDictionary<string, string>> FindNames(System.Collections.Generic.IEnumerable<string> creatorIds);
 

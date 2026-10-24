@@ -45,3 +45,44 @@ export async function confirmNotice(token: string): Promise<NoticeAnswer> {
 export async function stopNotice(token: string): Promise<NoticeAnswer> {
    return (await Axios.post<NoticeAnswer>(`${notices()}/${encodeURIComponent(token)}/stop`)).data;
 }
+
+export type CreatorCard = {
+   creator: PublicCreator;
+   followers: number;
+   following: boolean;
+   /** the creator is the person who asks */
+   isYou: boolean;
+   videos: number;
+   /** sessions that are on or coming */
+   sessions: number;
+   /** a temporary link to the cover of the latest video */
+   coverUrl?: string | null;
+};
+
+export type CreatorCardList = { items: CreatorCard[]; total: number };
+
+export type CreatorSort = 'popular' | 'new';
+
+export type CreatorQuery = {
+   q?: string;
+   sort?: CreatorSort;
+   /** only the creators the person follows */
+   following?: boolean;
+   skip?: number;
+   limit?: number;
+};
+
+/** Creators for fans to find and follow: the ones with something to see, or the ones the person follows. */
+export async function fetchCreatorCards(query: CreatorQuery = {}): Promise<CreatorCardList> {
+   return (
+      await Axios.get<CreatorCardList>(`${base()}/discover`, {
+         params: {
+            q: query.q || undefined,
+            sort: query.sort,
+            following: query.following || undefined,
+            skip: query.skip || undefined,
+            limit: query.limit,
+         },
+      })
+   ).data;
+}

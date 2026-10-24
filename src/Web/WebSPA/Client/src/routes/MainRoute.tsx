@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { isGbedu } from 'src/brand-id';
 import DiscoverSessions from 'src/features/gbedu/DiscoverSessions';
+import DiscoverCreators from 'src/features/creators/DiscoverCreators';
 import DiscoverVideos from 'src/features/videos/components/DiscoverVideos';
 import GbeduRoles from 'src/features/gbedu/GbeduRoles';
 import BrandLogo from 'src/components/BrandLogo';
@@ -148,6 +149,12 @@ export default function MainRoute() {
             <Box sx={{ display: 'flex', gap: 1 }}>
                {isGbedu && (
                   <>
+                     <Button color="inherit" component={RouterLink} to="/reels" id="reels-link">
+                        {t('creators.nav_reels')}
+                     </Button>
+                     <Button color="inherit" component={RouterLink} to="/creators" id="creators-link">
+                        {t('creators.nav_creators')}
+                     </Button>
                      <Button color="inherit" component={RouterLink} to="/tickets" id="tickets-link">
                         {t('sessions.tickets_link')}
                      </Button>
@@ -261,6 +268,7 @@ export default function MainRoute() {
          </main>
 
          {isGbedu && <DiscoverSessions />}
+         {isGbedu && <DiscoverCreators />}
          {isGbedu && <DiscoverVideos />}
       </div>
    );

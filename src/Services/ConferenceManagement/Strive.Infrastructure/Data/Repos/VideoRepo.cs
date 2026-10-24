@@ -57,6 +57,24 @@ namespace Strive.Infrastructure.Data.Repos
             await Collection.Find(x => x.CreatorId == creatorId).SortByDescending(x => x.CreatedAt).Limit(limit)
                 .ToListAsync();
 
+        public async Task<IReadOnlyList<string>> CreatorIdsWithReadyVideos() =>
+            await Collection.Distinct(x => x.CreatorId, ReadyAndShown).ToListAsync();
+
+        public async Task<IReadOnlyDictionary<string, int>> CountReadyOfCreators(IEnumerable<string> creatorIds)
+        {
+            var ids = creatorIds.Distinct().ToList();
+            if (ids.Count == 0) return new Dictionary<string, int>();
+
+            var groups = await Collection.Aggregate()
+                .Match(ReadyAndShown & Builders<Video>.Filter.In(x => x.CreatorId, ids))
+                .Group(x => x.CreatorId, g => new {CreatorId = g.Key, Count = g.Count()}).ToListAsync();
+            return groups.ToDictionary(x => x.CreatorId, x => x.Count);
+        }
+
+        private static FilterDefinition<Video> ReadyAndShown =>
+            Builders<Video>.Filter.Where(x => x.Status == VideoStatus.Ready && x.Moderation != VideoModeration.Hidden &&
+                                              x.Moderation != VideoModeration.Removed);
+
         public Task<long> CountOfCreator(string creatorId) =>
             Collection.CountDocumentsAsync(x => x.CreatorId == creatorId);
 

@@ -55,6 +55,13 @@ namespace Strive.Infrastructure.Data.Repos
             return found.ToDictionary(x => x.CreatorId, x => x.DisplayName);
         }
 
+        public async Task<System.Collections.Generic.IReadOnlyList<CreatorProfile>> FindByIds(
+            System.Collections.Generic.IEnumerable<string> creatorIds)
+        {
+            var ids = creatorIds.Distinct().ToList();
+            return await Collection.Find(x => ids.Contains(x.CreatorId)).ToListAsync();
+        }
+
         public Task<CreatorProfile?> FindBySlug(string slug)
         {
             return Collection.Find(x => x.Slug == slug).FirstOrDefaultAsync()!;

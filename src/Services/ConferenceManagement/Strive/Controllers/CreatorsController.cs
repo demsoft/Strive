@@ -28,11 +28,19 @@ namespace Strive.Controllers
         private readonly ICreatorPhotoRepo _photos;
         private readonly IPhotoStorage _photoStorage;
         private readonly IFollowRepo _follows;
+        private readonly CreatorDirectory _directory;
+        private readonly Strive.Core.Services.Videos.IVideoRepo _videos;
+        private readonly Strive.Presenters.VideoPresenter _videoPresenter;
 
         public CreatorsController(IMediator mediator, ICreatorRepo creators, ICreatorPhotoRepo photos,
-            IPhotoStorage photoStorage, IFollowRepo follows, IOptions<PaymentsOptions> options)
+            IPhotoStorage photoStorage, IFollowRepo follows, CreatorDirectory directory,
+            Strive.Core.Services.Videos.IVideoRepo videos, Strive.Presenters.VideoPresenter videoPresenter,
+            IOptions<PaymentsOptions> options)
         {
             _follows = follows;
+            _directory = directory;
+            _videos = videos;
+            _videoPresenter = videoPresenter;
             _photos = photos;
             _photoStorage = photoStorage;
             _mediator = mediator;
@@ -131,6 +139,34 @@ namespace Strive.Controllers
             if (!result.Success) return result.ToActionResult();
 
             return CreatorProfileDto.From(result.Response!);
+        }
+
+        // GET v1/creators/discover?q=&sort=&following=&skip=&limit=
+        /// <summary>
+        ///     Creators for fans to find and follow: the ones with something to see, by name, the most followed or the
+        ///     newest first. Everybody can ask; the answer says which of them the person follows.
+        /// </summary>
+        [HttpGet("v1/creators/discover")]
+        [AllowAnonymous]
+        public async Task<ActionResult<CreatorCardListDto>> Discover([FromQuery] string? q = null,
+            [FromQuery] string? sort = null, [FromQuery] bool following = false, [FromQuery] int skip = 0,
+            [FromQuery] int limit = 24)
+        {
+            var page = await _directory.Find(UserId, q, sort, following, skip, limit);
+
+            var cards = new System.Collections.Generic.List<CreatorCardDto>();
+            foreach (var entry in page.Items)
+            {
+                var latest = (await _videos.FindReadyOfCreator(entry.Creator.CreatorId, 1)).FirstOrDefault();
+                var cover = latest == null
+                    ? null
+                    : _videoPresenter.ToDto(latest, null, false, false, false).PosterUrl;
+                cards.Add(new CreatorCardDto(PublicCreatorDto.From(entry.Creator), entry.Followers, entry.Following,
+                    UserId != null && entry.Creator.UserId == UserId, entry.Videos, entry.Sessions, cover));
+            }
+
+            Response.Headers.CacheControl = "no-store";
+            return new CreatorCardListDto(cards.ToArray(), page.Total);
         }
 
         // GET v1/creators/following
