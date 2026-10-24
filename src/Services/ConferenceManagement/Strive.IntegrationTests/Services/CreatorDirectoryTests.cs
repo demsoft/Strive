@@ -73,7 +73,7 @@ namespace Strive.IntegrationTests.Services
         }
 
         [Fact]
-        public async Task OnlyCreatorsWithSomethingToSee_AreListed()
+        public async Task EveryCreatorIsListed_ThoseWithSomethingToSeeShowTheirCounts()
         {
             var (withVideo, idWithVideo) = await NewCreator("Has video");
             var (withSession, idWithSession) = await NewCreator("Has session");
@@ -87,8 +87,13 @@ namespace Strive.IntegrationTests.Services
             var ids = list.Items.Select(x => x.Creator.CreatorId).ToList();
             Assert.Contains(idWithVideo, ids);
             Assert.Contains(idWithSession, ids);
-            Assert.DoesNotContain(idEmpty, ids);
-            Assert.Equal(2, list.Total);
+            // a new creator with nothing yet is found as well
+            Assert.Contains(idEmpty, ids);
+            Assert.Equal(3, list.Total);
+            var empty = list.Items.Single(x => x.Creator.CreatorId == idEmpty);
+            Assert.Equal(0, empty.Videos);
+            Assert.Equal(0, empty.Sessions);
+            Assert.Null(empty.CoverUrl);
             var card = list.Items.Single(x => x.Creator.CreatorId == idWithVideo);
             Assert.Equal(1, card.Videos);
             Assert.NotNull(card.CoverUrl);
@@ -151,7 +156,7 @@ namespace Strive.IntegrationTests.Services
             Assert.All(asFan.Items, x => Assert.False(x.IsYou));
             Assert.All((await Discover(null)).Items, x => Assert.False(x.Following));
             Assert.True((await Discover(host)).Items.Single(x => x.Creator.CreatorId == id).IsYou);
-            Assert.DoesNotContain(otherId, asFan.Items.Select(x => x.Creator.CreatorId));
+            Assert.False(asFan.Items.Single(x => x.Creator.CreatorId == otherId).Following);
         }
 
         [Fact]
@@ -204,6 +209,19 @@ namespace Strive.IntegrationTests.Services
             Assert.DoesNotContain("0123456789", text);
             Assert.DoesNotContain("accountLast4", text, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("bankCode", text, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task Popular_PutsCreatorsWithSomethingToSeeAheadOfEmptyOnes_AmongTheSameFollowers()
+        {
+            var (_, emptyId) = await NewCreator("Nothing yet");
+            var (busy, busyId) = await NewCreator("Busy one");
+            await ReadyVideo(busy);
+
+            var list = await Read<CreatorCardListDto>(await Api(null).GetAsync(
+                $"/v1/creators/discover?sort=popular&q={_tag}"));
+
+            Assert.Equal(new[] {busyId, emptyId}, list.Items.Select(x => x.Creator.CreatorId).ToArray());
         }
     }
 }
