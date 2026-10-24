@@ -10,6 +10,7 @@ import AdminVideosPage from 'src/features/admin/components/AdminVideosPage';
 import AdminPaymentsPage from 'src/features/admin/components/AdminPaymentsPage';
 import AdminRoute from './AdminRoute';
 import ConferenceRoute from './ConferenceRoute';
+import ConnectionsPage from 'src/features/social/ConnectionsPage';
 import CreatorPage from 'src/features/creator/components/CreatorPage';
 import MyVideosPage from 'src/features/videos/components/MyVideosPage';
 import EarningsPage from 'src/features/creator/components/EarningsPage';
@@ -52,6 +53,7 @@ export default function AuthenticatedRoutes() {
          <Route path="/creator/earnings" component={EarningsPage} />
          <Route path="/creator/videos" component={MyVideosPage} />
          <Route path="/creator" component={CreatorPage} />
+         <Route path="/connections" component={ConnectionsPage} />
          <Route path="/tickets" component={MyTicketsPage} />
          <Route path="/recordings" component={MyRecordingsRoute} />
          <Route path="/c/:id" component={ConferenceRoute} />

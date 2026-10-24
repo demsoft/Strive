@@ -1,5 +1,6 @@
 import { AppBar, Box, Button, Toolbar } from '@mui/material';
 import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
+import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import SlideshowOutlinedIcon from '@mui/icons-material/SlideshowOutlined';
 import React from 'react';
 import { useAuth } from 'react-oidc-context';
@@ -57,6 +58,7 @@ export default function SiteHeader() {
             <Box sx={{ flex: 1 }} />
             {link('/reels', t('creators.nav_reels'), <SlideshowOutlinedIcon />, 'nav-reels')}
             {link('/creators', t('creators.nav_creators'), <ExploreOutlinedIcon />, 'nav-creators')}
+            {auth.user && link('/connections', t('social.connections_nav'), <PeopleOutlinedIcon />, 'nav-connections')}
             {auth.user ? (
                <Button id="nav-home" component={RouterLink} to="/" variant="outlined" color="inherit" sx={{ ml: 1 }}>
                   {t('creators.nav_home')}

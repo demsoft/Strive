@@ -179,5 +179,80 @@ namespace Strive.IntegrationTests.Services
 
             Assert.Empty(feed.Items);
         }
+
+        private async Task<FollowerListDto?> Followers(UserAccount user, string query = "")
+        {
+            var response = await Api(user).GetAsync("/v1/creators/me/followers" + query);
+            if (response.StatusCode == HttpStatusCode.NoContent) return null;
+            return await Read<FollowerListDto>(response);
+        }
+
+        [Fact]
+        public async Task Followers_ListsWhoFollowTheCreator_WithTheirNames_LatestFirst()
+        {
+            var (host, creatorId) = await NewCreator();
+            var first = Factory.CreateUser("Tola Bright", false);
+            var second = Factory.CreateUser("Bayo Smart", false);
+            await Follow(first, creatorId);
+            await Task.Delay(20);
+            await Follow(second, creatorId);
+
+            var list = (await Followers(host))!;
+
+            Assert.Equal(2, list.Total);
+            Assert.Equal(new[] {"Bayo Smart", "Tola Bright"}, list.Items.Select(x => x.Name).ToArray());
+            Assert.True(list.Items[0].Since >= list.Items[1].Since);
+            // nobody's account id is given out
+            var text = await (await Api(host).GetAsync("/v1/creators/me/followers")).Content.ReadAsStringAsync();
+            Assert.DoesNotContain(first.Sub, text);
+        }
+
+        [Fact]
+        public async Task Followers_ArePaged_AndOnlyTheOwnFollowersAreShown()
+        {
+            var (host, creatorId) = await NewCreator();
+            var (otherHost, otherId) = await NewCreator();
+            for (var i = 0; i < 3; i++)
+            {
+                await Follow(Factory.CreateUser("Fan " + i, false), creatorId);
+                await Task.Delay(15);
+            }
+
+            await Follow(Factory.CreateUser("Somebody else's fan", false), otherId);
+
+            var page = (await Followers(host, "?skip=0&limit=2"))!;
+            var rest = (await Followers(host, "?skip=2&limit=2"))!;
+
+            Assert.Equal(3, page.Total);
+            Assert.Equal(new[] {"Fan 2", "Fan 1"}, page.Items.Select(x => x.Name).ToArray());
+            Assert.Equal(new[] {"Fan 0"}, rest.Items.Select(x => x.Name).ToArray());
+            Assert.Equal(1, (await Followers(otherHost))!.Total);
+        }
+
+        [Fact]
+        public async Task Followers_NeedASignIn_AndFansGetNothing()
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized, (await Api(null).GetAsync("/v1/creators/me/followers")).StatusCode);
+            Assert.Null(await Followers(NewFan()));
+        }
+
+        [Fact]
+        public async Task Following_AgainKeepsTheNameInTheListCurrent()
+        {
+            var (host, creatorId) = await NewCreator();
+            var sub = Guid.NewGuid().ToString("N");
+            UserAccount WithName(string name) => new(sub, name, false,
+                Factory.JwtTokens.GenerateJwtToken(new System.Collections.Generic.List<System.Security.Claims.Claim>
+                {
+                    new(System.Security.Claims.ClaimTypes.NameIdentifier, sub), new("name", name),
+                }));
+
+            await Follow(WithName("Old Name"), creatorId);
+            await Follow(WithName("New Name"), creatorId);
+
+            var list = (await Followers(host))!;
+            Assert.Equal(1, list.Total);
+            Assert.Equal("New Name", list.Items[0].Name);
+        }
     }
 }

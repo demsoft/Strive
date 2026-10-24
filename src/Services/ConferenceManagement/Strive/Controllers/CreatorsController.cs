@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -169,6 +170,25 @@ namespace Strive.Controllers
             return new CreatorCardListDto(cards.ToArray(), page.Total);
         }
 
+        // GET v1/creators/me/followers?skip=&limit=
+        /// <summary>The people who follow the creator, the latest first. A person who is no creator gets 204.</summary>
+        [HttpGet("v1/creators/me/followers")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<ActionResult<FollowerListDto>> GetFollowers([FromQuery] int skip = 0,
+            [FromQuery] int limit = 50)
+        {
+            if (UserId == null) return Forbid();
+
+            var creator = await _creators.FindByUserId(UserId);
+            if (creator == null) return NoContent();
+
+            var follows = await _follows.FindOfCreator(creator.CreatorId, Math.Max(0, skip), Math.Clamp(limit, 1, 100));
+            Response.Headers.CacheControl = "no-store";
+            return new FollowerListDto(
+                follows.Select(x => new FollowerDto(x.UserName ?? CommentRules.UnknownName, x.CreatedAt)).ToArray(),
+                await _follows.CountOfCreator(creator.CreatorId));
+        }
+
         // GET v1/creators/following
         /// <summary>The creators the person follows, the latest follow first</summary>
         [HttpGet("v1/creators/following")]
@@ -195,7 +215,8 @@ namespace Strive.Controllers
         {
             if (UserId == null) return Forbid();
 
-            return (await _mediator.Send(new FollowCreatorRequest(UserId, creatorId))).ToActionResult();
+            var name = User.Claims.FirstOrDefault(x => x.Type == "name")?.Value;
+            return (await _mediator.Send(new FollowCreatorRequest(UserId, creatorId, name))).ToActionResult();
         }
 
         // DELETE v1/creators/{creatorId}/follow

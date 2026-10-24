@@ -155,6 +155,9 @@ export default function MainRoute() {
                      <Button color="inherit" component={RouterLink} to="/creators" id="creators-link">
                         {t('creators.nav_creators')}
                      </Button>
+                     <Button color="inherit" component={RouterLink} to="/connections" id="connections-link">
+                        {t('social.connections_nav')}
+                     </Button>
                      <Button color="inherit" component={RouterLink} to="/tickets" id="tickets-link">
                         {t('sessions.tickets_link')}
                      </Button>

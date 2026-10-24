@@ -49,4 +49,9 @@ namespace Strive.Models.Response
         int Sessions, string? CoverUrl);
 
     public record CreatorCardListDto(CreatorCardDto[] Items, int Total);
+
+    /// <summary>A person who follows the creator</summary>
+    public record FollowerDto(string Name, DateTimeOffset Since);
+
+    public record FollowerListDto(FollowerDto[] Items, long Total);
 }
