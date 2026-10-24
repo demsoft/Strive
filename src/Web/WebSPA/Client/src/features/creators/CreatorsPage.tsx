@@ -6,6 +6,7 @@ import {
    Container,
    InputAdornment,
    Skeleton,
+   Snackbar,
    TextField,
    ToggleButton,
    ToggleButtonGroup,
@@ -17,6 +18,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
+import { requestErrorMessage } from 'src/features/creator/errors';
 import * as api from 'src/services/api/follows';
 import { CreatorCard as Card, CreatorSort } from 'src/services/api/follows';
 import { brand } from 'src/theme';
@@ -39,6 +41,7 @@ export default function CreatorsPage() {
    const [total, setTotal] = useState(0);
    const [failed, setFailed] = useState(false);
    const [loadingMore, setLoadingMore] = useState(false);
+   const [message, setMessage] = useState<string | null>(null);
 
    // the words are searched for when the person stopped typing
    useEffect(() => {
@@ -113,8 +116,10 @@ export default function CreatorsPage() {
       set(!was);
       try {
          await (was ? api.unfollowCreator(id) : api.followCreator(id));
-      } catch {
+      } catch (e) {
+         // it goes back, and the person is told why (for example that nobody follows themself)
          set(was);
+         setMessage(requestErrorMessage(e) || t('creators.follow_failed'));
       }
    };
 
@@ -231,6 +236,8 @@ export default function CreatorsPage() {
                </Box>
             )}
          </Container>
+
+         <Snackbar open={!!message} autoHideDuration={4000} onClose={() => setMessage(null)} message={message} />
       </Box>
    );
 }

@@ -7,6 +7,7 @@ import { Link as RouterLink, useLocation, useParams } from 'react-router-dom';
 import BrandLogo from 'src/components/BrandLogo';
 import { SessionTile } from 'src/features/gbedu/DiscoverSessions';
 import VideoTile from 'src/features/videos/components/VideoTile';
+import { requestErrorMessage } from '../errors';
 import { creatorPhotoUrl } from '../photoUrl';
 import PassCard from './PassCard';
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
@@ -30,6 +31,7 @@ export default function CreatorPublicPage() {
    const [page, setPage] = useState<CreatorPage | null>(null);
    const [notFound, setNotFound] = useState(false);
    const [copied, setCopied] = useState(false);
+   const [followError, setFollowError] = useState<string | null>(null);
    // what the person did on this page; none: what the server said when the page was loaded
    const [followed, setFollowed] = useState<boolean | null>(null);
    // the same for the mail the person asked for
@@ -61,10 +63,12 @@ export default function CreatorPublicPage() {
       setFollowed(!was);
       // stopping to follow ends the mail as well
       if (was) setNotice('off');
+      setFollowError(null);
       try {
          await (was ? follows.unfollowCreator(page.creator.creatorId) : follows.followCreator(page.creator.creatorId));
-      } catch {
+      } catch (e) {
          setFollowed(was);
+         setFollowError(requestErrorMessage(e) || t('creators.follow_failed'));
       }
    };
 
@@ -125,6 +129,12 @@ export default function CreatorPublicPage() {
                         {copied ? t('sessions.copied') : t('creator.copy_page_link')}
                      </Button>
                   </Box>
+
+                  {followError && (
+                     <Alert severity="error" id="follow-error" sx={{ mb: 2 }} onClose={() => setFollowError(null)}>
+                        {followError}
+                     </Alert>
+                  )}
 
                   {following && !page.isYou && page.noticesAvailable && (
                      <NoticeSettings

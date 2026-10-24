@@ -8,6 +8,7 @@ import { makeStyles } from 'tss-react/mui';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import RequireAuth from './features/auth/components/RequireAuth';
+import AxiosAuth from './features/auth/components/AxiosAuth';
 import StriveAuthProvider from './features/auth/components/StriveAuthProvider';
 import UserInteractionListener from './features/media/components/UserInteractionListener';
 import theme from './theme';
@@ -45,6 +46,8 @@ function App() {
                <Route path="/c/:id/recording" exact component={RecordingRoute} />
                <Route path="/">
                   <StriveAuthProvider>
+                     {/* the pages that anybody can open call the API as the person who is signed in */}
+                     <AxiosAuth />
                      <Switch>
                         {/* the silent renew iframe, the provider processes the callback */}
                         <Route path="/authentication/silent_callback" render={() => null} />
