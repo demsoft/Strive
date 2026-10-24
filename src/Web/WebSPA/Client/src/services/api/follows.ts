@@ -86,3 +86,15 @@ export async function fetchCreatorCards(query: CreatorQuery = {}): Promise<Creat
       })
    ).data;
 }
+
+export type Follower = { name: string; since: string };
+
+export type FollowerList = { items: Follower[]; total: number };
+
+/** The people who follow the signed in creator, the latest first. Null: the person is no creator. */
+export async function fetchMyFollowers(skip = 0, limit = 50): Promise<FollowerList | null> {
+   const response = await Axios.get<FollowerList | ''>(`${base()}/me/followers`, {
+      params: { skip: skip || undefined, limit },
+   });
+   return response.status === 204 || !response.data ? null : response.data;
+}

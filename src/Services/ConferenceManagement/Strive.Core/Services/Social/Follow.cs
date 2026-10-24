@@ -34,6 +34,9 @@ namespace Strive.Core.Services.Social
 
         public DateTimeOffset CreatedAt { get; init; }
 
+        /// <summary>The name of the follower as it was in their token when they followed (the creator sees it in the list)</summary>
+        public string? UserName { get; set; }
+
         public NoticeStatus Notice { get; set; } = NoticeStatus.Off;
 
         /// <summary>Where the notices go; only set while they are pending or on</summary>
@@ -49,6 +52,12 @@ namespace Strive.Core.Services.Social
     public interface IFollowRepo
     {
         Task<Follow?> Find(string userId, string creatorId);
+
+        /// <summary>The people who follow the creator, the latest follow first</summary>
+        Task<IReadOnlyList<Follow>> FindOfCreator(string creatorId, int skip, int limit);
+
+        /// <summary>Keeps the name of the follower up to date (they may have changed it)</summary>
+        Task UpdateUserName(string userId, string creatorId, string name);
 
         Task<Follow?> FindByNoticeToken(string token);
 

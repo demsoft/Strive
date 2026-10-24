@@ -46,6 +46,30 @@ namespace Strive.Core.Tests.Services.Social
         }
 
         [Fact]
+        public async Task Follow_KeepsTheNameOfTheFollower_AndRefreshesItWhenFollowingAgain()
+        {
+            var (useCase, follows) = Build();
+
+            await useCase.Handle(new FollowCreatorRequest("fan", "c1", "  Tola  "), CancellationToken.None);
+            follows.Verify(x => x.TryAdd(It.Is<Follow>(f => f.UserName == "Tola")), Times.Once);
+            follows.Verify(x => x.UpdateUserName(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+
+            follows.Setup(x => x.TryAdd(It.IsAny<Follow>())).ReturnsAsync(false);
+            await useCase.Handle(new FollowCreatorRequest("fan", "c1", "Tola B"), CancellationToken.None);
+            follows.Verify(x => x.UpdateUserName("fan", "c1", "Tola B"), Times.Once);
+        }
+
+        [Fact]
+        public async Task Follow_WithoutAName_IsListedAsSomeone()
+        {
+            var (useCase, follows) = Build();
+
+            await useCase.Handle(new FollowCreatorRequest("fan", "c1"), CancellationToken.None);
+
+            follows.Verify(x => x.TryAdd(It.Is<Follow>(f => f.UserName == "Someone")), Times.Once);
+        }
+
+        [Fact]
         public async Task Follow_ACreatorThatIsNotThere_NotFound()
         {
             var (useCase, follows) = Build(creatorExists: false);

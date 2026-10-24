@@ -21,6 +21,7 @@ namespace Strive.Infrastructure.Data.Repos
                 config.MapIdMember(x => x.FollowId);
                 config.MapMember(x => x.CreatedAt).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
                 // a follow without notices has no token at all (the index of the tokens is unique)
+                config.MapMember(x => x.UserName).SetIgnoreIfNull(true);
                 config.MapMember(x => x.NoticeToken).SetIgnoreIfNull(true);
                 config.MapMember(x => x.NoticeEmail).SetIgnoreIfNull(true);
                 config.MapMember(x => x.Notice).SetSerializer(new EnumSerializer<NoticeStatus>(BsonType.String));
@@ -65,6 +66,14 @@ namespace Strive.Infrastructure.Data.Repos
 
         public Task<Follow?> Find(string userId, string creatorId) =>
             Collection.Find(x => x.UserId == userId && x.CreatorId == creatorId).FirstOrDefaultAsync()!;
+
+        public async Task<IReadOnlyList<Follow>> FindOfCreator(string creatorId, int skip, int limit) =>
+            await Collection.Find(x => x.CreatorId == creatorId).SortByDescending(x => x.CreatedAt).Skip(skip)
+                .Limit(limit).ToListAsync();
+
+        public Task UpdateUserName(string userId, string creatorId, string name) =>
+            Collection.UpdateOneAsync(x => x.UserId == userId && x.CreatorId == creatorId && x.UserName != name,
+                Builders<Follow>.Update.Set(x => x.UserName, name));
 
         public Task<Follow?> FindByNoticeToken(string token) =>
             Collection.Find(x => x.NoticeToken == token).FirstOrDefaultAsync()!;

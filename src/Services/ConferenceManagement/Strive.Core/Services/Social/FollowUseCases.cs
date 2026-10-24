@@ -8,7 +8,8 @@ using Strive.Core.Services.Payments.Gateways;
 namespace Strive.Core.Services.Social
 {
     /// <summary>A person follows a creator. Doing it twice changes nothing.</summary>
-    public record FollowCreatorRequest(string UserId, string CreatorId) : IRequest<SuccessOrError<Unit>>;
+    public record FollowCreatorRequest(string UserId, string CreatorId, string? UserName = null)
+        : IRequest<SuccessOrError<Unit>>;
 
     /// <summary>A person stops following a creator. Doing it twice changes nothing.</summary>
     public record UnfollowCreatorRequest(string UserId, string CreatorId) : IRequest<SuccessOrError<Unit>>;
@@ -32,8 +33,11 @@ namespace Strive.Core.Services.Social
             if (creator == null) return SocialError.CreatorNotFound;
             if (creator.UserId == request.UserId) return SocialError.OwnProfile;
 
-            await _follows.TryAdd(new Follow(Guid.NewGuid().ToString("N"), request.UserId, creator.CreatorId,
-                _timeProvider.GetUtcNow()));
+            var name = CommentRules.CleanName(request.UserName);
+            var added = await _follows.TryAdd(new Follow(Guid.NewGuid().ToString("N"), request.UserId, creator.CreatorId,
+                _timeProvider.GetUtcNow()) {UserName = name});
+            // following again keeps the name in the list of the creator current
+            if (!added) await _follows.UpdateUserName(request.UserId, creator.CreatorId, name);
             return Unit.Value;
         }
     }
