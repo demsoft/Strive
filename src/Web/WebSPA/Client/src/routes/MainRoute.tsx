@@ -155,9 +155,6 @@ export default function MainRoute() {
                      <Button color="inherit" component={RouterLink} to="/creators" id="creators-link">
                         {t('creators.nav_creators')}
                      </Button>
-                     <Button color="inherit" component={RouterLink} to="/connections" id="connections-link">
-                        {t('social.connections_nav')}
-                     </Button>
                      <Button color="inherit" component={RouterLink} to="/tickets" id="tickets-link">
                         {t('sessions.tickets_link')}
                      </Button>
@@ -263,7 +260,7 @@ export default function MainRoute() {
             {links && links.length > 0 && (
                <Box className={classes.panel} id="my-conferences">
                   <Typography variant="subtitle1" className={classes.panelTitle} sx={{ fontWeight: 700 }}>
-                     {t('view_main.my_conferences')}
+                     {t(isGbedu ? 'view_main_gbedu.my_conferences' : 'view_main.my_conferences')}
                   </Typography>
                   <MyConferencesList links={links} />
                </Box>
