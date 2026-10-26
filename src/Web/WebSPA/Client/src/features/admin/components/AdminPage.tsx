@@ -45,7 +45,17 @@ const RANGES = [
 
 function Card({ title, children, id }: { title: string; children: React.ReactNode; id?: string }) {
    return (
-      <Paper id={id} sx={{ p: 2.5, height: '100%', minWidth: 0, overflow: 'hidden' }}>
+      <Paper
+         id={id}
+         sx={{
+            p: 2.5,
+            height: '100%',
+            minWidth: 0,
+            overflow: 'hidden',
+            borderRadius: '20px',
+            border: `1px solid ${brand.border}`,
+         }}
+      >
          <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
             {title}
          </Typography>
@@ -77,7 +87,10 @@ function StatusBanner({ overview }: { overview: AdminOverview }) {
    const color = toneColor(tone);
 
    return (
-      <Paper id="admin-status" sx={{ p: 2.5, mb: 3, border: `1px solid ${color}`, backgroundColor: `${color}1A` }}>
+      <Paper
+         id="admin-status"
+         sx={{ p: 2.5, mb: 3, borderRadius: '20px', border: `1px solid ${color}`, backgroundColor: `${color}1A` }}
+      >
          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
             <Box sx={{ width: 14, height: 14, borderRadius: '50%', backgroundColor: color, flexShrink: 0 }} />
             <Typography variant="h5" sx={{ fontWeight: 800 }}>
@@ -309,7 +322,7 @@ export default function AdminPage() {
                </Card>
             </Box>
 
-            <Paper sx={{ p: 2.5, mb: 2 }} id="admin-history">
+            <Paper sx={{ p: 2.5, mb: 2, borderRadius: '20px', border: `1px solid ${brand.border}` }} id="admin-history">
                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
                   <Typography variant="overline" color="text.secondary">
                      {t('admin.history_title')}
