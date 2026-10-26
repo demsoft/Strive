@@ -201,6 +201,10 @@ namespace Identity.API.Quickstart.Account
                 return SignOut(new AuthenticationProperties {RedirectUri = url}, vm.ExternalAuthenticationScheme);
             }
 
+            // nothing else to tell the other clients: go straight back to the app instead of showing a page with a link
+            if (!string.IsNullOrEmpty(vm.PostLogoutRedirectUri) && string.IsNullOrEmpty(vm.SignOutIframeUrl))
+                return Redirect(vm.PostLogoutRedirectUri);
+
             return View("LoggedOut", vm);
         }
 
