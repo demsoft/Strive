@@ -131,7 +131,7 @@ export default function CreatorsPage() {
 
    return (
       <Box sx={{ minHeight: '100%' }} id="creators-page">
-         <SiteHeader />
+         <SiteHeader withoutConnections />
 
          <Box
             sx={{

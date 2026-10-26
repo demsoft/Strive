@@ -1,25 +1,22 @@
+import VideoLibraryOutlinedIcon from '@mui/icons-material/VideoLibraryOutlined';
 import {
    Alert,
-   AppBar,
    Box,
    Button,
    Chip,
    CircularProgress,
-   Container,
    Dialog,
    DialogContent,
    DialogTitle,
    LinearProgress,
    TextField,
-   Toolbar,
    Typography,
 } from '@mui/material';
 import { DateTime } from 'luxon';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link as RouterLink } from 'react-router-dom';
-import BackButton from 'src/components/BackButton';
-import BrandLogo from 'src/components/BrandLogo';
+import PageShell from 'src/components/PageShell';
+import SectionCard from 'src/components/SectionCard';
 import { requestErrorMessage } from 'src/features/creator/errors';
 import { formatMoney, isPriceInRange, parsePriceToMinor } from 'src/features/sessions/money';
 import { fetchMyCreatorProfile } from 'src/services/api/creators';
@@ -196,34 +193,15 @@ export default function MyVideosPage() {
    };
 
    return (
-      <Box sx={{ minHeight: '100%' }}>
-         <AppBar position="static" color="transparent" elevation={0}>
-            <Toolbar sx={{ gap: 2 }}>
-               <BackButton fallback="/creator" />
-               <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <BrandLogo size={30} />
-               </RouterLink>
-            </Toolbar>
-         </AppBar>
-
-         <Container maxWidth="md" sx={{ py: { xs: 2, sm: 4 } }} id="my-videos-page">
-            <Typography variant="h3" sx={{ fontSize: { xs: '2rem', sm: '2.6rem' }, mb: 0.5 }}>
-               {t('videos.title')}
-            </Typography>
-            <Typography color="text.secondary" sx={{ mb: 3 }}>
-               {t('videos.subtitle')}
-            </Typography>
-
-            <Box
-               id="video-form"
-               sx={{
-                  p: 2.5,
-                  mb: 4,
-                  borderRadius: '20px',
-                  backgroundColor: brand.surface,
-                  border: `1px solid ${brand.border}`,
-               }}
-            >
+      <>
+         <PageShell
+            id="my-videos-page"
+            icon={<VideoLibraryOutlinedIcon />}
+            title={t('videos.title')}
+            subtitle={t('videos.subtitle')}
+            backFallback="/creator"
+         >
+            <SectionCard id="video-form">
                <Button component="label" variant="outlined" disabled={sending} id="video-choose">
                   {file ? t('videos.change_file') : t('videos.choose_file')}
                   <input id="video-input" type="file" accept="video/*" hidden onChange={choose} />
@@ -319,7 +297,7 @@ export default function MyVideosPage() {
                >
                   {t('videos.upload')}
                </Button>
-            </Box>
+            </SectionCard>
 
             {loadError && (
                <Alert severity="error" sx={{ mb: 2 }}>
@@ -420,7 +398,7 @@ export default function MyVideosPage() {
                   </Box>
                ))}
             </Box>
-         </Container>
+         </PageShell>
 
          <Dialog open={editing !== null} onClose={() => setEditing(null)} maxWidth="sm" fullWidth>
             <DialogTitle>{t('videos.edit')}</DialogTitle>
@@ -500,6 +478,6 @@ export default function MyVideosPage() {
                )}
             </DialogContent>
          </Dialog>
-      </Box>
+      </>
    );
 }

@@ -1,10 +1,10 @@
-import { Alert, AppBar, Box, Chip, CircularProgress, Container, Toolbar, Typography } from '@mui/material';
+import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
+import { Alert, Box, Chip, CircularProgress, Typography } from '@mui/material';
 import { DateTime } from 'luxon';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link as RouterLink } from 'react-router-dom';
-import BackButton from 'src/components/BackButton';
-import BrandLogo from 'src/components/BrandLogo';
+import PageShell from 'src/components/PageShell';
+import SectionCard from 'src/components/SectionCard';
 import { formatMoney } from 'src/features/sessions/money';
 import * as api from 'src/services/api/creators';
 import { Earnings } from 'src/services/api/creators';
@@ -18,9 +18,10 @@ function Stat({ id, label, value, big }: { id: string; label: string; value: str
          sx={{
             flex: big ? '1 1 100%' : '1 1 160px',
             p: 2.5,
-            borderRadius: '18px',
+            borderRadius: '20px',
             backgroundColor: brand.surface,
             border: `1px solid ${brand.border}`,
+            ...(big && { background: brand.gradientSoft }),
          }}
       >
          <Typography variant="body2" color="text.secondary">
@@ -51,57 +52,44 @@ export default function EarningsPage() {
    const nothingYet = totals && totals.tickets + totals.passes + (totals.videos ?? 0) + totals.refunds === 0;
 
    return (
-      <Box sx={{ minHeight: '100%' }}>
-         <AppBar position="static" color="transparent" elevation={0}>
-            <Toolbar sx={{ gap: 2 }}>
-               <BackButton fallback="/creator" />
-               <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <BrandLogo size={30} />
-               </RouterLink>
-            </Toolbar>
-         </AppBar>
+      <PageShell
+         id="earnings-page"
+         icon={<PaymentsOutlinedIcon />}
+         title={t('creator.earnings_title')}
+         subtitle={t('creator.earnings_subtitle')}
+         backFallback="/creator"
+      >
+         {error && <Alert severity="error">{error}</Alert>}
+         {!error && !earnings && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
+               <CircularProgress />
+            </Box>
+         )}
 
-         <Container maxWidth="md" sx={{ py: { xs: 2, sm: 4 } }} id="earnings-page">
-            <Typography variant="h3" sx={{ fontSize: { xs: '2rem', sm: '2.6rem' }, mb: 0.5 }}>
-               {t('creator.earnings_title')}
-            </Typography>
-            <Typography color="text.secondary" sx={{ mb: 3 }}>
-               {t('creator.earnings_subtitle')}
-            </Typography>
-
-            {error && <Alert severity="error">{error}</Alert>}
-            {!error && !earnings && (
-               <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
-                  <CircularProgress />
+         {earnings && totals && (
+            <>
+               <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 1 }}>
+                  <Stat id="earn-net" big label={t('creator.earn_net')} value={money(totals.netMinor)} />
+                  <Stat id="earn-gross" label={t('creator.earn_gross')} value={money(totals.grossMinor)} />
+                  <Stat id="earn-fee" label={t('creator.earn_fee')} value={money(totals.platformMinor)} />
+                  <Stat id="earn-refunded" label={t('creator.earn_refunded')} value={money(totals.refundedMinor)} />
                </Box>
-            )}
+               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }} id="earn-counts">
+                  {t('creator.earn_counts', {
+                     tickets: totals.tickets,
+                     passes: totals.passes,
+                     videos: totals.videos ?? 0,
+                  })}
+               </Typography>
 
-            {earnings && totals && (
-               <>
-                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 1 }}>
-                     <Stat id="earn-net" big label={t('creator.earn_net')} value={money(totals.netMinor)} />
-                     <Stat id="earn-gross" label={t('creator.earn_gross')} value={money(totals.grossMinor)} />
-                     <Stat id="earn-fee" label={t('creator.earn_fee')} value={money(totals.platformMinor)} />
-                     <Stat id="earn-refunded" label={t('creator.earn_refunded')} value={money(totals.refundedMinor)} />
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }} id="earn-counts">
-                     {t('creator.earn_counts', {
-                        tickets: totals.tickets,
-                        passes: totals.passes,
-                        videos: totals.videos ?? 0,
-                     })}
+               {nothingYet ? (
+                  <Typography color="text.secondary" id="earn-nothing">
+                     {t('creator.earn_nothing')}
                   </Typography>
-
-                  {nothingYet ? (
-                     <Typography color="text.secondary" id="earn-nothing">
-                        {t('creator.earn_nothing')}
-                     </Typography>
-                  ) : (
-                     <>
-                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                           {t('creator.earn_by_session')}
-                        </Typography>
-                        <Box id="earn-sessions" sx={{ mb: 4 }}>
+               ) : (
+                  <>
+                     <SectionCard title={t('creator.earn_by_session')}>
+                        <Box id="earn-sessions">
                            {earnings.sessions.map((row) => (
                               <Box
                                  key={row.sessionId}
@@ -129,13 +117,12 @@ export default function EarningsPage() {
                               <Typography color="text.secondary">{t('creator.earn_no_sessions')}</Typography>
                            )}
                         </Box>
+                     </SectionCard>
 
-                        {earnings.videos && earnings.videos.length > 0 && (
-                           <>
-                              <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                                 {t('creator.earn_by_video')}
-                              </Typography>
-                              <Box id="earn-videos" sx={{ mb: 4 }}>
+                     {earnings.videos && earnings.videos.length > 0 && (
+                        <>
+                           <SectionCard title={t('creator.earn_by_video')}>
+                              <Box id="earn-videos">
                                  {earnings.videos.map((row) => (
                                     <Box
                                        key={row.videoId}
@@ -158,12 +145,11 @@ export default function EarningsPage() {
                                     </Box>
                                  ))}
                               </Box>
-                           </>
-                        )}
+                           </SectionCard>
+                        </>
+                     )}
 
-                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                           {t('creator.earn_recent')}
-                        </Typography>
+                     <SectionCard title={t('creator.earn_recent')}>
                         <Box id="earn-recent">
                            {earnings.recent.map((sale, index) => (
                               <Box
@@ -202,15 +188,15 @@ export default function EarningsPage() {
                               </Box>
                            ))}
                         </Box>
-                     </>
-                  )}
+                     </SectionCard>
+                  </>
+               )}
 
-                  <Alert severity="info" icon={false} sx={{ mt: 4 }} id="earn-payout-note">
-                     {t('creator.earn_payout_note')}
-                  </Alert>
-               </>
-            )}
-         </Container>
-      </Box>
+               <Alert severity="info" icon={false} sx={{ mt: 1, borderRadius: '16px' }} id="earn-payout-note">
+                  {t('creator.earn_payout_note')}
+               </Alert>
+            </>
+         )}
+      </PageShell>
    );
 }

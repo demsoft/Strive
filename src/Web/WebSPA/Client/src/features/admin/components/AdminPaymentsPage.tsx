@@ -6,12 +6,16 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router-dom';
 import BrandLogo from 'src/components/BrandLogo';
+import { brand } from 'src/theme';
 import { formatMoney } from 'src/features/sessions/money';
 import { AdminPayments, fetchAdminPayments, PaymentsPeriod } from '../api';
 
 function Stat({ id, label, value, hint }: { id: string; label: string; value: string; hint?: string }) {
    return (
-      <Paper id={id} sx={{ p: 2, flex: '1 1 150px', minWidth: 0 }}>
+      <Paper
+         id={id}
+         sx={{ p: 2.25, flex: '1 1 150px', minWidth: 0, borderRadius: '20px', border: `1px solid ${brand.border}` }}
+      >
          <Typography variant="body2" color="text.secondary">
             {label}
          </Typography>
@@ -153,7 +157,13 @@ export default function AdminPaymentsPage() {
 
             <Paper
                id="admin-pay-attention"
-               sx={{ p: 2.5, mb: 3, border: 1, borderColor: needsAttention ? 'warning.main' : 'success.main' }}
+               sx={{
+                  p: 2.5,
+                  mb: 3,
+                  borderRadius: '20px',
+                  border: 1,
+                  borderColor: needsAttention ? 'warning.main' : 'success.main',
+               }}
             >
                <Typography variant="h6" sx={{ fontWeight: 800 }}>
                   {needsAttention ? t('admin.pay_needs_attention', { count: needsAttention }) : t('admin.pay_all_good')}
@@ -238,7 +248,10 @@ export default function AdminPaymentsPage() {
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
                {t('admin.pay_recent')}
             </Typography>
-            <Paper id="admin-pay-recent">
+            <Paper
+               id="admin-pay-recent"
+               sx={{ borderRadius: '20px', border: `1px solid ${brand.border}`, overflow: 'hidden' }}
+            >
                {data.recent.length === 0 && (
                   <Typography color="text.secondary" sx={{ p: 2 }}>
                      {t('admin.pay_none')}

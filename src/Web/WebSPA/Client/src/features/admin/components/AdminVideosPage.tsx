@@ -19,6 +19,7 @@ import { DateTime } from 'luxon';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router-dom';
+import { brand } from 'src/theme';
 import BrandLogo from 'src/components/BrandLogo';
 import { formatMoney } from 'src/features/sessions/money';
 import { fetchVideoReports, keepVideo, removeVideo, RemovedVideo, VideoReportItem } from '../api';
@@ -130,7 +131,15 @@ export default function AdminVideosPage() {
                <Paper
                   key={item.videoId}
                   className="reported-video"
-                  sx={{ p: 2, mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}
+                  sx={{
+                     p: 2,
+                     mb: 2,
+                     display: 'flex',
+                     gap: 2,
+                     flexWrap: 'wrap',
+                     borderRadius: '20px',
+                     border: `1px solid ${brand.border}`,
+                  }}
                >
                   <Box
                      sx={{
