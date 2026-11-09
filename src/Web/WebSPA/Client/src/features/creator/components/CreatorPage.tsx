@@ -20,6 +20,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { compactCount } from 'src/features/creators/count';
 import SiteHeader from 'src/features/creators/SiteHeader';
+import { brandKey } from 'src/brand-text';
 import { formatMoney } from 'src/features/sessions/money';
 import * as api from 'src/services/api/creators';
 import { Bank, CreatorProfile, PaymentsConfig } from 'src/services/api/creators';
@@ -298,8 +299,8 @@ export default function CreatorPage() {
               ? [
                    {
                       id: 'session',
-                      title: t('dashboard.step_session'),
-                      text: t('dashboard.step_session_text'),
+                      title: t(brandKey('dashboard.step_session')),
+                      text: t(brandKey('dashboard.step_session_text')),
                       done: data.sessions.total > 0,
                       to: '/creator/sessions',
                       action: t('dashboard.step_publish'),
@@ -404,10 +405,10 @@ export default function CreatorPage() {
                      />
                      <StatCard
                         id="stat-sessions"
-                        label={t('dashboard.stat_sessions')}
+                        label={t(brandKey('dashboard.stat_sessions'))}
                         icon={<LiveTvOutlinedIcon fontSize="small" />}
                         value={loading ? undefined : data.sessions ? String(data.sessions.active) : null}
-                        hint={t('dashboard.stat_sessions_hint')}
+                        hint={t(brandKey('dashboard.stat_sessions_hint'))}
                         to="/creator/sessions"
                      />
                      <StatCard
@@ -449,8 +450,8 @@ export default function CreatorPage() {
                         <ActionCard
                            id="creator-sessions-link"
                            primary
-                           title={t('sessions.my_title')}
-                           text={t('dashboard.action_sessions')}
+                           title={t(brandKey('sessions.my_title'))}
+                           text={t(brandKey('dashboard.action_sessions'))}
                            icon={<LiveTvOutlinedIcon />}
                            to="/creator/sessions"
                            locked={!profile.canSell}
