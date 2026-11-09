@@ -800,6 +800,53 @@ namespace Strive.IntegrationTests.Services
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
 
+        // ---- season passes: the creator chooses how long a pass lasts
+
+        private Task<HttpResponseMessage> SetPassDays(UserAccount host, int days) =>
+            Client(host).PutAsync("/v1/creators/me/pass", new JsonNetContent(new SetPassPriceDto(PassPrice, days)));
+
+        [Fact]
+        public async Task Pass_TheCreatorChoosesTheLength_ItIsShownAndGiven()
+        {
+            var (host, creatorId) = await CreatorWithPass();
+            Assert.Equal(30, (await PageOf(creatorId, null)).Creator.PassDays);
+
+            (await SetPassDays(host, 90)).EnsureSuccessStatusCode();
+            var fan = await FanWithPass(creatorId);
+
+            Assert.Equal(90, (await PageOf(creatorId, null)).Creator.PassDays);
+            Assert.InRange(((await PageOf(creatorId, fan)).PassValidUntil!.Value - DateTimeOffset.UtcNow).TotalDays, 89.9,
+                90.1);
+        }
+
+        [Fact]
+        public async Task Pass_OnlyTheOfferedLengthsAreAccepted()
+        {
+            var (host, _) = await CreatorWithPass();
+
+            Assert.Equal(HttpStatusCode.BadRequest, (await SetPassDays(host, 45)).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await SetPassDays(host, 0)).StatusCode);
+            (await SetPassDays(host, 365)).EnsureSuccessStatusCode();
+        }
+
+        [Fact]
+        public async Task Pass_ChangingTheLengthLater_DoesNotChangeWhatWasBought_NorWhatRenewalsGive()
+        {
+            var (host, creatorId) = await CreatorWithPass();
+            (await SetPassDays(host, 90)).EnsureSuccessStatusCode();
+            var (fan, subscription) = await RenewingFan(creatorId);
+            var before = (await PageOf(creatorId, fan)).PassValidUntil!.Value;
+            Assert.InRange((before - DateTimeOffset.UtcNow).TotalDays, 89.9, 90.1);
+
+            // the creator shortens the pass: the fan agreed to 90 days at this price
+            (await SetPassDays(host, 30)).EnsureSuccessStatusCode();
+            await MakeDue(subscription);
+            await RunRenewals();
+
+            var after = (await PageOf(creatorId, fan)).PassValidUntil!.Value;
+            Assert.InRange((after - before).TotalDays, 89.9, 90.1);
+        }
+
         // ---- passes that renew themselves
 
         private IPassSubscriptionRepo Subscriptions => Factory.Services.GetRequiredService<IPassSubscriptionRepo>();

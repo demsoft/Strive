@@ -26,6 +26,7 @@ import { creatorPhotoUrl } from 'src/features/creator/photoUrl';
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
 import { brand } from 'src/theme';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+import { brandKey } from 'src/brand-text';
 import { formatMoney, PASS_DAYS } from '../money';
 
 const POLL_EVERY_MS = 2000;
@@ -370,9 +371,9 @@ export default function SessionPage() {
                                  to={`/u/${session.creator.slug || session.creator.creatorId}`}
                                  style={{ color: 'inherit' }}
                               >
-                                 {t('creator.pass_or', {
+                                 {t(brandKey('creator.pass_or'), {
                                     name: session.creator.displayName,
-                                    days: PASS_DAYS,
+                                    days: session.creator.passDays ?? PASS_DAYS,
                                     price: formatMoney(session.creator.passPriceMinor, session.currency),
                                  })}
                               </RouterLink>

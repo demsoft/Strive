@@ -137,7 +137,7 @@ namespace Strive.Controllers
         {
             if (UserId == null) return Forbid();
 
-            var result = await _mediator.Send(new SetPassPriceRequest(UserId, dto.PriceMinor));
+            var result = await _mediator.Send(new SetPassPriceRequest(UserId, dto.PriceMinor, dto.Days));
             if (!result.Success) return result.ToActionResult();
 
             return CreatorProfileDto.From(result.Response!);

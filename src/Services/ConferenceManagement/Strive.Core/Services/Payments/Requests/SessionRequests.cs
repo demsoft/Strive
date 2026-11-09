@@ -39,7 +39,7 @@ namespace Strive.Core.Services.Payments.Requests
     public record SetSlugRequest(string UserId, string? Slug) : IRequest<SuccessOrError<CreatorProfile>>;
 
     /// <summary>A creator sets what a pass costs, or stops selling it (null)</summary>
-    public record SetPassPriceRequest(string UserId, long? PriceMinor) : IRequest<SuccessOrError<CreatorProfile>>;
+    public record SetPassPriceRequest(string UserId, long? PriceMinor, int? Days = null) : IRequest<SuccessOrError<CreatorProfile>>;
 
     /// <param name="AuthorizationUrl">Null if the person has a ticket already</param>
     public record CheckoutResult(string? AuthorizationUrl, string? Reference, bool AlreadyHasTicket);

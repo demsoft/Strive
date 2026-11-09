@@ -6,6 +6,9 @@ namespace Strive.Core.Services.Payments
     {
         /// <summary>How long a pass lasts after it was paid (buying another one while it runs adds to it)</summary>
         public const int Days = 30;
+
+        /// <summary>The lengths a creator can choose: a month, a quarter, half a year or a season/year</summary>
+        public static readonly System.Collections.Generic.IReadOnlyList<int> AllowedDays = new[] {30, 90, 180, 365};
     }
 
     public static class SlugRules
@@ -109,6 +112,11 @@ namespace Strive.Core.Services.Payments
         ///     <see cref="PassRules.Days" /> days. Null: the creator does not sell a pass.
         /// </summary>
         public long? PassPriceMinor { get; set; }
+
+        /// <summary>How many days a pass lasts; null: <see cref="PassRules.Days" /> (see <see cref="PassRules.AllowedDays" />)</summary>
+        public int? PassDays { get; set; }
+
+        public int EffectivePassDays => PassDays ?? PassRules.Days;
 
         /// <summary>
         ///     The short name in the link of the page of the creator (/u/ada), unique, see <see cref="SlugRules" />.

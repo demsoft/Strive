@@ -28,6 +28,8 @@ export type CreatorProfile = {
    /** changes when the photo does; none: no photo */
    photoVersion?: string | null;
    /** may the creator publish football matches (Arena): an administrator approves organizers */
+   /** how many days the pass lasts */
+   passDays?: number;
    organizerStatus?: OrganizerStatus;
    organizationName?: string | null;
    /** the word of the administrator about the request */
@@ -84,8 +86,8 @@ export async function requestOrganizer(organizationName: string, about: string):
    return (await Axios.put<CreatorProfile>(`${base()}/me/organizer`, { organizationName, about })).data;
 }
 
-export async function setPassPrice(priceMinor: number | null): Promise<CreatorProfile> {
-   return (await Axios.put<CreatorProfile>(`${base()}/me/pass`, { priceMinor })).data;
+export async function setPassPrice(priceMinor: number | null, days?: number): Promise<CreatorProfile> {
+   return (await Axios.put<CreatorProfile>(`${base()}/me/pass`, { priceMinor, days })).data;
 }
 
 export type EarningsTotals = {

@@ -1,6 +1,9 @@
 /** How long a pass lasts (the server decides, this is what is shown). */
 export const PASS_DAYS = 30;
 
+/** The lengths a creator can choose for a pass (the server accepts these) */
+export const PASS_LENGTHS = [30, 90, 180, 365] as const;
+
 /** 500000 kobo is ₦5,000. Whole amounts are shown without decimals. */
 export function formatMoney(minor: number, currency: string, locale = 'en-NG'): string {
    const major = minor / 100;

@@ -1,9 +1,10 @@
-import { Alert, Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, MenuItem, TextField, Typography } from '@mui/material';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatMoney, PASS_DAYS, parsePriceToMinor } from 'src/features/sessions/money';
+import { formatMoney, PASS_DAYS, PASS_LENGTHS, parsePriceToMinor } from 'src/features/sessions/money';
 import * as api from 'src/services/api/creators';
 import { CreatorProfile } from 'src/services/api/creators';
+import { brandKey } from 'src/brand-text';
 import { requestErrorMessage } from '../errors';
 
 type Props = {
@@ -15,6 +16,7 @@ type Props = {
 export default function PassSetup({ profile, onSaved }: Props) {
    const { t } = useTranslation();
    const [price, setPrice] = useState(() => (profile.passPriceMinor ? String(profile.passPriceMinor / 100) : ''));
+   const [days, setDays] = useState<number>(profile.passDays ?? PASS_DAYS);
    const [saving, setSaving] = useState(false);
    const [error, setError] = useState<string | null>(null);
    const [saved, setSaved] = useState(false);
@@ -27,7 +29,7 @@ export default function PassSetup({ profile, onSaved }: Props) {
       setError(null);
       setSaved(false);
       try {
-         const updated = await api.setPassPrice(value);
+         const updated = await api.setPassPrice(value, days);
          onSaved(updated);
          if (value === null) setPrice('');
          setSaved(true);
@@ -40,12 +42,27 @@ export default function PassSetup({ profile, onSaved }: Props) {
    return (
       <Box id="pass-setup" sx={{ mt: 4 }}>
          <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            {t('creator.pass_setup_title')}
+            {t(brandKey('creator.pass_setup_title'))}
             {selling && ` · ${formatMoney(profile.passPriceMinor!, profile.currency)}`}
          </Typography>
          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {t('creator.pass_setup_text', { days: PASS_DAYS })}
+            {t(brandKey('creator.pass_setup_text'), { days })}
          </Typography>
+         <TextField
+            id="pass-days"
+            select
+            fullWidth
+            label={t('creator.pass_length')}
+            value={days}
+            onChange={(e) => setDays(Number(e.target.value))}
+            sx={{ mb: 2 }}
+         >
+            {PASS_LENGTHS.map((d) => (
+               <MenuItem key={d} value={d}>
+                  {t('creator.pass_length_days', { count: d })}
+               </MenuItem>
+            ))}
+         </TextField>
          <TextField
             id="pass-price"
             fullWidth

@@ -60,6 +60,8 @@ export type PublicCreator = {
    slug?: string | null;
    /** changes when the photo does; none: no photo */
    photoVersion?: string | null;
+   /** how many days the pass lasts */
+   passDays?: number;
 };
 
 export type PublicSession = {
