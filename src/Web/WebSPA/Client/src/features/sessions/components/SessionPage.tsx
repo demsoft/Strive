@@ -11,6 +11,7 @@ import {
    Typography,
 } from '@mui/material';
 import { DateTime } from 'luxon';
+import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +20,7 @@ import BrandLogo from 'src/components/BrandLogo';
 import { PaymentStatus, PublicSession } from 'src/services/api/sessions';
 import * as api from 'src/services/api/sessions';
 import { requestErrorMessage } from 'src/features/creator/errors';
+import ReportSessionDialog from './ReportSessionDialog';
 import { categoryGradient, categoryStyle } from 'src/features/gbedu/ui/categories';
 import { creatorPhotoUrl } from 'src/features/creator/photoUrl';
 import HostAvatar from 'src/features/gbedu/ui/HostAvatar';
@@ -71,6 +73,7 @@ export default function SessionPage() {
    const [email, setEmail] = useState(() => (auth.user?.profile?.email as string | undefined) ?? rememberedEmail());
    const [paying, setPaying] = useState(false);
    const [payError, setPayError] = useState<string | null>(null);
+   const [reporting, setReporting] = useState(false);
    const [payment, setPayment] = useState<Payment | null>(null);
    const polling = useRef(0);
 
@@ -215,6 +218,14 @@ export default function SessionPage() {
                         >
                            {session.title}
                         </Typography>
+                        {session.match && (
+                           <Typography color="text.secondary" id="session-match" sx={{ mb: 1 }}>
+                              {session.match.competition ? `${session.match.competition} · ` : ''}
+                              {t('matches.rights_declared', {
+                                 basis: t(`matches.basis_short_${session.match.rightsBasis ?? 'own'}`),
+                              })}
+                           </Typography>
+                        )}
                         {session.isLive && (
                            <Chip
                               size="small"
@@ -280,8 +291,25 @@ export default function SessionPage() {
                               </Box>
                            ))}
                         </Box>
+                        {auth.isAuthenticated && !session.isHost && session.status === 'published' && (
+                           <Button
+                              id="session-report"
+                              size="small"
+                              color="inherit"
+                              startIcon={<FlagOutlinedIcon fontSize="small" />}
+                              onClick={() => setReporting(true)}
+                              sx={{ mt: 2, opacity: 0.7 }}
+                           >
+                              {t('matches.report')}
+                           </Button>
+                        )}
                      </Box>
                   </Box>
+                  <ReportSessionDialog
+                     sessionId={session.sessionId}
+                     open={reporting}
+                     onClose={() => setReporting(false)}
+                  />
 
                   {payment?.state === 'checking' && (
                      <Alert severity="info" icon={<CircularProgress size={18} />} id="payment-checking" sx={{ mb: 2 }}>

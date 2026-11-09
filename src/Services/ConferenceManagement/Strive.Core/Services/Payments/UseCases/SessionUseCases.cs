@@ -81,7 +81,23 @@ namespace Strive.Core.Services.Payments.UseCases
             var creator = await _creators.FindByUserId(request.UserId);
             if (creator == null || !creator.CanSell) return PaymentsError.CreatorCannotSell;
 
+            // a match: the teams and the declaration of the rights come with it, the title can be the fixture
+            MatchDetails? match = null;
+            SessionRights? rights = null;
+            if ((request.Category == SessionCategories.Match) != (request.Match != null))
+                return PaymentsError.InvalidSession(request.Match == null
+                    ? "Add the teams and confirm your right to stream the match."
+                    : "Choose the category match for a match.");
+            if (request.Match != null)
+            {
+                var (checkedMatch, note, error) = MatchRules.Validate(request.Match);
+                if (error != null) return PaymentsError.InvalidSession(error);
+                match = checkedMatch;
+                rights = new SessionRights(request.Match.RightsBasis, note, _timeProvider.GetUtcNow(), request.UserId);
+            }
+
             var title = request.Title?.Trim() ?? "";
+            if (title.Length == 0 && match != null) title = $"{match.HomeTeam} vs {match.AwayTeam}";
             if (title.Length is < SessionRules.MinTitleLength or > SessionRules.MaxTitleLength)
                 return PaymentsError.InvalidSession(
                     $"The title must have {SessionRules.MinTitleLength} to {SessionRules.MaxTitleLength} characters.");
@@ -130,6 +146,8 @@ namespace Strive.Core.Services.Payments.UseCases
                 Category = request.Category,
                 StartsAt = request.StartsAt,
                 DurationMinutes = duration,
+                Match = match,
+                Rights = rights,
                 Shares = new[] {new RevenueShare(creator.CreatorId, creator.ProviderSubaccountCode!, 100)}.ToList(),
             };
             await _sessions.Create(session);
@@ -474,6 +492,127 @@ namespace Strive.Core.Services.Payments.UseCases
                 await OrderRefunds.Refund(_provider, _orders, _timeProvider, _logger, order, cancellationToken);
             }
 
+            return Unit.Value;
+        }
+    }
+
+    public class ReportSessionUseCase : IRequestHandler<ReportSessionRequest, SuccessOrError<Unit>>
+    {
+        private readonly ISessionRepo _sessions;
+        private readonly ISessionReportRepo _reports;
+        private readonly TimeProvider _timeProvider;
+        private readonly ILogger<ReportSessionUseCase> _logger;
+
+        public ReportSessionUseCase(ISessionRepo sessions, ISessionReportRepo reports, TimeProvider timeProvider,
+            ILogger<ReportSessionUseCase> logger)
+        {
+            _sessions = sessions;
+            _reports = reports;
+            _timeProvider = timeProvider;
+            _logger = logger;
+        }
+
+        public async Task<SuccessOrError<Unit>> Handle(ReportSessionRequest request, CancellationToken cancellationToken)
+        {
+            var session = await _sessions.FindById(request.SessionId);
+            // what a person cannot see, they cannot report
+            if (session == null || session.Status != SessionStatus.Published) return PaymentsError.SessionNotFound;
+            if (session.CreatorUserId == request.UserId) return PaymentsError.OwnSession;
+            if (!Enum.IsDefined(typeof(SessionReportReason), request.Reason))
+                return PaymentsError.InvalidSession("Choose what is wrong.");
+
+            var details = string.IsNullOrWhiteSpace(request.Details) ? null : request.Details.Trim();
+            if (details is {Length: > SessionReportRules.MaxDetailsLength})
+                return PaymentsError.InvalidSession(
+                    $"Tell it in {SessionReportRules.MaxDetailsLength} characters at most.");
+
+            // reporting twice changes nothing
+            if (await _reports.TryAdd(new SessionReport(Guid.NewGuid().ToString("N"), session.SessionId,
+                    request.UserId, request.Reason, details, _timeProvider.GetUtcNow())))
+                _logger.LogWarning("Session {sessionId} was reported: {reason}", session.SessionId, request.Reason);
+
+            return Unit.Value;
+        }
+    }
+
+    public class TakeDownSessionUseCase : IRequestHandler<TakeDownSessionRequest, SuccessOrError<Unit>>
+    {
+        public const int MaxNoteLength = 500;
+
+        private readonly ISessionRepo _sessions;
+        private readonly ISessionReportRepo _reports;
+        private readonly IOrderRepo _orders;
+        private readonly IPaymentProvider _provider;
+        private readonly TimeProvider _timeProvider;
+        private readonly ILogger<TakeDownSessionUseCase> _logger;
+
+        public TakeDownSessionUseCase(ISessionRepo sessions, ISessionReportRepo reports, IOrderRepo orders,
+            IPaymentProvider provider, TimeProvider timeProvider, ILogger<TakeDownSessionUseCase> logger)
+        {
+            _sessions = sessions;
+            _reports = reports;
+            _orders = orders;
+            _provider = provider;
+            _timeProvider = timeProvider;
+            _logger = logger;
+        }
+
+        /// <summary>
+        ///     The session is called off and every ticket money is given back. Doing it again tries the refunds that did
+        ///     not work before; a refund that fails never undoes the takedown.
+        /// </summary>
+        public async Task<SuccessOrError<Unit>> Handle(TakeDownSessionRequest request, CancellationToken cancellationToken)
+        {
+            var session = await _sessions.FindById(request.SessionId);
+            if (session == null) return PaymentsError.SessionNotFound;
+
+            var note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
+            if (note is {Length: > MaxNoteLength})
+                return PaymentsError.InvalidSession($"The note can have {MaxNoteLength} characters at most.");
+
+            var now = _timeProvider.GetUtcNow();
+            if (session.TakenDownAt == null)
+            {
+                session.Status = SessionStatus.Cancelled;
+                session.TakenDownAt = now;
+                session.TakedownNote = note;
+                await _sessions.Update(session);
+                _logger.LogWarning("Session {sessionId} was taken down", session.SessionId);
+            }
+
+            await _reports.ResolveOpen(session.SessionId, now);
+
+            foreach (var order in await _orders.FindPaidOfSession(session.SessionId))
+            {
+                if (order.Status != OrderStatus.Paid) continue;
+
+                await OrderRefunds.Refund(_provider, _orders, _timeProvider, _logger, order, cancellationToken);
+            }
+
+            return Unit.Value;
+        }
+    }
+
+    public class DismissSessionReportsUseCase : IRequestHandler<DismissSessionReportsRequest, SuccessOrError<Unit>>
+    {
+        private readonly ISessionRepo _sessions;
+        private readonly ISessionReportRepo _reports;
+        private readonly TimeProvider _timeProvider;
+
+        public DismissSessionReportsUseCase(ISessionRepo sessions, ISessionReportRepo reports,
+            TimeProvider timeProvider)
+        {
+            _sessions = sessions;
+            _reports = reports;
+            _timeProvider = timeProvider;
+        }
+
+        public async Task<SuccessOrError<Unit>> Handle(DismissSessionReportsRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (await _sessions.FindById(request.SessionId) == null) return PaymentsError.SessionNotFound;
+
+            await _reports.ResolveOpen(request.SessionId, _timeProvider.GetUtcNow());
             return Unit.Value;
         }
     }

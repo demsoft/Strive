@@ -4,7 +4,9 @@ import { DateTime } from 'luxon';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router-dom';
-import { formatMoney, SESSION_CATEGORIES } from 'src/features/sessions/money';
+import { formatMoney, MATCH_CATEGORY, SESSION_CATEGORIES } from 'src/features/sessions/money';
+import { isArena } from 'src/brand-id';
+import { brandKey } from 'src/brand-text';
 import * as api from 'src/services/api/sessions';
 import { creatorPhotoUrl } from 'src/features/creator/photoUrl';
 import { DiscoverSession } from 'src/services/api/sessions';
@@ -77,6 +79,11 @@ export function SessionTile({ session }: { session: DiscoverSession }) {
             <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.25 }}>
                {session.title}
             </Typography>
+            {session.match?.competition && (
+               <Typography variant="body2" color="text.secondary" className="discover-competition">
+                  {session.match.competition}
+               </Typography>
+            )}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                <HostAvatar
                   name={session.creatorName}
@@ -129,10 +136,10 @@ export default function DiscoverSessions() {
    return (
       <Box id="discover" sx={{ maxWidth: 1180, width: '100%', mx: 'auto', py: 4 }}>
          <Typography variant="h4" sx={{ fontWeight: 800 }}>
-            {t('sessions.discover_title')}
+            {t(brandKey('sessions.discover_title'))}
          </Typography>
          <Typography color="text.secondary" sx={{ mb: 3 }}>
-            {t('sessions.discover_subtitle')}
+            {t(brandKey('sessions.discover_subtitle'))}
          </Typography>
 
          {failed && <Alert severity="error">{t('sessions.discover_failed')}</Alert>}
@@ -173,7 +180,7 @@ export default function DiscoverSessions() {
                      color={category === null ? 'primary' : 'default'}
                      onClick={() => setCategory(null)}
                   />
-                  {SESSION_CATEGORIES.map((c) => (
+                  {(isArena ? [MATCH_CATEGORY] : SESSION_CATEGORIES).map((c) => (
                      <Chip
                         key={c}
                         id={`discover-cat-${c}`}

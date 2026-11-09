@@ -31,3 +31,6 @@ export const isPriceInRange = (minor: number) => minor >= MIN_PRICE_MINOR && min
 export const SESSION_DURATIONS = [30, 45, 60, 90, 120, 180] as const;
 
 export const SESSION_CATEGORIES = ['teach', 'perform', 'expertise', 'community', 'music'] as const;
+
+/** What a football organizer publishes on Arena */
+export const MATCH_CATEGORY = 'match';

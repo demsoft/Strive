@@ -7,7 +7,8 @@ namespace Strive.Core.Services.Payments.Requests
 {
     /// <summary>A creator publishes a session: a room is made for it and tickets can be bought</summary>
     public record CreateSessionRequest(string UserId, string Title, string? Description, string Category,
-        long PriceMinor, DateTimeOffset? StartsAt, int? DurationMinutes = null) : IRequest<SuccessOrError<PaidSession>>;
+        long PriceMinor, DateTimeOffset? StartsAt, int? DurationMinutes = null, MatchInput? Match = null)
+        : IRequest<SuccessOrError<PaidSession>>;
 
     /// <summary>Starts the payment of a ticket. The fan is sent to the returned address to pay.</summary>
     /// <param name="CallbackUrl">Where the provider sends the person back after paying</param>
@@ -53,4 +54,14 @@ namespace Strive.Core.Services.Payments.Requests
     public record CheckSessionAccessRequest(Participant Participant) : IRequest<SuccessOrError<Unit>>;
 
     public record CancelSessionRequest(string UserId, string SessionId) : IRequest<SuccessOrError<Unit>>;
+
+    /// <summary>A person reports a session (a match shown without the right to, for example)</summary>
+    public record ReportSessionRequest(string UserId, string SessionId, SessionReportReason Reason, string? Details)
+        : IRequest<SuccessOrError<Unit>>;
+
+    /// <summary>A moderator takes a session down: it is called off and every ticket is refunded</summary>
+    public record TakeDownSessionRequest(string SessionId, string? Note) : IRequest<SuccessOrError<Unit>>;
+
+    /// <summary>A moderator decided that the session is fine: the open reports are put aside</summary>
+    public record DismissSessionReportsRequest(string SessionId) : IRequest<SuccessOrError<Unit>>;
 }

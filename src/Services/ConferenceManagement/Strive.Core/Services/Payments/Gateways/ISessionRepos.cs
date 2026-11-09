@@ -46,6 +46,18 @@ namespace Strive.Core.Services.Payments.Gateways
         Task Update(PaidSession session);
     }
 
+    public interface ISessionReportRepo
+    {
+        /// <summary>Stores the report. A person reports a session once: false if they already had.</summary>
+        Task<bool> TryAdd(SessionReport report);
+
+        /// <summary>Open reports (not decided yet), the latest first</summary>
+        Task<IReadOnlyList<SessionReport>> FindOpen(int limit);
+
+        /// <summary>A moderator decided: the open reports of the session no longer count</summary>
+        Task ResolveOpen(string sessionId, System.DateTimeOffset at);
+    }
+
     public interface IOrderRepo
     {
         Task Create(TicketOrder order);

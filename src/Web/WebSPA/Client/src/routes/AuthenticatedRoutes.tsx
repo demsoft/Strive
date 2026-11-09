@@ -6,6 +6,7 @@ import { useAuth } from 'react-oidc-context';
 import { Route, Switch } from 'react-router-dom';
 import { setParticipantId } from 'src/features/auth/reducer';
 import { refreshTokenOnUnauthorized } from 'src/features/auth/unauthorized';
+import AdminMatchesPage from 'src/features/admin/components/AdminMatchesPage';
 import AdminVideosPage from 'src/features/admin/components/AdminVideosPage';
 import AdminPaymentsPage from 'src/features/admin/components/AdminPaymentsPage';
 import AdminRoute from './AdminRoute';
@@ -48,6 +49,7 @@ export default function AuthenticatedRoutes() {
          <Route exact path="/" component={MainRoute} />
          <Route path="/admin/payments" component={AdminPaymentsPage} />
          <Route path="/admin/videos" component={AdminVideosPage} />
+         <Route path="/admin/matches" component={AdminMatchesPage} />
          <Route path="/admin" component={AdminRoute} />
          <Route path="/creator/sessions" component={MySessionsPage} />
          <Route path="/creator/earnings" component={EarningsPage} />

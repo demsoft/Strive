@@ -6,18 +6,38 @@ using Strive.Core.Services.Payments.Sessions;
 namespace Strive.Models.Response
 {
     public record CreateSessionDto(string Title, string? Description, string Category, long PriceMinor,
-        DateTimeOffset? StartsAt, int? DurationMinutes = null);
+        DateTimeOffset? StartsAt, int? DurationMinutes = null, MatchInputDto? Match = null);
+
+    /// <summary>The teams of a match and the declaration of the right to stream it</summary>
+    public record MatchInputDto(string HomeTeam, string AwayTeam, string? Competition, string RightsBasis,
+        string? RightsNote, bool RightsAccepted);
+
+    /// <summary>The teams and the competition of a match</summary>
+    public record MatchDto(string HomeTeam, string AwayTeam, string? Competition, string? RightsBasis = null)
+    {
+        public static MatchDto? From(PaidSession session) =>
+            session.Match == null
+                ? null
+                : new MatchDto(session.Match.HomeTeam, session.Match.AwayTeam, session.Match.Competition,
+                    session.Rights?.Basis);
+    }
+
+    public record ReportSessionDto(string Reason, string? Details);
+
+    public record TakeDownDto(string? Note);
 
     /// <summary>A session as its host sees it</summary>
     public record SessionDto(string SessionId, string ConferenceId, string Title, string? Description,
         string Category, long PriceMinor, string Currency, SessionStatus Status, DateTimeOffset? StartsAt,
-        DateTimeOffset CreatedAt, int Refunded = 0, int RefundsPending = 0, int DurationMinutes = 60)
+        DateTimeOffset CreatedAt, int Refunded = 0, int RefundsPending = 0, int DurationMinutes = 60,
+        MatchDto? Match = null, string? RightsBasis = null, string? TakedownNote = null)
     {
         public static SessionDto From(PaidSession session, int refunded = 0, int refundsPending = 0)
         {
             return new SessionDto(session.SessionId, session.ConferenceId, session.Title, session.Description,
                 session.Category, session.PriceMinor, session.Currency, session.Status, session.StartsAt,
-                session.CreatedAt, refunded, refundsPending, session.DurationMinutes);
+                session.CreatedAt, refunded, refundsPending, session.DurationMinutes, MatchDto.From(session),
+                session.Rights?.Basis, session.TakenDownAt == null ? null : session.TakedownNote ?? "");
         }
     }
 
@@ -27,12 +47,14 @@ namespace Strive.Models.Response
     /// </summary>
     public record PublicSessionDto(string SessionId, string Title, string? Description, string Category,
         long PriceMinor, string Currency, SessionStatus Status, DateTimeOffset? StartsAt, PublicCreatorDto Creator,
-        bool IsHost, bool HasTicket, string? ConferenceId, int DurationMinutes = 60, bool IsLive = false);
+        bool IsHost, bool HasTicket, string? ConferenceId, int DurationMinutes = 60, bool IsLive = false,
+        MatchDto? Match = null);
 
     /// <summary>A session in the list of what is on, for everybody to see (the room is not part of it)</summary>
     public record DiscoverSessionDto(string SessionId, string Title, string? Description, string Category,
         long PriceMinor, string Currency, DateTimeOffset? StartsAt, string CreatorName, bool IsHost, bool HasTicket,
-        int DurationMinutes = 60, bool IsLive = false, string? CreatorId = null, string? CreatorPhotoVersion = null);
+        int DurationMinutes = 60, bool IsLive = false, string? CreatorId = null, string? CreatorPhotoVersion = null,
+        MatchDto? Match = null);
 
     /// <summary>The page of a creator: who they are and what they have on</summary>
     public record CreatorPageDto(PublicCreatorDto Creator, DiscoverSessionDto[] Sessions, bool HasPass = false,
@@ -70,7 +92,7 @@ namespace Strive.Models.Response
     public record TicketDto(string SessionId, string ConferenceId, string Title, string Category,
         DateTimeOffset? StartsAt, string CreatorName, DateTimeOffset GrantedAt, SessionStatus Status,
         bool Refunded = false, int DurationMinutes = 60, bool IsLive = false, string? CreatorId = null,
-        string? CreatorPhotoVersion = null);
+        string? CreatorPhotoVersion = null, MatchDto? Match = null);
 }
 
 namespace Strive.Models.Response
@@ -79,4 +101,13 @@ namespace Strive.Models.Response
 
     /// <param name="Status">on or off</param>
     public record NoticeAnswerDto(string CreatorName, string Status);
+}
+
+namespace Strive.Models.Response
+{
+    /// <summary>A session that people reported: for a moderator to take down or to keep</summary>
+    public record AdminSessionReportDto(string SessionId, string Title, string CreatorName, MatchDto? Match,
+        string? RightsBasis, string? RightsNote, long PriceMinor, int Tickets, int OpenReports,
+        System.Collections.Generic.IDictionary<string, int> Reasons,
+        System.Collections.Generic.IReadOnlyList<ReportDetailDto> Details, DateTimeOffset? LatestReportAt);
 }
