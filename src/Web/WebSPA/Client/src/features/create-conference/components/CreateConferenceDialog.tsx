@@ -5,6 +5,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { isGbedu } from 'src/brand-id';
+import { brandKey } from 'src/brand-text';
 import { RootState } from 'src/store';
 import { ConferenceDataForm, mapDataToForm, mapFormToData } from '../form';
 import { formatErrorMessage } from 'src/utils/error-utils';
@@ -74,7 +75,7 @@ function CreateConferenceDialog() {
                mode === 'patch'
                   ? 'dialog_create_conference.title_mode_patch'
                   : isGbedu
-                  ? 'view_main_gbedu.dialog_title_create'
+                  ? brandKey('view_main_gbedu.dialog_title_create')
                   : 'dialog_create_conference.title_mode_create',
             )}
          </DialogTitle>

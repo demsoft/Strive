@@ -4,6 +4,7 @@ import LiveTvOutlinedIcon from '@mui/icons-material/LiveTvOutlined';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router-dom';
+import { brandKey } from 'src/brand-text';
 import { brand } from 'src/theme';
 
 const card = {
@@ -25,25 +26,25 @@ export default function GbeduRoles() {
          <Box sx={card}>
             <ConfirmationNumberOutlinedIcon color="primary" />
             <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 1 }}>
-               {t('roles.fan_title')}
+               {t(brandKey('roles.fan_title'))}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-               {t('roles.fan_text')}
+               {t(brandKey('roles.fan_text'))}
             </Typography>
             <Button id="roles-fan" variant="outlined" component={RouterLink} to="/tickets">
-               {t('roles.fan_button')}
+               {t(brandKey('roles.fan_button'))}
             </Button>
          </Box>
          <Box sx={card}>
             <LiveTvOutlinedIcon color="primary" />
             <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 1 }}>
-               {t('roles.creator_title')}
+               {t(brandKey('roles.creator_title'))}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-               {t('roles.creator_text')}
+               {t(brandKey('roles.creator_text'))}
             </Typography>
             <Button id="roles-creator" variant="contained" component={RouterLink} to="/creator">
-               {t('roles.creator_button')}
+               {t(brandKey('roles.creator_button'))}
             </Button>
          </Box>
       </Box>

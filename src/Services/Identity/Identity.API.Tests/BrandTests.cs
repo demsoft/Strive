@@ -13,7 +13,7 @@ using Xunit;
 namespace Identity.API.Tests
 {
     /// <summary>
-    ///     One installation, two brands: gbedu.* is Gbedu, every other address is Strive. The sign in pages show the name,
+    ///     One installation, three brands: gbedu.* is Gbedu, arena.* is Arena, every other address is Strive. The sign in pages show the name,
     ///     the colours and the text of the brand of the address.
     /// </summary>
     public class BrandTests : IClassFixture<MongoFixture>, IDisposable
@@ -34,6 +34,8 @@ namespace Identity.API.Tests
         [Theory]
         [InlineData("gbedu.goserp.co.uk", "gbedu")]
         [InlineData("GBEDU.example.com", "gbedu")]
+        [InlineData("arena.goserp.co.uk", "arena")]
+        [InlineData("ARENA.example.com", "arena")]
         [InlineData("meet.goserp.co.uk", "strive")]
         [InlineData("localhost", "strive")]
         [InlineData(null, "strive")]
@@ -59,7 +61,7 @@ namespace Identity.API.Tests
                 var settings = new Dictionary<string, string?>
                 {
                     ["IdentityServer:SpaClientHost"] = "https://meet.test",
-                    ["IdentityServer:ExtraSpaHosts"] = "gbedu.test",
+                    ["IdentityServer:ExtraSpaHosts"] = "gbedu.test,arena.test",
                     ["IdentityServer:Issuer"] = "https://meet.test/account",
                     ["IdentityServer:PathBase"] = "/account",
                     ["Accounts:Mode"] = "Accounts",
@@ -106,6 +108,20 @@ namespace Identity.API.Tests
             // only what works today: payments are announced as coming, not offered
             Assert.Contains("coming soon", html);
             Assert.DoesNotContain("Meetings that feel", html);
+        }
+
+        [Fact]
+        public async Task LoginPage_OnTheArenaAddress_IsArena()
+        {
+            var html = await LoginPage("https://arena.test");
+
+            Assert.Contains("<title>Arena</title>", html);
+            Assert.Contains("data-brand=\"arena\"", html);
+            Assert.Contains("aria-label=\"Arena\"", html);
+            Assert.Contains("Football,", html);
+            Assert.Contains("matches", html);
+            Assert.DoesNotContain("Meetings that feel", html);
+            Assert.DoesNotContain("Go live.", html);
         }
 
         [Fact]

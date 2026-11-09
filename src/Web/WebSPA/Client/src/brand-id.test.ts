@@ -9,6 +9,13 @@ describe('detectBrandId', () => {
       expect(detectBrandId('localhost')).toBe('strive');
    });
 
+   test('arena.* is Arena', () => {
+      expect(detectBrandId('arena.goserp.co.uk')).toBe('arena');
+      expect(detectBrandId('localhost', '?brand=arena')).toBe('arena');
+      expect(detectBrandId('localhost', '', 'arena')).toBe('arena');
+      expect(detectBrandId('arena.example.com', '?brand=gbedu')).toBe('gbedu');
+   });
+
    test('?brand= switches the brand to try the other one without a second address', () => {
       expect(detectBrandId('localhost', '?brand=gbedu')).toBe('gbedu');
       expect(detectBrandId('gbedu.example.com', '?brand=strive')).toBe('strive');

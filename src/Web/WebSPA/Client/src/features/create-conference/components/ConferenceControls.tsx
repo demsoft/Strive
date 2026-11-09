@@ -2,6 +2,7 @@ import { Button } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import AddIcon from '@mui/icons-material/Add';
 import { isGbedu } from 'src/brand-id';
+import { brandKey } from 'src/brand-text';
 import { brand } from 'src/theme';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -36,7 +37,7 @@ function ConferenceControls() {
             startIcon={<AddIcon />}
             sx={{ boxShadow: `0 12px 32px ${brand.accentShadow}`, borderRadius: 4 }}
          >
-            {t(isGbedu ? 'view_main_gbedu.start_live' : 'view_main.start_new_conference')}
+            {t(isGbedu ? brandKey('view_main_gbedu.start_live') : 'view_main.start_new_conference')}
          </Button>
 
          <CreateConferenceDialog />

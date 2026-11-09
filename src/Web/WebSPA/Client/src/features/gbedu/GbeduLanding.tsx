@@ -7,6 +7,7 @@ import { useAuth } from 'react-oidc-context';
 import { useTranslation } from 'react-i18next';
 import { makeStyles } from 'tss-react/mui';
 import BrandLogo from 'src/components/BrandLogo';
+import { brandKey } from 'src/brand-text';
 import { brand } from 'src/theme';
 
 const useStyles = makeStyles()((theme) => ({
@@ -71,40 +72,40 @@ export default function GbeduLanding() {
          <header className={classes.header}>
             <BrandLogo size={34} />
             <Button color="inherit" onClick={signIn} id="landing-sign-in-top">
-               {t('landing.sign_in')}
+               {t(brandKey('landing.sign_in'))}
             </Button>
          </header>
 
          <main className={classes.main}>
             <Typography variant="h1" className={classes.title}>
-               {t('view_main_gbedu.headline_1')}{' '}
-               <span className={classes.gradientText}>{t('view_main_gbedu.headline_2')}</span>
+               {t(brandKey('view_main_gbedu.headline_1'))}{' '}
+               <span className={classes.gradientText}>{t(brandKey('view_main_gbedu.headline_2'))}</span>
             </Typography>
             <Typography variant="h6" component="p" className={classes.subtitle}>
-               {t('view_main_gbedu.subtitle')}
+               {t(brandKey('view_main_gbedu.subtitle'))}
             </Typography>
 
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
                <Button id="landing-sign-up" variant="contained" size="large" onClick={signUpAsFan}>
-                  {t('landing.become_fan')}
+                  {t(brandKey('landing.become_fan'))}
                </Button>
                <Button id="landing-sign-up-creator" variant="outlined" size="large" onClick={signUpAsCreator}>
-                  {t('landing.become_creator')}
+                  {t(brandKey('landing.become_creator'))}
                </Button>
             </Box>
             <Typography color="text.secondary" sx={{ mt: 2 }}>
-               {t('landing.have_account')}{' '}
+               {t(brandKey('landing.have_account'))}{' '}
                <Button id="landing-sign-in" size="small" onClick={signIn} sx={{ verticalAlign: 'baseline' }}>
-                  {t('landing.sign_in')}
+                  {t(brandKey('landing.sign_in'))}
                </Button>
             </Typography>
 
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap', mt: 1 }}>
                <Button id="landing-reels" color="inherit" href="/reels">
-                  {t('landing.watch_reels')}
+                  {t(brandKey('landing.watch_reels'))}
                </Button>
                <Button id="landing-creators" color="inherit" href="/creators">
-                  {t('landing.find_creators')}
+                  {t(brandKey('landing.find_creators'))}
                </Button>
             </Box>
 
@@ -112,28 +113,28 @@ export default function GbeduLanding() {
                <div className={classes.step}>
                   <ConfirmationNumberOutlinedIcon color="primary" />
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 1 }}>
-                     {t('landing.fans_title')}
+                     {t(brandKey('landing.fans_title'))}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                     {t('landing.fans_text')}
+                     {t(brandKey('landing.fans_text'))}
                   </Typography>
                </div>
                <div className={classes.step}>
                   <LiveTvOutlinedIcon color="primary" />
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 1 }}>
-                     {t('landing.creators_title')}
+                     {t(brandKey('landing.creators_title'))}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                     {t('landing.creators_text')}
+                     {t(brandKey('landing.creators_text'))}
                   </Typography>
                </div>
                <div className={classes.step}>
                   <PaymentsOutlinedIcon color="primary" />
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 1 }}>
-                     {t('landing.pay_title')}
+                     {t(brandKey('landing.pay_title'))}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                     {t('landing.pay_text')}
+                     {t(brandKey('landing.pay_text'))}
                   </Typography>
                </div>
             </div>

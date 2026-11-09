@@ -1,5 +1,5 @@
 import { alpha, createTheme, responsiveFontSizes } from '@mui/material';
-import { isGbedu } from './brand-id';
+import { isArena, isGbedu } from './brand-id';
 
 /**
  * The Strive design tokens. The Identity server pages (Services/Identity/Identity.API/wwwroot/css/site.css) use the same
@@ -40,15 +40,34 @@ const gbedu: typeof strive = {
    pulseFade: 'rgba(255, 77, 109, 0)',
 };
 
-export const brand = isGbedu ? gbedu : strive;
+/** Arena: pitch green and gold on a deep green-black base. */
+const arena: typeof strive = {
+   violet: '#22C55E',
+   violetLight: '#6EE7A0',
+   cyan: '#FACC15',
+   background: '#07100B',
+   surface: '#0F1A13',
+   surfaceRaised: '#16251B',
+   border: 'rgba(255, 255, 255, 0.08)',
+   gradient: 'linear-gradient(135deg, #22C55E 0%, #FACC15 100%)',
+   gradientSoft: 'linear-gradient(135deg, rgba(34, 197, 94, 0.18) 0%, rgba(250, 204, 21, 0.12) 100%)',
+   glowA: 'rgba(34, 197, 94, 0.14)',
+   glowB: 'rgba(250, 204, 21, 0.08)',
+   accentShadow: 'rgba(34, 197, 94, 0.40)',
+   pulse: 'rgba(250, 204, 21, 0.6)',
+   pulseFade: 'rgba(250, 204, 21, 0)',
+};
 
-const fontFamily = '"Inter", "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+export const brand = isArena ? arena : isGbedu ? gbedu : strive;
+
+const fontFamily =
+   '"Inter", "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif';
 
 const baseTheme = createTheme({
    palette: {
       mode: 'dark',
       primary: { main: brand.violet, light: brand.violetLight, contrastText: '#ffffff' },
-      secondary: { main: brand.cyan, contrastText: isGbedu ? '#2a0610' : '#06202a' },
+      secondary: { main: brand.cyan, contrastText: isArena ? '#2a2204' : isGbedu ? '#2a0610' : '#06202a' },
       error: { main: '#F87171' },
       success: { main: '#34D399' },
       warning: { main: '#FBBF24' },
@@ -78,8 +97,7 @@ const theme = responsiveFontSizes(
                html: { colorScheme: 'dark' },
                body: {
                   backgroundColor: brand.background,
-                  backgroundImage:
-                     `radial-gradient(1200px 600px at 10% -10%, ${brand.glowA}, transparent 60%), radial-gradient(900px 500px at 100% 0%, ${brand.glowB}, transparent 55%)`,
+                  backgroundImage: `radial-gradient(1200px 600px at 10% -10%, ${brand.glowA}, transparent 60%), radial-gradient(900px 500px at 100% 0%, ${brand.glowB}, transparent 55%)`,
                   backgroundAttachment: 'fixed',
                },
                '::-webkit-scrollbar': { width: 10, height: 10 },

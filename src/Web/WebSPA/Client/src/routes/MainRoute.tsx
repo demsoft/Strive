@@ -24,6 +24,7 @@ import { fetchConferenceLinks } from 'src/features/conference/reducer';
 import ConferenceControls from 'src/features/create-conference/components/ConferenceControls';
 import { fetchMyCreatorProfile } from 'src/services/api/creators';
 import { RootState } from 'src/store';
+import { brandKey } from 'src/brand-text';
 import { brand } from 'src/theme';
 
 const useStyles = makeStyles()((theme) => ({
@@ -175,10 +176,11 @@ export default function MainRoute() {
          <main className={classes.main}>
             <section className={classes.hero}>
                <Typography variant="h1" className={classes.title}>
-                  {t(`${texts}.headline_1`)} <span className={classes.gradientText}>{t(`${texts}.headline_2`)}</span>
+                  {t(brandKey(`${texts}.headline_1`))}{' '}
+                  <span className={classes.gradientText}>{t(brandKey(`${texts}.headline_2`))}</span>
                </Typography>
                <Typography variant="h6" component="p" className={classes.subtitle}>
-                  {t(`${texts}.subtitle`)}
+                  {t(brandKey(`${texts}.subtitle`))}
                </Typography>
                {mayStartConference ? (
                   <ConferenceControls />
@@ -199,33 +201,33 @@ export default function MainRoute() {
                         <Chip
                            className={classes.chip}
                            icon={<HighQualityIcon />}
-                           label={t('view_main_gbedu.feature_live')}
+                           label={t(brandKey('view_main_gbedu.feature_live'))}
                         />
                         <Chip
                            className={classes.chip}
                            icon={<ScreenShareIcon />}
-                           label={t('view_main_gbedu.feature_screen')}
+                           label={t(brandKey('view_main_gbedu.feature_screen'))}
                         />
                         <Chip
                            className={classes.chip}
                            icon={<GraphicEqIcon />}
-                           label={t('view_main_gbedu.feature_record')}
+                           label={t(brandKey('view_main_gbedu.feature_record'))}
                         />
                         <Chip
                            className={classes.chip}
                            icon={<GroupsIcon />}
-                           label={t('view_main_gbedu.feature_tools')}
+                           label={t(brandKey('view_main_gbedu.feature_tools'))}
                         />
                         <Chip
                            className={classes.chip}
                            icon={<PianoIcon />}
-                           label={t('view_main_gbedu.feature_music')}
+                           label={t(brandKey('view_main_gbedu.feature_music'))}
                         />
                         <Chip
                            className={classes.chip}
                            variant="outlined"
                            icon={<PaymentsOutlinedIcon />}
-                           label={t('view_main_gbedu.feature_soon')}
+                           label={t(brandKey('view_main_gbedu.feature_soon'))}
                         />
                      </>
                   ) : (
@@ -260,7 +262,7 @@ export default function MainRoute() {
             {links && links.length > 0 && (
                <Box className={classes.panel} id="my-conferences">
                   <Typography variant="subtitle1" className={classes.panelTitle} sx={{ fontWeight: 700 }}>
-                     {t(isGbedu ? 'view_main_gbedu.my_conferences' : 'view_main.my_conferences')}
+                     {t(isGbedu ? brandKey('view_main_gbedu.my_conferences') : 'view_main.my_conferences')}
                   </Typography>
                   <MyConferencesList links={links} />
                </Box>
