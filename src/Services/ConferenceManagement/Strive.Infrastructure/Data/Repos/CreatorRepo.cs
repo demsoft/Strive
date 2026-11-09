@@ -21,6 +21,11 @@ namespace Strive.Infrastructure.Data.Repos
                 config.MapMember(x => x.Status).SetSerializer(new EnumSerializer<CreatorStatus>(BsonType.String));
                 config.MapMember(x => x.CreatedAt).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
                 config.MapMember(x => x.UpdatedAt).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
+                config.MapMember(x => x.OrganizerStatus).SetSerializer(new EnumSerializer<OrganizerStatus>(BsonType.String));
+                config.MapMember(x => x.OrganizerRequestedAt).SetSerializer(
+                    new NullableSerializer<System.DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
+                config.MapMember(x => x.OrganizerDecidedAt).SetSerializer(
+                    new NullableSerializer<System.DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
                 config.SetIgnoreExtraElements(true);
             });
         }
@@ -44,6 +49,11 @@ namespace Strive.Infrastructure.Data.Repos
                     PartialFilterExpression = Builders<CreatorProfile>.Filter.Type(x => x.Slug, BsonType.String),
                 }));
         }
+
+        public async Task<System.Collections.Generic.IReadOnlyList<CreatorProfile>> FindByOrganizerStatus(
+            OrganizerStatus status, int limit) =>
+            await Collection.Find(x => x.OrganizerStatus == status).SortByDescending(x => x.OrganizerRequestedAt)
+                .Limit(limit).ToListAsync();
 
         public Task<long> Count() => Collection.CountDocumentsAsync(FilterDefinition<CreatorProfile>.Empty);
 

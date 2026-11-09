@@ -12,6 +12,10 @@ namespace Strive.Core.Services.Payments.Gateways
 
         Task<long> Count();
 
+        /// <summary>The creators whose organizer request is in this state, the newest request first</summary>
+        Task<System.Collections.Generic.IReadOnlyList<CreatorProfile>> FindByOrganizerStatus(OrganizerStatus status,
+            int limit);
+
         /// <summary>Every profile, the newest first, at most this many</summary>
         Task<System.Collections.Generic.IReadOnlyList<CreatorProfile>> FindAll(int limit);
 

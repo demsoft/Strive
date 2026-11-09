@@ -60,6 +60,46 @@ namespace Strive.Controllers
             _payments = payments.Value;
         }
 
+        /// <summary>Creators that asked to publish football matches, waiting, approved or turned down</summary>
+        [HttpGet("organizers")]
+        public async Task<ActionResult<AdminOrganizerDto[]>> GetOrganizers()
+        {
+            var result = new List<AdminOrganizerDto>();
+            foreach (var status in new[]
+                     {
+                         Strive.Core.Services.Payments.OrganizerStatus.Requested,
+                         Strive.Core.Services.Payments.OrganizerStatus.Approved,
+                         Strive.Core.Services.Payments.OrganizerStatus.Rejected,
+                     })
+            foreach (var creator in await _creators.FindByOrganizerStatus(status, 100))
+                result.Add(new AdminOrganizerDto(creator.CreatorId, creator.DisplayName,
+                    creator.OrganizationName ?? "", creator.OrganizerAbout ?? "",
+                    creator.OrganizerStatus.ToString().ToLowerInvariant(), creator.OrganizerRequestedAt,
+                    creator.OrganizerDecidedAt, creator.OrganizerDecisionNote,
+                    (await _sessions.FindOfCreator(creator.CreatorId, 200)).Count(x => x.Match != null)));
+
+            Response.Headers.CacheControl = "no-store";
+            return result.ToArray();
+        }
+
+        /// <summary>The organizer may publish matches</summary>
+        [HttpPost("organizers/{creatorId}/approve")]
+        public async Task<ActionResult> ApproveOrganizer(string creatorId, [FromBody] DecideOrganizerDto dto)
+        {
+            var result = await _mediator.Send(
+                new Strive.Core.Services.Payments.Requests.DecideOrganizerRequest(creatorId, true, dto.Note));
+            return result.Success ? NoContent() : result.ToActionResult();
+        }
+
+        /// <summary>The request is turned down, or an approval is taken back (matches that are on stay on)</summary>
+        [HttpPost("organizers/{creatorId}/reject")]
+        public async Task<ActionResult> RejectOrganizer(string creatorId, [FromBody] DecideOrganizerDto dto)
+        {
+            var result = await _mediator.Send(
+                new Strive.Core.Services.Payments.Requests.DecideOrganizerRequest(creatorId, false, dto.Note));
+            return result.Success ? NoContent() : result.ToActionResult();
+        }
+
         /// <summary>Sessions (matches) that people reported, with what the organizer declared about the rights</summary>
         [HttpGet("sessions/reports")]
         public async Task<ActionResult<AdminSessionReportDto[]>> GetSessionReports()

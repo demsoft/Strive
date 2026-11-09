@@ -25,7 +25,7 @@ import { brandKey } from 'src/brand-text';
 import SectionCard from 'src/components/SectionCard';
 import { requestErrorMessage } from 'src/features/creator/errors';
 import * as api from 'src/services/api/sessions';
-import NewMatchForm from './NewMatchForm';
+import MatchSetup from './MatchSetup';
 import { Session } from 'src/services/api/sessions';
 import { formatMoney, isPriceInRange, parsePriceToMinor, SESSION_CATEGORIES, SESSION_DURATIONS } from '../money';
 
@@ -137,7 +137,7 @@ export default function MySessionsPage() {
          <SectionCard title={t(brandKey('sessions.new_title'))}>
             {isArena ? (
                <>
-                  <NewMatchForm
+                  <MatchSetup
                      onCreated={(session) => {
                         setCreated(session);
                         load();

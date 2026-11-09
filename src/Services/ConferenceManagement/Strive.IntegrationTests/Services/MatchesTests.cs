@@ -59,12 +59,28 @@ namespace Strive.IntegrationTests.Services
             return JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync(), JsonConfig.Default)!;
         }
 
-        private async Task<UserAccount> NewOrganizer()
+        private async Task<(UserAccount user, CreatorProfileDto profile)> NewCreator()
         {
             var host = NewUser("org");
-            (await Client(host).PutAsync("/v1/creators/me",
-                new JsonNetContent(new SaveCreatorDto("Lagos League", "Football", "058", "0123456789"))))
-                .EnsureSuccessStatusCode();
+            var profile = await Read<CreatorProfileDto>(await Client(host).PutAsync("/v1/creators/me",
+                new JsonNetContent(new SaveCreatorDto("Lagos League", "Football", "058", "0123456789"))));
+            return (host, profile);
+        }
+
+        private Task<HttpResponseMessage> AskToOrganize(UserAccount host, string name = "Lagos League",
+            string about = "The matches of our league, we run it ourselves") =>
+            Client(host).PutAsync("/v1/creators/me/organizer", new JsonNetContent(new RequestOrganizerDto(name, about)));
+
+        private Task<HttpResponseMessage> Decide(string creatorId, bool approve, string? note = null) =>
+            AdminApi().PostAsync($"/v1/admin/organizers/{creatorId}/{(approve ? "approve" : "reject")}",
+                new JsonNetContent(new DecideOrganizerDto(note)));
+
+        /// <summary>A creator an administrator approved as an organizer</summary>
+        private async Task<UserAccount> NewOrganizer()
+        {
+            var (host, profile) = await NewCreator();
+            (await AskToOrganize(host)).EnsureSuccessStatusCode();
+            (await Decide(profile.CreatorId, true)).EnsureSuccessStatusCode();
             return host;
         }
 
@@ -242,6 +258,102 @@ namespace Strive.IntegrationTests.Services
             Assert.DoesNotContain(await AdminReports(), x => x.SessionId == session.SessionId);
             var page = await Read<PublicSessionDto>(await Client(null).GetAsync($"/v1/sessions/{session.SessionId}"));
             Assert.Equal("Published", page.Status.ToString());
+        }
+
+        // ---- organizers: an administrator approves who may publish matches
+
+        [Fact]
+        public async Task Publish_Match_WithoutApproval_IsRefused_UntilAnAdministratorApproves()
+        {
+            var (host, profile) = await NewCreator();
+
+            Assert.Equal(HttpStatusCode.Forbidden, (await PostMatch(host, Match())).StatusCode);
+            (await AskToOrganize(host)).EnsureSuccessStatusCode();
+            Assert.Equal(HttpStatusCode.Forbidden, (await PostMatch(host, Match())).StatusCode);
+            (await Decide(profile.CreatorId, true, "Known league")).EnsureSuccessStatusCode();
+
+            var session = await Read<SessionDto>(await PostMatch(host, Match()));
+            Assert.Equal("Lagos FC vs Abuja United", session.Title);
+            var mine = await Read<CreatorProfileDto>(await Client(host).GetAsync("/v1/creators/me"));
+            Assert.Equal("approved", mine.OrganizerStatus);
+            Assert.Equal("Known league", mine.OrganizerDecisionNote);
+        }
+
+        [Fact]
+        public async Task OtherSessions_NeedNoApproval()
+        {
+            var (host, _) = await NewCreator();
+
+            var response = await Client(host).PostAsync("/v1/sessions",
+                new JsonNetContent(new CreateSessionDto("Piano", "Learn", "music", Price, null)));
+
+            response.EnsureSuccessStatusCode();
+        }
+
+        [Fact]
+        public async Task AskToOrganize_NeedsACreatorAndTheDetails()
+        {
+            Assert.Equal(HttpStatusCode.NotFound, (await AskToOrganize(NewUser("fan"))).StatusCode);
+            var (host, _) = await NewCreator();
+
+            Assert.Equal(HttpStatusCode.BadRequest, (await AskToOrganize(host, name: "x")).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await AskToOrganize(host, about: "short")).StatusCode);
+            var mine = await Read<CreatorProfileDto>(await Client(host).GetAsync("/v1/creators/me"));
+            Assert.Equal("none", mine.OrganizerStatus);
+        }
+
+        [Fact]
+        public async Task AskToOrganize_ShowsToAdministrators_WhoApproveOrReject()
+        {
+            var (host, profile) = await NewCreator();
+            (await AskToOrganize(host, "Abuja Schools League", "Inter-school football, run by the ministry")).EnsureSuccessStatusCode();
+            // asking again while waiting changes nothing
+            (await AskToOrganize(host, "Other name", "Something else entirely")).EnsureSuccessStatusCode();
+
+            var listed = Assert.Single(await Read<AdminOrganizerDto[]>(await AdminApi().GetAsync("/v1/admin/organizers")),
+                x => x.CreatorId == profile.CreatorId);
+            Assert.Equal("requested", listed.Status);
+            Assert.Equal("Abuja Schools League", listed.OrganizationName);
+
+            (await Decide(profile.CreatorId, false, "We could not verify the league")).EnsureSuccessStatusCode();
+
+            var mine = await Read<CreatorProfileDto>(await Client(host).GetAsync("/v1/creators/me"));
+            Assert.Equal("rejected", mine.OrganizerStatus);
+            Assert.Equal("We could not verify the league", mine.OrganizerDecisionNote);
+            Assert.Equal(HttpStatusCode.Forbidden, (await PostMatch(host, Match())).StatusCode);
+            // can ask again
+            (await AskToOrganize(host, "Abuja Schools League", "Now with the letter of the ministry")).EnsureSuccessStatusCode();
+            Assert.Equal("requested",
+                (await Read<CreatorProfileDto>(await Client(host).GetAsync("/v1/creators/me"))).OrganizerStatus);
+        }
+
+        [Fact]
+        public async Task TakingBackTheApproval_KeepsTheMatchesThatAreOn_ButStopsNewOnes()
+        {
+            var (host, profile) = await NewCreator();
+            (await AskToOrganize(host)).EnsureSuccessStatusCode();
+            (await Decide(profile.CreatorId, true)).EnsureSuccessStatusCode();
+            var session = await PublishMatch(host);
+
+            (await Decide(profile.CreatorId, false, "Complaints")).EnsureSuccessStatusCode();
+
+            Assert.Equal(HttpStatusCode.Forbidden, (await PostMatch(host, Match())).StatusCode);
+            var page = await Read<PublicSessionDto>(await Client(null).GetAsync($"/v1/sessions/{session.SessionId}"));
+            Assert.Equal("Published", page.Status.ToString());
+        }
+
+        [Fact]
+        public async Task Decide_Refusals()
+        {
+            var (host, profile) = await NewCreator();
+
+            Assert.Equal(HttpStatusCode.NotFound, (await Decide("nope", true)).StatusCode);
+            // never asked
+            Assert.Equal(HttpStatusCode.BadRequest, (await Decide(profile.CreatorId, true)).StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden, (await Client(host).GetAsync("/v1/admin/organizers")).StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden,
+                (await Client(host).PostAsync($"/v1/admin/organizers/{profile.CreatorId}/approve",
+                    new JsonNetContent(new DecideOrganizerDto(null)))).StatusCode);
         }
     }
 }

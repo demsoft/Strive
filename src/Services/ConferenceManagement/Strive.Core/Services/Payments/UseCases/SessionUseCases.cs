@@ -81,6 +81,11 @@ namespace Strive.Core.Services.Payments.UseCases
             var creator = await _creators.FindByUserId(request.UserId);
             if (creator == null || !creator.CanSell) return PaymentsError.CreatorCannotSell;
 
+            // only organizers that an administrator approved publish matches (a rights declaration alone is not enough)
+            if (request.Match != null && _options.RequireOrganizerApproval &&
+                creator.OrganizerStatus != OrganizerStatus.Approved)
+                return PaymentsError.OrganizerNotApproved;
+
             // a match: the teams and the declaration of the rights come with it, the title can be the fixture
             MatchDetails? match = null;
             SessionRights? rights = null;

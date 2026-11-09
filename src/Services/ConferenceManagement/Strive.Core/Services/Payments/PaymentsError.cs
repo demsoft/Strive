@@ -39,6 +39,13 @@ namespace Strive.Core.Services.Payments
         public static Error OwnSession =>
             BadRequest("You cannot report your own session.", ServiceErrorCode.Payments_OwnSession);
 
+        public static Error OrganizerNotApproved =>
+            Forbidden("Only approved organizers can publish matches. Ask to become an organizer first.",
+                ServiceErrorCode.Payments_OrganizerNotApproved);
+
+        public static Error InvalidOrganizer(string message) =>
+            BadRequest(message, ServiceErrorCode.Payments_InvalidOrganizer);
+
         public static Error TicketRequired =>
             Forbidden("You need a ticket for this session.", ServiceErrorCode.Payments_TicketRequired);
 

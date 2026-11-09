@@ -9,13 +9,16 @@ namespace Strive.Models.Response
     /// <summary>A creator as the creator sees themself</summary>
     public record CreatorProfileDto(string CreatorId, string DisplayName, string? Bio, string Country, string Currency,
         string? BankCode, string? BankName, string? AccountLast4, string? AccountName, bool CanSell,
-        DateTimeOffset CreatedAt, long? PassPriceMinor = null, string? Slug = null, string? PhotoVersion = null)
+        DateTimeOffset CreatedAt, long? PassPriceMinor = null, string? Slug = null, string? PhotoVersion = null,
+        string OrganizerStatus = "none", string? OrganizationName = null, string? OrganizerDecisionNote = null)
     {
         public static CreatorProfileDto From(CreatorProfile profile)
         {
             return new CreatorProfileDto(profile.CreatorId, profile.DisplayName, profile.Bio, profile.Country,
                 profile.Currency, profile.BankCode, profile.BankName, profile.AccountLast4, profile.AccountName,
-                profile.CanSell, profile.CreatedAt, profile.PassPriceMinor, profile.Slug, profile.PhotoVersion);
+                profile.CanSell, profile.CreatedAt, profile.PassPriceMinor, profile.Slug, profile.PhotoVersion,
+                profile.OrganizerStatus.ToString().ToLowerInvariant(), profile.OrganizationName,
+                profile.OrganizerDecisionNote);
         }
     }
 
@@ -32,6 +35,14 @@ namespace Strive.Models.Response
     }
 
     public record SetPassPriceDto(long? PriceMinor);
+
+    public record RequestOrganizerDto(string OrganizationName, string About);
+
+    public record DecideOrganizerDto(string? Note);
+
+    /// <summary>An organizer request, for an administrator</summary>
+    public record AdminOrganizerDto(string CreatorId, string DisplayName, string OrganizationName, string About,
+        string Status, DateTimeOffset? RequestedAt, DateTimeOffset? DecidedAt, string? DecisionNote, long Matches);
 
     public record SetSlugDto(string? Slug);
 

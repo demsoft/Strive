@@ -40,6 +40,21 @@ namespace Strive.Core.Services.Payments
         }
     }
 
+    /// <summary>Whether the creator may publish football matches (Arena): an administrator approves organizers</summary>
+    public enum OrganizerStatus
+    {
+        /// <summary>Has not asked</summary>
+        None,
+
+        /// <summary>Asked, waiting for an administrator</summary>
+        Requested,
+
+        Approved,
+
+        /// <summary>Turned down, or the approval was taken back; can ask again</summary>
+        Rejected,
+    }
+
     public enum CreatorStatus
     {
         /// <summary>Verified bank account, can sell tickets</summary>
@@ -108,6 +123,21 @@ namespace Strive.Core.Services.Payments
         public string? PhotoPublicId { get; set; }
 
         public CreatorStatus Status { get; set; } = CreatorStatus.Active;
+
+        public OrganizerStatus OrganizerStatus { get; set; } = OrganizerStatus.None;
+
+        /// <summary>The league, school or club the organizer speaks for</summary>
+        public string? OrganizationName { get; set; }
+
+        /// <summary>What they want to stream, and the proof they offer (shown to the administrator)</summary>
+        public string? OrganizerAbout { get; set; }
+
+        public DateTimeOffset? OrganizerRequestedAt { get; set; }
+
+        public DateTimeOffset? OrganizerDecidedAt { get; set; }
+
+        /// <summary>The word of the administrator, shown to the organizer</summary>
+        public string? OrganizerDecisionNote { get; set; }
 
         public DateTimeOffset CreatedAt { get; init; }
 

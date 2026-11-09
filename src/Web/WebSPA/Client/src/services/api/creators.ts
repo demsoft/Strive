@@ -27,7 +27,14 @@ export type CreatorProfile = {
    slug?: string | null;
    /** changes when the photo does; none: no photo */
    photoVersion?: string | null;
+   /** may the creator publish football matches (Arena): an administrator approves organizers */
+   organizerStatus?: OrganizerStatus;
+   organizationName?: string | null;
+   /** the word of the administrator about the request */
+   organizerDecisionNote?: string | null;
 };
+
+export type OrganizerStatus = 'none' | 'requested' | 'approved' | 'rejected';
 
 export type Bank = { code: string; name: string };
 
@@ -72,6 +79,11 @@ export async function saveMyCreatorProfile(request: SaveCreatorRequest): Promise
 }
 
 /** Sets what the pass costs, or stops selling it (null). */
+/** The creator asks to publish football matches. An administrator decides. */
+export async function requestOrganizer(organizationName: string, about: string): Promise<CreatorProfile> {
+   return (await Axios.put<CreatorProfile>(`${base()}/me/organizer`, { organizationName, about })).data;
+}
+
 export async function setPassPrice(priceMinor: number | null): Promise<CreatorProfile> {
    return (await Axios.put<CreatorProfile>(`${base()}/me/pass`, { priceMinor })).data;
 }
