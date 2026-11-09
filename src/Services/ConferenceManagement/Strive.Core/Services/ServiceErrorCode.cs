@@ -56,6 +56,7 @@ namespace Strive.Core.Services
         Payments_InvalidEmail,
         Payments_SessionNotFound,
         Payments_SessionCancelled,
+        Payments_OwnSession,
         Payments_TicketRequired,
         Payments_HostCannotBuy,
         Payments_OrderNotFound,

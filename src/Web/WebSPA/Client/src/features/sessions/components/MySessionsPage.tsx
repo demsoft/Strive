@@ -20,9 +20,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useHistory } from 'react-router-dom';
 import PageShell from 'src/components/PageShell';
+import { isArena } from 'src/brand-id';
+import { brandKey } from 'src/brand-text';
 import SectionCard from 'src/components/SectionCard';
 import { requestErrorMessage } from 'src/features/creator/errors';
 import * as api from 'src/services/api/sessions';
+import NewMatchForm from './NewMatchForm';
 import { Session } from 'src/services/api/sessions';
 import { formatMoney, isPriceInRange, parsePriceToMinor, SESSION_CATEGORIES, SESSION_DURATIONS } from '../money';
 
@@ -103,12 +106,27 @@ export default function MySessionsPage() {
       await load();
    };
 
+   const createdAlert = created && (
+      <Alert
+         severity="success"
+         sx={{ mb: 2 }}
+         id="session-created"
+         action={
+            <Button color="inherit" size="small" onClick={() => copy(created.sessionId)}>
+               {t('sessions.copy_link')}
+            </Button>
+         }
+      >
+         {t('sessions.created', { title: created.title })}
+      </Alert>
+   );
+
    return (
       <PageShell
          id="my-sessions-page"
          maxWidth="sm"
          icon={<LiveTvOutlinedIcon />}
-         title={t('sessions.my_title')}
+         title={t(brandKey('sessions.my_title'))}
          backFallback="/creator"
          toolbarEnd={
             <Button color="inherit" component={RouterLink} to="/creator">
@@ -116,112 +134,113 @@ export default function MySessionsPage() {
             </Button>
          }
       >
-         <SectionCard title={t('sessions.new_title')}>
-            <TextField
-               id="session-form-title"
-               fullWidth
-               label={t('sessions.title')}
-               value={title}
-               onChange={(e) => setTitle(e.target.value)}
-               slotProps={{ htmlInput: { maxLength: 100 } }}
-               sx={{ mb: 2 }}
-            />
-            <TextField
-               id="session-form-category"
-               select
-               fullWidth
-               label={t('sessions.category')}
-               value={category}
-               onChange={(e) => setCategory(e.target.value)}
-               sx={{ mb: 2 }}
-            >
-               {SESSION_CATEGORIES.map((c) => (
-                  <MenuItem key={c} value={c}>
-                     {t(`sessions.category_${c}`)}
-                  </MenuItem>
-               ))}
-            </TextField>
-            <TextField
-               id="session-form-description"
-               fullWidth
-               multiline
-               minRows={3}
-               label={t('sessions.description')}
-               value={description}
-               onChange={(e) => setDescription(e.target.value)}
-               slotProps={{ htmlInput: { maxLength: 2000 } }}
-               sx={{ mb: 2 }}
-            />
-            <TextField
-               id="session-form-price"
-               fullWidth
-               label={t('sessions.price')}
-               value={price}
-               onChange={(e) => setPrice(e.target.value)}
-               error={price !== '' && !priceOk}
-               helperText={price !== '' && !priceOk ? t('sessions.price_range') : t('sessions.price_hint')}
-               slotProps={{ htmlInput: { inputMode: 'decimal' } }}
-               sx={{ mb: 2 }}
-            />
-            <TextField
-               id="session-form-starts"
-               fullWidth
-               type="datetime-local"
-               label={t('sessions.starts')}
-               helperText={t('sessions.starts_hint')}
-               value={startsAt}
-               onChange={(e) => setStartsAt(e.target.value)}
-               slotProps={{ inputLabel: { shrink: true } }}
-               sx={{ mb: 2 }}
-            />
-            <TextField
-               id="session-form-duration"
-               select
-               fullWidth
-               label={t('sessions.duration')}
-               helperText={t('sessions.duration_hint')}
-               value={duration}
-               onChange={(e) => setDuration(Number(e.target.value))}
-               sx={{ mb: 2 }}
-            >
-               {SESSION_DURATIONS.map((minutes) => (
-                  <MenuItem key={minutes} value={minutes}>
-                     {t('sessions.minutes', { count: minutes })}
-                  </MenuItem>
-               ))}
-            </TextField>
-            {saveError && (
-               <Alert severity="error" sx={{ mb: 2 }} id="session-form-error">
-                  {saveError}
-               </Alert>
+         <SectionCard title={t(brandKey('sessions.new_title'))}>
+            {isArena ? (
+               <>
+                  <NewMatchForm
+                     onCreated={(session) => {
+                        setCreated(session);
+                        load();
+                     }}
+                  />
+                  <Box sx={{ mt: 2 }}>{createdAlert}</Box>
+               </>
+            ) : (
+               <>
+                  <TextField
+                     id="session-form-title"
+                     fullWidth
+                     label={t('sessions.title')}
+                     value={title}
+                     onChange={(e) => setTitle(e.target.value)}
+                     slotProps={{ htmlInput: { maxLength: 100 } }}
+                     sx={{ mb: 2 }}
+                  />
+                  <TextField
+                     id="session-form-category"
+                     select
+                     fullWidth
+                     label={t('sessions.category')}
+                     value={category}
+                     onChange={(e) => setCategory(e.target.value)}
+                     sx={{ mb: 2 }}
+                  >
+                     {SESSION_CATEGORIES.map((c) => (
+                        <MenuItem key={c} value={c}>
+                           {t(`sessions.category_${c}`)}
+                        </MenuItem>
+                     ))}
+                  </TextField>
+                  <TextField
+                     id="session-form-description"
+                     fullWidth
+                     multiline
+                     minRows={3}
+                     label={t('sessions.description')}
+                     value={description}
+                     onChange={(e) => setDescription(e.target.value)}
+                     slotProps={{ htmlInput: { maxLength: 2000 } }}
+                     sx={{ mb: 2 }}
+                  />
+                  <TextField
+                     id="session-form-price"
+                     fullWidth
+                     label={t('sessions.price')}
+                     value={price}
+                     onChange={(e) => setPrice(e.target.value)}
+                     error={price !== '' && !priceOk}
+                     helperText={price !== '' && !priceOk ? t('sessions.price_range') : t('sessions.price_hint')}
+                     slotProps={{ htmlInput: { inputMode: 'decimal' } }}
+                     sx={{ mb: 2 }}
+                  />
+                  <TextField
+                     id="session-form-starts"
+                     fullWidth
+                     type="datetime-local"
+                     label={t('sessions.starts')}
+                     helperText={t('sessions.starts_hint')}
+                     value={startsAt}
+                     onChange={(e) => setStartsAt(e.target.value)}
+                     slotProps={{ inputLabel: { shrink: true } }}
+                     sx={{ mb: 2 }}
+                  />
+                  <TextField
+                     id="session-form-duration"
+                     select
+                     fullWidth
+                     label={t('sessions.duration')}
+                     helperText={t('sessions.duration_hint')}
+                     value={duration}
+                     onChange={(e) => setDuration(Number(e.target.value))}
+                     sx={{ mb: 2 }}
+                  >
+                     {SESSION_DURATIONS.map((minutes) => (
+                        <MenuItem key={minutes} value={minutes}>
+                           {t('sessions.minutes', { count: minutes })}
+                        </MenuItem>
+                     ))}
+                  </TextField>
+                  {saveError && (
+                     <Alert severity="error" sx={{ mb: 2 }} id="session-form-error">
+                        {saveError}
+                     </Alert>
+                  )}
+                  {createdAlert}
+                  <Button
+                     id="session-publish"
+                     variant="contained"
+                     size="large"
+                     fullWidth
+                     disabled={!canPublish}
+                     onClick={handlePublish}
+                  >
+                     {saving ? <CircularProgress size={22} color="inherit" /> : t('sessions.publish')}
+                  </Button>
+               </>
             )}
-            {created && (
-               <Alert
-                  severity="success"
-                  sx={{ mb: 2 }}
-                  id="session-created"
-                  action={
-                     <Button color="inherit" size="small" onClick={() => copy(created.sessionId)}>
-                        {t('sessions.copy_link')}
-                     </Button>
-                  }
-               >
-                  {t('sessions.created', { title: created.title })}
-               </Alert>
-            )}
-            <Button
-               id="session-publish"
-               variant="contained"
-               size="large"
-               fullWidth
-               disabled={!canPublish}
-               onClick={handlePublish}
-            >
-               {saving ? <CircularProgress size={22} color="inherit" /> : t('sessions.publish')}
-            </Button>
          </SectionCard>
 
-         <SectionCard title={t('sessions.published_title')}>
+         <SectionCard title={t(brandKey('sessions.published_title'))}>
             {loadError && <Alert severity="error">{loadError}</Alert>}
             {!loadError && sessions === null && <CircularProgress />}
             {sessions?.length === 0 && (
@@ -252,7 +271,15 @@ export default function MySessionsPage() {
                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                               <b>{session.title}</b>
                               {session.status === 'cancelled' && (
-                                 <Chip size="small" color="warning" label={t('sessions.cancelled_chip')} />
+                                 <Chip
+                                    size="small"
+                                    color="warning"
+                                    label={t(
+                                       session.takedownNote != null
+                                          ? 'matches.taken_down_chip'
+                                          : 'sessions.cancelled_chip',
+                                    )}
+                                 />
                               )}
                            </Box>
                         }
@@ -262,6 +289,12 @@ export default function MySessionsPage() {
                               {t(`sessions.category_${session.category}`)}
                               {session.startsAt &&
                                  ` · ${DateTime.fromISO(session.startsAt).toLocaleString(DateTime.DATETIME_MED)}`}
+                              {session.takedownNote != null && (
+                                 <Box sx={{ mt: 0.5 }} className="takedown-note">
+                                    {t('matches.taken_down')}
+                                    {session.takedownNote ? ` ${session.takedownNote}` : ''}
+                                 </Box>
+                              )}
                               {session.status === 'cancelled' && session.refunded + session.refundsPending > 0 && (
                                  <Box sx={{ mt: 0.5 }} className="refund-summary">
                                     {session.refundsPending === 0

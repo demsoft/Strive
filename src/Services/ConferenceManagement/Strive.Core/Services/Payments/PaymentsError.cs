@@ -36,6 +36,9 @@ namespace Strive.Core.Services.Payments
         public static Error SessionCancelled =>
             BadRequest("This session was called off.", ServiceErrorCode.Payments_SessionCancelled);
 
+        public static Error OwnSession =>
+            BadRequest("You cannot report your own session.", ServiceErrorCode.Payments_OwnSession);
+
         public static Error TicketRequired =>
             Forbidden("You need a ticket for this session.", ServiceErrorCode.Payments_TicketRequired);
 

@@ -1,6 +1,7 @@
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import SportsSoccerOutlinedIcon from '@mui/icons-material/SportsSoccerOutlined';
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
 import TheatersOutlinedIcon from '@mui/icons-material/TheatersOutlined';
 import { SvgIconComponent } from '@mui/icons-material';
@@ -18,6 +19,7 @@ const CATEGORY_STYLES: Record<string, CategoryStyle> = {
    expertise: { Icon: LightbulbOutlinedIcon, from: '#2DD4BF', to: '#0EA5A5' },
    community: { Icon: GroupsOutlinedIcon, from: '#A78BFA', to: '#7C5CFF' },
    music: { Icon: MusicNoteIcon, from: '#FF9F1C', to: '#FF4D6D' },
+   match: { Icon: SportsSoccerOutlinedIcon, from: '#22C55E', to: '#15803D' },
 };
 
 /** Every category has its own colour and icon, so that sessions can be told apart at a glance. Unknown: like music. */

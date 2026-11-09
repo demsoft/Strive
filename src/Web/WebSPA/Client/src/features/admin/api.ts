@@ -209,3 +209,33 @@ export async function removeVideo(videoId: string, note: string): Promise<Remove
       })
    ).data;
 }
+
+export type SessionReportItem = {
+   sessionId: string;
+   title: string;
+   creatorName: string;
+   match?: { homeTeam: string; awayTeam: string; competition?: string | null } | null;
+   /** what the organizer declared: own, licensed or permission */
+   rightsBasis?: string | null;
+   rightsNote?: string | null;
+   priceMinor: number;
+   /** how many tickets were paid: taking the session down gives them their money back */
+   tickets: number;
+   openReports: number;
+   reasons: Record<string, number>;
+   details: ReportDetail[];
+   latestReportAt?: string | null;
+};
+
+export async function fetchSessionReports(): Promise<SessionReportItem[]> {
+   return (await Axios.get<SessionReportItem[]>(adminUrl('sessions/reports'))).data;
+}
+
+/** The session is called off, every ticket is refunded and the organizer is told why. */
+export async function takeDownSession(sessionId: string, note: string): Promise<void> {
+   await Axios.post(adminUrl(`sessions/${encodeURIComponent(sessionId)}/takedown`), { note: note || undefined });
+}
+
+export async function keepSession(sessionId: string): Promise<void> {
+   await Axios.post(adminUrl(`sessions/${encodeURIComponent(sessionId)}/keep`));
+}

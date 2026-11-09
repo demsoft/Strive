@@ -4,6 +4,29 @@ import type { Video } from './videos';
 
 export type SessionStatus = 'published' | 'cancelled';
 
+/** Why an organizer may stream a match: their own, or a licence or a permission of whoever owns the rights */
+export type RightsBasis = 'own' | 'licensed' | 'permission';
+
+/** The teams of a football match (Arena) */
+export type Match = {
+   homeTeam: string;
+   awayTeam: string;
+   competition?: string | null;
+   /** what the organizer declared about the right to stream it */
+   rightsBasis?: RightsBasis | null;
+};
+
+export type MatchInput = {
+   homeTeam: string;
+   awayTeam: string;
+   competition?: string;
+   rightsBasis: RightsBasis;
+   rightsNote?: string;
+   rightsAccepted: boolean;
+};
+
+export type SessionReportReason = 'rightsHolder' | 'illegal' | 'misleading' | 'abuse' | 'spam' | 'other';
+
 export type Session = {
    sessionId: string;
    conferenceId: string;
@@ -21,6 +44,9 @@ export type Session = {
    /** after a cancellation: tickets given back, and tickets whose refund did not work yet */
    refunded: number;
    refundsPending: number;
+   match?: Match | null;
+   /** set if a moderator took the session down: why */
+   takedownNote?: string | null;
 };
 
 export type PublicCreator = {
@@ -53,6 +79,7 @@ export type PublicSession = {
    durationMinutes: number;
    /** the host has the room open right now */
    isLive: boolean;
+   match?: Match | null;
 };
 
 export type CreateSessionRequest = {
@@ -62,6 +89,7 @@ export type CreateSessionRequest = {
    priceMinor: number;
    startsAt?: string;
    durationMinutes?: number;
+   match?: MatchInput;
 };
 
 export type CheckoutResult = { authorizationUrl?: string | null; reference?: string | null; alreadyHasTicket: boolean };
@@ -94,6 +122,7 @@ export type Ticket = {
    isLive: boolean;
    creatorId?: string | null;
    creatorPhotoVersion?: string | null;
+   match?: Match | null;
 };
 
 /** A session in the list of what is on */
@@ -113,6 +142,7 @@ export type DiscoverSession = {
    isLive: boolean;
    creatorId?: string | null;
    creatorPhotoVersion?: string | null;
+   match?: Match | null;
 };
 
 export type CreatorPage = {
@@ -162,6 +192,14 @@ export async function createSession(request: CreateSessionRequest): Promise<Sess
 
 export async function fetchMySessions(): Promise<Session[]> {
    return (await Axios.get<Session[]>(`${base()}/v1/sessions/mine`)).data;
+}
+
+/** Tells us what is wrong with a session (a match shown without the right to, for example). A moderator decides. */
+export async function reportSession(sessionId: string, reason: SessionReportReason, details: string): Promise<void> {
+   await Axios.post(`${base()}/v1/sessions/${encodeURIComponent(sessionId)}/report`, {
+      reason,
+      details: details || undefined,
+   });
 }
 
 export async function cancelSession(sessionId: string): Promise<void> {

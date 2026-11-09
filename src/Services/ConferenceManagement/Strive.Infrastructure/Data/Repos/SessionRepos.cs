@@ -28,6 +28,19 @@ namespace Strive.Infrastructure.Data.Repos
                     new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
                 config.MapMember(x => x.FollowersNoticedAt).SetSerializer(
                     new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
+                config.MapMember(x => x.TakenDownAt).SetSerializer(
+                    new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
+                config.SetIgnoreExtraElements(true);
+            });
+            BsonClassMap.RegisterClassMap<MatchDetails>(config =>
+            {
+                config.AutoMap();
+                config.SetIgnoreExtraElements(true);
+            });
+            BsonClassMap.RegisterClassMap<SessionRights>(config =>
+            {
+                config.AutoMap();
+                config.MapMember(x => x.DeclaredAt).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
                 config.SetIgnoreExtraElements(true);
             });
             BsonClassMap.RegisterClassMap<RevenueShare>(config =>
@@ -425,5 +438,56 @@ namespace Strive.Infrastructure.Data.Repos
 
         public Task Update(PassSubscription subscription) =>
             Collection.ReplaceOneAsync(x => x.SubscriptionId == subscription.SubscriptionId, subscription);
+    }
+
+    public class SessionReportRepo : MongoRepo<SessionReport>, IMongoIndexBuilder, ISessionReportRepo
+    {
+        static SessionReportRepo()
+        {
+            BsonClassMap.RegisterClassMap<SessionReport>(config =>
+            {
+                config.AutoMap();
+                config.MapIdMember(x => x.ReportId);
+                config.MapMember(x => x.Reason).SetSerializer(new EnumSerializer<SessionReportReason>(BsonType.String));
+                config.MapMember(x => x.CreatedAt).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
+                config.MapMember(x => x.ResolvedAt).SetSerializer(
+                    new NullableSerializer<DateTimeOffset>(new DateTimeOffsetSerializer(BsonType.DateTime)));
+                config.SetIgnoreExtraElements(true);
+            });
+        }
+
+        public SessionReportRepo(IOptions<MongoDbOptions> options) : base(options)
+        {
+        }
+
+        public async Task CreateIndexes()
+        {
+            // a person reports a session once
+            await Collection.Indexes.CreateOneAsync(new CreateIndexModel<SessionReport>(
+                Builders<SessionReport>.IndexKeys.Ascending(x => x.SessionId).Ascending(x => x.ReporterUserId),
+                new CreateIndexOptions {Unique = true}));
+            await Collection.Indexes.CreateOneAsync(new CreateIndexModel<SessionReport>(
+                Builders<SessionReport>.IndexKeys.Ascending(x => x.Resolved).Descending(x => x.CreatedAt)));
+        }
+
+        public async Task<bool> TryAdd(SessionReport report)
+        {
+            try
+            {
+                await Collection.InsertOneAsync(report);
+                return true;
+            }
+            catch (MongoWriteException e) when (e.WriteError.Category == ServerErrorCategory.DuplicateKey)
+            {
+                return false;
+            }
+        }
+
+        public async Task<IReadOnlyList<SessionReport>> FindOpen(int limit) =>
+            await Collection.Find(x => !x.Resolved).SortByDescending(x => x.CreatedAt).Limit(limit).ToListAsync();
+
+        public Task ResolveOpen(string sessionId, DateTimeOffset at) =>
+            Collection.UpdateManyAsync(x => x.SessionId == sessionId && !x.Resolved,
+                Builders<SessionReport>.Update.Set(x => x.Resolved, true).Set(x => x.ResolvedAt, at));
     }
 }

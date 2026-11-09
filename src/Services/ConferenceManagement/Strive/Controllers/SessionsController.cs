@@ -81,7 +81,11 @@ namespace Strive.Controllers
             if (UserId == null) return Forbid();
 
             var result = await _mediator.Send(new CreateSessionRequest(UserId, dto.Title, dto.Description,
-                dto.Category, dto.PriceMinor, dto.StartsAt, dto.DurationMinutes));
+                dto.Category, dto.PriceMinor, dto.StartsAt, dto.DurationMinutes,
+                dto.Match == null
+                    ? null
+                    : new MatchInput(dto.Match.HomeTeam, dto.Match.AwayTeam, dto.Match.Competition,
+                        dto.Match.RightsBasis, dto.Match.RightsNote, dto.Match.RightsAccepted)));
             if (!result.Success) return result.ToActionResult();
 
             return SessionDto.From(result.Response!);
@@ -223,7 +227,7 @@ namespace Strive.Controllers
                 session.PriceMinor, session.Currency, session.StartsAt, creator.DisplayName,
                 UserId != null && session.CreatorUserId == UserId,
                 UserId != null && await CanJoin(session), session.DurationMinutes, live, creator.CreatorId,
-                creator.PhotoVersion);
+                creator.PhotoVersion, MatchDto.From(session));
         }
 
         /// <summary>Whether the host has opened the room and not closed it again</summary>
@@ -255,7 +259,24 @@ namespace Strive.Controllers
             return new PublicSessionDto(session.SessionId, session.Title, session.Description, session.Category,
                 session.PriceMinor, session.Currency, session.Status, session.StartsAt,
                 PublicCreatorDto.From(creator), isHost, hasTicket,
-                isHost || hasTicket ? session.ConferenceId : null, session.DurationMinutes, await IsLive(session));
+                isHost || hasTicket ? session.ConferenceId : null, session.DurationMinutes, await IsLive(session),
+                MatchDto.From(session));
+        }
+
+        // POST v1/sessions/{sessionId}/report
+        /// <summary>A person reports a session, for example a match that is shown without the right to. A moderator decides.</summary>
+        [HttpPost("v1/sessions/{sessionId}/report")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> Report(string sessionId, [FromBody] ReportSessionDto dto)
+        {
+            if (UserId == null) return Forbid();
+            if (!Enum.TryParse<SessionReportReason>(dto.Reason, true, out var reason))
+                return PaymentsError.InvalidSession("Choose what is wrong.").ToActionResult();
+
+            var result = await _mediator.Send(new ReportSessionRequest(UserId, sessionId, reason, dto.Details));
+            return result.Success ? NoContent() : result.ToActionResult();
         }
 
         // POST v1/sessions/{sessionId}/checkout
@@ -356,7 +377,7 @@ namespace Strive.Controllers
                 tickets.Add(new TicketDto(session.SessionId, session.ConferenceId, session.Title, session.Category,
                     session.StartsAt, creator?.DisplayName ?? "", entitlement.GrantedAt, session.Status,
                     order?.Status == OrderStatus.Refunded, session.DurationMinutes, await IsLive(session), creator?.CreatorId,
-                    creator?.PhotoVersion));
+                    creator?.PhotoVersion, MatchDto.From(session)));
             }
 
             Response.Headers.CacheControl = "no-store";

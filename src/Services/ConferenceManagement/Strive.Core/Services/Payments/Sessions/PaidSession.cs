@@ -21,7 +21,10 @@ namespace Strive.Core.Services.Payments.Sessions
         public const string Community = "community";
         public const string Music = "music";
 
-        public static readonly IReadOnlyList<string> All = new[] {Teach, Perform, Expertise, Community, Music};
+        /// <summary>A football match (Arena)</summary>
+        public const string Match = "match";
+
+        public static readonly IReadOnlyList<string> All = new[] {Teach, Perform, Expertise, Community, Music, Match};
     }
 
     /// <summary>One creator's part of the ticket money. Today a session has one share of 100%.</summary>
@@ -90,5 +93,17 @@ namespace Strive.Core.Services.Payments.Sessions
 
         /// <summary>When the followers who asked for mail were told about the session; null: not yet</summary>
         public DateTimeOffset? FollowersNoticedAt { get; set; }
+
+        /// <summary>The teams and the competition; set for a match (category match)</summary>
+        public MatchDetails? Match { get; set; }
+
+        /// <summary>What the organizer declared about the right to stream the match</summary>
+        public SessionRights? Rights { get; set; }
+
+        /// <summary>When a moderator took the session down (it is called off, the tickets are refunded)</summary>
+        public DateTimeOffset? TakenDownAt { get; set; }
+
+        /// <summary>Why it was taken down, shown to the organizer</summary>
+        public string? TakedownNote { get; set; }
     }
 }

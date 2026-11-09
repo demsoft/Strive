@@ -28,6 +28,7 @@ namespace Strive.Controllers
         private readonly AdminOverviewService _overview;
         private readonly IOrderRepo _orders;
         private readonly ISessionRepo _sessions;
+        private readonly ISessionReportRepo _sessionReports;
         private readonly ICreatorRepo _creators;
         private readonly IPassSubscriptionRepo _subscriptions;
         private readonly Strive.Core.Services.Videos.IVideoRepo _videoRepo;
@@ -38,7 +39,7 @@ namespace Strive.Controllers
         private readonly PaymentsOptions _payments;
 
         public AdminController(AdminOverviewService overview, IAdminMetricsStore history, IOrderRepo orders,
-            ISessionRepo sessions, ICreatorRepo creators, IPassSubscriptionRepo subscriptions,
+            ISessionRepo sessions, ISessionReportRepo sessionReports, ICreatorRepo creators, IPassSubscriptionRepo subscriptions,
             Strive.Core.Services.Videos.IVideoRepo videoRepo, Strive.Core.Services.Videos.IVideoReportRepo videoReports,
             Strive.Core.Services.Videos.IVideoEntitlementRepo videoEntitlements, Strive.Presenters.VideoPresenter videoPresenter,
             MediatR.IMediator mediator,
@@ -48,6 +49,7 @@ namespace Strive.Controllers
             _history = history;
             _orders = orders;
             _sessions = sessions;
+            _sessionReports = sessionReports;
             _creators = creators;
             _subscriptions = subscriptions;
             _videoRepo = videoRepo;
@@ -56,6 +58,54 @@ namespace Strive.Controllers
             _videoPresenter = videoPresenter;
             _mediator = mediator;
             _payments = payments.Value;
+        }
+
+        /// <summary>Sessions (matches) that people reported, with what the organizer declared about the rights</summary>
+        [HttpGet("sessions/reports")]
+        public async Task<ActionResult<AdminSessionReportDto[]>> GetSessionReports()
+        {
+            var open = await _sessionReports.FindOpen(500);
+            var result = new List<AdminSessionReportDto>();
+            foreach (var group in open.GroupBy(x => x.SessionId))
+            {
+                var session = await _sessions.FindById(group.Key);
+                if (session == null) continue;
+
+                var creator = await _creators.FindById(session.CreatorId);
+                var reports = group.ToList();
+                var tickets = (await _orders.FindPaidOfSession(session.SessionId)).Count(x => x.Status == OrderStatus.Paid);
+                result.Add(new AdminSessionReportDto(session.SessionId, session.Title, creator?.DisplayName ?? "",
+                    MatchDto.From(session), session.Rights?.Basis, session.Rights?.Note, session.PriceMinor, tickets,
+                    reports.Count,
+                    reports.GroupBy(x => x.Reason.ToString().ToLowerInvariant()).ToDictionary(g => g.Key, g => g.Count()),
+                    reports.Where(x => !string.IsNullOrEmpty(x.Details)).Take(5)
+                        .Select(x => new ReportDetailDto(x.Reason.ToString().ToLowerInvariant(), x.Details, x.CreatedAt))
+                        .ToList(),
+                    reports.Max(x => x.CreatedAt)));
+            }
+
+            Response.Headers.CacheControl = "no-store";
+            // a rights holder who reports is the most serious: first
+            return result.OrderByDescending(x => x.Reasons.ContainsKey("rightsholder"))
+                .ThenByDescending(x => x.OpenReports).ThenByDescending(x => x.LatestReportAt).ToArray();
+        }
+
+        /// <summary>The session goes: it is called off, every ticket is refunded and the organizer is told why</summary>
+        [HttpPost("sessions/{sessionId}/takedown")]
+        public async Task<ActionResult> TakeDownSession(string sessionId, [FromBody] TakeDownDto dto)
+        {
+            var result = await _mediator.Send(new Strive.Core.Services.Payments.Requests.TakeDownSessionRequest(sessionId,
+                dto.Note));
+            return result.Success ? NoContent() : result.ToActionResult();
+        }
+
+        /// <summary>The session is fine: the reports are put aside</summary>
+        [HttpPost("sessions/{sessionId}/keep")]
+        public async Task<ActionResult> KeepSession(string sessionId)
+        {
+            var result = await _mediator.Send(
+                new Strive.Core.Services.Payments.Requests.DismissSessionReportsRequest(sessionId));
+            return result.Success ? NoContent() : result.ToActionResult();
         }
 
         /// <summary>Videos that people reported, and the ones that are hidden until somebody looks at them</summary>
