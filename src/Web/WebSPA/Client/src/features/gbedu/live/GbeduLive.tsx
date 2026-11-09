@@ -1,3 +1,4 @@
+import { brandKey } from 'src/brand-text';
 import { Grid, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import React, { useMemo, useRef } from 'react';
@@ -91,7 +92,7 @@ export default function GbeduLive() {
                   </div>
                   {showChat && (
                      <aside className={classes.chat} id="gbedu-chat">
-                        <Typography className={classes.chatTitle}>{t('gbedu_live.chat')}</Typography>
+                        <Typography className={classes.chatTitle}>{t(brandKey('gbedu_live.chat'))}</Typography>
                         <Grid ref={chatContainer} />
                         <CurrentPollsBar />
                         <ChatBar />

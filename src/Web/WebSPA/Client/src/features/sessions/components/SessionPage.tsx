@@ -20,6 +20,7 @@ import BrandLogo from 'src/components/BrandLogo';
 import { PaymentStatus, PublicSession } from 'src/services/api/sessions';
 import * as api from 'src/services/api/sessions';
 import { requestErrorMessage } from 'src/features/creator/errors';
+import Replays from './Replays';
 import ReportSessionDialog from './ReportSessionDialog';
 import { categoryGradient, categoryStyle } from 'src/features/gbedu/ui/categories';
 import { creatorPhotoUrl } from 'src/features/creator/photoUrl';
@@ -292,6 +293,9 @@ export default function SessionPage() {
                               </Box>
                            ))}
                         </Box>
+                        {(session.isHost || session.hasTicket) && session.status === 'published' && (
+                           <Replays sessionId={session.sessionId} />
+                        )}
                         {auth.isAuthenticated && !session.isHost && session.status === 'published' && (
                            <Button
                               id="session-report"

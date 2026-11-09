@@ -42,6 +42,9 @@ namespace Strive.Controllers
         private readonly VideoAccess _videoAccess;
         private readonly PaymentsOptions _paymentsOptions;
         private readonly IConfiguration _configuration;
+        private readonly Strive.Core.Services.Recording.Gateways.IRecordingRepo _recordings;
+        private readonly Strive.Core.Services.Recording.Gateways.IRecordingStorage _recordingStorage;
+        private readonly Strive.Core.Services.Recording.RecordingOptions _recordingOptions;
 
         public SessionsController(IMediator mediator, ISessionRepo sessions, ICreatorRepo creators,
             IEntitlementRepo entitlements, IOrderRepo orders, IPassRepo passes, IPassSubscriptionRepo subscriptions,
@@ -49,8 +52,14 @@ namespace Strive.Controllers
             VideoAccess videoAccess, Strive.Core.Services.Social.IFollowRepo follows, EngagementPresenter engagement,
             Microsoft.Extensions.Options.IOptions<Strive.Core.Services.Reminders.RemindersOptions> reminders,
             Strive.Core.Services.Reminders.IEmailSender emailSender,
-            Microsoft.Extensions.Options.IOptions<PaymentsOptions> paymentsOptions, IConfiguration configuration)
+            Microsoft.Extensions.Options.IOptions<PaymentsOptions> paymentsOptions, IConfiguration configuration,
+            Strive.Core.Services.Recording.Gateways.IRecordingRepo recordings,
+            Strive.Core.Services.Recording.Gateways.IRecordingStorage recordingStorage,
+            Microsoft.Extensions.Options.IOptions<Strive.Core.Services.Recording.RecordingOptions> recordingOptions)
         {
+            _recordings = recordings;
+            _recordingStorage = recordingStorage;
+            _recordingOptions = recordingOptions.Value;
             _openConferences = openConferences;
             _videoRepo = videoRepo;
             _follows = follows;
@@ -263,6 +272,40 @@ namespace Strive.Controllers
                 PublicCreatorDto.From(creator), isHost, hasTicket,
                 isHost || hasTicket ? session.ConferenceId : null, session.DurationMinutes, await IsLive(session),
                 MatchDto.From(session));
+        }
+
+        // GET v1/sessions/{sessionId}/replays
+        /// <summary>
+        ///     The recordings of a session, to watch again: for the host and for people with a ticket or a pass. Not for a
+        ///     session that was called off or taken down.
+        /// </summary>
+        [HttpGet("v1/sessions/{sessionId}/replays")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ReplayDto[]>> GetReplays(string sessionId)
+        {
+            if (UserId == null) return Forbid();
+
+            var session = await _sessions.FindById(sessionId);
+            if (session == null || session.Status != SessionStatus.Published)
+                return PaymentsError.SessionNotFound.ToActionResult();
+            if (session.CreatorUserId != UserId && !await CanJoin(session))
+                return PaymentsError.TicketRequired.ToActionResult();
+
+            var validFor = _recordingOptions.PlaybackUrlValidFor;
+            var replays = (await _recordings.FindOfConference(session.ConferenceId))
+                .Where(x => x is {Status: Strive.Core.Services.Recording.RecordingStatus.Ready, StorageKey: not null} &&
+                            x.Kind == Strive.Core.Services.Recording.RecordingKind.Meeting)
+                .OrderByDescending(x => x.StartedAt)
+                .Select(x => new ReplayDto(x.RecordingId, x.StartedAt, x.DurationSeconds,
+                    _recordingStorage.GetPlaybackUrl(x.StorageKey!, validFor).ToString(),
+                    DateTimeOffset.UtcNow.Add(validFor)))
+                .ToArray();
+
+            // links that expire: never cache
+            Response.Headers.CacheControl = "no-store";
+            return replays;
         }
 
         // POST v1/sessions/{sessionId}/report

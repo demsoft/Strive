@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using Strive.Core.Services.Recording;
+using Strive.Core.Services.Recording.Gateways;
 using Strive.Infrastructure.Serialization;
 using Strive.IntegrationTests._Helpers;
 using Strive.Models.Response;
@@ -371,6 +373,75 @@ namespace Strive.IntegrationTests.Services
             Assert.Contains(onlyMatches, x => x.SessionId == match.SessionId);
             Assert.DoesNotContain(onlyMatches, x => x.SessionId == music.SessionId);
             Assert.Contains(all, x => x.SessionId == music.SessionId);
+        }
+
+        // ---- replays: ticket holders watch a recorded match again
+
+        private async Task AddRecording(string conferenceId, RecordingStatus status = RecordingStatus.Ready,
+            string? storageKey = "rec/match.mp4")
+        {
+            var id = Guid.NewGuid().ToString("N");
+            var recording = new ConferenceRecording(id, conferenceId, "host", DateTimeOffset.UtcNow.AddHours(-1),
+                DateTimeOffset.UtcNow.AddDays(30), Guid.NewGuid().ToString("N"))
+            {
+                Status = status, StorageKey = storageKey, DurationSeconds = 5400, EndedAt = DateTimeOffset.UtcNow,
+            };
+            Assert.True(await Factory.Services.GetRequiredService<IRecordingRepo>().TryCreate(recording));
+        }
+
+        private Task<HttpResponseMessage> Replays(UserAccount? user, string sessionId) =>
+            Client(user).GetAsync($"/v1/sessions/{sessionId}/replays");
+
+        [Fact]
+        public async Task Replays_TheHostAndTheTicketHolders_SeeTheFinishedRecordings()
+        {
+            var host = await NewOrganizer();
+            var session = await PublishMatch(host);
+            var conferenceId = (await Read<SessionDto[]>(await Client(host).GetAsync("/v1/sessions/mine")))
+                .Single(x => x.SessionId == session.SessionId).ConferenceId;
+            var fan = await FanWithTicket(session);
+            await AddRecording(conferenceId);
+            // not finished, or without a file: not offered
+            await AddRecording(conferenceId, RecordingStatus.Recording, null);
+            await AddRecording(conferenceId, RecordingStatus.Failed, null);
+
+            var forFan = await Read<ReplayDto[]>(await Replays(fan, session.SessionId));
+            var forHost = await Read<ReplayDto[]>(await Replays(host, session.SessionId));
+
+            var replay = Assert.Single(forFan);
+            Assert.Contains("rec/match.mp4", replay.Url);
+            Assert.Equal(5400, replay.DurationSeconds);
+            Assert.Single(forHost);
+        }
+
+        [Fact]
+        public async Task Replays_NotForPeopleWithoutATicket_NorForAnonymous()
+        {
+            var host = await NewOrganizer();
+            var session = await PublishMatch(host);
+            await AddRecording((await Read<SessionDto[]>(await Client(host).GetAsync("/v1/sessions/mine")))
+                .Single(x => x.SessionId == session.SessionId).ConferenceId);
+
+            Assert.Equal(HttpStatusCode.Forbidden, (await Replays(NewUser("nobody"), session.SessionId)).StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await Replays(null, session.SessionId)).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await Replays(NewUser("nobody"), "nope")).StatusCode);
+        }
+
+        [Fact]
+        public async Task Replays_AreGone_WhenTheMatchIsTakenDown()
+        {
+            var host = await NewOrganizer();
+            var session = await PublishMatch(host);
+            await AddRecording((await Read<SessionDto[]>(await Client(host).GetAsync("/v1/sessions/mine")))
+                .Single(x => x.SessionId == session.SessionId).ConferenceId);
+            var fan = await FanWithTicket(session);
+            Assert.Single(await Read<ReplayDto[]>(await Replays(fan, session.SessionId)));
+
+            (await AdminApi().PostAsync($"/v1/admin/sessions/{session.SessionId}/takedown",
+                new JsonNetContent(new TakeDownDto("No rights")))).EnsureSuccessStatusCode();
+
+            Assert.Equal(HttpStatusCode.NotFound, (await Replays(fan, session.SessionId)).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await Replays(host, session.SessionId)).StatusCode);
         }
     }
 }

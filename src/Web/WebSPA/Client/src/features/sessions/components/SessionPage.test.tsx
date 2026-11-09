@@ -8,6 +8,8 @@ const api = vi.hoisted(() => ({
    fetchSession: vi.fn(),
    startCheckout: vi.fn(),
    fetchPayment: vi.fn(),
+   fetchReplays: vi.fn(),
+   reportSession: vi.fn(),
 }));
 const push = vi.hoisted(() => vi.fn());
 const state = vi.hoisted(() => ({
@@ -74,6 +76,7 @@ const assign = vi.fn();
 
 beforeEach(() => {
    Object.values(api).forEach((fn) => fn.mockReset());
+   api.fetchReplays.mockResolvedValue([]);
    push.mockReset();
    assign.mockReset();
    state.user = undefined;
@@ -148,6 +151,24 @@ test('a fan with a ticket gets the way into the room, not a payment form', async
    expect(document.querySelector('#session-buy')).toBeNull();
    await act(async () => (document.querySelector('#session-join') as HTMLElement).click());
    expect(push).toHaveBeenCalledWith('/c/room1');
+});
+
+test('a fan with a ticket sees the replays of the session, a person without one does not ask for them', async () => {
+   state.user = { access_token: 'tok', profile: {} };
+   api.fetchReplays.mockResolvedValue([
+      {
+         recordingId: 'r1',
+         startedAt: '2026-11-14T16:00:00Z',
+         durationSeconds: 5400,
+         url: 'https://s.test/r1.mp4',
+         urlExpiresAt: 'x',
+      },
+   ]);
+   api.fetchSession.mockResolvedValue({ ...baseSession, hasTicket: true, conferenceId: 'room1' });
+   await render();
+
+   expect(api.fetchReplays).toHaveBeenCalledWith('abcd2345');
+   expect(document.querySelector('#session-replays')).not.toBeNull();
 });
 
 test('the host opens the room', async () => {

@@ -1,3 +1,4 @@
+import { brandKey } from 'src/brand-text';
 import { Box, Button, IconButton, Switch, Tooltip, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -122,7 +123,7 @@ export default function GbeduWaitingRoom({ conferenceInfo, isHost }: Props) {
                   </Typography>
                )}
                <Typography variant="h4" gutterBottom id="waiting-title">
-                  {isHost ? t('gbedu_live.ready_title') : t('gbedu_live.waiting_title')}
+                  {isHost ? t(brandKey('gbedu_live.ready_title')) : t(brandKey('gbedu_live.waiting_title'))}
                </Typography>
                {conferenceInfo.scheduledDate && (
                   <Typography color="textSecondary" gutterBottom>
@@ -132,7 +133,7 @@ export default function GbeduWaitingRoom({ conferenceInfo, isHost }: Props) {
                )}
                <Typography color="textSecondary">
                   {isHost
-                     ? t('gbedu_live.ready_text')
+                     ? t(brandKey('gbedu_live.ready_text'))
                      : hostIsHere
                      ? t('gbedu_live.host_is_here')
                      : t('gbedu_live.host_not_here')}
@@ -148,7 +149,7 @@ export default function GbeduWaitingRoom({ conferenceInfo, isHost }: Props) {
                         disabled={!canOpen}
                         id="moderator-open-conference-button"
                      >
-                        {t('gbedu_live.go_live')}
+                        {t(brandKey('gbedu_live.go_live'))}
                      </Button>
                      <Tooltip title={t('conference_not_open.change_conference_settings')}>
                         <IconButton

@@ -204,6 +204,20 @@ export async function reportSession(sessionId: string, reason: SessionReportReas
    });
 }
 
+/** A recording of a session to watch again (for the host and for people with a ticket or a pass). */
+export type Replay = {
+   recordingId: string;
+   startedAt: string;
+   durationSeconds?: number | null;
+   /** a temporary link to play it */
+   url: string;
+   urlExpiresAt: string;
+};
+
+export async function fetchReplays(sessionId: string): Promise<Replay[]> {
+   return (await Axios.get<Replay[]>(`${base()}/v1/sessions/${encodeURIComponent(sessionId)}/replays`)).data;
+}
+
 export async function cancelSession(sessionId: string): Promise<void> {
    await Axios.post(`${base()}/v1/sessions/${encodeURIComponent(sessionId)}/cancel`);
 }

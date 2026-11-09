@@ -24,6 +24,10 @@ namespace Strive.Models.Response
 
     public record ReportSessionDto(string Reason, string? Details);
 
+    /// <summary>A recording of a session that people with a ticket (or a pass) can watch again</summary>
+    public record ReplayDto(string RecordingId, DateTimeOffset StartedAt, double? DurationSeconds, string Url,
+        DateTimeOffset UrlExpiresAt);
+
     public record TakeDownDto(string? Note);
 
     /// <summary>A session as its host sees it</summary>
