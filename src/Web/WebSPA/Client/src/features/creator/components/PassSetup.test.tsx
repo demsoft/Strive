@@ -50,8 +50,21 @@ test('the price is sent in kobo and the new profile is handed on', async () => {
    await type('#pass-price', '25,000');
    await act(async () => save.click());
 
-   expect(api.setPassPrice).toHaveBeenCalledWith(2500000);
+   expect(api.setPassPrice).toHaveBeenCalledWith(2500000, 30);
    expect(onSaved).toHaveBeenCalledWith(updated);
+});
+
+test('the creator chooses how long the pass lasts, and it starts at what is saved', async () => {
+   api.setPassPrice.mockResolvedValue(profile({ passPriceMinor: 2500000, passDays: 90 }));
+   await act(async () =>
+      createRoot(container).render(
+         <PassSetup profile={profile({ passPriceMinor: 2500000, passDays: 90 })} onSaved={vi.fn()} />,
+      ),
+   );
+
+   await act(async () => (document.querySelector('#pass-save') as HTMLButtonElement).click());
+
+   expect(api.setPassPrice).toHaveBeenCalledWith(2500000, 90);
 });
 
 test('a creator who sells a pass can stop selling it', async () => {
@@ -64,7 +77,7 @@ test('a creator who sells a pass can stop selling it', async () => {
    expect((document.querySelector('#pass-price') as HTMLInputElement).value).toBe('20000');
    await act(async () => (document.querySelector('#pass-stop') as HTMLElement).click());
 
-   expect(api.setPassPrice).toHaveBeenCalledWith(null);
+   expect(api.setPassPrice).toHaveBeenCalledWith(null, 30);
 });
 
 test('no stop button while no pass is sold, and the server error is shown', async () => {

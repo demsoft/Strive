@@ -77,6 +77,9 @@ namespace Strive.Core.Services.Payments.Sessions
         /// <summary>Of a pass: the creator it is for (a pass has no session, SessionId and ConferenceId are empty)</summary>
         public string? PassCreatorId { get; set; }
 
+        /// <summary>Of a pass: how many days it gives, fixed when it was bought (null: the usual 30)</summary>
+        public int? PassDays { get; set; }
+
         /// <summary>The reference at the provider, unique</summary>
         public string Reference { get; init; }
 
@@ -208,6 +211,9 @@ namespace Strive.Core.Services.Payments.Sessions
             CreatedAt = createdAt;
             NextChargeAt = nextChargeAt;
         }
+
+        /// <summary>How many days each renewal gives, as agreed when the pass was bought (null: the usual 30)</summary>
+        public int? Days { get; set; }
 
         public string SubscriptionId { get; init; }
 

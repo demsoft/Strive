@@ -60,6 +60,8 @@ export type PublicCreator = {
    slug?: string | null;
    /** changes when the photo does; none: no photo */
    photoVersion?: string | null;
+   /** how many days the pass lasts */
+   passDays?: number;
 };
 
 export type PublicSession = {
@@ -202,6 +204,20 @@ export async function reportSession(sessionId: string, reason: SessionReportReas
    });
 }
 
+/** A recording of a session to watch again (for the host and for people with a ticket or a pass). */
+export type Replay = {
+   recordingId: string;
+   startedAt: string;
+   durationSeconds?: number | null;
+   /** a temporary link to play it */
+   url: string;
+   urlExpiresAt: string;
+};
+
+export async function fetchReplays(sessionId: string): Promise<Replay[]> {
+   return (await Axios.get<Replay[]>(`${base()}/v1/sessions/${encodeURIComponent(sessionId)}/replays`)).data;
+}
+
 export async function cancelSession(sessionId: string): Promise<void> {
    await Axios.post(`${base()}/v1/sessions/${encodeURIComponent(sessionId)}/cancel`);
 }
@@ -228,8 +244,12 @@ export async function fetchMyTickets(): Promise<Ticket[]> {
 export const sessionLink = (sessionId: string) => new URL('/s/' + sessionId, document.baseURI).href;
 
 /** The published sessions that are not over, the ones that start first at the top. */
-export async function fetchDiscover(): Promise<DiscoverSession[]> {
-   return (await Axios.get<DiscoverSession[]>(`${base()}/v1/sessions/discover`)).data;
+export async function fetchDiscover(category?: string): Promise<DiscoverSession[]> {
+   return (
+      await Axios.get<DiscoverSession[]>(`${base()}/v1/sessions/discover`, {
+         params: category ? { category } : undefined,
+      })
+   ).data;
 }
 
 /** What a creator has on, for their page. The token (if the person is signed in) marks their own and ticketed sessions. */

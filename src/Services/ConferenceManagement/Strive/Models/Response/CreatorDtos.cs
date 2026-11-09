@@ -9,29 +9,42 @@ namespace Strive.Models.Response
     /// <summary>A creator as the creator sees themself</summary>
     public record CreatorProfileDto(string CreatorId, string DisplayName, string? Bio, string Country, string Currency,
         string? BankCode, string? BankName, string? AccountLast4, string? AccountName, bool CanSell,
-        DateTimeOffset CreatedAt, long? PassPriceMinor = null, string? Slug = null, string? PhotoVersion = null)
+        DateTimeOffset CreatedAt, long? PassPriceMinor = null, string? Slug = null, string? PhotoVersion = null,
+        string OrganizerStatus = "none", string? OrganizationName = null, string? OrganizerDecisionNote = null,
+        int PassDays = 30)
     {
         public static CreatorProfileDto From(CreatorProfile profile)
         {
             return new CreatorProfileDto(profile.CreatorId, profile.DisplayName, profile.Bio, profile.Country,
                 profile.Currency, profile.BankCode, profile.BankName, profile.AccountLast4, profile.AccountName,
-                profile.CanSell, profile.CreatedAt, profile.PassPriceMinor, profile.Slug, profile.PhotoVersion);
+                profile.CanSell, profile.CreatedAt, profile.PassPriceMinor, profile.Slug, profile.PhotoVersion,
+                profile.OrganizerStatus.ToString().ToLowerInvariant(), profile.OrganizationName,
+                profile.OrganizerDecisionNote, profile.EffectivePassDays);
         }
     }
 
     /// <summary>What everybody may see of a creator: no bank details</summary>
     public record PublicCreatorDto(string CreatorId, string DisplayName, string? Bio, long? PassPriceMinor = null,
-        string? Currency = null, string? Slug = null, string? PhotoVersion = null)
+        string? Currency = null, string? Slug = null, string? PhotoVersion = null, int PassDays = 30)
     {
         public static PublicCreatorDto From(CreatorProfile profile)
         {
             // a pass is only on offer if the creator can be paid
             return new PublicCreatorDto(profile.CreatorId, profile.DisplayName, profile.Bio,
-                profile.CanSell ? profile.PassPriceMinor : null, profile.Currency, profile.Slug, profile.PhotoVersion);
+                profile.CanSell ? profile.PassPriceMinor : null, profile.Currency, profile.Slug, profile.PhotoVersion,
+                profile.EffectivePassDays);
         }
     }
 
-    public record SetPassPriceDto(long? PriceMinor);
+    public record SetPassPriceDto(long? PriceMinor, int? Days = null);
+
+    public record RequestOrganizerDto(string OrganizationName, string About);
+
+    public record DecideOrganizerDto(string? Note);
+
+    /// <summary>An organizer request, for an administrator</summary>
+    public record AdminOrganizerDto(string CreatorId, string DisplayName, string OrganizationName, string About,
+        string Status, DateTimeOffset? RequestedAt, DateTimeOffset? DecidedAt, string? DecisionNote, long Matches);
 
     public record SetSlugDto(string? Slug);
 

@@ -116,6 +116,20 @@ namespace Strive.Controllers
             return CreatorProfileDto.From(result.Response!);
         }
 
+        // PUT v1/creators/me/organizer
+        /// <summary>The creator asks to publish football matches (Arena). An administrator decides.</summary>
+        [HttpPut("v1/creators/me/organizer")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<CreatorProfileDto>> RequestOrganizer([FromBody] RequestOrganizerDto dto)
+        {
+            if (UserId == null) return Forbid();
+
+            var result = await _mediator.Send(new RequestOrganizerRequest(UserId, dto.OrganizationName, dto.About));
+            if (!result.Success) return result.ToActionResult();
+
+            return CreatorProfileDto.From(result.Response!);
+        }
+
         // PUT v1/creators/me/pass
         [HttpPut("v1/creators/me/pass")]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -123,7 +137,7 @@ namespace Strive.Controllers
         {
             if (UserId == null) return Forbid();
 
-            var result = await _mediator.Send(new SetPassPriceRequest(UserId, dto.PriceMinor));
+            var result = await _mediator.Send(new SetPassPriceRequest(UserId, dto.PriceMinor, dto.Days));
             if (!result.Success) return result.ToActionResult();
 
             return CreatorProfileDto.From(result.Response!);

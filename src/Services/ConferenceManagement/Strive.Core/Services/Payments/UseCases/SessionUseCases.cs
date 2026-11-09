@@ -81,6 +81,11 @@ namespace Strive.Core.Services.Payments.UseCases
             var creator = await _creators.FindByUserId(request.UserId);
             if (creator == null || !creator.CanSell) return PaymentsError.CreatorCannotSell;
 
+            // only organizers that an administrator approved publish matches (a rights declaration alone is not enough)
+            if (request.Match != null && _options.RequireOrganizerApproval &&
+                creator.OrganizerStatus != OrganizerStatus.Approved)
+                return PaymentsError.OrganizerNotApproved;
+
             // a match: the teams and the declaration of the rights come with it, the title can be the fixture
             MatchDetails? match = null;
             SessionRights? rights = null;
@@ -359,11 +364,12 @@ namespace Strive.Core.Services.Payments.UseCases
         {
             var now = _timeProvider.GetUtcNow();
             // charged a day before the pass ends: the new pass is added to the end of the running one
+            var days = order.PassDays ?? PassRules.Days;
             var validUntil = await _passes.ActiveUntil(order.BuyerUserId, order.PassCreatorId!, now) ??
-                             now.AddDays(PassRules.Days);
+                             now.AddDays(days);
             await _subscriptions.StartOrReplace(new PassSubscription(Guid.NewGuid().ToString("N"), order.BuyerUserId,
                 order.PassCreatorId!, order.Email, authorizationCode, order.AmountMinor, order.Currency, now,
-                validUntil.AddDays(-1)));
+                validUntil.AddDays(-1)) {Days = days});
         }
 
         private async Task GrantTicket(TicketOrder order)
@@ -379,7 +385,7 @@ namespace Strive.Core.Services.Payments.UseCases
             if (order.Kind == OrderKind.Pass)
             {
                 await _passes.GrantOnce(order.BuyerUserId, order.PassCreatorId!, order.OrderId,
-                    _timeProvider.GetUtcNow(), PassRules.Days);
+                    _timeProvider.GetUtcNow(), order.PassDays ?? PassRules.Days);
                 return;
             }
 
@@ -656,6 +662,7 @@ namespace Strive.Core.Services.Payments.UseCases
             {
                 Kind = OrderKind.Pass,
                 PassCreatorId = creator.CreatorId,
+                PassDays = creator.EffectivePassDays,
                 AutoRenew = request.AutoRenew,
                 Shares = new System.Collections.Generic.List<RevenueShare>
                 {
@@ -708,6 +715,14 @@ namespace Strive.Core.Services.Payments.UseCases
             if (request.PriceMinor is { } price and (< SessionRules.MinPriceMinor or > SessionRules.MaxPriceMinor))
                 return PaymentsError.InvalidSession(
                     $"The price must be between {SessionRules.MinPriceMinor / 100} and {SessionRules.MaxPriceMinor / 100} {creator.Currency}.");
+
+            if (request.Days is { } days)
+            {
+                if (!PassRules.AllowedDays.Contains(days))
+                    return PaymentsError.InvalidSession(
+                        $"A pass can last {string.Join(", ", PassRules.AllowedDays)} days.");
+                creator.PassDays = days;
+            }
 
             creator.PassPriceMinor = request.PriceMinor;
             creator.UpdatedAt = _timeProvider.GetUtcNow();
@@ -883,6 +898,7 @@ namespace Strive.Core.Services.Payments.UseCases
                 {
                     Kind = OrderKind.Pass,
                     PassCreatorId = subscription.CreatorId,
+                    PassDays = subscription.Days ?? PassRules.Days,
                     IsRenewal = true,
                     Shares = new System.Collections.Generic.List<RevenueShare>
                     {
@@ -920,7 +936,7 @@ namespace Strive.Core.Services.Payments.UseCases
             {
                 case OrderStatus.Paid:
                     var validUntil = await _passes.ActiveUntil(subscription.UserId, subscription.CreatorId, now) ??
-                                     now.AddDays(PassRules.Days);
+                                     now.AddDays(subscription.Days ?? PassRules.Days);
                     subscription.PendingReference = null;
                     subscription.FailedAttempts = 0;
                     subscription.NextChargeAt = validUntil.AddDays(-1);

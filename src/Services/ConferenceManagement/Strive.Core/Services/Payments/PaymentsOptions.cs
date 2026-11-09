@@ -32,6 +32,12 @@ namespace Strive.Core.Services.Payments
         /// <summary>How many days before a renewal the person is told about it by mail</summary>
         public int RenewNoticeDays { get; set; } = 3;
 
+        /// <summary>
+        ///     Only organizers that an administrator approved can publish football matches (Arena). Turn it off to let any
+        ///     creator publish a match.
+        /// </summary>
+        public bool RequireOrganizerApproval { get; set; } = true;
+
         public PaystackOptions Paystack { get; set; } = new();
     }
 

@@ -236,6 +236,29 @@ export async function takeDownSession(sessionId: string, note: string): Promise<
    await Axios.post(adminUrl(`sessions/${encodeURIComponent(sessionId)}/takedown`), { note: note || undefined });
 }
 
+export type OrganizerItem = {
+   creatorId: string;
+   displayName: string;
+   organizationName: string;
+   about: string;
+   status: 'requested' | 'approved' | 'rejected';
+   requestedAt?: string | null;
+   decidedAt?: string | null;
+   decisionNote?: string | null;
+   /** how many matches the organizer published */
+   matches: number;
+};
+
+export async function fetchOrganizers(): Promise<OrganizerItem[]> {
+   return (await Axios.get<OrganizerItem[]>(adminUrl('organizers'))).data;
+}
+
+export async function decideOrganizer(creatorId: string, approve: boolean, note: string): Promise<void> {
+   await Axios.post(adminUrl(`organizers/${encodeURIComponent(creatorId)}/${approve ? 'approve' : 'reject'}`), {
+      note: note || undefined,
+   });
+}
+
 export async function keepSession(sessionId: string): Promise<void> {
    await Axios.post(adminUrl(`sessions/${encodeURIComponent(sessionId)}/keep`));
 }

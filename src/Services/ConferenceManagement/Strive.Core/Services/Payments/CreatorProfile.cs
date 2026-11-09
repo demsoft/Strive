@@ -6,6 +6,9 @@ namespace Strive.Core.Services.Payments
     {
         /// <summary>How long a pass lasts after it was paid (buying another one while it runs adds to it)</summary>
         public const int Days = 30;
+
+        /// <summary>The lengths a creator can choose: a month, a quarter, half a year or a season/year</summary>
+        public static readonly System.Collections.Generic.IReadOnlyList<int> AllowedDays = new[] {30, 90, 180, 365};
     }
 
     public static class SlugRules
@@ -38,6 +41,21 @@ namespace Strive.Core.Services.Payments
             if (Reserved.Contains(slug)) return "This name is reserved. Choose another one.";
             return null;
         }
+    }
+
+    /// <summary>Whether the creator may publish football matches (Arena): an administrator approves organizers</summary>
+    public enum OrganizerStatus
+    {
+        /// <summary>Has not asked</summary>
+        None,
+
+        /// <summary>Asked, waiting for an administrator</summary>
+        Requested,
+
+        Approved,
+
+        /// <summary>Turned down, or the approval was taken back; can ask again</summary>
+        Rejected,
     }
 
     public enum CreatorStatus
@@ -95,6 +113,11 @@ namespace Strive.Core.Services.Payments
         /// </summary>
         public long? PassPriceMinor { get; set; }
 
+        /// <summary>How many days a pass lasts; null: <see cref="PassRules.Days" /> (see <see cref="PassRules.AllowedDays" />)</summary>
+        public int? PassDays { get; set; }
+
+        public int EffectivePassDays => PassDays ?? PassRules.Days;
+
         /// <summary>
         ///     The short name in the link of the page of the creator (/u/ada), unique, see <see cref="SlugRules" />.
         ///     Null: the link uses the id.
@@ -108,6 +131,21 @@ namespace Strive.Core.Services.Payments
         public string? PhotoPublicId { get; set; }
 
         public CreatorStatus Status { get; set; } = CreatorStatus.Active;
+
+        public OrganizerStatus OrganizerStatus { get; set; } = OrganizerStatus.None;
+
+        /// <summary>The league, school or club the organizer speaks for</summary>
+        public string? OrganizationName { get; set; }
+
+        /// <summary>What they want to stream, and the proof they offer (shown to the administrator)</summary>
+        public string? OrganizerAbout { get; set; }
+
+        public DateTimeOffset? OrganizerRequestedAt { get; set; }
+
+        public DateTimeOffset? OrganizerDecidedAt { get; set; }
+
+        /// <summary>The word of the administrator, shown to the organizer</summary>
+        public string? OrganizerDecisionNote { get; set; }
 
         public DateTimeOffset CreatedAt { get; init; }
 

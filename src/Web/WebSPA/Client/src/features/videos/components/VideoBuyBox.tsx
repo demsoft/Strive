@@ -145,7 +145,7 @@ export default function VideoBuyBox({ video, accessToken, knownEmail, payment, o
                   <RouterLink to={`/u/${creator.slug || creator.creatorId}`} style={{ color: 'inherit' }}>
                      {t('videos.pass_hint', {
                         name: creator.displayName,
-                        days: PASS_DAYS,
+                        days: creator.passDays ?? PASS_DAYS,
                         price: formatMoney(creator.passPriceMinor, creator.currency ?? 'NGN'),
                      })}
                   </RouterLink>

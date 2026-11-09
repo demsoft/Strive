@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
+import { brandKey } from 'src/brand-text';
 import { formatMoney, PASS_DAYS } from 'src/features/sessions/money';
 import * as api from 'src/services/api/sessions';
 import { CreatorPage } from 'src/services/api/sessions';
@@ -127,11 +128,11 @@ export default function PassCard({ page, onPaid }: Props) {
          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
             <ConfirmationNumberOutlinedIcon color="primary" />
             <Typography variant="h6" sx={{ fontWeight: 800 }}>
-               {t('creator.pass_title')} · {price}
+               {t(brandKey('creator.pass_title'))} · {price}
             </Typography>
          </Box>
          <Typography color="text.secondary" sx={{ mb: 2 }}>
-            {t('creator.pass_blurb', { name: creator.displayName, days: PASS_DAYS })}
+            {t(brandKey('creator.pass_blurb'), { name: creator.displayName, days: creator.passDays ?? PASS_DAYS })}
          </Typography>
 
          {payment === 'checking' && (
@@ -157,11 +158,11 @@ export default function PassCard({ page, onPaid }: Props) {
 
          {page.hasPass && (
             <Alert severity="success" id="pass-active" sx={{ mb: 2 }}>
-               {t('creator.pass_active', { date: until })}
+               {t(brandKey('creator.pass_active'), { date: until })}
                {page.passRenewsAt && (
                   <span id="pass-renews">
                      {' '}
-                     {t('creator.pass_renews_on', {
+                     {t(brandKey('creator.pass_renews_on'), {
                         date: DateTime.fromISO(page.passRenewsAt).toLocaleString(DateTime.DATE_MED),
                      })}
                   </span>
@@ -172,7 +173,7 @@ export default function PassCard({ page, onPaid }: Props) {
          {!accessToken ? (
             <Box>
                <Button id="pass-sign-in" variant="contained" size="large" fullWidth onClick={signIn}>
-                  {t('creator.pass_buy', { days: PASS_DAYS, price })}
+                  {t(brandKey('creator.pass_buy'), { days: creator.passDays ?? PASS_DAYS, price })}
                </Button>
                <Button id="pass-sign-up" size="large" fullWidth onClick={signUp} sx={{ mt: 1 }}>
                   {t('sessions.sign_up_to_buy')}
@@ -203,7 +204,7 @@ export default function PassCard({ page, onPaid }: Props) {
                      }
                      label={
                         <span>
-                           <b>{t('creator.pass_auto_renew', { days: PASS_DAYS })}</b>
+                           <b>{t(brandKey('creator.pass_auto_renew'), { days: creator.passDays ?? PASS_DAYS })}</b>
                            <Typography
                               variant="body2"
                               color="text.secondary"
@@ -232,9 +233,9 @@ export default function PassCard({ page, onPaid }: Props) {
                   {paying ? (
                      <CircularProgress size={22} color="inherit" />
                   ) : page.hasPass ? (
-                     t('creator.pass_extend', { days: PASS_DAYS, price })
+                     t(brandKey('creator.pass_extend'), { days: creator.passDays ?? PASS_DAYS, price })
                   ) : (
-                     t('creator.pass_buy', { days: PASS_DAYS, price })
+                     t(brandKey('creator.pass_buy'), { days: creator.passDays ?? PASS_DAYS, price })
                   )}
                </Button>
             </Box>

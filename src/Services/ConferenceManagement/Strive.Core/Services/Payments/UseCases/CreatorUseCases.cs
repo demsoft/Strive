@@ -12,6 +12,91 @@ using Strive.Core.Services.Payments.Requests;
 
 namespace Strive.Core.Services.Payments.UseCases
 {
+    public static class OrganizerRules
+    {
+        public const int MinNameLength = 2;
+        public const int MaxNameLength = 80;
+        public const int MinAboutLength = 10;
+        public const int MaxAboutLength = 600;
+        public const int MaxNoteLength = 300;
+    }
+
+    public class RequestOrganizerUseCase : IRequestHandler<RequestOrganizerRequest, SuccessOrError<CreatorProfile>>
+    {
+        private readonly ICreatorRepo _creators;
+        private readonly TimeProvider _timeProvider;
+
+        public RequestOrganizerUseCase(ICreatorRepo creators, TimeProvider timeProvider)
+        {
+            _creators = creators;
+            _timeProvider = timeProvider;
+        }
+
+        public async Task<SuccessOrError<CreatorProfile>> Handle(RequestOrganizerRequest request,
+            CancellationToken cancellationToken)
+        {
+            var creator = await _creators.FindByUserId(request.UserId);
+            if (creator == null) return PaymentsError.CreatorNotFound;
+
+            var name = request.OrganizationName?.Trim() ?? "";
+            if (name.Length is < OrganizerRules.MinNameLength or > OrganizerRules.MaxNameLength)
+                return PaymentsError.InvalidOrganizer(
+                    $"The name of your league, school or club needs {OrganizerRules.MinNameLength} to {OrganizerRules.MaxNameLength} characters.");
+
+            var about = request.About?.Trim() ?? "";
+            if (about.Length is < OrganizerRules.MinAboutLength or > OrganizerRules.MaxAboutLength)
+                return PaymentsError.InvalidOrganizer(
+                    $"Tell what you want to stream and why you may: {OrganizerRules.MinAboutLength} to {OrganizerRules.MaxAboutLength} characters.");
+
+            // approved already, or waiting: asking again changes nothing
+            if (creator.OrganizerStatus is OrganizerStatus.Approved or OrganizerStatus.Requested) return creator;
+
+            var now = _timeProvider.GetUtcNow();
+            creator.OrganizerStatus = OrganizerStatus.Requested;
+            creator.OrganizationName = name;
+            creator.OrganizerAbout = about;
+            creator.OrganizerRequestedAt = now;
+            creator.OrganizerDecidedAt = null;
+            creator.OrganizerDecisionNote = null;
+            creator.UpdatedAt = now;
+            await _creators.Save(creator);
+            return creator;
+        }
+    }
+
+    public class DecideOrganizerUseCase : IRequestHandler<DecideOrganizerRequest, SuccessOrError<CreatorProfile>>
+    {
+        private readonly ICreatorRepo _creators;
+        private readonly TimeProvider _timeProvider;
+
+        public DecideOrganizerUseCase(ICreatorRepo creators, TimeProvider timeProvider)
+        {
+            _creators = creators;
+            _timeProvider = timeProvider;
+        }
+
+        public async Task<SuccessOrError<CreatorProfile>> Handle(DecideOrganizerRequest request,
+            CancellationToken cancellationToken)
+        {
+            var creator = await _creators.FindById(request.CreatorId);
+            if (creator == null) return PaymentsError.CreatorNotFound;
+            if (creator.OrganizerStatus == OrganizerStatus.None)
+                return PaymentsError.InvalidOrganizer("This creator did not ask to be an organizer.");
+
+            var note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
+            if (note is {Length: > OrganizerRules.MaxNoteLength})
+                return PaymentsError.InvalidOrganizer($"The note can have {OrganizerRules.MaxNoteLength} characters at most.");
+
+            var now = _timeProvider.GetUtcNow();
+            creator.OrganizerStatus = request.Approve ? OrganizerStatus.Approved : OrganizerStatus.Rejected;
+            creator.OrganizerDecidedAt = now;
+            creator.OrganizerDecisionNote = note;
+            creator.UpdatedAt = now;
+            await _creators.Save(creator);
+            return creator;
+        }
+    }
+
     public class ListBanksUseCase : IRequestHandler<ListBanksRequest, SuccessOrError<IReadOnlyList<ProviderBank>>>
     {
         private readonly IPaymentProvider _provider;

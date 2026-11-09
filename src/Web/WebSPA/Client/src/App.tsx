@@ -17,6 +17,7 @@ import { isGbedu } from './brand-id';
 import LandingGate from './features/gbedu/LandingGate';
 import CreatorPublicPage from 'src/features/creator/components/CreatorPublicPage';
 import CreatorsPage from 'src/features/creators/CreatorsPage';
+import MatchesPage from 'src/features/matches/MatchesPage';
 import NoticePage from 'src/features/social/NoticePage';
 import ReelsPage from 'src/features/videos/components/ReelsPage';
 import WatchVideoPage from 'src/features/videos/components/WatchVideoPage';
@@ -63,6 +64,8 @@ function App() {
                         <Route path="/reels/:videoId?" component={ReelsPage} />
                         {/* creators for fans to find and follow */}
                         <Route path="/creators" exact component={CreatorsPage} />
+                        {/* Arena: the matches that are on or coming */}
+                        <Route path="/matches" exact component={MatchesPage} />
                         {/* the links in the mails to followers: confirm the address, stop the mail */}
                         <Route path="/n/:action/:token" component={NoticePage} />
                         {/* Gbedu: a welcome page with sign up and sign in for visitors */}
