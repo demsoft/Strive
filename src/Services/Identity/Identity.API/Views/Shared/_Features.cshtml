@@ -1,5 +1,18 @@
 @inject Identity.API.BrandInfo Brand
-@if (Brand.IsGbedu)
+@if (Brand.IsArena)
+{
+<section class="features" aria-label="About Arena">
+    <h2>Football, <span class="gradient-text">live.</span></h2>
+    <p class="lead">Watch lower league, school and club matches that their organizers stream live. Get a pass for a match or a season and watch from your phone.</p>
+    <ul>
+        <li><span class="ico">⚽</span><div><strong>Live match streams</strong><span>Straight in the browser, no download.</span></div></li>
+        <li><span class="ico">🎟️</span><div><strong>Passes in naira</strong><span>Pay by card, bank transfer or USSD. Come back to the same pass any time.</span></div></li>
+        <li><span class="ico">💬</span><div><strong>Match chat</strong><span>Talk about the game with the other fans while it is on.</span></div></li>
+        <li><span class="ico">⏺️</span><div><strong>Replays</strong><span>Organizers record their matches so you can watch again.</span></div></li>
+    </ul>
+</section>
+}
+else if (Brand.IsGbedu)
 {
 <section class="features" aria-label="About Gbedu">
     <h2>Go live. <span class="gradient-text">Bring people together.</span></h2>

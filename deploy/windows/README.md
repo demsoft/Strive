@@ -94,10 +94,12 @@ app, the sign in pages (`https://gbedu.goserp.co.uk/account`) and the links all 
 
 1. Make sure the host name points to the server (a wildcard DNS record `*.goserp.co.uk` already does).
 2. In `src\.env.production` add the host name (no `https://`, several separated by commas):
-   `EXTRA_APP_HOSTS=gbedu.goserp.co.uk`
+   `EXTRA_APP_HOSTS=gbedu.goserp.co.uk,arena.goserp.co.uk`
+   (a host starting with `gbedu.` is Gbedu, one starting with `arena.` is Arena, the rest is Strive)
 3. Run `.\Setup-Iis.ps1` as administrator (adds the binding and the rules, the wildcard certificate covers it) and then
    `.\strive.ps1 up` (the sign in service and the API learn the new address).
-4. For sign in with Google add the redirect address `https://gbedu.goserp.co.uk/account/signin-google` in the Google console.
+4. For sign in with Google add the redirect address of each host in the Google console, for example
+   `https://gbedu.goserp.co.uk/account/signin-google` and `https://arena.goserp.co.uk/account/signin-google`.
 
 The tokens keep the issuer of the main host (`https://meet.goserp.co.uk/account`), so a person is signed in on both
 addresses with the same account, but each address has its own sign in session (cookie).

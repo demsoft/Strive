@@ -1,4 +1,4 @@
-import { AppBar, Box, Button, Toolbar } from '@mui/material';
+import { alpha, AppBar, Box, Button, Toolbar } from '@mui/material';
 import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
 import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import SlideshowOutlinedIcon from '@mui/icons-material/SlideshowOutlined';
@@ -50,7 +50,7 @@ export default function SiteHeader({ withoutConnections }: { withoutConnections?
          elevation={0}
          sx={{
             backdropFilter: 'blur(14px)',
-            backgroundColor: 'rgba(18,13,10,0.72)',
+            backgroundColor: alpha(brand.background, 0.72),
             borderBottom: `1px solid ${brand.border}`,
          }}
       >

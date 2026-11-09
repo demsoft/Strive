@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import React from 'react';
-import { brandName, isGbedu } from 'src/brand-id';
+import { brandName, isArena, isGbedu } from 'src/brand-id';
 import { brand } from 'src/theme';
 
 type Props = {
@@ -9,7 +9,7 @@ type Props = {
    showName?: boolean;
 };
 
-/** The logo mark of the brand: a gradient tile with a stylized S (Strive) or sound waves (Gbedu). */
+/** The logo mark of the brand: a gradient tile with a stylized S (Strive), sound waves (Gbedu) or a ball (Arena). */
 export default function BrandLogo({ size = 32, showName = true }: Props) {
    return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
@@ -21,7 +21,19 @@ export default function BrandLogo({ size = 32, showName = true }: Props) {
                </linearGradient>
             </defs>
             <rect width="32" height="32" rx="9" fill="url(#brand-gradient)" />
-            {isGbedu ? (
+            {isArena ? (
+               <>
+                  <circle cx="16" cy="16" r="9" fill="none" stroke="#fff" strokeWidth="2.2" />
+                  <path
+                     d="M16 11.2l3.7 2.7-1.4 4.4h-4.6l-1.4-4.4zM16 11.2V7.2M19.7 13.9l3.8-1.2M18.3 18.3l2.4 3.2M13.7 18.3l-2.4 3.2M12.3 13.9l-3.8-1.2"
+                     fill="none"
+                     stroke="#fff"
+                     strokeWidth="1.8"
+                     strokeLinecap="round"
+                     strokeLinejoin="round"
+                  />
+               </>
+            ) : isGbedu ? (
                <>
                   <circle cx="16" cy="16" r="3" fill="#fff" />
                   <path

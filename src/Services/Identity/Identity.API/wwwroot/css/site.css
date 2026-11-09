@@ -32,6 +32,21 @@ body[data-brand="gbedu"] {
   --accent-focus: rgba(255, 159, 28, 0.25);
 }
 
+/* Arena: pitch green and gold (keep in sync with brand.ts of the web app) */
+body[data-brand="arena"] {
+  --violet: #22c55e;
+  --violet-light: #6ee7a0;
+  --cyan: #facc15;
+  --bg: #07100b;
+  --surface: #0f1a13;
+  --surface-raised: #16251b;
+  --gradient: linear-gradient(135deg, #22c55e 0%, #facc15 100%);
+  --glow-a: rgba(34, 197, 94, 0.16);
+  --glow-b: rgba(250, 204, 21, 0.09);
+  --accent-shadow: rgba(34, 197, 94, 0.35);
+  --accent-focus: rgba(34, 197, 94, 0.25);
+}
+
 * { box-sizing: border-box; }
 
 html, body { height: 100%; }
