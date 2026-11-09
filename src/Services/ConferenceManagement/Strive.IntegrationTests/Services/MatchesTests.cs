@@ -355,5 +355,22 @@ namespace Strive.IntegrationTests.Services
                 (await Client(host).PostAsync($"/v1/admin/organizers/{profile.CreatorId}/approve",
                     new JsonNetContent(new DecideOrganizerDto(null)))).StatusCode);
         }
+
+        [Fact]
+        public async Task Discover_WithACategory_ListsOnlyThatKind()
+        {
+            var host = await NewOrganizer();
+            var match = await PublishMatch(host);
+            var music = await Read<SessionDto>(await Client(host).PostAsync("/v1/sessions",
+                new JsonNetContent(new CreateSessionDto("Piano night", "Live", "music", Price, null))));
+
+            var onlyMatches = await Read<DiscoverSessionDto[]>(
+                await Client(null).GetAsync("/v1/sessions/discover?category=match"));
+            var all = await Read<DiscoverSessionDto[]>(await Client(null).GetAsync("/v1/sessions/discover"));
+
+            Assert.Contains(onlyMatches, x => x.SessionId == match.SessionId);
+            Assert.DoesNotContain(onlyMatches, x => x.SessionId == music.SessionId);
+            Assert.Contains(all, x => x.SessionId == music.SessionId);
+        }
     }
 }

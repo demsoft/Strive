@@ -7,6 +7,7 @@ import { useAuth } from 'react-oidc-context';
 import { useTranslation } from 'react-i18next';
 import { makeStyles } from 'tss-react/mui';
 import BrandLogo from 'src/components/BrandLogo';
+import { isArena } from 'src/brand-id';
 import { brandKey } from 'src/brand-text';
 import { brand } from 'src/theme';
 
@@ -101,6 +102,11 @@ export default function GbeduLanding() {
             </Typography>
 
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap', mt: 1 }}>
+               {isArena && (
+                  <Button id="landing-matches" color="inherit" href="/matches">
+                     {t('matches.page_title')}
+                  </Button>
+               )}
                <Button id="landing-reels" color="inherit" href="/reels">
                   {t(brandKey('landing.watch_reels'))}
                </Button>

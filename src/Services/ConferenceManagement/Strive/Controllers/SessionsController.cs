@@ -152,11 +152,13 @@ namespace Strive.Controllers
         /// <summary>What is on: published sessions that are not over, the ones that start first at the top</summary>
         [HttpGet("v1/sessions/discover")]
         [AllowAnonymous]
-        public async Task<ActionResult<DiscoverSessionDto[]>> Discover()
+        public async Task<ActionResult<DiscoverSessionDto[]>> Discover([FromQuery] string? category = null)
         {
             // nothing lasts longer than the longest session: what started earlier than that is over
             var sessions = await _sessions.FindForSale(
-                DateTimeOffset.UtcNow.AddMinutes(-SessionRules.MaxDurationMinutes), 60);
+                DateTimeOffset.UtcNow.AddMinutes(-SessionRules.MaxDurationMinutes), category == null ? 60 : 300);
+            // one kind only (the matches page): the others are left out
+            if (category != null) sessions = sessions.Where(x => x.Category == category).Take(120).ToList();
 
             var result = new List<DiscoverSessionDto>();
             foreach (var session in sessions.OrderBy(x => x.StartsAt ?? DateTimeOffset.MaxValue))

@@ -13,7 +13,7 @@ import ScreenShareIcon from '@mui/icons-material/ScreenShare';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { isGbedu } from 'src/brand-id';
+import { isArena, isGbedu } from 'src/brand-id';
 import DiscoverSessions from 'src/features/gbedu/DiscoverSessions';
 import DiscoverCreators from 'src/features/creators/DiscoverCreators';
 import DiscoverVideos from 'src/features/videos/components/DiscoverVideos';
@@ -150,6 +150,11 @@ export default function MainRoute() {
             <Box sx={{ display: 'flex', gap: 1 }}>
                {isGbedu && (
                   <>
+                     {isArena && (
+                        <Button color="inherit" component={RouterLink} to="/matches" id="matches-link">
+                           {t('matches.nav')}
+                        </Button>
+                     )}
                      <Button color="inherit" component={RouterLink} to="/reels" id="reels-link">
                         {t('creators.nav_reels')}
                      </Button>

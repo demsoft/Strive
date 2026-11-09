@@ -1,12 +1,14 @@
 import { alpha, AppBar, Box, Button, Toolbar } from '@mui/material';
 import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
 import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
+import SportsSoccerOutlinedIcon from '@mui/icons-material/SportsSoccerOutlined';
 import SlideshowOutlinedIcon from '@mui/icons-material/SlideshowOutlined';
 import React from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import BrandLogo from 'src/components/BrandLogo';
+import { isArena } from 'src/brand-id';
 import { brand } from 'src/theme';
 
 /**
@@ -59,6 +61,7 @@ export default function SiteHeader({ withoutConnections }: { withoutConnections?
                <BrandLogo size={30} />
             </RouterLink>
             <Box sx={{ flex: 1 }} />
+            {isArena && link('/matches', t('matches.nav'), <SportsSoccerOutlinedIcon />, 'nav-matches')}
             {link('/reels', t('creators.nav_reels'), <SlideshowOutlinedIcon />, 'nav-reels')}
             {link('/creators', t('creators.nav_creators'), <ExploreOutlinedIcon />, 'nav-creators')}
             {auth.user &&
