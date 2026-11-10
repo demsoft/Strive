@@ -225,7 +225,12 @@ namespace Strive.Controllers
                 _paymentsOptions.AutoRenewEnabled, renewing?.NextChargeAt, videos,
                 await _follows.CountOfCreator(creator.CreatorId), following != null, UserId != null && creator.UserId == UserId,
                 following?.Notice.ToString().ToLowerInvariant() ?? "off",
-                _reminders.Enabled && _emailSender.IsConfigured);
+                _reminders.Enabled && _emailSender.IsConfigured,
+                (await _sessions.FindOfCreator(creator.CreatorId, 200))
+                .Where(x => x.Status == SessionStatus.Published && x.Match != null &&
+                            x.Scoreboard?.Period == MatchPeriods.FullTime)
+                .OrderByDescending(x => x.StartsAt ?? x.CreatedAt).Take(12)
+                .Select(x => new ResultDto(x.SessionId, x.Title, MatchDto.From(x)!, x.StartsAt)).ToArray());
         }
 
         /// <summary>The session in a list; null if it is over (it was meant to end and its room is not open)</summary>
@@ -272,6 +277,39 @@ namespace Strive.Controllers
                 PublicCreatorDto.From(creator), isHost, hasTicket,
                 isHost || hasTicket ? session.ConferenceId : null, session.DurationMinutes, await IsLive(session),
                 MatchDto.From(session));
+        }
+
+        // PUT v1/sessions/{sessionId}/scoreboard
+        /// <summary>The organizer sets the score and the period of a match while it is played</summary>
+        [HttpPut("v1/sessions/{sessionId}/scoreboard")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<MatchDto>> SetScoreboard(string sessionId, [FromBody] ScoreboardDto dto)
+        {
+            if (UserId == null) return Forbid();
+
+            var result = await _mediator.Send(new SetScoreboardRequest(UserId, sessionId, dto.HomeScore, dto.AwayScore,
+                dto.Period));
+            if (!result.Success) return result.ToActionResult();
+
+            return MatchDto.From(result.Response!)!;
+        }
+
+        // GET v1/matches/live/{conferenceId}
+        /// <summary>The match of a room, with its score: everybody in the room may ask, so can anybody with the id</summary>
+        [HttpGet("v1/matches/live/{conferenceId}")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<LiveMatchDto>> GetLiveMatch(string conferenceId)
+        {
+            var session = await _sessions.FindByConferenceId(conferenceId);
+            if (session is not {Match: not null, Status: SessionStatus.Published})
+                return PaymentsError.SessionNotFound.ToActionResult();
+
+            Response.Headers.CacheControl = "no-store";
+            return new LiveMatchDto(session.SessionId, session.Title, MatchDto.From(session)!,
+                UserId != null && session.CreatorUserId == UserId);
         }
 
         // GET v1/sessions/{sessionId}/replays

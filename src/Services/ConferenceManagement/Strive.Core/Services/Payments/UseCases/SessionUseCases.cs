@@ -502,6 +502,38 @@ namespace Strive.Core.Services.Payments.UseCases
         }
     }
 
+    public class SetScoreboardUseCase : IRequestHandler<SetScoreboardRequest, SuccessOrError<PaidSession>>
+    {
+        public const int MaxScore = 99;
+
+        private readonly ISessionRepo _sessions;
+        private readonly TimeProvider _timeProvider;
+
+        public SetScoreboardUseCase(ISessionRepo sessions, TimeProvider timeProvider)
+        {
+            _sessions = sessions;
+            _timeProvider = timeProvider;
+        }
+
+        public async Task<SuccessOrError<PaidSession>> Handle(SetScoreboardRequest request,
+            CancellationToken cancellationToken)
+        {
+            var session = await _sessions.FindById(request.SessionId);
+            if (session == null || session.CreatorUserId != request.UserId) return PaymentsError.SessionNotFound;
+            if (session.Match == null || session.Status != SessionStatus.Published)
+                return PaymentsError.InvalidSession("Only a match that is on has a scoreboard.");
+            if (request.HomeScore is < 0 or > MaxScore || request.AwayScore is < 0 or > MaxScore)
+                return PaymentsError.InvalidSession($"A score is between 0 and {MaxScore}.");
+            if (!MatchPeriods.All.Contains(request.Period))
+                return PaymentsError.InvalidSession("Choose the period of the match.");
+
+            session.Scoreboard = new Scoreboard(request.HomeScore, request.AwayScore, request.Period,
+                _timeProvider.GetUtcNow());
+            await _sessions.Update(session);
+            return session;
+        }
+    }
+
     public class ReportSessionUseCase : IRequestHandler<ReportSessionRequest, SuccessOrError<Unit>>
     {
         private readonly ISessionRepo _sessions;

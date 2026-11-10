@@ -3,6 +3,8 @@ import { hasAuthParams, useAuth } from 'react-oidc-context';
 import RedirectToConference from 'src/RedirectToConference';
 import RequireAuth from 'src/features/auth/components/RequireAuth';
 import AuthenticatedRoutes from 'src/routes/AuthenticatedRoutes';
+import { isArena } from 'src/brand-id';
+import ArenaHome from 'src/features/arena/ArenaHome';
 import GbeduLanding from './GbeduLanding';
 
 /**
@@ -15,7 +17,7 @@ export default function LandingGate() {
 
    const showLanding =
       !auth.isLoading && !auth.isAuthenticated && !auth.activeNavigator && !auth.error && !hasAuthParams();
-   if (showLanding) return <GbeduLanding />;
+   if (showLanding) return isArena ? <ArenaHome /> : <GbeduLanding />;
 
    return (
       <RequireAuth>

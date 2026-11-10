@@ -55,6 +55,10 @@ namespace Strive.Core.Services.Payments.Requests
 
     public record CancelSessionRequest(string UserId, string SessionId) : IRequest<SuccessOrError<Unit>>;
 
+    /// <summary>The organizer sets the score and the period of a match</summary>
+    public record SetScoreboardRequest(string UserId, string SessionId, int HomeScore, int AwayScore, string Period)
+        : IRequest<SuccessOrError<PaidSession>>;
+
     /// <summary>A person reports a session (a match shown without the right to, for example)</summary>
     public record ReportSessionRequest(string UserId, string SessionId, SessionReportReason Reason, string? Details)
         : IRequest<SuccessOrError<Unit>>;

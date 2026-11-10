@@ -100,6 +100,9 @@ namespace Strive.Core.Services.Payments.Sessions
         /// <summary>What the organizer declared about the right to stream the match</summary>
         public SessionRights? Rights { get; set; }
 
+        /// <summary>The score and the period; null until the organizer sets it</summary>
+        public Scoreboard? Scoreboard { get; set; }
+
         /// <summary>When a moderator took the session down (it is called off, the tickets are refunded)</summary>
         public DateTimeOffset? TakenDownAt { get; set; }
 

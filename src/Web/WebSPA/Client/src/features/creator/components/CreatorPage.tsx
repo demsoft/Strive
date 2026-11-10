@@ -20,7 +20,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { compactCount } from 'src/features/creators/count';
 import SiteHeader from 'src/features/creators/SiteHeader';
+import { isArena } from 'src/brand-id';
 import { brandKey } from 'src/brand-text';
+import MatchdayPanel from 'src/features/arena/MatchdayPanel';
 import { formatMoney } from 'src/features/sessions/money';
 import * as api from 'src/services/api/creators';
 import { Bank, CreatorProfile, PaymentsConfig } from 'src/services/api/creators';
@@ -372,6 +374,8 @@ export default function CreatorPage() {
             {config?.enabled && profile && (
                <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2.5, md: 3 } }} id="creator-dashboard">
                   <ProfileHero profile={profile} />
+
+                  {isArena && <MatchdayPanel profile={profile} onProfileChanged={setProfile} />}
 
                   <SetupChecklist steps={steps} />
 
