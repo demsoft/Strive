@@ -22,6 +22,7 @@ import { formatMoney, MATCH_CATEGORY } from 'src/features/sessions/money';
 import * as api from 'src/services/api/sessions';
 import { DiscoverSession } from 'src/services/api/sessions';
 import { brand } from 'src/theme';
+import Scoreboard from './Scoreboard';
 import { competitionsOf, filterMatches, sortMatches, WhenFilter } from './matchFilters';
 
 const WHEN: WhenFilter[] = ['all', 'live', 'today', 'week'];
@@ -55,19 +56,23 @@ function MatchCard({ match }: { match: DiscoverSession }) {
             </Typography>
             {match.isLive && <Chip size="small" color="error" label={t('sessions.live_now')} className="match-live" />}
          </Box>
-         <Box sx={{ textAlign: 'center', py: 1 }}>
-            <Typography sx={{ fontWeight: 800, fontSize: '1.15rem' }} className="match-teams">
-               {match.match ? `${match.match.homeTeam}` : match.title}
-            </Typography>
-            {match.match && (
-               <>
-                  <Typography color="text.secondary" variant="body2">
-                     {t('matches.versus')}
-                  </Typography>
-                  <Typography sx={{ fontWeight: 800, fontSize: '1.15rem' }}>{match.match.awayTeam}</Typography>
-               </>
-            )}
-         </Box>
+         {match.match && match.match.period && match.match.period !== 'upcoming' ? (
+            <Scoreboard match={match.match} compact />
+         ) : (
+            <Box sx={{ textAlign: 'center', py: 1 }}>
+               <Typography sx={{ fontWeight: 800, fontSize: '1.15rem' }} className="match-teams">
+                  {match.match ? `${match.match.homeTeam}` : match.title}
+               </Typography>
+               {match.match && (
+                  <>
+                     <Typography color="text.secondary" variant="body2">
+                        {t('matches.versus')}
+                     </Typography>
+                     <Typography sx={{ fontWeight: 800, fontSize: '1.15rem' }}>{match.match.awayTeam}</Typography>
+                  </>
+               )}
+            </Box>
+         )}
          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }} className="match-kickoff">
             {start ? start.toLocaleString(DateTime.DATETIME_MED) : t('matches.no_date')}
          </Typography>

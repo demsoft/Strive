@@ -20,6 +20,7 @@ import BrandLogo from 'src/components/BrandLogo';
 import { PaymentStatus, PublicSession } from 'src/services/api/sessions';
 import * as api from 'src/services/api/sessions';
 import { requestErrorMessage } from 'src/features/creator/errors';
+import Scoreboard from 'src/features/matches/Scoreboard';
 import Replays from './Replays';
 import ReportSessionDialog from './ReportSessionDialog';
 import { categoryGradient, categoryStyle } from 'src/features/gbedu/ui/categories';
@@ -220,6 +221,11 @@ export default function SessionPage() {
                         >
                            {session.title}
                         </Typography>
+                        {session.match && (
+                           <Box sx={{ mb: 1.5 }}>
+                              <Scoreboard match={session.match} />
+                           </Box>
+                        )}
                         {session.match && (
                            <Typography color="text.secondary" id="session-match" sx={{ mb: 1 }}>
                               {session.match.competition ? `${session.match.competition} · ` : ''}

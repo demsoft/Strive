@@ -14,7 +14,19 @@ export type Match = {
    competition?: string | null;
    /** what the organizer declared about the right to stream it */
    rightsBasis?: RightsBasis | null;
+   /** set by the organizer while the match is played */
+   homeScore?: number | null;
+   awayScore?: number | null;
+   period?: MatchPeriod | null;
 };
+
+export type MatchPeriod = 'upcoming' | '1h' | 'ht' | '2h' | 'ft';
+
+/** The match of a room, for the scoreboard on top of it */
+export type LiveMatch = { sessionId: string; title: string; match: Match; isHost: boolean };
+
+/** A match that is over */
+export type MatchResult = { sessionId: string; title: string; match: Match; startsAt?: string | null };
 
 export type MatchInput = {
    homeTeam: string;
@@ -168,6 +180,8 @@ export type CreatorPage = {
    notice?: 'off' | 'pending' | 'on';
    /** the server can send mail */
    noticesAvailable?: boolean;
+   /** the latest matches that are over, with their score */
+   results?: MatchResult[];
 };
 
 export type Pass = {
@@ -216,6 +230,32 @@ export type Replay = {
 
 export async function fetchReplays(sessionId: string): Promise<Replay[]> {
    return (await Axios.get<Replay[]>(`${base()}/v1/sessions/${encodeURIComponent(sessionId)}/replays`)).data;
+}
+
+/** The organizer sets the score and the period of a match. */
+export async function setScoreboard(
+   sessionId: string,
+   homeScore: number,
+   awayScore: number,
+   period: MatchPeriod,
+): Promise<Match> {
+   return (
+      await Axios.put<Match>(`${base()}/v1/sessions/${encodeURIComponent(sessionId)}/scoreboard`, {
+         homeScore,
+         awayScore,
+         period,
+      })
+   ).data;
+}
+
+/** The match of a room (null if the room is not a match). */
+export async function fetchLiveMatch(conferenceId: string): Promise<LiveMatch | null> {
+   try {
+      return (await Axios.get<LiveMatch>(`${base()}/v1/matches/live/${encodeURIComponent(conferenceId)}`)).data;
+   } catch (e) {
+      if ((e as { response?: { status?: number } }).response?.status === 404) return null;
+      throw e;
+   }
 }
 
 export async function cancelSession(sessionId: string): Promise<void> {
