@@ -1,4 +1,6 @@
 import { alpha, AppBar, Box, Button, Toolbar } from '@mui/material';
+import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined';
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
 import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import SportsSoccerOutlinedIcon from '@mui/icons-material/SportsSoccerOutlined';
@@ -9,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import BrandLogo from 'src/components/BrandLogo';
 import { isArena } from 'src/brand-id';
+import { brandKey } from 'src/brand-text';
 import { brand } from 'src/theme';
 
 /**
@@ -62,11 +65,15 @@ export default function SiteHeader({ withoutConnections }: { withoutConnections?
             </RouterLink>
             <Box sx={{ flex: 1 }} />
             {isArena && link('/matches', t('matches.nav'), <SportsSoccerOutlinedIcon />, 'nav-matches')}
-            {link('/reels', t('creators.nav_reels'), <SlideshowOutlinedIcon />, 'nav-reels')}
-            {link('/creators', t('creators.nav_creators'), <ExploreOutlinedIcon />, 'nav-creators')}
+            {link('/reels', t(brandKey('creators.nav_reels')), <SlideshowOutlinedIcon />, 'nav-reels')}
+            {link('/creators', t(brandKey('creators.nav_creators')), <ExploreOutlinedIcon />, 'nav-creators')}
             {auth.user &&
                !withoutConnections &&
                link('/connections', t('social.connections_nav'), <PeopleOutlinedIcon />, 'nav-connections')}
+            {isArena &&
+               auth.user &&
+               link('/tickets', t('arena_home.my_passes'), <ConfirmationNumberOutlinedIcon />, 'nav-passes')}
+            {isArena && auth.user && link('/creator', t('arena_home.desk'), <DashboardOutlinedIcon />, 'nav-desk')}
             {auth.user ? (
                <Button id="nav-home" component={RouterLink} to="/" variant="outlined" color="inherit" sx={{ ml: 1 }}>
                   {t('creators.nav_home')}

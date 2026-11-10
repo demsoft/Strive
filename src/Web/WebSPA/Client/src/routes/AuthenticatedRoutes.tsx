@@ -18,6 +18,8 @@ import MyVideosPage from 'src/features/videos/components/MyVideosPage';
 import EarningsPage from 'src/features/creator/components/EarningsPage';
 import MySessionsPage from 'src/features/sessions/components/MySessionsPage';
 import MyTicketsPage from 'src/features/sessions/components/MyTicketsPage';
+import { isArena } from 'src/brand-id';
+import ArenaHome from 'src/features/arena/ArenaHome';
 import MainRoute from './MainRoute';
 import MyRecordingsRoute from './MyRecordingsRoute';
 
@@ -47,7 +49,7 @@ export default function AuthenticatedRoutes() {
 
    return (
       <Switch>
-         <Route exact path="/" component={MainRoute} />
+         <Route exact path="/" component={isArena ? ArenaHome : MainRoute} />
          <Route path="/admin/payments" component={AdminPaymentsPage} />
          <Route path="/admin/videos" component={AdminVideosPage} />
          <Route path="/admin/matches" component={AdminMatchesPage} />
