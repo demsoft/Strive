@@ -1,3 +1,4 @@
+import { brandKey } from 'src/brand-text';
 import { Alert, AppBar, Box, Button, CircularProgress, Container, Tab, Tabs, Toolbar, Typography } from '@mui/material';
 import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined';
 import { DateTime } from 'luxon';
@@ -86,11 +87,11 @@ export default function MyTicketsPage() {
                         WebkitTextFillColor: 'transparent',
                      }}
                   >
-                     {t('sessions.tickets_title')}
+                     {t(brandKey('sessions.tickets_title'))}
                   </span>
                </Typography>
                <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                  {t('sessions.tickets_subtitle')}
+                  {t(brandKey('sessions.tickets_subtitle'))}
                </Typography>
             </Box>
 
@@ -216,7 +217,7 @@ export default function MyTicketsPage() {
                      ))}
                      {shown.length === 0 && (
                         <Typography color="text.secondary" id="tickets-tab-empty" sx={{ py: 3 }}>
-                           {tab === 'upcoming' ? t('sessions.no_upcoming') : t('sessions.no_past')}
+                           {tab === 'upcoming' ? t(brandKey('sessions.no_upcoming')) : t('sessions.no_past')}
                         </Typography>
                      )}
                   </Box>
@@ -236,10 +237,10 @@ export default function MyTicketsPage() {
                >
                   <ConfirmationNumberOutlinedIcon sx={{ fontSize: 56, color: 'primary.main', mb: 1 }} />
                   <Typography variant="h5" gutterBottom>
-                     {t('sessions.no_tickets_title')}
+                     {t(brandKey('sessions.no_tickets_title'))}
                   </Typography>
                   <Typography color="text.secondary" sx={{ maxWidth: 420, mx: 'auto', mb: 3 }}>
-                     {t('sessions.no_tickets')}
+                     {t(brandKey('sessions.no_tickets'))}
                   </Typography>
                   <Button component={RouterLink} to="/" variant="contained" size="large" id="find-session">
                      {t('sessions.find_session')}
