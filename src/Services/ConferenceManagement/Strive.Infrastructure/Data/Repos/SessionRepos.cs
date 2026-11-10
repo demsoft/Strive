@@ -37,6 +37,12 @@ namespace Strive.Infrastructure.Data.Repos
                 config.AutoMap();
                 config.SetIgnoreExtraElements(true);
             });
+            BsonClassMap.RegisterClassMap<Scoreboard>(config =>
+            {
+                config.AutoMap();
+                config.MapMember(x => x.UpdatedAt).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
+                config.SetIgnoreExtraElements(true);
+            });
             BsonClassMap.RegisterClassMap<SessionRights>(config =>
             {
                 config.AutoMap();

@@ -13,16 +13,26 @@ namespace Strive.Models.Response
         string? RightsNote, bool RightsAccepted);
 
     /// <summary>The teams and the competition of a match</summary>
-    public record MatchDto(string HomeTeam, string AwayTeam, string? Competition, string? RightsBasis = null)
+    public record MatchDto(string HomeTeam, string AwayTeam, string? Competition, string? RightsBasis = null,
+        int? HomeScore = null, int? AwayScore = null, string? Period = null)
     {
         public static MatchDto? From(PaidSession session) =>
             session.Match == null
                 ? null
                 : new MatchDto(session.Match.HomeTeam, session.Match.AwayTeam, session.Match.Competition,
-                    session.Rights?.Basis);
+                    session.Rights?.Basis, session.Scoreboard?.HomeScore, session.Scoreboard?.AwayScore,
+                    session.Scoreboard?.Period);
     }
 
     public record ReportSessionDto(string Reason, string? Details);
+
+    public record ScoreboardDto(int HomeScore, int AwayScore, string Period);
+
+    /// <summary>The match of a room: for the scoreboard on top of it, and for the host to update it</summary>
+    public record LiveMatchDto(string SessionId, string Title, MatchDto Match, bool IsHost);
+
+    /// <summary>A match that is over, with its score</summary>
+    public record ResultDto(string SessionId, string Title, MatchDto Match, DateTimeOffset? StartsAt);
 
     /// <summary>A recording of a session that people with a ticket (or a pass) can watch again</summary>
     public record ReplayDto(string RecordingId, DateTimeOffset StartedAt, double? DurationSeconds, string Url,
@@ -64,7 +74,7 @@ namespace Strive.Models.Response
     public record CreatorPageDto(PublicCreatorDto Creator, DiscoverSessionDto[] Sessions, bool HasPass = false,
         DateTimeOffset? PassValidUntil = null, bool AutoRenewAvailable = false, DateTimeOffset? PassRenewsAt = null,
         VideoDto[]? Videos = null, long Followers = 0, bool Following = false,
-        bool IsYou = false, string Notice = "off", bool NoticesAvailable = false);
+        bool IsYou = false, string Notice = "off", bool NoticesAvailable = false, ResultDto[]? Results = null);
 
     /// <summary>A pass of the person that is running</summary>
     /// <param name="SubscriptionId">Set if the pass renews itself: the person can stop it with this</param>

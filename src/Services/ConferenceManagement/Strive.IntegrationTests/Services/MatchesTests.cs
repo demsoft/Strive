@@ -443,5 +443,70 @@ namespace Strive.IntegrationTests.Services
             Assert.Equal(HttpStatusCode.NotFound, (await Replays(fan, session.SessionId)).StatusCode);
             Assert.Equal(HttpStatusCode.NotFound, (await Replays(host, session.SessionId)).StatusCode);
         }
+
+        // ---- the scoreboard
+
+        private Task<HttpResponseMessage> SetScore(UserAccount? user, string sessionId, int home, int away,
+            string period) =>
+            Client(user).PutAsync($"/v1/sessions/{sessionId}/scoreboard",
+                new JsonNetContent(new ScoreboardDto(home, away, period)));
+
+        [Fact]
+        public async Task Scoreboard_TheOrganizerSetsIt_AndEverybodySeesItOnThePageTheListAndTheRoom()
+        {
+            var host = await NewOrganizer();
+            var session = await PublishMatch(host);
+            var conferenceId = (await Read<SessionDto[]>(await Client(host).GetAsync("/v1/sessions/mine")))
+                .Single(x => x.SessionId == session.SessionId).ConferenceId;
+
+            var answer = await Read<MatchDto>(await SetScore(host, session.SessionId, 2, 1, "2h"));
+
+            Assert.Equal((2, 1, "2h"), (answer.HomeScore, answer.AwayScore, answer.Period));
+            var page = await Read<PublicSessionDto>(await Client(null).GetAsync($"/v1/sessions/{session.SessionId}"));
+            Assert.Equal(2, page.Match!.HomeScore);
+            var listed = (await Read<DiscoverSessionDto[]>(await Client(null).GetAsync("/v1/sessions/discover?category=match")))
+                .Single(x => x.SessionId == session.SessionId);
+            Assert.Equal("2h", listed.Match!.Period);
+            var room = await Read<LiveMatchDto>(await Client(null).GetAsync($"/v1/matches/live/{conferenceId}"));
+            Assert.Equal(1, room.Match.AwayScore);
+            Assert.False(room.IsHost);
+            Assert.True((await Read<LiveMatchDto>(await Client(host).GetAsync($"/v1/matches/live/{conferenceId}"))).IsHost);
+        }
+
+        [Fact]
+        public async Task Scoreboard_Refusals()
+        {
+            var host = await NewOrganizer();
+            var session = await PublishMatch(host);
+
+            Assert.Equal(HttpStatusCode.Unauthorized, (await SetScore(null, session.SessionId, 0, 0, "1h")).StatusCode);
+            // not the organizer
+            Assert.Equal(HttpStatusCode.NotFound, (await SetScore(NewUser("fan"), session.SessionId, 1, 0, "1h")).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await SetScore(host, session.SessionId, -1, 0, "1h")).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await SetScore(host, session.SessionId, 100, 0, "1h")).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await SetScore(host, session.SessionId, 0, 0, "extra")).StatusCode);
+            // a session that is not a match has no scoreboard
+            var music = await Read<SessionDto>(await Client(host).PostAsync("/v1/sessions",
+                new JsonNetContent(new CreateSessionDto("Piano night", "Live", "music", Price, null))));
+            Assert.Equal(HttpStatusCode.BadRequest, (await SetScore(host, music.SessionId, 0, 0, "1h")).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await Client(null).GetAsync("/v1/matches/live/nope")).StatusCode);
+        }
+
+        [Fact]
+        public async Task Results_FinishedMatches_AreOnThePageOfTheOrganizerWithTheirScore()
+        {
+            var host = await NewOrganizer();
+            var finished = await PublishMatch(host);
+            var running = await PublishMatch(host);
+            (await SetScore(host, finished.SessionId, 3, 0, "ft")).EnsureSuccessStatusCode();
+            (await SetScore(host, running.SessionId, 1, 1, "1h")).EnsureSuccessStatusCode();
+            var creatorId = (await Read<CreatorProfileDto>(await Client(host).GetAsync("/v1/creators/me"))).CreatorId;
+
+            var page = await Read<CreatorPageDto>(await Client(null).GetAsync($"/v1/creators/{creatorId}/page"));
+
+            var result = Assert.Single(page.Results!);
+            Assert.Equal(finished.SessionId, result.SessionId);
+            Assert.Equal(3, result.Match.HomeScore);
+        }
     }
 }

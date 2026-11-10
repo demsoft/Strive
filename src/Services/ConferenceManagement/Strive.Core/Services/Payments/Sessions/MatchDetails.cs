@@ -25,6 +25,22 @@ namespace Strive.Core.Services.Payments.Sessions
         public static bool NeedsNote(string basis) => basis != Own;
     }
 
+    /// <summary>The periods of a match, in the order they are played</summary>
+    public static class MatchPeriods
+    {
+        public const string Upcoming = "upcoming";
+        public const string FirstHalf = "1h";
+        public const string HalfTime = "ht";
+        public const string SecondHalf = "2h";
+        public const string FullTime = "ft";
+
+        public static readonly System.Collections.Generic.IReadOnlyList<string> All =
+            new[] {Upcoming, FirstHalf, HalfTime, SecondHalf, FullTime};
+    }
+
+    /// <summary>The score and the period of a match, kept by the organizer while it is played</summary>
+    public record Scoreboard(int HomeScore, int AwayScore, string Period, DateTimeOffset UpdatedAt);
+
     /// <summary>What the organizer declared about the rights to stream a match, kept with the session</summary>
     public record SessionRights(string Basis, string? Note, DateTimeOffset DeclaredAt, string DeclaredByUserId);
 
