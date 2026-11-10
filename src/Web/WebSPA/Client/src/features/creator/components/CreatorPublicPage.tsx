@@ -7,6 +7,11 @@ import { Link as RouterLink, useLocation, useParams } from 'react-router-dom';
 import BrandLogo from 'src/components/BrandLogo';
 import { SessionTile } from 'src/features/gbedu/DiscoverSessions';
 import VideoTile from 'src/features/videos/components/VideoTile';
+import { isArena } from 'src/brand-id';
+import { brandKey } from 'src/brand-text';
+import ClubResults from 'src/features/arena/ClubResults';
+import SiteHeader from 'src/features/creators/SiteHeader';
+import MatchCard from 'src/features/matches/MatchCard';
 import { requestErrorMessage } from '../errors';
 import { creatorPhotoUrl } from '../photoUrl';
 import PassCard from './PassCard';
@@ -84,13 +89,17 @@ export default function CreatorPublicPage() {
 
    return (
       <Box sx={{ minHeight: '100%' }}>
-         <AppBar position="static" color="transparent" elevation={0}>
-            <Toolbar>
-               <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <BrandLogo size={30} />
-               </RouterLink>
-            </Toolbar>
-         </AppBar>
+         {isArena ? (
+            <SiteHeader />
+         ) : (
+            <AppBar position="static" color="transparent" elevation={0}>
+               <Toolbar>
+                  <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                     <BrandLogo size={30} />
+                  </RouterLink>
+               </Toolbar>
+            </AppBar>
+         )}
 
          <Container maxWidth="md" sx={{ py: { xs: 2, sm: 4 } }} id="creator-public-page">
             {notFound && <Alert severity="error">{t('creator.page_not_found')}</Alert>}
@@ -102,12 +111,27 @@ export default function CreatorPublicPage() {
 
             {page && (
                <>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5, flexWrap: 'wrap', mb: 4 }}>
+                  <Box
+                     className={isArena ? 'club-banner' : undefined}
+                     sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2.5,
+                        flexWrap: 'wrap',
+                        mb: 4,
+                        ...(isArena && {
+                           p: { xs: 2.5, sm: 3.5 },
+                           borderRadius: '28px',
+                           background: brand.gradientSoft,
+                           border: `1px solid ${brand.border}`,
+                        }),
+                     }}
+                  >
                      <HostAvatar
                         name={page.creator.displayName}
-                        size={80}
+                        size={isArena ? 96 : 80}
                         background={brand.gradient}
-                        photoUrl={creatorPhotoUrl(page.creator.creatorId, page.creator.photoVersion, 80)}
+                        photoUrl={creatorPhotoUrl(page.creator.creatorId, page.creator.photoVersion, isArena ? 96 : 80)}
                      />
                      <Box sx={{ flex: 1, minWidth: 220 }}>
                         <Typography variant="h3" id="creator-name" sx={{ fontSize: { xs: '1.9rem', sm: '2.5rem' } }}>
@@ -168,11 +192,11 @@ export default function CreatorPublicPage() {
                   )}
 
                   <Typography variant="h5" sx={{ fontWeight: 800, mb: 2 }}>
-                     {t('creator.page_sessions')}
+                     {t(brandKey('creator.page_sessions'))}
                   </Typography>
                   {page.sessions.length === 0 ? (
                      <Typography color="text.secondary" id="creator-nothing-on">
-                        {t('creator.page_nothing_on', { name: page.creator.displayName })}
+                        {t(brandKey('creator.page_nothing_on'), { name: page.creator.displayName })}
                      </Typography>
                   ) : (
                      <Box
@@ -182,9 +206,19 @@ export default function CreatorPublicPage() {
                            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
                         }}
                      >
-                        {page.sessions.map((session) => (
-                           <SessionTile key={session.sessionId} session={session} />
-                        ))}
+                        {page.sessions.map((session) =>
+                           isArena && session.match ? (
+                              <MatchCard key={session.sessionId} match={session} />
+                           ) : (
+                              <SessionTile key={session.sessionId} session={session} />
+                           ),
+                        )}
+                     </Box>
+                  )}
+
+                  {isArena && (
+                     <Box sx={{ mt: 4 }}>
+                        <ClubResults results={page.results ?? []} />
                      </Box>
                   )}
                </>
