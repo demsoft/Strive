@@ -65,7 +65,7 @@ def prepare(args):
         'SignalrHubUrl': args.api + '/signalr', 'EquipmentSignalrHubUrl': args.api + '/equipment-signalr',
         'HrmPortalOrigin': args.staff, 'HrmCandidatePortalOrigin': args.candidate}})
     # Merge these fragments into the HRM server's existing protected settings, preserving all other sections.
-    json_file('hrm.merge.json', {'GosMeet': {'Enabled': True, 'RecruitmentEnabled': False, 'ApiOrigin': args.api,
+    json_file('hrm.merge.json', {'GosMeet': {'Enabled': True, 'RecruitmentEnabled': False, 'SchedulingEnabled': False, 'ApiOrigin': args.api,
         'MeetingOrigin': args.meet, 'PortalOrigin': args.staff, 'CandidatePortalOrigin': args.candidate,
         'InstanceId': instance, 'ServiceSecret': keys['service']},
         'ChatCalls': {'Enabled': False, 'Turn': {'Urls': urls, 'Secret': keys['turn']}}})
