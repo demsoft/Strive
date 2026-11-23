@@ -21,3 +21,11 @@ Focused authorization/controller tests, browser handoff tests and React typechec
 The user will deploy. No staging credentials, IIS routes, protected settings or HRM databases were changed as part of the source push. Keep HRM `GosMeet:RecruitmentEnabled` disabled until the dedicated service connection, exact staff/candidate origins, media networking and matching portal wrappers are installed and verified. Do not use the ordinary production Strive queue, Mongo data or SFU ports for an AI pilot. No secrets belong in source, meeting URLs or browser storage.
 
 The staff/candidate portal wrappers are separate HRM repository changes and must be released before enabling embedded interviews.
+
+## Deployment package completed locally — 23 November follow-up
+
+Portable configuration generator, protected service configuration, persistent Mongo/Rabbit/Redis, both SFU media protocols, optional HTTPS edge/coturn, guarded build/deploy/readiness scripts and rollback instructions are in `deploy/hrm-ai/README.md`. No fixed server IP or path-prefixed HRM ApiOrigin remains in this package. The SFU Dockerfile's unset EXPOSE range was corrected.
+
+Do not configure Redis KeyPrefix for the legacy key/value Lua adapter: it rewrites room/participant data passed as script keys and prevents room assignment. The dedicated Redis service/database supplies installation isolation. The repeated two-participant media proof passes with persistent Redis after removing that prefix. Root-level conference errors now leave an embedded HRM meeting rather than entering ordinary Strive sign-in.
+
+Protected configuration remains separate from source; scripts never enable HRM flags or change IIS automatically. Use exact current paired HRM portal/backend releases before enabling recruitment meetings. Physical network/firewall/device acceptance is still a deployment step, even though local direct and forced-relay media checks passed.

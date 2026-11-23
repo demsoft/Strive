@@ -1,0 +1,31 @@
+pipeline {
+  agent any
+  options { timestamps(); timeout(time: 45, unit: 'MINUTES'); disableConcurrentBuilds(); skipDefaultCheckout(true) }
+  parameters {
+    booleanParam(name: 'DEPLOY_APPROVED', defaultValue: false, description: 'Publish only the isolated HRM AI meeting stack')
+    string(name: 'INSTALLATION', defaultValue: '', description: 'Protected installation directory created by prepare.py')
+  }
+  stages {
+    stage('Check out AI branch') {
+      steps {
+        checkout([$class:'GitSCM', branches:[[name:'*/feature/goshrm-ai-improvements']], userRemoteConfigs:[[url:'https://github.com/demsoft/Strive.git', credentialsId:'gosrms-github']]])
+        script { env.RELEASE = bat(returnStdout:true, script:'@git rev-parse HEAD').trim() }
+      }
+    }
+    stage('Check integration contracts') {
+      steps { powershell '''
+        python -m unittest discover -s deploy/hrm-ai -p 'test_*.py'
+        if($LASTEXITCODE){throw 'Deployment contract tests failed.'}
+        dotnet test src/Services/ConferenceManagement/Strive.Tests --filter 'FullyQualifiedName~Hrm' --nologo
+        if($LASTEXITCODE){throw 'Meeting authorization tests failed.'}
+      ''' }
+    }
+    stage('Build isolated meeting images') { steps {
+      powershell '& ./deploy/hrm-ai/build.ps1 -Release $env:RELEASE -Installation $env:INSTALLATION'
+    } }
+    stage('Deploy AI meeting stack') {
+      when { expression { params.DEPLOY_APPROVED } }
+      steps { powershell '& ./deploy/hrm-ai/deploy.ps1 -Release $env:RELEASE -Installation $env:INSTALLATION' }
+    }
+  }
+}

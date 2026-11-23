@@ -12,7 +12,8 @@ COPY Client/package.json .
 COPY Client/yarn.lock .
 RUN yarn install --frozen-lockfile
 COPY Client/ .
-RUN yarn build
+ARG ASSET_BASE=/
+RUN yarn build --base=$ASSET_BASE
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS publish
 WORKDIR /src
