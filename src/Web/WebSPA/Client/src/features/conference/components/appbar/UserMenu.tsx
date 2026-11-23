@@ -118,12 +118,12 @@ export default function UserMenu(props: Props) {
                   <ListItemText>{t('conference.recording.list_title')}</ListItemText>
                </MenuItem>
             )}
-            <MenuItem onClick={run(props.onChangeConference)}>
+            {!window.location.pathname.startsWith('/hrm/embed/') && <MenuItem onClick={run(props.onChangeConference)}>
                <ListItemIcon>
                   <TuneIcon fontSize="small" />
                </ListItemIcon>
                <ListItemText>{t('conference.appbar.change_conference_settings')}</ListItemText>
-            </MenuItem>
+            </MenuItem>}
             {props.canCloseConference && (
                <MenuItem onClick={run(props.onCloseConference)} sx={{ color: 'error.main' }}>
                   <ListItemIcon sx={{ color: 'inherit' }}>
@@ -145,7 +145,7 @@ export default function UserMenu(props: Props) {
                <ListItemIcon>
                   <LogoutIcon fontSize="small" />
                </ListItemIcon>
-               <ListItemText>{t('common:sign_out')}</ListItemText>
+               <ListItemText>{window.location.pathname.startsWith('/hrm/embed/') ? 'Leave meeting' : t('common:sign_out')}</ListItemText>
             </MenuItem>
          </Menu>
       </>

@@ -1,4 +1,5 @@
 using System;
+using Microsoft.AspNetCore.Http;
 using System.Linq;
 using System.Security.Claims;
 using System.Collections.Generic;
@@ -92,6 +93,14 @@ namespace Strive
 
             // Authentication
             var authOptions = Configuration.GetRequired<AuthOptions>("Authentication");
+            var hrmOptions = Configuration.GetSection("HrmIntegration").Get<Strive.Hrm.HrmMeetingOptions>() ?? new();
+            services.AddSingleton(hrmOptions);
+            services.AddSingleton(provider => {
+                var settings = Configuration.GetRequired<MongoDbOptions>("MongoDb");
+                var collection = new MongoClient(settings.ConnectionString).GetDatabase(settings.DatabaseName)
+                    .GetCollection<MongoDB.Bson.BsonDocument>("HrmMeetingHandoffs");
+                return new Strive.Hrm.HrmMeetingBridge(hrmOptions, collection);
+            });
             services.AddAuthentication(options =>
                 {
                     // a policy scheme picks the identity server or the recorder scheme by the issuer of the token
@@ -108,6 +117,11 @@ namespace Strive
 
                     options.RequireHttpsMetadata = !authOptions.NoSslRequired;
 
+                    options.AcceptTokenFromQuery();
+                })
+                .AddJwtBearer(Strive.Hrm.HrmMeetingBridge.Scheme, options =>
+                {
+                    options.TokenValidationParameters = Strive.Hrm.HrmMeetingBridge.Validation(hrmOptions.SessionSecret);
                     options.AcceptTokenFromQuery();
                 })
                 .AddJwtBearer(RecorderAuthentication.Scheme, options =>
@@ -313,7 +327,7 @@ namespace Strive
 
                         configurator.ReceiveEndpoint(sfuOptions.ReceiveQueue, e =>
                         {
-                            e.Durable = false;
+                            e.Durable = true;
 
                             e.ConfigureConsumer<StreamsUpdatedConsumer>(context);
                             e.ConfigureConsumer<NotifyConnectionConsumer>(context);
@@ -441,13 +455,25 @@ namespace Strive
             app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Strive API V1"));
 
             app.UseAuthentication();
+            app.Use(async (context, next) =>
+            {
+                if (Strive.Hrm.HrmMeetingScope.IsMeetingUser(context.User) &&
+                    (!context.RequestServices.GetRequiredService<Strive.Hrm.HrmMeetingBridge>().Ready ||
+                     !Strive.Hrm.HrmMeetingScope.AllowsRequest(context.Request, context.User)))
+                {
+                    context.Response.StatusCode = 403;
+                    await context.Response.WriteAsJsonAsync(new { message = "This meeting session cannot access that resource." });
+                    return;
+                }
+                await next();
+            });
 
             app.UseRouting();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute("default", "{controller}/{action=Index}/{id?}");
-                endpoints.MapHub<CoreHub>("/signalr");
+                endpoints.MapHub<CoreHub>("/signalr", options => options.CloseOnAuthenticationExpiration = true);
                 endpoints.MapHub<EquipmentHub>("/equipment-signalr");
             });
 

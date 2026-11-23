@@ -26,6 +26,7 @@ import SharedRecordingRoute from './routes/SharedRecordingRoute';
 import RedirectToConference from './RedirectToConference';
 import AuthenticatedRoutes from './routes/AuthenticatedRoutes';
 import EquipmentRoute from './routes/EquipmentRoute';
+import HrmMeetingRoute from './routes/HrmMeetingRoute';
 
 const useStyles = makeStyles()((theme) => ({
    toast: {
@@ -42,6 +43,8 @@ function App() {
          <CssBaseline />
          <BrowserRouter>
             <Switch>
+               <Route path="/hrm/embed/:id" exact component={HrmMeetingRoute} />
+               <Route path="/hrm/:id" exact component={HrmMeetingRoute} />
                <Route path="/c/:id/as-equipment" exact component={EquipmentRoute} />
                {/* opened by the recorder service, it joins with its own token */}
                <Route path="/c/:id/recording" exact component={RecordingRoute} />

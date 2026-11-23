@@ -1,6 +1,12 @@
 import { combineReducers } from 'redux';
 import { PersistConfig, persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
+// HRM meetings must never touch localStorage, including during dependency initialization.
+const memory = new Map<string, string>();
+const storage = {
+   getItem: async (key: string) => memory.get(key) ?? null,
+   setItem: async (key: string, value: string) => { memory.set(key, value); },
+   removeItem: async (key: string) => { memory.delete(key); },
+};
 import auth from '../features/auth/reducer';
 import breakoutRooms from '../features/breakout-rooms/reducer';
 import chat from '../features/chat/reducer';

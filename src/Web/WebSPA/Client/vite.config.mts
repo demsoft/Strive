@@ -15,7 +15,10 @@ const announceForAspNetHost = (): Plugin => ({
 export default defineConfig({
    plugins: [react(), announceForAspNetHost()],
    resolve: {
-      alias: { src: fileURLToPath(new URL('./src', import.meta.url)) },
+      alias: [
+         { find: 'src', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+         { find: /^howler$/, replacement: fileURLToPath(new URL('./src/compat/howler.js', import.meta.url)) },
+      ],
    },
    server: { port: 3000, strictPort: true },
    build: {
