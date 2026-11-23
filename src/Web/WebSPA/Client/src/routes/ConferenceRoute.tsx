@@ -1,6 +1,8 @@
+import { AuthContext } from 'react-oidc-context';
+import { MeetingPortalContext } from 'src/features/hrm-call/MeetingPortalContext';
 import useUser from 'src/features/auth/useUser';
 import { Link } from '@mui/material';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
@@ -40,6 +42,8 @@ function ConferenceRoute({
       params: { id },
    },
 }: Props) {
+   const meetingPortal = useContext(MeetingPortalContext);
+   const auth = useContext(AuthContext);
    const error = useSelector((state: RootState) => state.conference.connectionError);
    const lobbyStatus = useSelector(selectLobbyStatus);
    const conferenceState = useSelector((state: RootState) => state.conference.conferenceState);
@@ -81,7 +85,7 @@ function ConferenceRoute({
    if (error) {
       return (
          <FullscreenError message={formatErrorMessage(error)}>
-            <Link {...to('/')}>{t('common:back_to_start')}</Link>
+            {meetingPortal ? <Link component="button" onClick={() => void auth?.signoutRedirect()}>Leave meeting</Link> : <Link {...to('/')}>{t('common:back_to_start')}</Link>}
          </FullscreenError>
       );
    }

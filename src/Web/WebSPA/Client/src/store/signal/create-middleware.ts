@@ -1,4 +1,4 @@
-import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { HubConnection, HubConnectionBuilder, LogLevel, HttpTransportType } from '@microsoft/signalr';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { Middleware, MiddlewareAPI } from 'redux';
 import { events } from 'src/core-hub';
@@ -29,14 +29,18 @@ export default (): SignalRResult => {
          { payload: { signalUrl, appData, urlParams, defaultEvents } },
       ) => {
          if (!connection) {
-            const queryString = Object.keys(urlParams)
+            const accessToken = urlParams.access_token;
+            const queryString = Object.keys(urlParams).filter(key => key !== 'access_token')
                .map((key) => key + '=' + urlParams[key])
                .join('&');
 
             const url = signalUrl + '?' + queryString;
 
             connection = new HubConnectionBuilder()
-               .withUrl(url)
+               .withUrl(url, { accessTokenFactory: () => accessToken ?? '',
+                  // Header-authenticated polling keeps the HRM handoff credential out of URLs and proxy logs.
+                  // Media is carried by the SFU, not by this signaling transport.
+                  transport: window.location.pathname.startsWith('/hrm/embed/') ? HttpTransportType.LongPolling : undefined })
                .withAutomaticReconnect({ nextRetryDelayInMilliseconds: () => 5000 })
                .configureLogging({ log: (level, message) => logLibrary('[%s]: %s', LogLevel[level], message) })
                .build();

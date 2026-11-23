@@ -9,7 +9,8 @@ import {
    Tooltip,
 } from '@mui/material';
 import CallEndIcon from '@mui/icons-material/CallEnd';
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
+import { AuthContext } from 'react-oidc-context';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { useHistory } from 'react-router-dom';
@@ -32,12 +33,14 @@ export default function LeaveConferenceButton({ className, size, ...fabProps }: 
    const { t } = useTranslation();
    const dispatch = useDispatch();
    const history = useHistory();
+   const auth = useContext(AuthContext);
    const canEnd = usePermission(CONFERENCE_CAN_OPEN_AND_CLOSE);
    const [open, setOpen] = useState(false);
 
    const leave = () => {
       setOpen(false);
-      history.push('/');
+      if (window.location.pathname.startsWith('/hrm/embed/')) void auth?.signoutRedirect();
+      else history.push('/');
    };
 
    const endForEveryone = () => {

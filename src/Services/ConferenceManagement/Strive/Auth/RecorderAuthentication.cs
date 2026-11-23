@@ -50,6 +50,8 @@ namespace Strive.Auth
 
             try
             {
+                if (handler.ReadJwtToken(token).Issuer == Strive.Hrm.HrmMeetingBridge.Issuer)
+                    return Strive.Hrm.HrmMeetingBridge.Scheme;
                 return handler.ReadJwtToken(token).Issuer == RecorderOptions.TokenIssuer
                     ? Scheme
                     : JwtBearerDefaults.AuthenticationScheme;

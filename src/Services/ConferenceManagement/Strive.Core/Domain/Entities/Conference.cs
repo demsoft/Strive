@@ -21,6 +21,7 @@ namespace Strive.Core.Domain.Entities
         public Dictionary<PermissionType, Dictionary<string, JValue>> Permissions { get; set; } = new();
 
         public ConferenceConfiguration Configuration { get; set; } = new();
+        public HrmMeetingOwnership? HrmMeeting { get; set; }
 
         public int Version { get; set; }
 

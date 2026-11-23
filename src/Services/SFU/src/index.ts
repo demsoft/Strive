@@ -77,7 +77,7 @@ async function main() {
    });
 
    const server = app
-      .listen(config.http.port, () => {
+      .listen(config.http.port, config.http.host, () => {
          lightship.signalReady();
          logger.info('HTTP server is listening on port %i', config.http.port);
       })

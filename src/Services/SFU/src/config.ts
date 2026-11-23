@@ -52,6 +52,7 @@ const config: Config = {
    },
    http: {
       port: Number(process.env.HTTP_PORT) || 3000,
+      host: process.env.HTTP_HOST || '0.0.0.0',
    },
    services: {
       conferenceInfoRequestUrl:
@@ -76,6 +77,7 @@ type Config = {
    };
    http: {
       port: number;
+      host: string;
    };
    services: {
       conferenceInfoRequestUrl: string;

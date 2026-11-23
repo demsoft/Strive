@@ -10,7 +10,10 @@ export class ConferenceManagementClient {
 
    public async fetchConference(conferenceId: string): Promise<ConferenceInfo> {
       const requestUrl = this.buildRequestUrl(conferenceId);
-      const response = await axios.get<ConferenceInfoDto>(requestUrl);
+      const response = await axios.get<ConferenceInfoDto>(requestUrl, {
+         headers: process.env.API_CONFERENCE_TOKEN ? { 'X-GOS-SFU-Key': process.env.API_CONFERENCE_TOKEN } : {},
+         timeout: 10000,
+      }).catch(() => { throw new Error('The media server could not load authorized meeting information.'); });
 
       const result = response.data;
       return {

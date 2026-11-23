@@ -174,6 +174,8 @@ namespace Strive.Hubs.Core
             var httpContext = GetHttpContext();
 
             var conferenceId = httpContext.Request.Query["conferenceId"].ToString();
+            if (!Strive.Hrm.HrmMeetingScope.AllowsRoom(httpContext.User, conferenceId))
+                throw new HubException("This session belongs to another meeting.");
             var participantId = httpContext.User.GetUserId();
 
             return new Participant(conferenceId, participantId);

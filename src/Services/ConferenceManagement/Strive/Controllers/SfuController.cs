@@ -1,4 +1,6 @@
 using System.Threading.Tasks;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -27,8 +29,11 @@ namespace Strive.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<SfuConferenceInfo>> Fetch(string conferenceId, [FromQuery] string? apiKey)
         {
-            if (apiKey != _options.ApiKey)
-                return Forbid();
+            var provided = Request.Headers["X-GOS-SFU-Key"].ToString();
+            if (string.IsNullOrEmpty(provided)) provided = apiKey;
+            if (string.IsNullOrEmpty(provided) || string.IsNullOrEmpty(_options.ApiKey) ||
+                !CryptographicOperations.FixedTimeEquals(SHA256.HashData(Encoding.UTF8.GetBytes(provided)), SHA256.HashData(Encoding.UTF8.GetBytes(_options.ApiKey))))
+                return StatusCode(403, new { message = "Media service authentication required." });
 
             return await _provider.Get(conferenceId);
         }

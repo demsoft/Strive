@@ -28,3 +28,4 @@ README.md
 **/test-results/
 **/TestResults/
 Client/build
+Client/vite.hrm-local.config.mts

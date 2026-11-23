@@ -341,3 +341,6 @@ src/certs/
 .env.*
 !.env.example
 !.env.*.example
+
+# Isolated local HRM browser proof; never included in deployment artifacts.
+src/Web/WebSPA/Client/vite.hrm-local.config.mts

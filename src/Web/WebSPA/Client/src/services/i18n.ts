@@ -25,6 +25,7 @@ i18next
    .use(LanguageDetector)
    .init({
       resources,
+      detection: { caches: [], order: ['navigator', 'htmlTag'] },
       fallbackLng: 'en',
       supportedLngs: supportedLanguages.map((x) => x.id),
       ns: ['common', 'glossary', 'main'],

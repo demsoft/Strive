@@ -28,3 +28,4 @@ README.md
 **/test-results/
 **/TestResults/
 Web/WebSPA/Client/build
+Web/WebSPA/Client/vite.hrm-local.config.mts
