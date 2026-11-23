@@ -23,6 +23,7 @@ class InstallationTests(unittest.TestCase):
             self.assertFalse(hrm['ChatCalls']['Enabled'])
             self.assertFalse(hrm['GosMeet']['RecruitmentEnabled'])
             self.assertFalse(config['KeyValueDatabase']['UseInMemory'])
+            self.assertNotIn('KeyPrefix', config['KeyValueDatabase']['Redis'])
             self.assertGreaterEqual(len(config['HrmIntegration']['ServiceSecret']),48)
             self.assertNotEqual(config['HrmIntegration']['ServiceSecret'],config['HrmIntegration']['SessionSecret'])
             self.assertNotIn('/gos-meet-api',hrm['GosMeet']['ApiOrigin'])

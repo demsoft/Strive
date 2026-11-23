@@ -76,6 +76,8 @@ def main(args):
                 with urllib.request.urlopen(f'http://127.0.0.1:{port}{path}', timeout=3) as result:
                     if result.status != 200:
                         raise ValueError('Readiness has not passed.')
+                    if path == '/config.js' and args.release not in result.read(1048576).decode('utf-8'):
+                        raise ValueError('The running meeting web version does not match the requested release.')
             compose('exec', '-T', 'sfu', 'node', '-e', "fetch('http://127.0.0.1:9000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))", capture=True)
             print('Conference API, web runtime configuration and SFU readiness passed. Complete authenticated and cross-network acceptance before enabling HRM flags.')
             return
