@@ -57,7 +57,7 @@ def main(args):
         return
     if args.action == 'build':
         head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
-        if head != args.release or subprocess.check_output(['git', 'diff', '--name-only', 'HEAD'], cwd=ROOT, text=True).strip():
+        if head != args.release or subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=normal'], cwd=ROOT, text=True).strip():
             raise ValueError('Build from the clean approved revision; do not build uncommitted changes as a release.')
         compose('build')
         return
