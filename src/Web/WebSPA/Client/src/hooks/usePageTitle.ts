@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
-
-const APP_NAME = 'Strive';
+import { brandName } from 'src/brand-id';
 
 export default function usePageTitle(title?: string | null) {
    useEffect(() => {
@@ -13,9 +12,9 @@ export default function usePageTitle(title?: string | null) {
 
    useEffect(() => {
       if (title) {
-         document.title = `${APP_NAME} | ${title}`;
+         document.title = `${brandName} | ${title}`;
       } else {
-         document.title = APP_NAME;
+         document.title = brandName;
       }
    }, [title]);
 }

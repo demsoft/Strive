@@ -43,4 +43,4 @@ export const isArena = brandId === 'arena';
 export const isGbedu = brandId !== 'strive';
 
 /** The name shown to people. */
-export const brandName = isArena ? 'Arena' : isGbedu ? 'Gbedu' : 'Strive';
+export const brandName = isArena ? 'Arena' : isGbedu ? 'Gbedu' : 'GOS MEET';

@@ -7,17 +7,17 @@ namespace Identity.API.Accounts
     public static class EmailTemplates
     {
         public static EmailMessage ConfirmEmail(string to, string name, string link) =>
-            Build(to, "Confirm your email for Strive", $"Welcome to Strive, {name}!",
+            Build(to, "Confirm your email for GOS MEET", $"Welcome to GOS MEET, {name}!",
                 "Confirm your email address to finish creating your account.", "Confirm email", link,
                 "The link works for 24 hours. If you did not create an account you can ignore this email.");
 
         public static EmailMessage ResetPassword(string to, string link) =>
-            Build(to, "Reset your Strive password", "Reset your password",
+            Build(to, "Reset your GOS MEET password", "Reset your password",
                 "Somebody (hopefully you) asked to reset the password of this account.", "Choose a new password", link,
                 "The link works for one hour and only once. If you did not ask for it you can ignore this email.");
 
         public static EmailMessage AlreadyRegistered(string to, string signInLink, string resetLink) =>
-            Build(to, "You already have a Strive account", "You already have an account",
+            Build(to, "You already have a GOS MEET account", "You already have an account",
                 "Somebody tried to create an account with this email address, but you have one already.",
                 "Sign in", signInLink, $"Forgot your password? Reset it here: {resetLink}");
 

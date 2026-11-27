@@ -129,7 +129,7 @@ namespace Identity.API.Tests
         {
             var html = await LoginPage("https://meet.test");
 
-            Assert.Contains("<title>Strive</title>", html);
+            Assert.Contains("<title>GOS MEET</title>", html);
             Assert.Contains("data-brand=\"strive\"", html);
             Assert.Contains("Meetings that feel", html);
             Assert.DoesNotContain("Gbedu", html);
