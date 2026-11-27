@@ -20,7 +20,9 @@ namespace Identity.API.Accounts
         public async Task SendAsync(EmailMessage message)
         {
             var mime = new MimeMessage();
-            mime.From.Add(MailboxAddress.Parse(_options.From));
+            var from = MailboxAddress.Parse(_options.From);
+            if (message.SenderName != null) from.Name = message.SenderName;
+            mime.From.Add(from);
             mime.To.Add(MailboxAddress.Parse(message.To));
             mime.Subject = message.Subject;
             mime.Body = new BodyBuilder {TextBody = message.TextBody, HtmlBody = message.HtmlBody}.ToMessageBody();

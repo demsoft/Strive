@@ -8,7 +8,7 @@ namespace Strive.IntegrationTests._Helpers
     /// <summary>Stands in for the mail service: it remembers what it was asked to send.</summary>
     public class FakeEmailSender : IEmailSender
     {
-        public record Mail(string To, string Subject, string Html, string Text);
+        public record Mail(string To, string Subject, string Html, string Text, string? SenderName = null);
 
         public ConcurrentQueue<Mail> Sent { get; } = new();
 
@@ -20,10 +20,10 @@ namespace Strive.IntegrationTests._Helpers
         public bool IsConfigured => Configured;
 
         public Task Send(string toEmail, string subject, string htmlBody, string textBody,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default, string? senderName = null)
         {
             if (Failing) throw new EmailException("Brevo answered 401.");
-            Sent.Enqueue(new Mail(toEmail, subject, htmlBody, textBody));
+            Sent.Enqueue(new Mail(toEmail, subject, htmlBody, textBody, senderName));
             return Task.CompletedTask;
         }
     }

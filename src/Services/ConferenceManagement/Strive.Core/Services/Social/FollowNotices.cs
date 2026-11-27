@@ -43,14 +43,11 @@ namespace Strive.Core.Services.Social
     {
         public static string NewToken() => Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
 
-        private static string Link(RemindersOptions options, string path) =>
-            $"{options.LinkBaseUrl.TrimEnd('/')}/{path}";
+        public static string ConfirmLink(PlatformBrand brand, string token) =>
+            brand.Link("n/confirm/" + Uri.EscapeDataString(token));
 
-        public static string ConfirmLink(RemindersOptions options, string token) =>
-            Link(options, "n/confirm/" + Uri.EscapeDataString(token));
-
-        public static string StopLink(RemindersOptions options, string token) =>
-            Link(options, "n/stop/" + Uri.EscapeDataString(token));
+        public static string StopLink(PlatformBrand brand, string token) =>
+            brand.Link("n/stop/" + Uri.EscapeDataString(token));
 
         public static (string Subject, string Html, string Text) Confirmation(string creatorName, string confirmLink)
         {
@@ -109,10 +106,11 @@ namespace Strive.Core.Services.Social
             var address = request.Email!.Trim();
             // a new secret for every request: an old confirm link of another address does not work any more
             var token = NoticeMail.NewToken();
-            var mail = NoticeMail.Confirmation(creator.DisplayName, NoticeMail.ConfirmLink(_options, token));
+            var brand = PlatformBrand.Of(_options, creator);
+            var mail = NoticeMail.Confirmation(creator.DisplayName, NoticeMail.ConfirmLink(brand, token));
             try
             {
-                await _email.Send(address, mail.Subject, mail.Html, mail.Text, cancellationToken);
+                await _email.Send(address, mail.Subject, mail.Html, mail.Text, cancellationToken, brand.Name);
             }
             catch (EmailException e)
             {
@@ -243,10 +241,10 @@ namespace Strive.Core.Services.Social
                 // only one instance tells it, and only once
                 if (!await _videos.TryClaimFollowerNotice(video.VideoId, now)) continue;
 
+                var brand = PlatformBrand.Of(_options, await _creators.FindById(video.CreatorId));
                 sent += await Tell(video.CreatorId, now,
-                    name => $"posted a new video: {video.Title}",
-                    $"{_options.LinkBaseUrl.TrimEnd('/')}/v/{Uri.EscapeDataString(video.VideoId)}", "Watch it",
-                    cancellationToken);
+                    name => $"posted a new video: {video.Title}", brand,
+                    brand.Link($"v/{Uri.EscapeDataString(video.VideoId)}"), "Watch it", cancellationToken);
             }
 
             foreach (var session in await _sessions.FindForFollowerNotice(now - NewFor, 50))
@@ -260,16 +258,17 @@ namespace Strive.Core.Services.Social
                 var when = session.StartsAt == null
                     ? ""
                     : " on " + ReminderMail.FormatTime(session.StartsAt.Value, creator?.Country ?? "NG");
-                sent += await Tell(session.CreatorId, now, name => $"has a new session: {session.Title}{when}",
-                    $"{_options.LinkBaseUrl.TrimEnd('/')}/s/{Uri.EscapeDataString(session.SessionId)}", "See the session",
-                    cancellationToken);
+                var brand = PlatformBrand.Of(_options, session);
+                var kind = brand.IsArena ? "match" : "session";
+                sent += await Tell(session.CreatorId, now, name => $"has a new {kind}: {session.Title}{when}", brand,
+                    brand.Link($"s/{Uri.EscapeDataString(session.SessionId)}"), $"See the {kind}", cancellationToken);
             }
 
             return sent;
         }
 
-        private async Task<int> Tell(string creatorId, DateTimeOffset now, Func<string, string> headline, string link,
-            string linkLabel, CancellationToken cancellationToken)
+        private async Task<int> Tell(string creatorId, DateTimeOffset now, Func<string, string> headline,
+            PlatformBrand brand, string link, string linkLabel, CancellationToken cancellationToken)
         {
             var creator = await _creators.FindById(creatorId);
             if (creator == null) return 0;
@@ -283,10 +282,11 @@ namespace Strive.Core.Services.Social
                                                           !string.IsNullOrWhiteSpace(x.NoticeToken)))
             {
                 var mail = NoticeMail.News(creator.DisplayName, headline(creator.DisplayName), link, linkLabel,
-                    NoticeMail.StopLink(_options, follow.NoticeToken!));
+                    NoticeMail.StopLink(brand, follow.NoticeToken!));
                 try
                 {
-                    await _email.Send(follow.NoticeEmail!, mail.Subject, mail.Html, mail.Text, cancellationToken);
+                    await _email.Send(follow.NoticeEmail!, mail.Subject, mail.Html, mail.Text, cancellationToken,
+                        brand.Name);
                     delivered.Add(follow.FollowId);
                 }
                 catch (EmailException e)

@@ -31,7 +31,7 @@ namespace Identity.API.Accounts
             {
                 Content = JsonContent.Create(new
                 {
-                    sender = new {name = _from.Name, email = _from.Address},
+                    sender = new {name = message.SenderName ?? _from.Name, email = _from.Address},
                     to = new[] {new {email = message.To}},
                     subject = message.Subject,
                     htmlContent = message.HtmlBody,

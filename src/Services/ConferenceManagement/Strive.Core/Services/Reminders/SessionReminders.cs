@@ -31,13 +31,13 @@ namespace Strive.Core.Services.Reminders
         }
 
         public static (string Subject, string Html, string Text) Build(string title, string creatorName, string when,
-            string link)
+            string link, string joinLabel = "Join the session")
         {
             var subject = $"Starting soon: {title}";
             var text = $"{creatorName} starts \"{title}\" at {when}.\n\nJoin here: {link}\n\nYou get this mail because you have a ticket.";
             var html =
                 $"<p><b>{WebUtility.HtmlEncode(creatorName)}</b> starts <b>{WebUtility.HtmlEncode(title)}</b> at {WebUtility.HtmlEncode(when)}.</p>" +
-                $"<p><a href=\"{WebUtility.HtmlEncode(link)}\">Join the session</a></p>" +
+                $"<p><a href=\"{WebUtility.HtmlEncode(link)}\">{WebUtility.HtmlEncode(joinLabel)}</a></p>" +
                 "<p style=\"color:#888\">You get this mail because you have a ticket.</p>";
             return (subject, html, text);
         }
@@ -87,15 +87,17 @@ namespace Strive.Core.Services.Reminders
                     .ToList();
                 if (recipients.Count == 0) continue;
 
-                var link = $"{_options.LinkBaseUrl.TrimEnd('/')}/s/{Uri.EscapeDataString(session.SessionId)}";
+                var brand = PlatformBrand.Of(_options, session);
+                var link = brand.Link($"s/{Uri.EscapeDataString(session.SessionId)}");
                 var mail = ReminderMail.Build(session.Title, creator?.DisplayName ?? "Your host",
-                    ReminderMail.FormatTime(session.StartsAt!.Value, creator?.Country ?? "NG"), link);
+                    ReminderMail.FormatTime(session.StartsAt!.Value, creator?.Country ?? "NG"), link,
+                    brand.IsArena ? "Join the match" : "Join the session");
 
                 var delivered = 0;
                 foreach (var recipient in recipients)
                     try
                     {
-                        await _email.Send(recipient, mail.Subject, mail.Html, mail.Text, cancellationToken);
+                        await _email.Send(recipient, mail.Subject, mail.Html, mail.Text, cancellationToken, brand.Name);
                         delivered++;
                     }
                     catch (EmailException e)

@@ -25,7 +25,7 @@ namespace Strive.Infrastructure.Email
         public bool IsConfigured => !string.IsNullOrWhiteSpace(_options.BrevoApiKey);
 
         public async Task Send(string toEmail, string subject, string htmlBody, string textBody,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default, string? senderName = null)
         {
             if (!IsConfigured) throw new EmailException("Email is not set up.");
 
@@ -34,7 +34,7 @@ namespace Strive.Infrastructure.Email
             {
                 Content = JsonContent.Create(new
                 {
-                    sender = new {name, email = address},
+                    sender = new {name = senderName ?? name, email = address},
                     to = new[] {new {email = toEmail}},
                     subject,
                     htmlContent = htmlBody,
@@ -84,6 +84,7 @@ namespace Strive.Infrastructure.Email
         public bool IsConfigured => false;
 
         public Task Send(string toEmail, string subject, string htmlBody, string textBody,
-            CancellationToken cancellationToken = default) => throw new EmailException("Email is not set up.");
+            CancellationToken cancellationToken = default, string? senderName = null) =>
+            throw new EmailException("Email is not set up.");
     }
 }

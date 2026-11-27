@@ -16,6 +16,9 @@ namespace Strive.Core.Services.Reminders
         /// <summary>The address the link in the mail starts with, like https://gbedu.example.com</summary>
         public string LinkBaseUrl { get; set; } = "";
 
+        /// <summary>The same for mails about football matches (Arena), like https://arena.example.com; empty: LinkBaseUrl</summary>
+        public string ArenaLinkBaseUrl { get; set; } = "";
+
         /// <summary>A follower who asked for mail gets at most one in this many hours (batches of posts are one mail)</summary>
         public int FollowerNoticeCooldownHours { get; set; } = 6;
 

@@ -181,13 +181,21 @@ namespace Strive
             services.Configure<RemindersOptions>(Configuration.GetSection(RemindersOptions.Section));
             services.PostConfigure<RemindersOptions>(options =>
             {
-                // the link goes to the first extra host (Gbedu), else to the main address of the app
-                if (!string.IsNullOrWhiteSpace(options.LinkBaseUrl)) return;
-                var host = (Configuration["App:ExtraHosts"] ?? "")
-                    .Split(new[] {',', ';', ' '}, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
-                options.LinkBaseUrl = host != null
-                    ? (host.StartsWith("http") ? host : "https://" + host)
-                    : Configuration["App:FrontendUrl"] ?? "";
+                // the links of a brand go to its own host (gbedu.…, arena.…); without one: the first extra host, else
+                // the main address of the app
+                var hosts = (Configuration["App:ExtraHosts"] ?? "")
+                    .Split(new[] {',', ';', ' '}, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.StartsWith("http") ? x : "https://" + x)
+                    .ToList();
+                string? HostOf(string brand) => hosts.FirstOrDefault(x =>
+                    Uri.TryCreate(x, UriKind.Absolute, out var uri) &&
+                    uri.Host.StartsWith(brand + ".", StringComparison.OrdinalIgnoreCase));
+
+                if (string.IsNullOrWhiteSpace(options.LinkBaseUrl))
+                    options.LinkBaseUrl = HostOf("gbedu") ?? hosts.FirstOrDefault() ??
+                        Configuration["App:FrontendUrl"] ?? "";
+                if (string.IsNullOrWhiteSpace(options.ArenaLinkBaseUrl))
+                    options.ArenaLinkBaseUrl = HostOf("arena") ?? "";
             });
             services.AddHttpClient<BrevoEmailSender>(client => client.Timeout = TimeSpan.FromSeconds(15));
             // TryAdd: the tests bring their own sender
