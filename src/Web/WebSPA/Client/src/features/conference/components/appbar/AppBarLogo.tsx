@@ -5,5 +5,5 @@ import { MeetingPortalContext } from 'src/features/hrm-call/MeetingPortalContext
 
 export default function AppBarLogo() {
    const portal = useContext(MeetingPortalContext);
-   return portal ? <Typography variant="h6" component="span" sx={{ fontWeight: 800 }}>GOS Meet</Typography> : <BrandLogo size={28} />;
+   return portal ? <Typography variant="h6" component="span" sx={{ fontWeight: 800 }}>GOS MEET</Typography> : <BrandLogo size={28} />;
 }

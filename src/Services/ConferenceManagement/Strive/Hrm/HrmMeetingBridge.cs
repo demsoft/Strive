@@ -70,7 +70,7 @@ namespace Strive.Hrm
             CryptographicOperations.FixedTimeEquals(SHA256.HashData(Encoding.UTF8.GetBytes(provided)), SHA256.HashData(Encoding.UTF8.GetBytes(options.ServiceSecret)));
         public string ConferenceId(string organization, string externalId)
         {
-            if (!Ready) throw new InvalidOperationException("GOS Meet integration is not configured.");
+            if (!Ready) throw new InvalidOperationException("GOS MEET integration is not configured.");
             using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(options.ServiceSecret));
             return "hrm-" + Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(organization + "\0" + externalId))).ToLowerInvariant()[..32];
         }
