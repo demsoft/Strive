@@ -5,6 +5,9 @@ import ringMark from 'src/assets/images/mark-gosmeet.png';
 import { brandName, isArena, isGbedu } from 'src/brand-id';
 import { brand } from 'src/theme';
 
+/** The width of the word mark of GOS Meet for each pixel of height (the picture is 720 by 134) */
+const WORDMARK_RATIO = 720 / 134;
+
 type Props = {
    size?: number;
    /** show the word mark next to the logo mark */
@@ -17,15 +20,19 @@ type Props = {
  */
 export default function BrandLogo({ size = 32, showName = true }: Props) {
    // the main brand: neither of the creator platforms
-   if (!isGbedu)
+   if (!isGbedu) {
+      const height = showName ? Math.round(size * 0.9) : size;
+      const width = showName ? Math.round(height * WORDMARK_RATIO) : height;
+      // both sides are set: in a column layout a picture without a width is stretched across the page
       return (
          <Box
             component="img"
             src={showName ? wordmark : ringMark}
             alt={brandName}
-            sx={{ display: 'block', flexShrink: 0, height: showName ? Math.round(size * 0.9) : size, width: 'auto' }}
+            sx={{ display: 'block', flexShrink: 0, width: `${width}px`, height: `${height}px`, objectFit: 'contain' }}
          />
       );
+   }
 
    return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
