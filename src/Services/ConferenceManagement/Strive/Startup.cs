@@ -358,7 +358,7 @@ namespace Strive
             // Swagger
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo {Title = "GOS MEET API", Version = "v1"});
+                c.SwaggerDoc("v1", new OpenApiInfo {Title = "GOS Meet API", Version = "v1"});
 
                 var scheme = new OpenApiSecurityScheme
                 {
@@ -460,7 +460,7 @@ namespace Strive
 
             // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), 
             // specifying the Swagger JSON endpoint.
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "GOS MEET API V1"));
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "GOS Meet API V1"));
 
             app.UseAuthentication();
             app.Use(async (context, next) =>

@@ -1,5 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import React from 'react';
+import wordmark from 'src/assets/images/logo-gosmeet.png';
+import ringMark from 'src/assets/images/mark-gosmeet.png';
 import { brandName, isArena, isGbedu } from 'src/brand-id';
 import { brand } from 'src/theme';
 
@@ -9,8 +11,22 @@ type Props = {
    showName?: boolean;
 };
 
-/** The logo mark of the brand: a gradient tile with a G and a live dot (GOS MEET), sound waves (Gbedu) or a ball (Arena). */
+/**
+ * The logo of the brand. GOS Meet has its own artwork (the word mark, or its three colour ring where there is no room
+ * for the name); Gbedu (sound waves) and Arena (a ball) are a gradient tile with their name next to it.
+ */
 export default function BrandLogo({ size = 32, showName = true }: Props) {
+   // the main brand: neither of the creator platforms
+   if (!isGbedu)
+      return (
+         <Box
+            component="img"
+            src={showName ? wordmark : ringMark}
+            alt={brandName}
+            sx={{ display: 'block', flexShrink: 0, height: showName ? Math.round(size * 0.9) : size, width: 'auto' }}
+         />
+      );
+
    return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
          <svg width={size} height={size} viewBox="0 0 32 32" role="img" aria-label={brandName}>
@@ -33,7 +49,7 @@ export default function BrandLogo({ size = 32, showName = true }: Props) {
                      strokeLinejoin="round"
                   />
                </>
-            ) : isGbedu ? (
+            ) : (
                <>
                   <circle cx="16" cy="16" r="3" fill="#fff" />
                   <path
@@ -51,18 +67,6 @@ export default function BrandLogo({ size = 32, showName = true }: Props) {
                      strokeWidth="2.2"
                      strokeLinecap="round"
                   />
-               </>
-            ) : (
-               <>
-                  <path
-                     d="M21.9 10.1a8.4 8.4 0 1 0 2.5 5.9h-7"
-                     fill="none"
-                     stroke="#fff"
-                     strokeWidth="3"
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                  />
-                  <circle cx="25.1" cy="7.4" r="2" fill="#fff" />
                </>
             )}
          </svg>
