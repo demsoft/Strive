@@ -23,7 +23,7 @@ namespace Identity.API
 
         public string Id => ForHost(_accessor?.HttpContext?.Request.Host.Host);
 
-        public string Name => Id == Arena ? "Arena" : Id == Gbedu ? "Gbedu" : "Strive";
+        public string Name => Id == Arena ? "Arena" : Id == Gbedu ? "Gbedu" : "GOS MEET";
 
         /// <summary>A creator platform (Gbedu, and Arena which is built on it) and not the meetings app</summary>
         public bool IsGbedu => Id != Strive;

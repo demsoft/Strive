@@ -30,7 +30,7 @@
   "creator": {"link": "Kreativ werden", "title": "Dein Creator-Profil", "not_enabled": "Bezahlte Sitzungen sind noch nicht geöffnet. Komm bald wieder.", "intro_new": "Trage das Bankkonto ein, auf das deine Einnahmen gezahlt werden. Bei einer bezahlten Sitzung behält Gbedu {{percent}}%, der Rest geht auf dein Konto.", "intro_existing": "Ändere deinen Namen oder Text oder das Bankkonto für deine Einnahmen.", "name": "Dein Name", "name_hint": "Wird den Teilnehmern deiner Sitzungen gezeigt", "bio": "Über dich", "bio_hint": "Was du unterrichtest oder aufführst, in ein paar Sätzen", "payout_title": "Wohin du bezahlt wirst", "payout_hint": "Wir prüfen das Konto bei der Bank und zeigen dir den Namen des Kontoinhabers. Nur die letzten vier Ziffern werden gespeichert.", "bank": "Bank", "account_number": "Kontonummer (10 Ziffern)", "account_holder": "Kontoinhaber: {{name}}", "account_saved": "{{name}} · {{bank}} · endet auf {{last4}}", "change_account": "Ändern", "save": "Speichern", "create": "Creator werden", "saved": "Gespeichert.", "page_not_found": "Diese Creator-Seite wurde nicht gefunden. Der Link ist vielleicht falsch.", "copy_page_link": "Seitenlink kopieren", "page_sessions": "Was läuft", "page_nothing_on": "{{name}} hat gerade nichts geplant. Schau bald wieder vorbei.", "view_my_page": "Meine öffentliche Seite ansehen", "pass_title": "Pass", "pass_buy": "{{days}}-Tage-Pass holen · {{price}}", "pass_blurb": "Jede Sitzung von {{name}}, {{days}} Tage lang.", "pass_active": "Dein Pass gilt bis {{date}}.", "pass_extend": "{{days}} weitere Tage · {{price}}", "pass_or": "Oder alle Sitzungen von {{name}} für {{days}} Tage · {{price}}", "my_passes": "Deine Pässe", "pass_until": "bis {{date}}", "pass_setup_title": "Pass", "pass_setup_text": "Biete Fans alle deine Sitzungen {{days}} Tage lang zu einem Preis an. Leer lassen, wenn du keinen Pass verkaufen willst.", "pass_price": "Passpreis (₦)", "pass_save": "Pass speichern", "pass_stop": "Nicht mehr verkaufen", "pass_saved": "Gespeichert.", "pass_paid": "Dein Pass ist aktiv. Willkommen!", "pass_failed": "Die Zahlung ist nicht durchgegangen. Für den Pass wurde nichts abgebucht.", "earnings_title": "Einnahmen", "earnings_subtitle": "Was deine Sitzungen und Pässe eingebracht haben.", "earn_net": "Dein Anteil", "earn_gross": "Von Fans bezahlt", "earn_fee": "Gbedu-Provision", "earn_refunded": "Zurückerstattet", "earn_counts": "{{tickets}} Ticket(s), {{passes}} Pass/Pässe und {{videos}} Video(s) verkauft.", "earn_nothing": "Noch keine Verkäufe. Teile den Link einer Sitzung oder deiner Seite.", "earn_by_session": "Nach Sitzung", "earn_tickets": "{{count}} Ticket(s)", "earn_no_sessions": "Noch keine Ticketverkäufe.", "earn_recent": "Letzte Verkäufe", "earn_payout_note": "Dein Anteil wird von Paystack direkt auf dein Bankkonto ausgezahlt, nach dem üblichen Auszahlungsrhythmus von Paystack. Gbedu hält dein Geld nie. Erstattete Verkäufe werden nicht mitgezählt.", "slug_title": "Dein Link", "slug_text": "Wähle einen kurzen Namen für den Link deiner öffentlichen Seite, damit du gbedu.example.com/u/deinname statt eines langen Codes teilen kannst.", "slug_hint": "3 bis 30 Buchstaben oder Zahlen, dazwischen einzelne Bindestriche (ada, ada-lovelace).", "slug_save": "Namen speichern", "slug_clear": "Langen Link verwenden", "slug_saved": "Gespeichert. Deine Seite ist unter dem neuen Link erreichbar.", "slug_change_warning": "Links mit dem alten Namen funktionieren nicht mehr. Der lange Link funktioniert immer.", "pass_renews_on": "Verlängert sich am {{date}}.", "pass_auto_renew": "Automatisch alle {{days}} Tage verlängern", "pass_auto_renew_hint": "Die Karte, mit der du zahlst, wird für den nächsten Pass erneut belastet. Wir schreiben dir einige Tage vorher, und du kannst es jederzeit unter Meine Tickets beenden.", "pass_stop_renewing": "Verlängerung beenden", "pass_stop_confirm": "Verlängerung deines Passes für {{name}} beenden? Was du bezahlt hast, läuft bis zum Ende.", "earn_by_video": "Nach Video", "earn_sales": "{{count}} Verkauf/Verkäufe", "pass_length": "How long the pass lasts", "pass_length_days": "{{count}} days"},
   "view_main_gbedu": {"headline_1": "Geh live.", "headline_2": "Bring Menschen zusammen.", "subtitle": "Unterrichte, tritt auf und teile, was du kannst, in Live-Sitzungen, denen man vom Handy beitritt. Bezahlte Sitzungen in Naira kommen bald.", "feature_live": "Live-Videositzungen", "feature_screen": "Bildschirm teilen mit Ton", "feature_record": "Aufnahme mit Link zum Teilen", "feature_tools": "Umfragen, Whiteboard, Gruppenräume", "feature_music": "Studioklang für Musik", "feature_soon": "Bezahlte Sitzungen: bald", "start_live": "Live gehen", "my_conferences": "Deine Live-Räume", "dialog_title_create": "Live-Sitzung einrichten"},
   "view_main": {
-    "welcome_message": "Willkomen bei Strive",
+    "welcome_message": "Willkomen bei GOS MEET",
     "start_new_conference": "Neue Konferenz öffnen",
     "headline_1": "Meetings, die sich",
     "headline_2": "mühelos anfühlen.",
@@ -159,7 +159,7 @@
     "pay_kind_renewal": "Verlängerung",
     "pay_kind_video": "Video",
     "title": "Serverübersicht",
-    "back": "Zurück zu Strive",
+    "back": "Zurück zu GOS MEET",
     "refresh": "Aktualisieren",
     "updated": "Aktualisiert {{time}}",
     "loading": "Lädt…",
@@ -265,7 +265,7 @@
       "error_fetch_chat": "Beim Versuch, den Chat abzurufen, ist ein Fehler aufgetreten: {{error, error}}"
     },
     "diagnostics": {
-      "title": "Diagnose von Strive ({{name}})"
+      "title": "Diagnose von GOS MEET ({{name}})"
     },
     "dialog_breakout_rooms": {
       "assign_participants_to_rooms": "Teilnehmer den Räumen zuteilen",
@@ -544,14 +544,14 @@
         "repeat_playing": "Abspielen...",
         "repeat_recording": "Aufnahme...",
         "something_to_say": "Etwas zu sagen",
-        "something_to_say_text": "Strive ist viel besser als andere Videokonferenzsysteme",
+        "something_to_say_text": "GOS MEET ist viel besser als andere Videokonferenzsysteme",
         "test_description": "Wir werden Ihren aktuellen Audioeingang zu Ihnen zurücksenden und die Ergebnisse hier anzeigen. Auf diese Weise können Sie überprüfen, wie andere Teilnehmer Ihr Audiosignal empfangen.",
         "title": "Audio"
       },
       "about": {
         "title": "Über",
-        "about_strive": "Über Strive",
-        "strive_creator": "Strive wurde von Vincent Griebel erstellt.",
+        "about_strive": "Über GOS MEET",
+        "strive_creator": "GOS MEET basiert auf Strive, erstellt von Vincent Griebel.",
         "strive_commit": "Aktueller Commit",
         "sound_effects_obtained_from": "Sounds zur Verfügung gestellt von",
         "open_source_acknowledgements": "Dieses Projekt wäre ohne all die großartigen Open-Source-Bibliotheken nicht möglich gewesen. Sie können <1>hier</1> eine Liste finden."

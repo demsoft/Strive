@@ -63,7 +63,11 @@ export default function BrandLogo({ size = 32, showName = true }: Props) {
             )}
          </svg>
          {showName && (
-            <Typography variant="h6" component="span" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+            <Typography
+               variant="h6"
+               component="span"
+               sx={{ fontWeight: 800, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}
+            >
                {brandName}
             </Typography>
          )}

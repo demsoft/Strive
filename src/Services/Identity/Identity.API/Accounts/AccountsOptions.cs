@@ -95,7 +95,7 @@ namespace Identity.API.Accounts
     public class EmailOptions
     {
         /// <summary>The sender of all emails, for example "Strive &lt;no-reply@example.com&gt;".</summary>
-        public string From { get; set; } = "Strive <no-reply@localhost>";
+        public string From { get; set; } = "GOS MEET <no-reply@localhost>";
 
         /// <summary>
         ///     Brevo (brevo.com) transactional API key. When set, mails are sent through the Brevo HTTP API (the sender
