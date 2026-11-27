@@ -57,12 +57,14 @@ namespace Identity.API.Accounts
         private readonly AccountsOptions _options;
         private readonly PasswordHasher<StriveUser> _hasher = new();
         private readonly IUserRepository _users;
+        private readonly BrandInfo? _brand;
         private readonly Func<DateTimeOffset> _now;
 
         public AccountService(IUserRepository users, IEmailSender email, IOptions<AccountsOptions> options,
-            ILogger<AccountService> logger, Func<DateTimeOffset>? now = null)
+            ILogger<AccountService> logger, Func<DateTimeOffset>? now = null, BrandInfo? brand = null)
         {
             _users = users;
+            _brand = brand;
             _email = email;
             _options = options.Value;
             _logger = logger;
@@ -112,7 +114,8 @@ namespace Identity.API.Accounts
                 // do not tell the visitor: the answer is the same for an unknown and for a known address
                 var existing = await _users.FindByEmailAsync(normalized);
                 if (existing != null)
-                    await SafeSendAsync(EmailTemplates.AlreadyRegistered(existing.Email, signInUrl(), resetUrl()));
+                    await SafeSendAsync(EmailTemplates.AlreadyRegistered(existing.Email, signInUrl(), resetUrl(),
+                        MailBrand.Of(_brand)));
             }
 
             return RegisterOutcome.Ok;
@@ -121,7 +124,8 @@ namespace Identity.API.Accounts
         public async Task SendConfirmationAsync(StriveUser user, Func<string, string> confirmUrl)
         {
             var token = await CreateTokenAsync(user, TokenPurpose.ConfirmEmail, _options.ConfirmationTokenLifetime);
-            await SafeSendAsync(EmailTemplates.ConfirmEmail(user.Email, user.DisplayName ?? user.Email, confirmUrl(token)));
+            await SafeSendAsync(EmailTemplates.ConfirmEmail(user.Email, user.DisplayName ?? user.Email, confirmUrl(token),
+                MailBrand.Of(_brand)));
         }
 
         public async Task ResendConfirmationAsync(string? email, Func<string, string> confirmUrl)
@@ -189,7 +193,7 @@ namespace Identity.API.Accounts
             if (user == null) return;
 
             var token = await CreateTokenAsync(user, TokenPurpose.ResetPassword, _options.ResetTokenLifetime);
-            await SafeSendAsync(EmailTemplates.ResetPassword(user.Email, resetUrl(token)));
+            await SafeSendAsync(EmailTemplates.ResetPassword(user.Email, resetUrl(token), MailBrand.Of(_brand)));
         }
 
         /// <returns>The errors, empty when the password was changed.</returns>

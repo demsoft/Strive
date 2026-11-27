@@ -2,6 +2,7 @@ import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
 import de from 'src/assets/locales/de';
+import { brandName } from 'src/brand-id';
 import en from 'src/assets/locales/en';
 import { formatErrorMessage } from 'src/utils/error-utils';
 
@@ -33,6 +34,8 @@ i18next
       nonExplicitSupportedLngs: true,
       interpolation: {
          escapeValue: false,
+         // {{appName}} and {{host}} in the texts: one installation serves several brands on their own addresses
+         defaultVariables: { appName: brandName, host: window.location.host },
       },
    });
 

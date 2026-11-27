@@ -9,7 +9,7 @@ type Props = {
    showName?: boolean;
 };
 
-/** The logo mark of the brand: a gradient tile with a stylized S (Strive), sound waves (Gbedu) or a ball (Arena). */
+/** The logo mark of the brand: a gradient tile with a G and a live dot (GOS MEET), sound waves (Gbedu) or a ball (Arena). */
 export default function BrandLogo({ size = 32, showName = true }: Props) {
    return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
@@ -53,13 +53,17 @@ export default function BrandLogo({ size = 32, showName = true }: Props) {
                   />
                </>
             ) : (
-               <path
-                  d="M21.5 11.2c-1.2-1.4-3-2.2-5.2-2.2-3 0-5 1.5-5 3.7 0 2.2 1.7 3.1 4.7 3.8 2.3.5 3.4.9 3.4 2 0 1.1-1.2 1.8-3 1.8-1.7 0-3.1-.7-4.1-1.9"
-                  fill="none"
-                  stroke="#fff"
-                  strokeWidth="2.6"
-                  strokeLinecap="round"
-               />
+               <>
+                  <path
+                     d="M21.9 10.1a8.4 8.4 0 1 0 2.5 5.9h-7"
+                     fill="none"
+                     stroke="#fff"
+                     strokeWidth="3"
+                     strokeLinecap="round"
+                     strokeLinejoin="round"
+                  />
+                  <circle cx="25.1" cy="7.4" r="2" fill="#fff" />
+               </>
             )}
          </svg>
          {showName && (

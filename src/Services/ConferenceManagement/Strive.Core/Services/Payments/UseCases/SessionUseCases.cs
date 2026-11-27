@@ -998,7 +998,8 @@ namespace Strive.Core.Services.Payments.UseCases
                 $"Your pass renewal did not go through",
                 $"We could not renew your pass for {creator?.DisplayName ?? "this creator"}. We will try again on " +
                 $"{ReminderMail.FormatTime(subscription.NextChargeAt, creator?.Country ?? "NG")}. " +
-                "Check that your card has money on it and has not expired. You can stop the renewal on the page My tickets.");
+                "Check that your card has money on it and has not expired. You can stop the renewal on the page " +
+                $"{(PlatformBrand.Of(_reminders, creator).IsArena ? "My passes" : "My tickets")}.");
             return RenewalOutcome.Failed;
         }
 
@@ -1032,7 +1033,7 @@ namespace Strive.Core.Services.Payments.UseCases
 
                 var creator = await _creators.FindById(subscription.CreatorId);
                 var amount = Math.Min(subscription.AmountMinor, creator?.PassPriceMinor ?? subscription.AmountMinor);
-                var link = $"{_reminders.LinkBaseUrl.TrimEnd('/')}/tickets";
+                var link = PlatformBrand.Of(_reminders, creator).Link("tickets");
                 var delivered = await Mail(subscription, creator, "Your pass renews soon",
                     $"Your pass for {creator?.DisplayName ?? "this creator"} renews on " +
                     $"{ReminderMail.FormatTime(subscription.NextChargeAt, creator?.Country ?? "NG")}: " +
@@ -1056,7 +1057,8 @@ namespace Strive.Core.Services.Payments.UseCases
             try
             {
                 await _email.Send(subscription.Email, subject,
-                    $"<p>{System.Net.WebUtility.HtmlEncode(text)}</p>", text);
+                    $"<p>{System.Net.WebUtility.HtmlEncode(text)}</p>", text,
+                    senderName: PlatformBrand.Of(_reminders, creator).Name);
                 return true;
             }
             catch (EmailException e)

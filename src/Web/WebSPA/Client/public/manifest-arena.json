@@ -1,0 +1,15 @@
+{
+  "short_name": "Arena",
+  "name": "Arena",
+  "icons": [
+    {
+      "src": "mark-arena.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#07100b",
+  "background_color": "#07100b"
+}

@@ -124,6 +124,32 @@ namespace Identity.API.Tests
             Assert.DoesNotContain("Go live.", html);
         }
 
+        [Theory]
+        [InlineData("meet.test", "GOS MEET", null)]
+        [InlineData("gbedu.test", "Gbedu", "Gbedu")]
+        [InlineData("arena.test", "Arena", "Arena")]
+        public void AccountMails_SpeakForTheBrandOfTheAddress(string host, string name, string? sender)
+        {
+            var accessor = new Microsoft.AspNetCore.Http.HttpContextAccessor
+            {
+                HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext(),
+            };
+            accessor.HttpContext.Request.Host = new Microsoft.AspNetCore.Http.HostString(host);
+            var brand = MailBrand.Of(new BrandInfo(accessor));
+
+            var confirm = EmailTemplates.ConfirmEmail("a@example.com", "Ann", "https://x.test/c", brand);
+            var reset = EmailTemplates.ResetPassword("a@example.com", "https://x.test/r", brand);
+            var again = EmailTemplates.AlreadyRegistered("a@example.com", "https://x.test/s", "https://x.test/r", brand);
+
+            Assert.Equal($"Confirm your email for {name}", confirm.Subject);
+            Assert.Contains($"Welcome to {name}, Ann!", confirm.TextBody);
+            Assert.Equal($"Reset your {name} password", reset.Subject);
+            Assert.Equal($"You already have a {name} account", again.Subject);
+            // the main brand keeps the sender name of the settings
+            Assert.Equal(sender, confirm.SenderName);
+            Assert.Contains(brand.Button, confirm.HtmlBody);
+        }
+
         [Fact]
         public async Task LoginPage_OnTheMainAddress_StaysStrive()
         {

@@ -65,6 +65,23 @@ namespace Strive.IntegrationTests.Services
         private async Task<CreatorPageDto> Page(UserAccount? viewer, string creatorId) =>
             await Read<CreatorPageDto>(await Api(viewer).GetAsync($"/v1/creators/{creatorId}/page"));
 
+        [Fact]
+        public async Task Mails_OfACreator_AreSignedGbedu_AndOfAnApprovedOrganizer_Arena()
+        {
+            var (_, creatorId) = await NewCreator();
+            var (_, address, _) = await Subscribed(creatorId);
+            Assert.All(MailsTo(address), mail => Assert.Equal("Gbedu", mail.SenderName));
+
+            var (_, organizerId) = await NewCreator();
+            var creators = Factory.Services.GetRequiredService<Strive.Core.Services.Payments.Gateways.ICreatorRepo>();
+            var organizer = (await creators.FindById(organizerId))!;
+            organizer.OrganizerStatus = Strive.Core.Services.Payments.OrganizerStatus.Approved;
+            await creators.Save(organizer);
+            var (_, address2, _) = await Subscribed(organizerId);
+
+            Assert.All(MailsTo(address2), mail => Assert.Equal("Arena", mail.SenderName));
+        }
+
         private async Task<string> ReadyVideo(UserAccount host, string title = "A new reel")
         {
             var created = await Read<CreatedVideoDto>(await Api(host).PostAsync("/v1/videos",

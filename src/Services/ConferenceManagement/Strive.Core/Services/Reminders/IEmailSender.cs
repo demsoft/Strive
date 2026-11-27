@@ -10,8 +10,9 @@ namespace Strive.Core.Services.Reminders
         bool IsConfigured { get; }
 
         /// <summary>Sends one mail. Throws <see cref="EmailException" /> if it was not accepted.</summary>
+        /// <param name="senderName">The name shown as the sender instead of the configured one (the address stays)</param>
         Task Send(string toEmail, string subject, string htmlBody, string textBody,
-            CancellationToken cancellationToken = default);
+            CancellationToken cancellationToken = default, string? senderName = null);
     }
 
     public class EmailException : Exception
