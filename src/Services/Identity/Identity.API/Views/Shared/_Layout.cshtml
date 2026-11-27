@@ -10,7 +10,14 @@
 
     <title>@Brand.Name</title>
 
-    <link rel="icon" type="image/svg+xml" href="~/img/mark-@(Brand.Id == "strive" ? "gosmeet" : Brand.Id).svg" />
+    @if (Brand.IsGbedu)
+    {
+        <link rel="icon" type="image/svg+xml" href="~/img/mark-@(Brand.Id).svg" />
+    }
+    else
+    {
+        <link rel="icon" type="image/png" href="~/img/mark-gosmeet.png" />
+    }
     <link rel="alternate icon" type="image/x-icon" href="~/favicon.ico" />
 
     <link rel="stylesheet" href="~/css/site.css" />

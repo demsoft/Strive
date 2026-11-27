@@ -2,7 +2,7 @@ import { BrandId } from './brand-id';
 
 /** The files in public/ that belong to a brand: its icon and the manifest with its name */
 export const brandAssets = (id: BrandId) => ({
-   icon: id === 'strive' ? 'mark-gosmeet.svg' : `mark-${id}.svg`,
+   icon: id === 'strive' ? 'mark-gosmeet.png' : `mark-${id}.svg`,
    manifest: id === 'strive' ? 'manifest.json' : `manifest-${id}.json`,
 });
 
@@ -13,7 +13,7 @@ export function applyBrandAssets(id: BrandId, document: Document) {
 
    const shortcut = link('shortcut icon') ?? document.head.appendChild(document.createElement('link'));
    shortcut.setAttribute('rel', 'shortcut icon');
-   shortcut.setAttribute('type', 'image/svg+xml');
+   shortcut.setAttribute('type', icon.endsWith('.png') ? 'image/png' : 'image/svg+xml');
    shortcut.setAttribute('href', new URL(icon, document.baseURI).href);
    link('manifest')?.setAttribute('href', new URL(manifest, document.baseURI).href);
 }

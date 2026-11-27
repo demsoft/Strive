@@ -79,6 +79,7 @@ a:hover { text-decoration: underline; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--text); font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em; }
 .brand:hover { text-decoration: none; }
 .brand svg { display: block; }
+.brand .wordmark { display: block; height: 28px; width: auto; }
 
 .page-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 0; }
 

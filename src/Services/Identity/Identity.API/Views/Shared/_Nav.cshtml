@@ -12,7 +12,11 @@
 <header class="page-header">
     <a href="@App.Home" class="brand">
         <partial name="_Brand" />
-        @Brand.Name
+        @* the logo of the main brand has the name in it *@
+        @if (Brand.IsGbedu)
+        {
+            @Brand.Name
+        }
     </a>
 
     @if (!string.IsNullOrWhiteSpace(name))

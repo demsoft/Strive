@@ -2,7 +2,7 @@ import { expect, test } from 'vitest';
 import { applyBrandAssets, brandAssets } from './brand-assets';
 
 test('every brand has its own icon and manifest', () => {
-   expect(brandAssets('strive')).toEqual({ icon: 'mark-gosmeet.svg', manifest: 'manifest.json' });
+   expect(brandAssets('strive')).toEqual({ icon: 'mark-gosmeet.png', manifest: 'manifest.json' });
    expect(brandAssets('gbedu')).toEqual({ icon: 'mark-gbedu.svg', manifest: 'manifest-gbedu.json' });
    expect(brandAssets('arena')).toEqual({ icon: 'mark-arena.svg', manifest: 'manifest-arena.json' });
 });
