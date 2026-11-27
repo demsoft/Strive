@@ -6,7 +6,7 @@ namespace Identity.API.Accounts
     /// <summary>The name and the button colours of the brand a mail speaks for</summary>
     public record MailBrand(string Name, string Button, string ButtonText)
     {
-        public static readonly MailBrand Default = new("GOS MEET", "#7c5cff", "#fff");
+        public static readonly MailBrand Default = new("GOS Meet", "#7c5cff", "#fff");
         public static readonly MailBrand Gbedu = new("Gbedu", "#ff9f1c", "#2a0610");
         public static readonly MailBrand Arena = new("Arena", "#22c55e", "#07100b");
 

@@ -32,7 +32,7 @@ export default function HrmMeetingRoute(props: Props) {
             if (!response.ok) throw new Error('This meeting is not available. Open it from HRM.');
             const config = await response.json();
             if (disposed) return;
-            if (!config.enabled) throw new Error('GOS MEET is not connected to HRM on this server.');
+            if (!config.enabled) throw new Error('GOS Meet is not connected to HRM on this server.');
             const origin = new URL(config.parentOrigin);
             if (origin.protocol !== 'https:' || origin.origin !== config.parentOrigin) throw new Error('The HRM connection is not configured correctly.');
             if (window.parent === window) {
@@ -55,7 +55,7 @@ export default function HrmMeetingRoute(props: Props) {
       return () => { disposed = true; controller.abort(); cancel?.(); };
    }, [id]);
    if (error) return <Stack spacing={2} sx={{ p: 3 }}><Alert severity="error">{error}</Alert></Stack>;
-   if (!session) return <Stack spacing={2} sx={{ p: 4, alignItems: 'center' }}><CircularProgress /><Typography>Opening GOS MEET with your HRM account…</Typography></Stack>;
+   if (!session) return <Stack spacing={2} sx={{ p: 4, alignItems: 'center' }}><CircularProgress /><Typography>Opening GOS Meet with your HRM account…</Typography></Stack>;
    return <HrmMeetingSession session={session}><ConferenceRoute {...props} /></HrmMeetingSession>;
 }
 

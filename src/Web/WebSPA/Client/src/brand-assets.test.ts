@@ -26,6 +26,6 @@ test('the texts take the name of the brand of the address', async () => {
    const i18n = (await import('./services/i18n')).default;
    await i18n.changeLanguage('en');
 
-   expect(i18n.t('creator.earn_fee')).toBe('GOS MEET commission');
+   expect(i18n.t('creator.earn_fee')).toBe('GOS Meet commission');
    expect(i18n.t('creator.slug_text')).toContain(`${window.location.host}/u/yourname`);
 });

@@ -125,7 +125,7 @@ namespace Identity.API.Tests
         }
 
         [Theory]
-        [InlineData("meet.test", "GOS MEET", null)]
+        [InlineData("meet.test", "GOS Meet", null)]
         [InlineData("gbedu.test", "Gbedu", "Gbedu")]
         [InlineData("arena.test", "Arena", "Arena")]
         public void AccountMails_SpeakForTheBrandOfTheAddress(string host, string name, string? sender)
@@ -155,7 +155,7 @@ namespace Identity.API.Tests
         {
             var html = await LoginPage("https://meet.test");
 
-            Assert.Contains("<title>GOS MEET</title>", html);
+            Assert.Contains("<title>GOS Meet</title>", html);
             Assert.Contains("data-brand=\"strive\"", html);
             Assert.Contains("Meetings that feel", html);
             Assert.DoesNotContain("Gbedu", html);

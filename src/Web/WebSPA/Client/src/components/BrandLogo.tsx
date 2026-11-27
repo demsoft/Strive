@@ -12,7 +12,7 @@ type Props = {
 };
 
 /**
- * The logo of the brand. GOS MEET has its own artwork (the word mark, or its three colour ring where there is no room
+ * The logo of the brand. GOS Meet has its own artwork (the word mark, or its three colour ring where there is no room
  * for the name); Gbedu (sound waves) and Arena (a ball) are a gradient tile with their name next to it.
  */
 export default function BrandLogo({ size = 32, showName = true }: Props) {
